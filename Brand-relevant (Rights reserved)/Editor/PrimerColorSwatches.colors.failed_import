@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &1
+MonoBehaviour:
+  m_ObjectHideFlags: 52
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 12323, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: PrimerColorSwatches
+  m_EditorClassIdentifier: 
+  m_Presets:
+  - m_Name: Primer Blue
+    m_Color: {r: 0.24313726, g: 0.49411765, b: 0.627451, a: 1}
+  - m_Name: Primer Orange
+    m_Color: {r: 1, g: 0.5803922, b: 0, a: 1}
+  - m_Name: Primer Yellow
+    m_Color: {r: 0.90588236, g: 0.8862745, b: 0.2784314, a: 1}
+  - m_Name: Primer Red
+    m_Color: {r: 0.8392157, g: 0.23137255, b: 0.3137255, a: 1}
+  - m_Name: Primer Green
+    m_Color: {r: 0.4117647, g: 0.56078434, b: 0.24705882, a: 1}
+  - m_Name: Primer Purple
+    m_Color: {r: 0.85882354, g: 0.3529412, b: 0.7294118, a: 1}
+  - m_Name: Primer Gray
+    m_Color: {r: 0.18431373, g: 0.2, b: 0.21176471, a: 1}
+  - m_Name: Primer Light Gray
+    m_Color: {r: 0.36862746, g: 0.4, b: 0.42352942, a: 1}
+  - m_Name: Primer White
+    m_Color: {r: 0.9529412, g: 0.9490196, b: 0.9411765, a: 1}

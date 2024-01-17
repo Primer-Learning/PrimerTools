@@ -1,0 +1,35 @@
+[remap]
+
+importer="texture"
+type="CompressedTexture2D"
+uid="uid://jk6vf5dt3l0c"
+path.s3tc="res://.godot/imported/Blob_heads_Metallic.png-1bbadac5792c41b1c92f7954edf77254.s3tc.ctex"
+metadata={
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
+}
+
+[deps]
+
+source_file="res://addons/PrimerTools/Brand-relevant (Rights reserved)/Coin flips/Inputs/textures and maps/copper coin/heads/Blob_heads_Metallic.png"
+dest_files=["res://.godot/imported/Blob_heads_Metallic.png-1bbadac5792c41b1c92f7954edf77254.s3tc.ctex"]
+
+[params]
+
+compress/mode=2
+compress/high_quality=false
+compress/lossy_quality=0.5
+compress/hdr_compression=1
+compress/normal_map=2
+compress/channel_pack=0
+mipmaps/generate=true
+mipmaps/limit=-1
+roughness/mode=1
+roughness/src_normal=""
+process/fix_alpha_border=true
+process/premult_alpha=0
+process/normal_map_invert_y=false
+process/hdr_as_srgb=false
+process/hdr_clamp_exposure=false
+process/size_limit=2048
+detect_3d/compress_to=0
