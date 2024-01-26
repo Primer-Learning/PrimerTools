@@ -29,13 +29,6 @@ public partial class AnimationCreator : AnimationPlayer
 		}
 	}
 
-
-	// public override void _Ready()
-	// {
-	// 	GD.Print("Ready");
-	// 	Play("code_generated:CombinedAnimation");
-	// }
-
 	public void Define()
 	{
 		for (var i = 0; i < 2; i++)

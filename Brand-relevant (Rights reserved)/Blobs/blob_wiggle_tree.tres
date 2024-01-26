@@ -1,0 +1,50 @@
+[gd_resource type="AnimationNodeBlendTree" load_steps=10 format=3 uid="uid://dnctn6q7smbp8"]
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_m87gd"]
+animation = &"tilt_right"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_eu17c"]
+animation = &"tilt_left"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_jvccj"]
+animation = &"tilt_back"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_ty8ad"]
+animation = &"tilt_forward"
+
+[sub_resource type="AnimationNodeBlendSpace2D" id="AnimationNodeBlendSpace2D_1e1eq"]
+blend_point_0/node = SubResource("AnimationNodeAnimation_m87gd")
+blend_point_0/pos = Vector2(1, 0)
+blend_point_1/node = SubResource("AnimationNodeAnimation_eu17c")
+blend_point_1/pos = Vector2(-1, 0)
+blend_point_2/node = SubResource("AnimationNodeAnimation_jvccj")
+blend_point_2/pos = Vector2(0, 1)
+blend_point_3/node = SubResource("AnimationNodeAnimation_ty8ad")
+blend_point_3/pos = Vector2(0, -1)
+
+[sub_resource type="AnimationNodeAdd2" id="AnimationNodeAdd2_1xa42"]
+filter_enabled = true
+filters = ["blob_rig/Skeleton3D:bone_arm.l", "blob_rig/Skeleton3D:bone_arm.r", "blob_rig/Skeleton3D:bone_arm_out_left_driver", "blob_rig/Skeleton3D:bone_arm_out_right_driver", "blob_rig/Skeleton3D:bone_eye.l", "blob_rig/Skeleton3D:bone_eye.r", "blob_rig/Skeleton3D:bone_neck", "blob_rig/Skeleton3D:bone_neck_arms", "blob_rig/Skeleton3D:bone_torso"]
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_foh5f"]
+animation = &"turn_right"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_uqv78"]
+animation = &"turn_left"
+
+[sub_resource type="AnimationNodeBlendSpace1D" id="AnimationNodeBlendSpace1D_fdwhr"]
+blend_point_0/node = SubResource("AnimationNodeAnimation_foh5f")
+blend_point_0/pos = 1.0
+blend_point_1/node = SubResource("AnimationNodeAnimation_uqv78")
+blend_point_1/pos = -1.0
+
+[resource]
+graph_offset = Vector2(-406.467, -178.339)
+nodes/output/position = Vector2(740, 120)
+nodes/tilt/node = SubResource("AnimationNodeBlendSpace2D_1e1eq")
+nodes/tilt/position = Vector2(200, -20)
+nodes/tilt_and_turn/node = SubResource("AnimationNodeAdd2_1xa42")
+nodes/tilt_and_turn/position = Vector2(440, 80)
+nodes/turn/node = SubResource("AnimationNodeBlendSpace1D_fdwhr")
+nodes/turn/position = Vector2(-140, 200)
+node_connections = [&"output", 0, &"tilt_and_turn", &"tilt_and_turn", 0, &"tilt", &"tilt_and_turn", 1, &"turn"]
