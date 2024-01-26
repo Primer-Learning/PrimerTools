@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Godot;
 using PrimerTools.Latex;
 
 namespace PrimerTools.LaTeX;
@@ -45,7 +46,7 @@ internal class LatexToSvg
         ct.ThrowIfCancellationRequested();
 
         File.WriteAllText(sourcePath, @$"
-            {string.Join(Environment.NewLine, config.headers)}
+            {string.Join((string)System.Environment.NewLine, config.headers)}
             \begin{{document}}
             \color{{white}}
             {config.code}
