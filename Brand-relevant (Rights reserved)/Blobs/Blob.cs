@@ -27,13 +27,18 @@ public partial class Blob : Node3D
 		if (rng.RangeFloat(0, 1) < changeProbability)
 		{
 			var tween = GetTree().CreateTween();
-			tween.TweenProperty(_animationTree, "parameters/turn", (rng.RangeFloat(0, 1) * 2 - 1), 0.5f);
+			tween.TweenProperty(_animationTree, "parameters/turn/blend_position", (rng.RangeFloat(0, 1) * 2 - 1), 0.5f);
 		}
-		// 	TiltHeadLeftRight((rng.RangeFloat(0, 1) * 2 - 1) * 2);
-		// if (rng.RangeFloat(0, 1) < changeProbability)
-		// 	TiltHeadFrontBack((rng.RangeFloat(0, 1) * 2 - 1) * 2);
-		// if (rng.RangeFloat(0, 1) < changeProbability)
-		// 	TurnHeadLeftRight((rng.RangeFloat(0, 1) * 2 - 1) * 2);
+		if (rng.RangeFloat(0, 1) < changeProbability)
+		{
+			var tween = GetTree().CreateTween();
+			tween.TweenProperty(_animationTree, "parameters/tilt/blend_position:x", (rng.RangeFloat(0, 1) * 2 - 1), 0.5f);
+		}
+		if (rng.RangeFloat(0, 1) < changeProbability)
+		{
+			var tween = GetTree().CreateTween();
+			tween.TweenProperty(_animationTree, "parameters/tilt/blend_position:y", (rng.RangeFloat(0, 1) * 2 - 1), 0.5f);
+		}
 
 		// var blinkProbability = 0.002f;
 		// if (rng.RangeFloat() < blinkProbability) Blink();
