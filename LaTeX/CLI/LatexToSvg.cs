@@ -1,9 +1,11 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Godot;
 using PrimerTools.Latex;
+using FileAccess = System.IO.FileAccess;
 
 namespace PrimerTools.LaTeX;
 internal class LatexToSvg
@@ -53,12 +55,12 @@ internal class LatexToSvg
             \end{{document}}
         ");
 
-        // PrimerLogger.Log("AAAAAA", new { dir, sourcePath});
         ExecuteXelatex(dir, sourcePath, ct);
         ExecuteDvisvgm(dir, outputPath, ct);
 
         ct.ThrowIfCancellationRequested();
-        return File.ReadAllText(outputPath);
+        // return File.ReadAllText(outputPath);
+        return outputPath;
     }
 
     private static void ExecuteXelatex(TempDir tmpDir, string sourcePath, CancellationToken ct)
@@ -90,6 +92,58 @@ internal class LatexToSvg
         if (result.exitCode != 0) {
             throw new Exception($"Got dvisvgm error(s): {result.stderr}");
         }
+    }
+
+    public async Task<string> MeshFromExpression(string latex, bool openBlender = false)
+    {
+        var input = LatexInput.From("H" + latex); // The H gets removed in blender after alignment
+        var svgPath = await RenderToSvg(input, default);
+
+        var blenderPath = @"C:\Program Files\Blender Foundation\Blender 3.6\blender.exe";
+        var scriptPath = "addons/PrimerTools/LaTeX/svg_to_mesh.py";
+        var destinationPath = "addons/PrimerTools/LaTeX/latex_test_mesh.gltf";
+
+        var startInfo = new ProcessStartInfo(blenderPath)
+        {
+            RedirectStandardOutput = true,
+            UseShellExecute = false
+        };
+        if (openBlender)
+        {
+            startInfo.Arguments = $"--python {scriptPath} -- {svgPath} {destinationPath}";
+            startInfo.CreateNoWindow = false;
+        }
+        else
+        {
+            startInfo.Arguments = $"--background --python {scriptPath} -- {svgPath} {destinationPath}";
+            startInfo.CreateNoWindow = true;
+        }
+        
+        using Process process = Process.Start(startInfo);
+        using (StreamReader reader = process.StandardOutput)
+        {
+            string result = await reader.ReadToEndAsync();
+            GD.Print(result);
+        }
+        
+        return destinationPath;
+    }
+    
+    private static bool IsFileLocked(FileInfo file)
+    {
+        try
+        {
+            using (FileStream stream = file.Open(FileMode.Open, FileAccess.Read, FileShare.None))
+            {
+                stream.Close();
+            }
+        }
+        catch (IOException)
+        {
+            return true;
+        }
+
+        return false;
     }
 
     private static void DumpStandardOutputs(TempDir workingDir, CliProgram.ExecutionResult result, string name)

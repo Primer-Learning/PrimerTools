@@ -16,7 +16,7 @@ namespace PrimerTools
         public TempDir()
         {
             var tempPath = Path.GetTempPath();
-            var tmpDir = Path.Combine(tempPath, $"unity-primer-{Guid.NewGuid()}");
+            var tmpDir = Path.Combine(tempPath, $"godot-primer-{Guid.NewGuid()}");
             info = Directory.CreateDirectory(tmpDir);
             isRoot = true;
             exists = true;
