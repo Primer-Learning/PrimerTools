@@ -23,6 +23,9 @@ public partial class LatexNode : Node3D
 	
 	private readonly LatexToSvg latexToSvg = new();
 	
+	public override void _Ready() {
+	}
+	
 	private async void RunTest() {
 		foreach (var child in GetChildren())
 		{

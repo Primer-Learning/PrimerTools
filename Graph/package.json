@@ -1,0 +1,11 @@
+{
+  "name": "org.primerlearning.primer-graph",
+  "displayName": "Primer.Graph",
+  "version": "1.0.0",
+  "description": "Primer's graph visualization",
+  "unity": "2021.3",
+  "dependencies": {
+    "org.primerlearning.primer": "1.0.0",
+    "org.primerlearning.primer-timeline": "1.0.0"
+  }
+}

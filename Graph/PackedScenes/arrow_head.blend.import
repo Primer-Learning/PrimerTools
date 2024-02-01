@@ -1,0 +1,75 @@
+[remap]
+
+importer="scene"
+importer_version=1
+type="PackedScene"
+uid="uid://csldocd4lfo40"
+path="res://.godot/imported/arrow_head.blend-44fb6473b4bb8ec9102774726babd94d.scn"
+
+[deps]
+
+source_file="res://addons/PrimerTools/Graph/PackedScenes/arrow_head.blend"
+dest_files=["res://.godot/imported/arrow_head.blend-44fb6473b4bb8ec9102774726babd94d.scn"]
+
+[params]
+
+nodes/root_type="Node3D"
+nodes/root_name="Root Scene"
+nodes/apply_root_scale=true
+nodes/root_scale=1.0
+meshes/ensure_tangents=1
+meshes/generate_lods=true
+meshes/create_shadow_meshes=false
+meshes/light_baking=1
+meshes/lightmap_texel_size=0.2
+skins/use_named_skins=true
+animation/import=true
+animation/fps=30
+animation/trimming=false
+animation/remove_immutable_tracks=false
+import_script/path=""
+_subresources={
+"animations": {},
+"materials": {
+"": {
+"use_external/enabled": true,
+"use_external/path": "res://Primer.Graph/Materials/extracted/arrow_head..material"
+}
+},
+"meshes": {
+"Root Scene_arrow_head-c9b1671928b85b05ef8053ad50ef9067_CUBezierCurve": {
+"save_to_file/enabled": true,
+"save_to_file/make_streamable": "",
+"save_to_file/path": "res://Primer.Graph/Materials/extracted/arrow_head.arrow_head-c9b1671928b85b05ef8053ad50ef9067_CUBezierCurve.mesh"
+},
+"arrow_head-c9b1671928b85b05ef8053ad50ef9067_CUBezierCurve": {
+"save_to_file/enabled": true,
+"save_to_file/make_streamable": "",
+"save_to_file/path": "res://Primer.Graph/Materials/extracted/arrow_head.arrow_head-c9b1671928b85b05ef8053ad50ef9067_CUBezierCurve.mesh"
+}
+},
+"nodes": {
+"PATH:AnimationPlayer": {
+"optimizer/enabled": true,
+"optimizer/max_angular_error": 0.00277778,
+"optimizer/max_linear_error": 0.5
+}
+}
+}
+gltf/embedded_image_handling=1
+blender/nodes/visible=0
+blender/nodes/punctual_lights=true
+blender/nodes/cameras=true
+blender/nodes/custom_properties=true
+blender/nodes/modifiers=1
+blender/meshes/colors=false
+blender/meshes/uvs=true
+blender/meshes/normals=true
+blender/meshes/tangents=true
+blender/meshes/skins=2
+blender/meshes/export_bones_deforming_mesh_only=false
+blender/materials/unpack_enabled=true
+blender/materials/export_materials=1
+blender/animation/limit_playback=true
+blender/animation/always_sample=true
+blender/animation/group_tracks=true
