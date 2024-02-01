@@ -5,7 +5,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Godot;
 using PrimerTools.Latex;
-using FileAccess = System.IO.FileAccess;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace PrimerTools.LaTeX;
 internal class LatexToSvg
@@ -13,18 +15,17 @@ internal class LatexToSvg
     private static readonly string[] xelatexArguments = {
         "-no-pdf",
         "-interaction=batchmode",
-        "-halt-on-error",
+        "-halt-on-error"
     };
 
     private static readonly string[] dvisvgmArguments = {
-        "--no-fonts=1",
+        "--no-fonts=1"
     };
 
     readonly object executionLock = new();
     Task<string> currentTask;
 
     internal TempDir rootTempDir = new();
-
 
     public Task<string> RenderToSvg(LatexInput config, CancellationToken ct)
     {
@@ -98,11 +99,16 @@ internal class LatexToSvg
     {
         var input = LatexInput.From("H" + latex); // The H gets removed in blender after alignment
         var svgPath = await RenderToSvg(input, default);
-
+        
+        // TODO: Get the blender path from Godot's user settings
         var blenderPath = @"C:\Program Files\Blender Foundation\Blender 3.6\blender.exe";
-        var scriptPath = "addons/PrimerTools/LaTeX/svg_to_mesh.py";
-        var destinationPath = "addons/PrimerTools/LaTeX/latex_test_mesh.gltf";
+        var dirPath = "addons/PrimerTools/LaTeX";
+        var scriptPath = Path.Combine(dirPath, "svg_to_mesh.py");
+        var gltfDirPath = Path.Combine(dirPath, "gltf");
+        var destinationPath = Path.Combine(gltfDirPath, GenerateFileName(latex) + ".gltf");
 
+        if (File.Exists(destinationPath)) return destinationPath;
+        
         var startInfo = new ProcessStartInfo(blenderPath)
         {
             RedirectStandardOutput = true,
@@ -128,23 +134,6 @@ internal class LatexToSvg
         
         return destinationPath;
     }
-    
-    private static bool IsFileLocked(FileInfo file)
-    {
-        try
-        {
-            using (FileStream stream = file.Open(FileMode.Open, FileAccess.Read, FileShare.None))
-            {
-                stream.Close();
-            }
-        }
-        catch (IOException)
-        {
-            return true;
-        }
-
-        return false;
-    }
 
     private static void DumpStandardOutputs(TempDir workingDir, CliProgram.ExecutionResult result, string name)
     {
@@ -153,6 +142,45 @@ internal class LatexToSvg
 
         var stderr = workingDir.GetChildPath($"{name}.stderr");
         File.WriteAllText(stderr, result.stderr);
+    }
+    
+    public static string GenerateFileName(string latexExpression)
+    {
+        // Replace invalid file name characters with '_'. 
+        // This list covers characters invalid in Windows and the '/' for UNIX-based systems.
+        var invalidChars = new string(Path.GetInvalidFileNameChars()) + "\x00..\x1F";
+        var sanitized = Regex.Replace(latexExpression, $"[{Regex.Escape(invalidChars)}]", "_");
+
+        // Shorten if too long to avoid path length issues, keeping under 255 characters
+        if (sanitized.Length > 200)
+        {
+            sanitized = sanitized[..200];
+        }
+
+        // Generate a hash of the original expression for uniqueness
+        string hash = GetShortHash(latexExpression);
+
+        // Combine sanitized expression with hash
+        string fileName = $"{sanitized}_{hash}.txt"; // .txt or your preferred extension
+
+        return fileName;
+    }
+
+    private static string GetShortHash(string input)
+    {
+        using (SHA256 sha256 = SHA256.Create())
+        {
+            // Compute hash - this returns byte array
+            byte[] bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(input));
+
+            // Convert byte array to a short string representation
+            StringBuilder builder = new StringBuilder();
+            for (int i = 0; i < 4; i++) // Use only the first 4 bytes for a short hash
+            {
+                builder.Append(bytes[i].ToString("x2"));
+            }
+            return builder.ToString();
+        }
     }
 }
 

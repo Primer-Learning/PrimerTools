@@ -1,4 +1,8 @@
+using System;
+using System.ComponentModel;
 using Godot;
+using System.IO;
+using System.Reflection;
 
 namespace PrimerTools.LaTeX;
 [Tool]
@@ -18,7 +22,6 @@ public partial class LatexNode : Node3D
 	}
 
 	[Export] public bool openBlender = false;
-	
 	[Export] public string _latex = "$z^2 + y^2 = 1$";
 	
 	private readonly LatexToSvg latexToSvg = new();
