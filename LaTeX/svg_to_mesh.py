@@ -18,26 +18,26 @@ bpy.ops.object.delete()
 bpy.ops.import_curve.svg(filepath=svg_path)
 bpy.ops.object.select_all(action='SELECT')
 
-# Convert curves to meshes, but don't actually since it seems unnecessary.
-# Keeping for reference.
-# bpy.context.view_layer.objects.active = obj
-# bpy.ops.object.convert(target='MESH')
 
 mesh_objects = []
 for obj in bpy.context.selected_objects:
     mesh_objects.append(obj)
     bpy.context.view_layer.objects.active = obj
+    # Commented out because mesh conversion happens automatically with gltf export
+    # bpy.ops.object.convert(target='MESH')
     bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='BOUNDS')
  
 # Move the first object to origin
 if mesh_objects:
     first_obj = mesh_objects[0]
+    second_obj = mesh_objects[1]
     
     # Calculate lower right corner of bounding box
-    bbox_corners = [first_obj.matrix_world @ Vector(corner) for corner in first_obj.bound_box]
-    lower_right_corner = (max(corner.x for corner in bbox_corners),
-                          min(corner.y for corner in bbox_corners),
-                          min(corner.z for corner in bbox_corners))
+    first_bbox_corners = [first_obj.matrix_world @ Vector(corner) for corner in first_obj.bound_box]
+    second_bbox_corners = [second_obj.matrix_world @ Vector(corner) for corner in second_obj.bound_box]
+    lower_right_corner = (min(corner.x for corner in second_bbox_corners),
+                          min(corner.y for corner in first_bbox_corners),
+                          min(corner.z for corner in first_bbox_corners))
     
     translation = -Vector(lower_right_corner)
 
@@ -46,6 +46,7 @@ if mesh_objects:
         obj.location += translation
         obj.location *= SCALE_FACTOR
         obj.scale *= SCALE_FACTOR
+        bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
 
 bpy.data.objects.remove(first_obj, do_unlink=True)
 

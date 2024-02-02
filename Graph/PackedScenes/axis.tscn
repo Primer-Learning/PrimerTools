@@ -16,18 +16,20 @@ height = 1.0
 
 [node name="Axis" type="Node3D"]
 script = ExtResource("1_gobhs")
-length = 2.035
+Length = 1.305
 Padding = Vector2(0.2, 0.2)
+ticStep = 3.0
+ticScene = ExtResource("3_v6q6s")
 
 [node name="Rod" type="Node3D" parent="."]
-transform = Transform3D(2.035, 0, 0, 0, 1, 0, 0, 0, 1, -0.2, 0, 0)
+transform = Transform3D(1.305, 0, 0, 0, 1, 0, 0, 0, 1, -0.2, 0, 0)
 
 [node name="RodMesh" type="MeshInstance3D" parent="Rod"]
 transform = Transform3D(-1.74846e-09, 1, -1.18109e-17, -0.0399939, -4.37047e-08, -0.000698097, -0.000698097, -7.62869e-10, 0.0399939, 0.5, 0, 0)
 mesh = SubResource("CylinderMesh_ojy7n")
 
 [node name="Head" parent="." instance=ExtResource("1_1vsiv")]
-transform = Transform3D(-3.0598e-09, 0.07, 0, -0.07, -3.0598e-09, 0, 0, 0, 0.07, 1.835, 0, 0)
+transform = Transform3D(-3.0598e-09, 0.07, 0, -0.07, -3.0598e-09, 0, 0, 0, 0.07, 1.105, 0, 0)
 
 [node name="Tail" parent="." instance=ExtResource("1_1vsiv")]
 transform = Transform3D(-3.0598e-09, -0.07, 0, 0.07, -3.0598e-09, 0, 0, 0, 0.07, -0.2, 0, 0)
@@ -38,67 +40,41 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2.13751)
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4.32271)
 
-[node name="Tic 2" type="Node3D" parent="." instance=ExtResource("3_v6q6s")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.327, 0, 0)
+[node name="Tic 3" type="Node3D" parent="." instance=ExtResource("3_v6q6s")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2715, 0, 0)
 script = ExtResource("4_j4gbq")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Tic 2"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Tic 3"]
 transform = Transform3D(0.05, 0, 0, 0, 0.09, 0, 0, 0, 0.05, 0, 0, 0)
 mesh = SubResource("CylinderMesh_s5tg3")
 
-[node name="Node3D" type="Node3D" parent="Tic 2"]
-transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, -0.426836, -2.49378, 0)
+[node name="LatexNode" type="Node3D" parent="Tic 3"]
+transform = Transform3D(0.2, 0, 0, 0, -8.74228e-09, -0.2, 0, 0.2, -8.74228e-09, -0.0853543, -0.332843, 0)
 script = ExtResource("5_8vy8i")
-_latex = "$1$"
-
-[node name="Tic 4" type="Node3D" parent="." instance=ExtResource("3_v6q6s")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.654, 0, 0)
-script = ExtResource("4_j4gbq")
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Tic 4"]
-transform = Transform3D(0.05, 0, 0, 0, 0.09, 0, 0, 0, 0.05, 0, 0, 0)
-mesh = SubResource("CylinderMesh_s5tg3")
-
-[node name="Node3D" type="Node3D" parent="Tic 4"]
-transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, -0.426836, -2.49378, 0)
-script = ExtResource("5_8vy8i")
-_latex = "$1$"
+latex = "3"
 
 [node name="Tic 6" type="Node3D" parent="." instance=ExtResource("3_v6q6s")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.981, 0, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.543, 0, 0)
 script = ExtResource("4_j4gbq")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Tic 6"]
 transform = Transform3D(0.05, 0, 0, 0, 0.09, 0, 0, 0, 0.05, 0, 0, 0)
 mesh = SubResource("CylinderMesh_s5tg3")
 
-[node name="Node3D" type="Node3D" parent="Tic 6"]
-transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, -0.426836, -2.49378, 0)
+[node name="LatexNode" type="Node3D" parent="Tic 6"]
+transform = Transform3D(0.2, 0, 0, 0, -8.74228e-09, -0.2, 0, 0.2, -8.74228e-09, -0.0853543, -0.332843, 0)
 script = ExtResource("5_8vy8i")
-_latex = "$1$"
+latex = "6"
 
-[node name="Tic 8" type="Node3D" parent="." instance=ExtResource("3_v6q6s")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.308, 0, 0)
+[node name="Tic 9" type="Node3D" parent="." instance=ExtResource("3_v6q6s")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.8145, 0, 0)
 script = ExtResource("4_j4gbq")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Tic 8"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Tic 9"]
 transform = Transform3D(0.05, 0, 0, 0, 0.09, 0, 0, 0, 0.05, 0, 0, 0)
 mesh = SubResource("CylinderMesh_s5tg3")
 
-[node name="Node3D" type="Node3D" parent="Tic 8"]
-transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, -0.426836, -2.49378, 0)
+[node name="LatexNode" type="Node3D" parent="Tic 9"]
+transform = Transform3D(0.2, 0, 0, 0, -8.74228e-09, -0.2, 0, 0.2, -8.74228e-09, -0.0853543, -0.332843, 0)
 script = ExtResource("5_8vy8i")
-_latex = "$1$"
-
-[node name="Tic 10" type="Node3D" parent="." instance=ExtResource("3_v6q6s")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.635, 0, 0)
-script = ExtResource("4_j4gbq")
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Tic 10"]
-transform = Transform3D(0.05, 0, 0, 0, 0.09, 0, 0, 0, 0.05, 0, 0, 0)
-mesh = SubResource("CylinderMesh_s5tg3")
-
-[node name="Node3D" type="Node3D" parent="Tic 10"]
-transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, -0.426836, -2.49378, 0)
-script = ExtResource("5_8vy8i")
-_latex = "$1$"
+latex = "9"

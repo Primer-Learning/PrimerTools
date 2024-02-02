@@ -11,7 +11,11 @@ public partial class Axis : Node3D
 	
 	[Export] public float min = 0;
 	[Export] public float max = 10;
-	[Export] public float length = 1;
+	private float length = 1;
+	[Export] public float Length {
+		get => length;
+		set => length = Mathf.Max(0, value);
+	}
 	
 	public float RangeSize => Mathf.Max(0.001f, max - min);
 	
@@ -85,11 +89,10 @@ public partial class Axis : Node3D
 
 	#region Tics
 	internal bool transitionTicsAllTogether = false;
-	public float ticStep = 2;
+	[Export] public float ticStep = 2;
 	public bool showZero;
 	public int labelNumberOffset;
-	// [Export] public PackedScene ticScene;
-	public PackedScene ticScene = ResourceLoader.Load<PackedScene>("res://addons/PrimerTools/Graph/PackedScenes/axis_tic.tscn");
+	[Export] public PackedScene ticScene;
 	
 	public int autoTicCount = 0;
 	public List<TicData> manualTicks = new();
@@ -101,16 +104,16 @@ public partial class Axis : Node3D
 			if (tic is AxisTic axisTic)
 				axisTic.Free();
 		}
-		
+
 		Vector3 GetPosition(AxisTic tic) => new(tic.data.value * scale, 0, 0);
 
 		foreach (var data in PrepareTics())
 		{
 			// var tic = GetNodeOrNull<AxisTic>(ticName);
-			// var tic = (AxisTic)ticScene.Instantiate();
 			var tic = ticScene.Instantiate<AxisTic>();
 			tic.data = data;
 			tic.Name = $"Tic {data.label}";
+			tic.SetLabel();
 			AddChild(tic);
 			tic.Owner = GetTree().EditedSceneRoot;
 			foreach (var child in tic.GetChildren())

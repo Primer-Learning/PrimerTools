@@ -10,7 +10,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 
 namespace PrimerTools.LaTeX;
-internal class LatexToSvg
+internal class LatexToMesh
 {
     private static readonly string[] xelatexArguments = {
         "-no-pdf",
@@ -97,18 +97,18 @@ internal class LatexToSvg
 
     public async Task<string> MeshFromExpression(string latex, bool openBlender = false)
     {
+        var dirPath = "addons/PrimerTools/LaTeX";
+        var scriptPath = Path.Combine(dirPath, "svg_to_mesh.py");
+        var gltfDirPath = Path.Combine(dirPath, "gltf");
+        if (!Directory.Exists(gltfDirPath)) Directory.CreateDirectory(gltfDirPath);
+        var destinationPath = Path.Combine(gltfDirPath, GenerateFileName(latex) + ".gltf");
+        if (File.Exists(destinationPath)) return destinationPath;
+        
         var input = LatexInput.From("H" + latex); // The H gets removed in blender after alignment
         var svgPath = await RenderToSvg(input, default);
         
         // TODO: Get the blender path from Godot's user settings
         var blenderPath = @"C:\Program Files\Blender Foundation\Blender 3.6\blender.exe";
-        var dirPath = "addons/PrimerTools/LaTeX";
-        var scriptPath = Path.Combine(dirPath, "svg_to_mesh.py");
-        var gltfDirPath = Path.Combine(dirPath, "gltf");
-        var destinationPath = Path.Combine(gltfDirPath, GenerateFileName(latex) + ".gltf");
-
-        if (File.Exists(destinationPath)) return destinationPath;
-        
         var startInfo = new ProcessStartInfo(blenderPath)
         {
             RedirectStandardOutput = true,
@@ -148,7 +148,7 @@ internal class LatexToSvg
     {
         // Replace invalid file name characters with '_'. 
         // This list covers characters invalid in Windows and the '/' for UNIX-based systems.
-        var invalidChars = new string(Path.GetInvalidFileNameChars()) + "\x00..\x1F";
+        var invalidChars = new string(Path.GetInvalidFileNameChars()) + " " + "\x00..\x1F";
         var sanitized = Regex.Replace(latexExpression, $"[{Regex.Escape(invalidChars)}]", "_");
 
         // Shorten if too long to avoid path length issues, keeping under 255 characters
