@@ -12,30 +12,21 @@ using System.Text.RegularExpressions;
 namespace PrimerTools.LaTeX;
 internal class LatexToMesh
 {
-    private static readonly string[] xelatexArguments = {
+    private static readonly string[] XelatexArguments = {
         "-no-pdf",
         "-interaction=batchmode",
         "-halt-on-error"
     };
 
-    private static readonly string[] dvisvgmArguments = {
+    private static readonly string[] DvisvgmArguments = {
         "--no-fonts=1"
     };
-
-    readonly object executionLock = new();
-    Task<string> currentTask;
 
     internal TempDir rootTempDir = new();
 
     public Task<string> RenderToSvg(LatexInput config, CancellationToken ct)
     {
-        lock (executionLock) {
-            if (currentTask is not null && !currentTask.IsCompleted) {
-                throw new Exception("A LaTeX rendering task is already running.");
-            }
-
-            return Task.Run(() => RenderToSvgSync(config, ct), ct);
-        }
+        return Task.Run(() => RenderToSvgSync(config, ct), ct);
     }
 
     private string RenderToSvgSync(LatexInput config, CancellationToken ct)
@@ -68,7 +59,7 @@ internal class LatexToMesh
     {
         ct.ThrowIfCancellationRequested();
 
-        var args = xelatexArguments.Append($"-output-directory={tmpDir}", sourcePath);
+        var args = XelatexArguments.Append($"-output-directory={tmpDir}", sourcePath);
         var result = LatexBinaries.Xelatex(tmpDir, args, ct);
 
         ct.ThrowIfCancellationRequested();
@@ -85,7 +76,7 @@ internal class LatexToMesh
         ct.ThrowIfCancellationRequested();
 
         var dviPath = workingDirectory.GetChildPath("source.xdv");
-        var args = dvisvgmArguments.Append(dviPath, $"--output={outputPath}");
+        var args = DvisvgmArguments.Append(dviPath, $"--output={outputPath}");
 
         var result = LatexBinaries.Dvisvgm(workingDirectory, args, ct);
         DumpStandardOutputs(workingDirectory, result, "dvisvgm");

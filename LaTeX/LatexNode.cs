@@ -33,8 +33,10 @@ public partial class LatexNode : Node3D
 		var newNode = ResourceLoader.Load<PackedScene>(path).Instantiate();
 		
 		AddChild(newNode);
-		// newNode.Owner = this; 
-		newNode.Owner = GetTree().EditedSceneRoot;
+		// newNode.Owner = this;
+		// newNode.Owner = GetTree().EditedSceneRoot;
+		
+		Align();
 	}
 
 	#region Alignment
@@ -73,6 +75,11 @@ public partial class LatexNode : Node3D
 
 	private void Align()
 	{
+		if (GetChildCount() == 0)
+		{
+			// GD.PushWarning("No children to align.");
+			return;
+		}
 		var children = GetChild(0).GetChildren().OfType<VisualInstance3D>();
 		var visualInstance3Ds = children as VisualInstance3D[] ?? children.ToArray();
 		

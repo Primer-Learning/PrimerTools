@@ -5,7 +5,6 @@ namespace PrimerTools;
 
 public partial class Blob : Node3D
 {
-	private static Random _classRng;
 	private Rng rng;
 	
 	private AnimationTree _animationTree;
@@ -18,7 +17,6 @@ public partial class Blob : Node3D
 		rng = new Rng(Rng.NextInt());
 	}
 
-	// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
 	{
 		//Random idle wiggles

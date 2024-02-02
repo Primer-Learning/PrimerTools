@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://dgevknceo3tes"]
+
+[ext_resource type="PackedScene" uid="uid://c57q0rwh3i0n8" path="res://addons/PrimerTools/Graph/PackedScenes/axis_tic_x.tscn" id="1_i8m45"]
+
+[node name="axis_tic" instance=ExtResource("1_i8m45")]
+
+[node name="LatexNode" parent="." index="1"]
+transform = Transform3D(-8.74228e-09, 0.2, -8.74228e-09, 0, -8.74228e-09, -0.2, -0.2, -8.74228e-09, 3.82137e-16, 0, -0.264387, 0)

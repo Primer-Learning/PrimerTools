@@ -82,6 +82,11 @@ public partial class Axis : Node3D
 	
 	private void UpdateChildren()
 	{
+		if (min != 0)
+		{
+			GD.PrintErr("Idk how to deal with non-zero min yet.");
+			return;
+		}
 		UpdateRod();
 		UpdateArrows();
 		UpdateTics();
@@ -115,11 +120,11 @@ public partial class Axis : Node3D
 			tic.Name = $"Tic {data.label}";
 			tic.SetLabel();
 			AddChild(tic);
-			tic.Owner = GetTree().EditedSceneRoot;
-			foreach (var child in tic.GetChildren())
-			{
-				child.Owner = GetTree().EditedSceneRoot;
-			}
+			// tic.Owner = GetTree().EditedSceneRoot;
+			// foreach (var child in tic.GetChildren())
+			// {
+			// 	child.Owner = GetTree().EditedSceneRoot;
+			// }
 			tic.Position = GetPosition(tic);
 		}
 	}

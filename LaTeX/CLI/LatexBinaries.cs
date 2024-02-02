@@ -8,21 +8,20 @@ namespace PrimerTools.Latex
 {
     internal static class LatexBinaries
     {
-        internal static readonly DirectoryInfo rootTempDir;
-        internal static string latexBinDir;
-        internal static string xelatex;
-        internal static string dvisvgm;
-
+        // internal static readonly DirectoryInfo rootTempDir;
+        private const string LatexBinDir = "";
+        private const string XelatexDir = "";
+        private const string DvisvgmDir = "";
 
         public static CliProgram.ExecutionResult Xelatex(TempDir cwd, string[] args, CancellationToken ct)
         {
-            var program = GetCliProgram(xelatex, "xelatex");
+            var program = GetCliProgram(XelatexDir, "xelatex");
             return program.Execute(cwd.FullPath, args, ct);
         }
 
         public static CliProgram.ExecutionResult Dvisvgm(TempDir cwd, string[] args, CancellationToken ct)
         {
-            var program = GetCliProgram(dvisvgm, "dvisvgm");
+            var program = GetCliProgram(DvisvgmDir, "dvisvgm");
             return program.Execute(cwd.FullPath, args, ct);
         }
 
@@ -45,9 +44,9 @@ namespace PrimerTools.Latex
             var path = GetBinary(setting, filename);
             if (string.IsNullOrWhiteSpace(path)) return null;
 
-            var binDir = string.IsNullOrWhiteSpace(latexBinDir)
+            var binDir = string.IsNullOrWhiteSpace(LatexBinDir)
                 ? Path.GetDirectoryName(path)
-                : latexBinDir;
+                : LatexBinDir;
 
             var cli = new CliProgram(path);
             cli.EnvVars["PATH"] = binDir;
@@ -60,8 +59,8 @@ namespace PrimerTools.Latex
                 return setting;
             }
 
-            if (!string.IsNullOrWhiteSpace(latexBinDir)) {
-                var found = FindBinary(latexBinDir, filename);
+            if (!string.IsNullOrWhiteSpace(LatexBinDir)) {
+                var found = FindBinary(LatexBinDir, filename);
                 if (found is not null) return found;
             }
 

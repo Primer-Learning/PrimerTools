@@ -9,10 +9,12 @@
 script = ExtResource("1_q2pjj")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.05, 0, 0, 0, 0.09, 0, 0, 0, 0.05, 0, 0, 0)
+transform = Transform3D(0.038, 0, 0, 0, 0.1, 0, 0, 0, 0.038, 0, 0, 0)
 mesh = SubResource("CylinderMesh_s5tg3")
 
 [node name="LatexNode" type="Node3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, -8.74228e-09, -0.2, 0, 0.2, -8.74228e-09, -0.0853543, -0.332843, 0)
+transform = Transform3D(0.2, 0, 0, 0, -8.74228e-09, -0.2, 0, 0.2, -8.74228e-09, 0, -0.264387, 0)
 script = ExtResource("1_eck8k")
-latex = "5"
+latex = "2"
+VerticalAlignment = 1
+HorizontalAlignment = 1
