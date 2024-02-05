@@ -2,7 +2,7 @@
 
 [ext_resource type="PackedScene" uid="uid://d1y06ar34m5qm" path="res://addons/PrimerTools/Graph/PackedScenes/graph_arrow_head.tscn" id="1_1vsiv"]
 [ext_resource type="Script" path="res://addons/PrimerTools/Graph/Axis/Axis.cs" id="1_gobhs"]
-[ext_resource type="PackedScene" uid="uid://c57q0rwh3i0n8" path="res://addons/PrimerTools/Graph/PackedScenes/axis_tic_x.tscn" id="3_v6q6s"]
+[ext_resource type="PackedScene" uid="uid://c57q0rwh3i0n8" path="res://addons/PrimerTools/Graph/PackedScenes/axis_tic_x.tscn" id="2_etimq"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_r4gnf"]
 
@@ -14,7 +14,7 @@ height = 1.0
 script = ExtResource("1_gobhs")
 Length = 2.31
 Padding = Vector2(0.2, 0.2)
-ticScene = ExtResource("3_v6q6s")
+ticScene = ExtResource("2_etimq")
 
 [node name="Rod" type="Node3D" parent="."]
 transform = Transform3D(2.31, 0, 0, 0, 1, 0, 0, 0, 1, -0.2, 0, 0)

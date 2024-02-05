@@ -11,7 +11,7 @@ public partial class Axis : Node3D
 	
 	[Export] public float min = 0;
 	[Export] public float max = 10;
-	private float length = 1;
+	internal float length = 1;
 	[Export] public float Length {
 		get => length;
 		set => length = Mathf.Max(0, value);
@@ -80,7 +80,7 @@ public partial class Axis : Node3D
 		// var endArrowTween = Tween.Parallel(endArrowMove, endArrowScale);
 	}
 	
-	private void UpdateChildren()
+	internal void UpdateChildren()
 	{
 		if (min != 0)
 		{
