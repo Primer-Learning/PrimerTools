@@ -5,10 +5,18 @@ using System.Linq;
 
 namespace PrimerTools.Graph;
 
+[Tool]
 public partial class Graph : Node3D
 {
-    public bool enableZAxis;
-    public bool isRightHanded = true;
+    private MemberChangeChecker memberChangeChecker;
+    public override void _Process(double delta)
+    {
+        memberChangeChecker ??= new MemberChangeChecker(this);
+        if (Engine.IsEditorHint() && memberChangeChecker.CheckForChanges())
+        {
+            Update();
+        }
+    }
     
     private bool _transitionTicsAllTogether = false;
     public bool transitionTicsAllTogether

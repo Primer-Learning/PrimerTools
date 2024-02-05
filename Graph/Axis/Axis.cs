@@ -61,6 +61,8 @@ public partial class Axis : Node3D
 
 	private void UpdateArrows()
 	{
+		
+		
 		var endArrow = GetNode<Node3D>("Head");
 		// endArrow.localRotation = Quaternion.Euler(0f, 90f, 0f);
 		endArrow.Position = new Vector3(length - padding.X, 0f, 0f);
@@ -78,6 +80,12 @@ public partial class Axis : Node3D
 		// 	? endArrow.localScale == Vector3.zero ? Tween.noop : endArrow.ScaleTo(0)
 		// 	: endArrow.localScale == Vector3.one * 0.07f ? Tween.noop : endArrow.ScaleTo(0.07f);
 		// var endArrowTween = Tween.Parallel(endArrowMove, endArrowScale);
+		
+		if (length == 0)
+		{
+			endArrow.Scale = Vector3.Zero;
+			startArrow.Scale = Vector3.Zero;
+		}
 	}
 	
 	internal void UpdateChildren()
@@ -126,6 +134,11 @@ public partial class Axis : Node3D
 			// 	child.Owner = GetTree().EditedSceneRoot;
 			// }
 			tic.Position = GetPosition(tic);
+			
+			if (length == 0)
+			{
+				tic.Scale = Vector3.Zero;
+			}
 		}
 	}
 	
