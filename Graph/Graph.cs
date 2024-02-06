@@ -30,7 +30,7 @@ public partial class Graph : Node3D
     public Axis XAxis => GetNode<Axis>("X"); 
     public Axis YAxis => GetNode<Axis>("Y"); 
     public Axis ZAxis => GetNode<Axis>("Z");
-    private List<Axis> Axes => new() { XAxis, YAxis, ZAxis };
+    public List<Axis> Axes => new() { XAxis, YAxis, ZAxis };
 
     public void Update()
     {
