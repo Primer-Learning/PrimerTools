@@ -1,6 +1,6 @@
 using Godot;
 
-namespace TimelineTool;
+namespace PrimerTools.AnimationSequence;
 
 [Tool]
 public partial class CombinedAnimation : AnimationPlayer
