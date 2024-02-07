@@ -28,6 +28,15 @@ public abstract partial class AnimationSequence : AnimationPlayer
 	{
 		if (!Engine.IsEditorHint())
 		{
+			AssignedAnimation = "p/CombinedAnimation";
+			
+			var mainAnimation = GetAnimation(AssignedAnimation);
+			for (var i = mainAnimation.TrackGetKeyCount(0) - 1; i >= 0; i--)
+			{
+				var time = mainAnimation.TrackGetKeyTime(0, i);
+				Seek(time, update: true);
+			}
+			
 			Play("p/CombinedAnimation");
 		}
 	}
@@ -67,7 +76,6 @@ public abstract partial class AnimationSequence : AnimationPlayer
 			// This runs at edit time, so it assumes an absolute path in the context of the editor.
 			// A path relative to AnimationSequence also works, though this code is unnecessary in that case.
 			var path = animation.TrackGetPath(i);
-			GD.Print(path);
 			var node = GetNode(path);
 			// Make the path relative to AnimationSequence node so it will work in editor and player contexts
 			var relativePath = GetPathTo(node) + ":" + path.GetConcatenatedSubNames();
@@ -88,8 +96,6 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		// TODO: Make a dictionary of animations and start times
 		// Start times can be gotten from the top-level animation player if they exist already
 		animation.TrackSetPath(trackIndex, $"{Name}/ReferenceAnimationPlayer:animation");
-		GD.Print("Current Scene: " + GetTree().CurrentScene);
-		GD.Print("Edited Scene Root: " + GetTree().EditedSceneRoot.Name);
 		
 		// TODO: Make time the minimum of next start time and previous end time
 		var time = 0.0f;

@@ -35,7 +35,11 @@ public partial class Axis : Node3D
 	public override void _Process(double delta)
 	{
 		memberChangeChecker ??= new MemberChangeChecker(this);
-		if (Engine.IsEditorHint() && memberChangeChecker.CheckForChanges())
+		
+		// This needs to work when played, so don't check for Engine.IsEditorHint()
+		// I don't remember why that was checked for in the first place.
+		// So documenting this here so I remember why I undid it.
+		if (/*Engine.IsEditorHint() &&*/ memberChangeChecker.CheckForChanges())
 		{
 			UpdateChildren();
 		}
