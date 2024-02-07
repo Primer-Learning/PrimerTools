@@ -17,19 +17,29 @@ public partial class Graph : Node3D
     
     public static Graph CreateAsOwnedChild(Node parent)
     {
-        if (parent.HasNode("Graph")) return parent.GetNode<Graph>("Graph");   
+        if (parent.HasNode("Graph"))
+        {
+            // I'm not sure this ever happens.
+            GD.PushWarning("Graph already exists, which is against the intended use pattern.");
+            return parent.GetNode<Graph>("Graph");   
+        }
         
+        // Make the graph
         var graph = new Graph();
         graph.Name = "Graph";
         parent.AddChild(graph);
-        graph.Owner = parent;
-        graph.MakeChildrenLocalRecursively(parent);
+
+        // Make the graph and children visible in the editor and eligible to be saved in the scene. 
+        var sceneRoot = graph.GetTree().EditedSceneRoot;
+        graph.Owner = sceneRoot;
+        graph.MakeChildrenLocalRecursively(sceneRoot);
+        
         return graph;
     }
 
     public override void _Ready()
     {
-        InstantiateAxes();
+        if (Engine.IsEditorHint()) InstantiateAxes();
     }
     
     private void InstantiateAxes()

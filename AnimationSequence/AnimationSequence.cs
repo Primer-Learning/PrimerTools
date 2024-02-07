@@ -6,16 +6,7 @@ namespace PrimerTools.AnimationSequence;
 public abstract partial class AnimationSequence : AnimationPlayer
 {
 	private AnimationPlayer referenceAnimationPlayer;
-	// {
-	// 	get
-	// 	{
-	// 		if (GetParent().HasNode("ReferenceAnimationPlayer"))
-	// 		{
-	// 			return GetParent().GetNode<AnimationPlayer>("ReferenceAnimationPlayer");
-	// 		}
-	// 		return CreateReferenceAnimationPlayer();
-	// 	}
-	// }
+	private AnimationLibrary referenceAnimationLibrary;
 
 	private int animationsMade = 0;
 
@@ -44,37 +35,47 @@ public abstract partial class AnimationSequence : AnimationPlayer
 	protected abstract void Define();
 	private void Reset()
 	{
+		// All children are dynamically created and should be removed when the sequence is reset
+		// It's good to keep track of these as children since they are in the editor, rather than a list of references
+		// that may be lost.
+		// TODO: Potential other cases
+		// - Children that need to be dynamically created as children of another object. Possible solution
+		//	 could be to intentionally create those as objects that have a known location in the scene tree,
+		//	 and then include their children in this loop.
+		// - Objects that are made in the editor and shouldn't be removed. This approach might be good for complex
+		//   objects that are difficult to capture in code. Possible approach is to just remake those too, but just
+		//   use packed scenes.
+		
 		foreach (var child in GetChildren())
 		{
 			child.Free();
 		}
-
-		CreateReferenceAnimationPlayer();
+		
+		referenceAnimationPlayer = MakeReferenceAnimationPlayer();
+		referenceAnimationLibrary = MakeOrGetAnimationLibrary(referenceAnimationPlayer, "p");
 		
 		// Reset the index for the library
 		animationsMade = 0;
 	}
 
 	#region Animation Methods
-	protected void MoveAnimation(Node3D node3D, Vector3 to, Vector3? from = null, float duration = 1f)
+
+	protected void RegisterAnimation(Animation animation)
 	{
-		node3D.Owner = GetTree().EditedSceneRoot;
-		
-		// Make or get the AnimationLibrary
-		var library = MakeOrGetAnimationLibrary(referenceAnimationPlayer, "p");
-		
-		var animation = new Animation();
-		animation.Length = duration;
-		var trackIndex = animation.AddTrack(Animation.TrackType.Value);
+		for (var i = 0; i < animation.GetTrackCount(); i++)
+		{
+			// This runs at edit time, so it assumes an absolute path in the context of the editor.
+			// A path relative to AnimationSequence also works, though this code is unnecessary in that case.
+			var path = animation.TrackGetPath(i);
+			GD.Print(path);
+			var node = GetNode(path);
+			// Make the path relative to AnimationSequence node so it will work in editor and player contexts
+			var relativePath = GetPathTo(node) + ":" + path.GetConcatenatedSubNames();
+			animation.TrackSetPath(i, relativePath);
+		}
 		
 		// Put the library in the animation player
-		AddAnimationToLibrary(animation, $"anim{animationsMade}", library);
-		animationsMade++;
-		
-		animation.TrackSetPath(trackIndex, $"{node3D.Name}:position");
-		animation.TrackInsertKey(trackIndex, 0.0f, from ?? node3D.Position);
-		animation.TrackInsertKey(trackIndex, 1.0f, to);
-		node3D.Position = to;
+		AddAnimationToLibrary(animation, $"anim{animationsMade++}", referenceAnimationLibrary);
 	}
 	#endregion
 	
@@ -103,7 +104,7 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		AddAnimationToLibrary(animation, "CombinedAnimation", library);
 	}
 	
-	private void CreateReferenceAnimationPlayer()
+	private AnimationPlayer MakeReferenceAnimationPlayer()
 	{
 		// This animation player is used as a container for the library of animations
 		// It's necessary because an animation playback track needs to reference an AnimationPlayer, not just a library
@@ -111,10 +112,10 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		newPlayer.Name = "ReferenceAnimationPlayer";
 		AddChild(newPlayer);
 		newPlayer.Owner = GetParent();
-		referenceAnimationPlayer = newPlayer;
+		return newPlayer;
 	}
 	
-	private AnimationLibrary MakeOrGetAnimationLibrary(AnimationPlayer animationPlayer, string libraryName)
+	private static AnimationLibrary MakeOrGetAnimationLibrary(AnimationPlayer animationPlayer, string libraryName)
 	{
 		// Find animation library if it exists
 		if (animationPlayer.HasAnimationLibrary(libraryName))
