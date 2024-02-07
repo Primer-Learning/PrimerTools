@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Diagnostics;
 using Godot;
 
 namespace PrimerTools.Graph;
@@ -122,17 +121,11 @@ public partial class Axis : Node3D
 
 		foreach (var data in PrepareTics())
 		{
-			// var tic = GetNodeOrNull<AxisTic>(ticName);
 			var tic = ticScene.Instantiate<AxisTic>();
 			tic.data = data;
 			tic.Name = $"Tic {data.label}";
 			tic.SetLabel();
 			AddChild(tic);
-			// tic.Owner = GetTree().EditedSceneRoot;
-			// foreach (var child in tic.GetChildren())
-			// {
-			// 	child.Owner = GetTree().EditedSceneRoot;
-			// }
 			tic.Position = GetPosition(tic);
 			
 			if (length == 0)

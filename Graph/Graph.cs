@@ -15,6 +15,42 @@ public partial class Graph : Node3D
         }
     }
     
+    public static Graph CreateAsOwnedChild(Node parent)
+    {
+        if (parent.HasNode("Graph")) return parent.GetNode<Graph>("Graph");   
+        
+        var graph = new Graph();
+        graph.Name = "Graph";
+        parent.AddChild(graph);
+        graph.Owner = parent;
+        graph.MakeChildrenLocalRecursively(parent);
+        return graph;
+    }
+
+    public override void _Ready()
+    {
+        InstantiateAxes();
+    }
+    
+    private void InstantiateAxes()
+    {
+        var axisScene = ResourceLoader.Load<PackedScene>("res://addons/PrimerTools/Graph/PackedScenes/axis.tscn"); 
+        var x = axisScene.Instantiate<Axis>();
+        var y = axisScene.Instantiate<Axis>();
+        y.ticScene = ResourceLoader.Load<PackedScene>("res://addons/PrimerTools/Graph/PackedScenes/axis_tic_y.tscn");
+        y.RotationDegrees = new Vector3(0, 0, 90);
+        var z = axisScene.Instantiate<Axis>();
+        z.ticScene = ResourceLoader.Load<PackedScene>("res://addons/PrimerTools/Graph/PackedScenes/axis_tic_z.tscn");
+        z.RotationDegrees = new Vector3(0, -90, 0);
+        
+        AddChild(x);
+        AddChild(y);
+        AddChild(z);
+        x.Name = "X";
+        y.Name = "Y";
+        z.Name = "Z";
+    }
+    
     private bool _transitionTicsAllTogether = false;
     public bool transitionTicsAllTogether
     {
