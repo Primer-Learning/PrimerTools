@@ -67,74 +67,31 @@ public partial class Axis : Node3D
 			return null;
 		}
 		
+		var (removeTics, updateTics, addTics) = UpdateTics(duration);
+		
 		return AnimationUtilities.Parallel(
 			UpdateArrows(duration),
 			UpdateRod(duration),
-			UpdateTics(duration)
+			AnimationUtilities.Series(removeTics, updateTics, addTics)
 		);
 	}
 
 	private Animation UpdateRod(float duration)
 	{
 		var rod = GetNode<Node3D>("Rod");
-		var newPosition = new Vector3(-padding.X, 0f, 0f);
-		var newRodScale = length == 0 
-			? Vector3.Zero
-			: new Vector3(length, thickness, thickness);
 
-		var animation = new Animation();
-		animation.Length = duration;
-		
-		var trackIndex = animation.AddTrack(Animation.TrackType.Scale3D);
-		animation.ScaleTrackInsertKey(trackIndex, 0.0f, rod.Scale);
-		animation.ScaleTrackInsertKey(trackIndex, duration, newRodScale);
-		animation.TrackSetPath(trackIndex, rod.GetPath());
-		
-		trackIndex = animation.AddTrack(Animation.TrackType.Position3D);
-		animation.PositionTrackInsertKey(trackIndex, 0.0f, rod.Position);
-		animation.PositionTrackInsertKey(trackIndex, duration, newPosition);
-		animation.TrackSetPath(trackIndex, rod.GetPath());
-		
-		rod.Position = newPosition;
-		rod.Scale = newRodScale;
-		return animation;
+		return AnimationUtilities.Parallel(
+			rod.MoveTo(new Vector3(-padding.X, 0f, 0f), duration),
+			rod.ScaleTo(length == 0 
+				? Vector3.Zero
+				: new Vector3(length, thickness, thickness), duration)
+		);
 	}
 
 	private Animation UpdateArrows(float duration)
 	{
 		var endArrow = GetNode<Node3D>("Head");
-		// endArrow.localRotation = Quaternion.Euler(0f, 90f, 0f);
-		var endArrowPos = new Vector3(length - padding.X, 0f, 0f);
-		
-		var animation = new Animation();
-		animation.Length = duration;
-		
-		var trackIndex = animation.AddTrack(Animation.TrackType.Position3D);
-		animation.PositionTrackInsertKey(trackIndex, 0.0f, endArrow.Position);
-		animation.PositionTrackInsertKey(trackIndex, duration, endArrowPos);
-		animation.TrackSetPath(trackIndex, endArrow.GetPath());
-		
-		// var endArrowMove = endArrowPos == endArrow.localPosition ? Tween.noop : endArrow.MoveTo(endArrowPos);
-		// var endArrowScale arrowPresence == ArrowPresence.Neither
-		// 	? endArrow.localScale == Vector3.zero ? Tween.noop : endArrow.ScaleTo(0)
-		// 	: endArrow.localScale == Vector3.one * 0.07f ? Tween.noop : endArrow.ScaleTo(0.07f);
-		// var endArrowTween = Tween.Parallel(endArrowMove, endArrowScale);
-		
 		var startArrow = GetNode<Node3D>("Tail");
-		// endArrow.localRotation = Quaternion.Euler(0f, 90f, 0f);
-		var startArrowPos = new Vector3(-padding.X, 0f, 0f);
-		trackIndex = animation.AddTrack(Animation.TrackType.Position3D);
-		animation.PositionTrackInsertKey(trackIndex, 0.0f, startArrow.Position);
-		animation.PositionTrackInsertKey(trackIndex, duration, startArrowPos);
-		animation.TrackSetPath(trackIndex, startArrow.GetPath());
-		// var endArrowMove = endArrowPos == endArrow.localPosition ? Tween.noop : endArrow.MoveTo(endArrowPos);
-		// var endArrowScale arrowPresence == ArrowPresence.Neither
-		// 	? endArrow.localScale == Vector3.zero ? Tween.noop : endArrow.ScaleTo(0)
-		// 	: endArrow.localScale == Vector3.one * 0.07f ? Tween.noop : endArrow.ScaleTo(0.07f);
-		// var endArrowTween = Tween.Parallel(endArrowMove, endArrowScale);
-		
-		startArrow.Position = new Vector3(-padding.X, 0f, 0f);
-		endArrow.Position = endArrowPos;
 		
 		if (length == 0)
 		{
@@ -142,7 +99,10 @@ public partial class Axis : Node3D
 			startArrow.Scale = Vector3.Zero;
 		}
 
-		return animation;
+		return AnimationUtilities.Parallel(
+			startArrow.MoveTo(new Vector3(-padding.X, 0f, 0f)),
+			endArrow.MoveTo(new Vector3(length - padding.X, 0f, 0f))
+		);
 	}
 
 	#region Tics
@@ -155,10 +115,12 @@ public partial class Axis : Node3D
 	public int autoTicCount = 0;
 	public List<TicData> manualTicks = new();
 
-	private Animation UpdateTics(float duration)
+	private (Animation removeAnimation, Animation updateAnimation, Animation addAnimation) UpdateTics(float duration)
 	{
 		Vector3 GetPosition(AxisTic tic) => new(tic.data.value * scale, 0, 0);
 		var ticsToRemove = GetChildren().Select(x => x as AxisTic).Where(x => x != null).ToList();
+		var newTicAnimations = new List<Animation>();
+		var ticMovementAnimations = new List<Animation>();
 		
 		var animation = new Animation();
 		animation.Length = duration;
@@ -178,43 +140,28 @@ public partial class Axis : Node3D
 				
 				tic.Position = GetPosition(tic);
 				tic.Scale = Vector3.Zero;
-				var trackIndex = animation.AddTrack(Animation.TrackType.Scale3D);
-				animation.ScaleTrackInsertKey(trackIndex, 0.0f, tic.Scale);
-				animation.ScaleTrackInsertKey(trackIndex, duration, Vector3.One);
-				animation.TrackSetPath(trackIndex, tic.GetPath());
-				tic.Scale = Vector3.One;
+				newTicAnimations.Add(tic.ScaleTo(1, duration));
 			}
 			else
 			{
 				ticsToRemove.Remove(tic);
 			}
 			
-			var ticPosition = GetPosition(tic);
-			var positionTrackIndex = animation.AddTrack(Animation.TrackType.Position3D);
-			animation.PositionTrackInsertKey(positionTrackIndex, 0.0f, tic.Position);
-			animation.PositionTrackInsertKey(positionTrackIndex, duration, ticPosition);
-			animation.TrackSetPath(positionTrackIndex, tic.GetPath());
-			tic.Position = ticPosition;
-			
-			tic.Position = GetPosition(tic);
+			ticMovementAnimations.Add(tic.MoveTo(GetPosition(tic)));
 			
 			if (length == 0)
 			{
 				tic.Scale = Vector3.Zero;
 			}
 		}
-		
-		foreach (var tic in ticsToRemove)
-		{
-			// tic.Free();
-			var trackIndex = animation.AddTrack(Animation.TrackType.Scale3D);
-			animation.ScaleTrackInsertKey(trackIndex, 0.0f, tic.Scale);
-			animation.ScaleTrackInsertKey(trackIndex, duration, Vector3.Zero);
-			animation.TrackSetPath(trackIndex, tic.GetPath());
-			tic.Scale = Vector3.Zero;
-		}
 
-		return animation;
+		var ticRemovalAnimations = ticsToRemove.Select(tic => tic.ScaleTo(0, duration));
+
+		return (
+			AnimationUtilities.Series(ticRemovalAnimations.ToArray()),
+			AnimationUtilities.Parallel(newTicAnimations.ToArray()),
+			AnimationUtilities.Parallel(ticMovementAnimations.ToArray())
+		);
 	}
 	
 	private void UpdateTicStep()
