@@ -5,14 +5,14 @@ namespace PrimerTools.Graph;
 [Tool]
 public partial class Graph : Node3D
 {
-    private MemberChangeChecker memberChangeChecker;
+    // private MemberChangeChecker memberChangeChecker;
     public override void _Process(double delta)
     {
-        memberChangeChecker ??= new MemberChangeChecker(this);
-        if (Engine.IsEditorHint() && memberChangeChecker.CheckForChanges())
-        {
-            Update();
-        }
+        // memberChangeChecker ??= new MemberChangeChecker(this);
+        // if (Engine.IsEditorHint() && memberChangeChecker.CheckForChanges())
+        // {
+        //     Update();
+        // }
     }
     
     public static Graph CreateAsOwnedChild(Node parent)
@@ -76,14 +76,15 @@ public partial class Graph : Node3D
     public Axis XAxis => GetNode<Axis>("X"); 
     public Axis YAxis => GetNode<Axis>("Y"); 
     public Axis ZAxis => GetNode<Axis>("Z");
-    public List<Axis> Axes => new() { XAxis, YAxis, ZAxis };
+    private List<Axis> Axes => new() { XAxis, YAxis, ZAxis };
 
-    public void Update()
+    public Animation Update()
     {
-        foreach (var axis in Axes)
-        {
-            axis.UpdateChildren();
-        }
+        return XAxis.UpdateChildren();
+        // foreach (var axis in axes)
+        // {
+        //     axis.UpdateChildren();
+        // }
     }
 
     // Saving for reference when it's animation time

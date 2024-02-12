@@ -1,17 +1,29 @@
 using System.Collections.Generic;
+using System.Linq;
 using Godot;
+using PrimerTools.AnimationSequence;
 
 namespace PrimerTools.Graph;
 
 [Tool]
 public partial class Axis : Node3D
 {
-	private MemberChangeChecker memberChangeChecker;
+	private ExportedMemberChangeChecker exportedMemberChangeChecker;
+	private AnimationPlayer animationPlayer;
+	private int animationsMade = 0;
 	
-	[Export] public float min = 0;
-	[Export] public float max = 10;
+	public float min = 0;
+	[Export] private float Min {
+		get => min;
+		set => min = value;
+	}
+	public float max = 10;
+	[Export] private float Max {
+		get => max;
+		set => max = value;
+	}
 	internal float length = 1;
-	[Export] public float Length {
+	[Export] private float Length {
 		get => length;
 		set => length = Mathf.Max(0, value);
 	}
@@ -34,38 +46,105 @@ public partial class Axis : Node3D
 	
 	public override void _Process(double delta)
 	{
-		memberChangeChecker ??= new MemberChangeChecker(this);
+		exportedMemberChangeChecker ??= new ExportedMemberChangeChecker(this);
 		
-		// This needs to work when played, so don't check for Engine.IsEditorHint()
-		// I don't remember why that was checked for in the first place.
-		// So documenting this here so I remember why I undid it.
-		if (/*Engine.IsEditorHint() &&*/ memberChangeChecker.CheckForChanges())
+		if (Engine.IsEditorHint() && exportedMemberChangeChecker.CheckForChanges())
 		{
-			UpdateChildren();
+			UpdateChildren(0);
 		}
 	}
 
 	public override void _Ready()
 	{
-		UpdateChildren();
+		UpdateChildren(0);
+	}
+	
+	internal Animation UpdateChildren(float duration = 0.5f)
+	{
+		if (min != 0)
+		{
+			GD.PrintErr("Idk how to deal with non-zero min yet.");
+			return null;
+		}
+
+		UpdateArrows(duration);
+		UpdateTics(duration);
+
+		return CreateParallelAnimation(
+			UpdateRod(duration)
+		);
 	}
 
-	private void UpdateRod()
+	private Animation CreateParallelAnimation(params Animation[] animations)
+	{
+		// Make sure the animation player exists
+		animationPlayer ??= GetNodeOrNull<AnimationPlayer>("AnimationPlayer");
+		if (animationPlayer == null)
+		{
+			animationPlayer = new AnimationPlayer();
+			animationPlayer.Name = "AnimationPlayer";
+			AddChild(animationPlayer);
+			animationPlayer.Owner = GetTree().EditedSceneRoot;
+		}
+
+		AnimationLibrary library;
+		if (animationPlayer.HasAnimationLibrary("p"))
+		{
+			library = animationPlayer.GetAnimationLibrary("p");
+		}
+		else
+		{
+			library = new AnimationLibrary();
+			animationPlayer.AddAnimationLibrary("p", library);
+		}
+
+		var combinedAnimation = new Animation();
+		combinedAnimation.Length = animations.Select(x => x.Length).Max();
+
+		// Add the animations to the library
+		foreach (var animation in animations)
+		{
+			var name = $"anim{animationsMade}";
+			library.AddAnimation(name, animation);
+			
+			var trackIndex = combinedAnimation.AddTrack(Animation.TrackType.Animation);
+			combinedAnimation.TrackInsertKey(trackIndex, 0.0f, $"p/{name}");
+			combinedAnimation.TrackSetPath(trackIndex, $"{animationPlayer.GetPath()}:animation");
+		
+			animationsMade++;
+		}
+
+		return combinedAnimation;
+	}
+
+	private Animation UpdateRod(float duration)
 	{
 		var rod = GetNode<Node3D>("Rod");
-		var position = new Vector3(-padding.X, 0f, 0f);
-		var rodScale = length == 0 
+		var newPosition = new Vector3(-padding.X, 0f, 0f);
+		var newRodScale = length == 0 
 			? Vector3.Zero
 			: new Vector3(length, thickness, thickness);
 
-		rod.Position = position;
-		rod.Scale = rodScale;
+		var animation = new Animation();
+		animation.Length = duration;
+		
+		var trackIndex = animation.AddTrack(Animation.TrackType.Scale3D);
+		animation.ScaleTrackInsertKey(trackIndex, 0.0f, rod.Scale);
+		animation.ScaleTrackInsertKey(trackIndex, duration, newRodScale);
+		animation.TrackSetPath(trackIndex, $"Rod");
+		
+		trackIndex = animation.AddTrack(Animation.TrackType.Position3D);
+		animation.PositionTrackInsertKey(trackIndex, 0.0f, rod.Position);
+		animation.PositionTrackInsertKey(trackIndex, duration, newPosition);
+		animation.TrackSetPath(trackIndex, $"Rod");
+		
+		rod.Position = newPosition;
+		rod.Scale = newRodScale;
+		return animation;
 	}
 
-	private void UpdateArrows()
+	private void UpdateArrows(float duration)
 	{
-		
-		
 		var endArrow = GetNode<Node3D>("Head");
 		// endArrow.localRotation = Quaternion.Euler(0f, 90f, 0f);
 		endArrow.Position = new Vector3(length - padding.X, 0f, 0f);
@@ -90,18 +169,6 @@ public partial class Axis : Node3D
 			startArrow.Scale = Vector3.Zero;
 		}
 	}
-	
-	internal void UpdateChildren()
-	{
-		if (min != 0)
-		{
-			GD.PrintErr("Idk how to deal with non-zero min yet.");
-			return;
-		}
-		UpdateRod();
-		UpdateArrows();
-		UpdateTics();
-	}
 
 	#region Tics
 	internal bool transitionTicsAllTogether = false;
@@ -113,7 +180,7 @@ public partial class Axis : Node3D
 	public int autoTicCount = 0;
 	public List<TicData> manualTicks = new();
 
-	private void UpdateTics()
+	private void UpdateTics(float duration)
 	{
 		foreach (var tic in GetChildren())
 		{
@@ -123,19 +190,37 @@ public partial class Axis : Node3D
 
 		Vector3 GetPosition(AxisTic tic) => new(tic.data.value * scale, 0, 0);
 
+		var ticsToRemove = GetChildren().Select(x => x as AxisTic).Where(x => x != null).ToList();
+		
 		foreach (var data in PrepareTics())
 		{
-			var tic = ticScene.Instantiate<AxisTic>();
-			tic.data = data;
-			tic.Name = $"Tic {data.label}";
-			tic.SetLabel();
-			AddChild(tic);
+			var name = $"Tic {data.label}";
+			var tic = GetNodeOrNull<AxisTic>(name);
+
+			if (tic == null)
+			{
+				tic = ticScene.Instantiate<AxisTic>();
+				tic.data = data;
+				tic.Name = name;
+				tic.SetLabel();
+				AddChild(tic);
+			}
+			else
+			{
+				ticsToRemove.Remove(tic);
+			}
+			
 			tic.Position = GetPosition(tic);
 			
 			if (length == 0)
 			{
 				tic.Scale = Vector3.Zero;
 			}
+		}
+
+		foreach (var tic in ticsToRemove)
+		{
+			tic.Free();
 		}
 	}
 	
