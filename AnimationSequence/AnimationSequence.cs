@@ -76,7 +76,7 @@ public abstract partial class AnimationSequence : AnimationPlayer
 			// This runs at edit time, so it assumes an absolute path in the context of the editor.
 			// A path relative to AnimationSequence also works, though this code is unnecessary in that case.
 			var path = animation.TrackGetPath(i);
-			GD.Print("Path is " + path);
+			// GD.Print("Path is " + path);
 			var node = GetNode(path);
 			// Make the path relative to AnimationSequence node so it will work in editor and player contexts
 			var relativePath = GetPathTo(node) + ":" + path.GetConcatenatedSubNames();

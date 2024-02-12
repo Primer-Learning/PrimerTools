@@ -80,11 +80,11 @@ public partial class Graph : Node3D
 
     public Animation Update()
     {
-        return XAxis.UpdateChildren();
-        // foreach (var axis in axes)
-        // {
-        //     axis.UpdateChildren();
-        // }
+        return AnimationUtilities.Parallel(
+            XAxis.UpdateChildren(),
+            YAxis.UpdateChildren(),
+            ZAxis.UpdateChildren()
+        );
     }
 
     // Saving for reference when it's animation time

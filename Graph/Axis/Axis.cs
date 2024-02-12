@@ -66,55 +66,12 @@ public partial class Axis : Node3D
 			GD.PrintErr("Idk how to deal with non-zero min yet.");
 			return null;
 		}
-
-		UpdateArrows(duration);
-		UpdateTics(duration);
-
-		return CreateParallelAnimation(
-			UpdateRod(duration)
-		);
-	}
-
-	private Animation CreateParallelAnimation(params Animation[] animations)
-	{
-		// Make sure the animation player exists
-		animationPlayer ??= GetNodeOrNull<AnimationPlayer>("AnimationPlayer");
-		if (animationPlayer == null)
-		{
-			animationPlayer = new AnimationPlayer();
-			animationPlayer.Name = "AnimationPlayer";
-			AddChild(animationPlayer);
-			animationPlayer.Owner = GetTree().EditedSceneRoot;
-		}
-
-		AnimationLibrary library;
-		if (animationPlayer.HasAnimationLibrary("p"))
-		{
-			library = animationPlayer.GetAnimationLibrary("p");
-		}
-		else
-		{
-			library = new AnimationLibrary();
-			animationPlayer.AddAnimationLibrary("p", library);
-		}
-
-		var combinedAnimation = new Animation();
-		combinedAnimation.Length = animations.Select(x => x.Length).Max();
-
-		// Add the animations to the library
-		foreach (var animation in animations)
-		{
-			var name = $"anim{animationsMade}";
-			library.AddAnimation(name, animation);
-			
-			var trackIndex = combinedAnimation.AddTrack(Animation.TrackType.Animation);
-			combinedAnimation.TrackInsertKey(trackIndex, 0.0f, $"p/{name}");
-			combinedAnimation.TrackSetPath(trackIndex, $"{animationPlayer.GetPath()}:animation");
 		
-			animationsMade++;
-		}
-
-		return combinedAnimation;
+		return AnimationUtilities.Parallel(
+			UpdateArrows(duration),
+			UpdateRod(duration),
+			UpdateTics(duration)
+		);
 	}
 
 	private Animation UpdateRod(float duration)
@@ -131,23 +88,32 @@ public partial class Axis : Node3D
 		var trackIndex = animation.AddTrack(Animation.TrackType.Scale3D);
 		animation.ScaleTrackInsertKey(trackIndex, 0.0f, rod.Scale);
 		animation.ScaleTrackInsertKey(trackIndex, duration, newRodScale);
-		animation.TrackSetPath(trackIndex, $"Rod");
+		animation.TrackSetPath(trackIndex, rod.GetPath());
 		
 		trackIndex = animation.AddTrack(Animation.TrackType.Position3D);
 		animation.PositionTrackInsertKey(trackIndex, 0.0f, rod.Position);
 		animation.PositionTrackInsertKey(trackIndex, duration, newPosition);
-		animation.TrackSetPath(trackIndex, $"Rod");
+		animation.TrackSetPath(trackIndex, rod.GetPath());
 		
 		rod.Position = newPosition;
 		rod.Scale = newRodScale;
 		return animation;
 	}
 
-	private void UpdateArrows(float duration)
+	private Animation UpdateArrows(float duration)
 	{
 		var endArrow = GetNode<Node3D>("Head");
 		// endArrow.localRotation = Quaternion.Euler(0f, 90f, 0f);
-		endArrow.Position = new Vector3(length - padding.X, 0f, 0f);
+		var endArrowPos = new Vector3(length - padding.X, 0f, 0f);
+		
+		var animation = new Animation();
+		animation.Length = duration;
+		
+		var trackIndex = animation.AddTrack(Animation.TrackType.Position3D);
+		animation.PositionTrackInsertKey(trackIndex, 0.0f, endArrow.Position);
+		animation.PositionTrackInsertKey(trackIndex, duration, endArrowPos);
+		animation.TrackSetPath(trackIndex, endArrow.GetPath());
+		
 		// var endArrowMove = endArrowPos == endArrow.localPosition ? Tween.noop : endArrow.MoveTo(endArrowPos);
 		// var endArrowScale arrowPresence == ArrowPresence.Neither
 		// 	? endArrow.localScale == Vector3.zero ? Tween.noop : endArrow.ScaleTo(0)
@@ -156,18 +122,27 @@ public partial class Axis : Node3D
 		
 		var startArrow = GetNode<Node3D>("Tail");
 		// endArrow.localRotation = Quaternion.Euler(0f, 90f, 0f);
-		startArrow.Position = new Vector3(-padding.X, 0f, 0f);
+		var startArrowPos = new Vector3(-padding.X, 0f, 0f);
+		trackIndex = animation.AddTrack(Animation.TrackType.Position3D);
+		animation.PositionTrackInsertKey(trackIndex, 0.0f, startArrow.Position);
+		animation.PositionTrackInsertKey(trackIndex, duration, startArrowPos);
+		animation.TrackSetPath(trackIndex, startArrow.GetPath());
 		// var endArrowMove = endArrowPos == endArrow.localPosition ? Tween.noop : endArrow.MoveTo(endArrowPos);
 		// var endArrowScale arrowPresence == ArrowPresence.Neither
 		// 	? endArrow.localScale == Vector3.zero ? Tween.noop : endArrow.ScaleTo(0)
 		// 	: endArrow.localScale == Vector3.one * 0.07f ? Tween.noop : endArrow.ScaleTo(0.07f);
 		// var endArrowTween = Tween.Parallel(endArrowMove, endArrowScale);
 		
+		startArrow.Position = new Vector3(-padding.X, 0f, 0f);
+		endArrow.Position = endArrowPos;
+		
 		if (length == 0)
 		{
 			endArrow.Scale = Vector3.Zero;
 			startArrow.Scale = Vector3.Zero;
 		}
+
+		return animation;
 	}
 
 	#region Tics
@@ -180,17 +155,13 @@ public partial class Axis : Node3D
 	public int autoTicCount = 0;
 	public List<TicData> manualTicks = new();
 
-	private void UpdateTics(float duration)
+	private Animation UpdateTics(float duration)
 	{
-		foreach (var tic in GetChildren())
-		{
-			if (tic is AxisTic axisTic)
-				axisTic.Free();
-		}
-
 		Vector3 GetPosition(AxisTic tic) => new(tic.data.value * scale, 0, 0);
-
 		var ticsToRemove = GetChildren().Select(x => x as AxisTic).Where(x => x != null).ToList();
+		
+		var animation = new Animation();
+		animation.Length = duration;
 		
 		foreach (var data in PrepareTics())
 		{
@@ -204,11 +175,26 @@ public partial class Axis : Node3D
 				tic.Name = name;
 				tic.SetLabel();
 				AddChild(tic);
+				
+				tic.Position = GetPosition(tic);
+				tic.Scale = Vector3.Zero;
+				var trackIndex = animation.AddTrack(Animation.TrackType.Scale3D);
+				animation.ScaleTrackInsertKey(trackIndex, 0.0f, tic.Scale);
+				animation.ScaleTrackInsertKey(trackIndex, duration, Vector3.One);
+				animation.TrackSetPath(trackIndex, tic.GetPath());
+				tic.Scale = Vector3.One;
 			}
 			else
 			{
 				ticsToRemove.Remove(tic);
 			}
+			
+			var ticPosition = GetPosition(tic);
+			var positionTrackIndex = animation.AddTrack(Animation.TrackType.Position3D);
+			animation.PositionTrackInsertKey(positionTrackIndex, 0.0f, tic.Position);
+			animation.PositionTrackInsertKey(positionTrackIndex, duration, ticPosition);
+			animation.TrackSetPath(positionTrackIndex, tic.GetPath());
+			tic.Position = ticPosition;
 			
 			tic.Position = GetPosition(tic);
 			
@@ -217,11 +203,18 @@ public partial class Axis : Node3D
 				tic.Scale = Vector3.Zero;
 			}
 		}
-
+		
 		foreach (var tic in ticsToRemove)
 		{
-			tic.Free();
+			// tic.Free();
+			var trackIndex = animation.AddTrack(Animation.TrackType.Scale3D);
+			animation.ScaleTrackInsertKey(trackIndex, 0.0f, tic.Scale);
+			animation.ScaleTrackInsertKey(trackIndex, duration, Vector3.Zero);
+			animation.TrackSetPath(trackIndex, tic.GetPath());
+			tic.Scale = Vector3.Zero;
 		}
+
+		return animation;
 	}
 	
 	private void UpdateTicStep()
