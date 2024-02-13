@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Godot;
 
 namespace PrimerTools;
@@ -26,6 +27,8 @@ public static class AnimationUtilities
     public static Animation ScaleTo(this Node3D node, Vector3 finalScale, float duration = 0.5f)
     {
         var animation = new Animation();
+
+        // if (finalScale == node.Scale) return null;
         
         var trackIndex = animation.AddTrack(Animation.TrackType.Scale3D);
         animation.ScaleTrackInsertKey(trackIndex, 0.0f, node.Scale);
@@ -55,10 +58,10 @@ public static class AnimationUtilities
         var trackPaths = new List<(NodePath, Animation.TrackType)>();
         var newAnimation = new Animation();
         
-        var time = 0.0;
+        var finalAnimationLength = 0.0;
         foreach (var anim in animations)
         {
-            var maxTime = 0.0;
+            var animLength = 0.0;
             for (var i = 0; i < anim.GetTrackCount(); i++)
             {
                 var trackType = anim.TrackGetType(i);
@@ -70,11 +73,8 @@ public static class AnimationUtilities
                 for (var j = 0; j < anim.TrackGetKeyCount(i); j++)
                 {
                     var keyTime = anim.TrackGetKeyTime(i, j);
-                    if (!parallel)
-                    {
-                        maxTime = Mathf.Max(maxTime, keyTime);
-                    }
-                    newAnimation.TrackInsertKey(newTrackIndex, keyTime + time, anim.TrackGetKeyValue(i, j));
+                    animLength = Mathf.Max(animLength, keyTime);
+                    newAnimation.TrackInsertKey(newTrackIndex, keyTime + (parallel ? 0 : finalAnimationLength), anim.TrackGetKeyValue(i, j));
                 }
                 
                 var path = anim.TrackGetPath(i);
@@ -89,10 +89,26 @@ public static class AnimationUtilities
                     newAnimation.TrackSetPath(newTrackIndex, path);
                 }
             }
-            time += maxTime;
+
+            if (parallel)
+            {
+                finalAnimationLength = Mathf.Max(finalAnimationLength, animLength);
+            }
+            else
+            {
+                finalAnimationLength += animLength;
+            }
         }
+        
+        newAnimation.Length = (float)finalAnimationLength;
         
         return newAnimation;
     }
+    
+    public static Animation RunInParallel(this IEnumerable<Animation> animations)
+    {
+        return Parallel(animations.ToArray());
+    }
+    
     #endregion
 }

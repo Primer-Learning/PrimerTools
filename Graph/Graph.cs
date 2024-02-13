@@ -1,5 +1,7 @@
 using Godot;
 using System.Collections.Generic;
+using System.Linq;
+
 namespace PrimerTools.Graph;
 
 [Tool]
@@ -80,10 +82,25 @@ public partial class Graph : Node3D
 
     public Animation Update()
     {
-        return AnimationUtilities.Parallel(
-            XAxis.UpdateChildren(),
-            YAxis.UpdateChildren(),
-            ZAxis.UpdateChildren()
+        var removeTransitions = new List<Animation>();
+        var updateTransitions = new List<Animation>();
+        var addTransitions = new List<Animation>();
+
+        foreach (var axis in Axes)
+        {
+            var (remove, update, add) = axis.UpdateChildren();
+            removeTransitions.Add(remove);
+            updateTransitions.Add(update);
+            addTransitions.Add(add);
+        }
+        // For data objects
+        updateTransitions.AddRange(
+            GetChildren().OfType<IPrimerGraphData>().Select(x => x.Transition())
+        );
+        return AnimationUtilities.Series(
+            removeTransitions.RunInParallel()
+            ,updateTransitions.RunInParallel() 
+            ,addTransitions.RunInParallel()
         );
     }
 
@@ -162,9 +179,4 @@ public partial class Graph : Node3D
     }
     
     
-}
-public interface IPrimerGraphData
-{
-    public Tween Transition();
-    public Tween ShrinkToEnd();
 }

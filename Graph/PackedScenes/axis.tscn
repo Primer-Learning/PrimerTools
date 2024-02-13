@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://dw3ic4fy1t6jc"]
+[gd_scene load_steps=6 format=3 uid="uid://dw3ic4fy1t6jc"]
 
 [ext_resource type="PackedScene" uid="uid://d1y06ar34m5qm" path="res://addons/PrimerTools/Graph/PackedScenes/graph_arrow_head.tscn" id="1_1vsiv"]
 [ext_resource type="Script" path="res://addons/PrimerTools/Graph/Axis/Axis.cs" id="1_gobhs"]
@@ -9,28 +9,6 @@
 [sub_resource type="CylinderMesh" id="CylinderMesh_gedf0"]
 material = SubResource("StandardMaterial3D_ntcfd")
 height = 1.0
-
-[sub_resource type="Animation" id="Animation_3whjs"]
-length = 0.001
-tracks/0/type = "scale_3d"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath("Rod")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = PackedFloat32Array(0, 1, 3, 1, 1)
-tracks/1/type = "position_3d"
-tracks/1/imported = false
-tracks/1/enabled = true
-tracks/1/path = NodePath("Rod")
-tracks/1/interp = 1
-tracks/1/loop_wrap = true
-tracks/1/keys = PackedFloat32Array(0, 1, -0.2, 0, 0)
-
-[sub_resource type="AnimationLibrary" id="AnimationLibrary_yp6o5"]
-_data = {
-"anim0": SubResource("Animation_3whjs")
-}
 
 [node name="Axis" type="Node3D"]
 script = ExtResource("1_gobhs")
@@ -50,8 +28,3 @@ transform = Transform3D(-3.0598e-09, 0.07, 0, -0.07, -3.0598e-09, 0, 0, 0, 0.07,
 
 [node name="Tail" parent="." instance=ExtResource("1_1vsiv")]
 transform = Transform3D(-3.0598e-09, -0.07, 0, 0.07, -3.0598e-09, 0, 0, 0, 0.07, -0.2, 0, 0)
-
-[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
-libraries = {
-"p": SubResource("AnimationLibrary_yp6o5")
-}

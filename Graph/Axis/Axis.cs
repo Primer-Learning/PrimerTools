@@ -9,7 +9,7 @@ namespace PrimerTools.Graph;
 public partial class Axis : Node3D
 {
 	private ExportedMemberChangeChecker exportedMemberChangeChecker;
-	private AnimationPlayer animationPlayer;
+	// private AnimationPlayer animationPlayer;
 	private int animationsMade = 0;
 	
 	public float min = 0;
@@ -59,20 +59,24 @@ public partial class Axis : Node3D
 		UpdateChildren(0);
 	}
 	
-	internal Animation UpdateChildren(float duration = 0.5f)
+	internal (Animation removeAnimation, Animation updateAnimation, Animation addAnimation) UpdateChildren(float duration = 0.5f)
 	{
 		if (min != 0)
 		{
 			GD.PrintErr("Idk how to deal with non-zero min yet.");
-			return null;
+			return (null, null, null);
 		}
 		
 		var (removeTics, updateTics, addTics) = UpdateTics(duration);
-		
-		return AnimationUtilities.Parallel(
-			UpdateArrows(duration),
-			UpdateRod(duration),
-			AnimationUtilities.Series(removeTics, updateTics, addTics)
+
+		return (
+			AnimationUtilities.Parallel(removeTics),
+			AnimationUtilities.Parallel(
+				UpdateArrows(duration),
+				UpdateRod(duration),
+				updateTics
+			),
+			AnimationUtilities.Parallel(addTics)
 		);
 	}
 
@@ -158,9 +162,9 @@ public partial class Axis : Node3D
 		var ticRemovalAnimations = ticsToRemove.Select(tic => tic.ScaleTo(0, duration));
 
 		return (
-			AnimationUtilities.Series(ticRemovalAnimations.ToArray()),
-			AnimationUtilities.Parallel(newTicAnimations.ToArray()),
-			AnimationUtilities.Parallel(ticMovementAnimations.ToArray())
+			AnimationUtilities.Parallel(ticRemovalAnimations.ToArray()),
+			AnimationUtilities.Parallel(ticMovementAnimations.ToArray()),
+			AnimationUtilities.Parallel(newTicAnimations.ToArray())
 		);
 	}
 	

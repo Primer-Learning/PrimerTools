@@ -103,7 +103,7 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		foreach (var animationName in referenceAnimationPlayer.GetAnimationList())
 		{
 			animation.TrackInsertKey(trackIndex, time, animationName);
-			time += 1;
+			time += referenceAnimationPlayer.GetAnimation(animationName).Length;
 		}
 		animation.Length = time;
 		
