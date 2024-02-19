@@ -30,7 +30,7 @@ namespace PrimerTools
         }
 
         #region enumerable.Shuffle()
-        public static List<T> Shuffle<T>(this IEnumerable<T> self, Rng rng = null)
+        public static List<T> ShuffleToList<T>(this IEnumerable<T> self, Rng rng = null)
         {
             var list = new List<T>(self);
             Randomize(list, rng);
@@ -48,6 +48,7 @@ namespace PrimerTools
                 (list[k], list[n]) = (list[n], list[k]);
             }
         }
+        
         #endregion
 
         #region enumerable.MaxBy(x => x.value);

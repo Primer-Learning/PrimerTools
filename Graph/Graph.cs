@@ -1,6 +1,7 @@
 using Godot;
 using System.Collections.Generic;
 using System.Linq;
+using Primer;
 
 namespace PrimerTools.Graph;
 
@@ -138,15 +139,17 @@ public partial class Graph : Node3D
     // public Tween Appear() => Axes.Select(x => x.Appear()).RunInParallel();
     // public Tween Disappear() => Axes.Select(x => x.Disappear()).RunInParallel();
     
-    // public PrimerLine AddLine(string name, Color color)
-    // {
-    //     var gnome = new SimpleGnome(transform);
-    //     var line = gnome.Add<PrimerLine>(name);
-    //     line.SetColor(color);
-    //     line.transformPointFromDataSpaceToPositionSpace = DataSpaceToPositionSpace;
-    //     line.Reset();
-    //     return line;
-    // }
+    public CurveData AddLine()
+    {
+        var line = new CurveData();
+        line.transformPointFromDataSpaceToPositionSpace = DataSpaceToPositionSpace;
+        AddChild(line);
+        line.Owner = GetTree().EditedSceneRoot;
+        line.Render();
+        // line.transformPointFromDataSpaceToPositionSpace = DataSpaceToPositionSpace;
+        // line.Reset();
+        return line;
+    }
     // public PrimerLine AddLine(string name)
     // {
     //     return AddLine(name, PrimerColor.white);
