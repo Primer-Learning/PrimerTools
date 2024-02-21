@@ -7,7 +7,7 @@ using PrimerTools.Utilities;
 namespace PrimerTools.Graph;
 
 [Tool]
-public partial class CurveData : MeshInstance3D, IPrimerGraphData
+public partial class CurvePlot : MeshInstance3D, IPrimerGraphData
 {
     public delegate Vector3 Transformation(Vector3 inputPoint);
     public Transformation transformPointFromDataSpaceToPositionSpace = point => point;
@@ -122,11 +122,7 @@ public partial class CurveData : MeshInstance3D, IPrimerGraphData
     }
     
     private Vector3[] dataPoints;
-    // private Vector3[] transformedPoints => dataPoints.Select( x => transformPointFromDataSpaceToPositionSpace(x)).ToArray();
-    
     private readonly List<Vector3[]> pointsOfStages = new();
-    // This is for storing mesh data, but at first, we'll recreate it every time it's needed.
-    // private List<Godot.Collections.Array> stages = new();
     
     private float width = 0.05f;
     private int jointVertices = 3;
@@ -136,11 +132,6 @@ public partial class CurveData : MeshInstance3D, IPrimerGraphData
     {
         dataPoints = data;
     }
-    public void SetInitialData(params Vector3[] data)
-    {
-        dataPoints = data;
-        pointsOfStages.Add(dataPoints.Select( x => transformPointFromDataSpaceToPositionSpace(x)).ToArray());
-    }
     
     public Animation Transition(float duration)
     {
@@ -148,9 +139,12 @@ public partial class CurveData : MeshInstance3D, IPrimerGraphData
         {
             GD.Print(thing);
         }
+        // If there's not a previous stage, add the first point of the data as the first stage
+        if (pointsOfStages.Count == 0) pointsOfStages.Add( new[] {transformPointFromDataSpaceToPositionSpace(dataPoints[0])});
         pointsOfStages.Add(dataPoints.Select( x => transformPointFromDataSpaceToPositionSpace(x)).ToArray());
         
         var animation = new Animation();
+        animation.Length = duration;
         
         var trackIndex = animation.AddTrack(Animation.TrackType.Value);
         animation.TrackInsertKey(trackIndex, 0.0f, RenderExtent);
@@ -165,34 +159,8 @@ public partial class CurveData : MeshInstance3D, IPrimerGraphData
     {
         throw new System.NotImplementedException();
     }
-    
-    // public void UpdateBlendShapes()
-    // {
-    //     var arrayMesh = new ArrayMesh();
-    //     Mesh = arrayMesh;
-    //     
-    //     List<Array> stages = new();
-    //     for (var i = 0; i < pointsOfStages.Count; i++)
-    //     {
-    //         GD.Print("Stage " + i);
-    //         foreach (var point in pointsOfStages[i])
-    //         {
-    //             GD.Print(point);
-    //         }
-    //         stages.Add(MakeMeshData(pointsOfStages[i], includeIndexArray: i == 0));
-    //         if (i > 0) arrayMesh.AddBlendShape(i.ToString());
-    //     }
-    //     
-    //     GD.Print(stages.Count);
-    //     
-    //     arrayMesh.AddSurfaceFromArrays(
-    //         Mesh.PrimitiveType.Triangles,
-    //         stages[0],
-    //         new Array<Array>(stages.Skip(1))
-    //     );
-    // }
-    
-    public Array MakeMeshData(Vector3[] points, bool includeIndexArray = true)
+
+    private Array MakeMeshData(Vector3[] points)
     {
         var vertices = new List<Vector3>();
         var indices = new List<int>();
@@ -200,6 +168,14 @@ public partial class CurveData : MeshInstance3D, IPrimerGraphData
         AddJoints(points, vertices, indices);
         AddEndCap(vertices, indices, points);
         AddEndCap(vertices, indices, points);
+
+        // Make sure there's at least one point in the mesh so a line with a single point is considered valid, if invisible.
+        // Needed because the animations usually start by drawing a line from nothing.
+        if (vertices.Count == 0)
+        {
+            vertices = new List<Vector3> {Vector3.Zero};
+            indices = new List<int> {0, 0, 0};
+        }
         
         var vertexArray = vertices.ToArray();
         var indexArray = indices.ToArray();
@@ -210,12 +186,12 @@ public partial class CurveData : MeshInstance3D, IPrimerGraphData
         surfaceArray.Resize((int)Mesh.ArrayType.Max);
         surfaceArray[(int)Mesh.ArrayType.Vertex] = vertexArray;
         surfaceArray[(int)Mesh.ArrayType.Normal] = normalArray;
-        if (includeIndexArray) surfaceArray[(int)Mesh.ArrayType.Index] = indexArray;
+        surfaceArray[(int)Mesh.ArrayType.Index] = indexArray;
 
         return surfaceArray;
     }
      
-     private void CreateSegments(Vector3[] points, List<Vector3> vertices, List<int> triangles)
+     private void CreateSegments(Vector3[] points, List<Vector3> vertices, List<int> indices)
         {
             for (var i = 0; i < points.Length - 1; i++) {
                 var currentPoint = points[i];
@@ -231,8 +207,8 @@ public partial class CurveData : MeshInstance3D, IPrimerGraphData
 
                 // Add the indices of the two triangles to the list
                 var index = i * 4;
-                triangles.AddTriangle(index, index + 2, index + 1);
-                triangles.AddTriangle(index + 1, index + 2, index + 3);
+                indices.AddTriangle(index, index + 2, index + 1);
+                indices.AddTriangle(index + 1, index + 2, index + 3);
             }
         }
 

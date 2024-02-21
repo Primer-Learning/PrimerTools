@@ -140,9 +140,9 @@ public partial class Graph : Node3D
     // public Tween Appear() => Axes.Select(x => x.Appear()).RunInParallel();
     // public Tween Disappear() => Axes.Select(x => x.Disappear()).RunInParallel();
     
-    public CurveData AddLine()
+    public CurvePlot AddLine()
     {
-        var line = new CurveData();
+        var line = new CurvePlot();
         line.transformPointFromDataSpaceToPositionSpace = DataSpaceToPositionSpace;
         AddChild(line);
         line.Owner = GetTree().EditedSceneRoot;
