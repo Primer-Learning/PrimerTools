@@ -11,6 +11,12 @@ public partial class CurvePlot : MeshInstance3D, IPrimerGraphData
 {
     public delegate Vector3 Transformation(Vector3 inputPoint);
     public Transformation transformPointFromDataSpaceToPositionSpace = point => point;
+    private StandardMaterial3D materialCache;
+    private StandardMaterial3D Material
+    {
+        get => materialCache ??= new StandardMaterial3D();
+        set => materialCache = value;
+    }
     
     private float renderExtent;
     public float RenderExtent
@@ -118,6 +124,7 @@ public partial class CurvePlot : MeshInstance3D, IPrimerGraphData
                 Mesh.PrimitiveType.Triangles,
                 MakeMeshData(targetPoints)
             );
+            Mesh.SurfaceSetMaterial(0, Material);
         }
     }
     
@@ -300,9 +307,7 @@ public partial class CurvePlot : MeshInstance3D, IPrimerGraphData
 
      public void SetColor(Color color)
      {
-         var material = new StandardMaterial3D();
-         material.AlbedoColor = color;
-         SetSurfaceOverrideMaterial(0, material);
+         Material.AlbedoColor = color;
      }
 
     // public class PrimerLine : MonoBehaviour, IMeshController, IDisposable, IPrimerGraphData
