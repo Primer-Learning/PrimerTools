@@ -221,6 +221,19 @@ public partial class CurvePlot : MeshInstance3D, IPrimerGraphData
 
      private void AddJoints(Vector3[] points, List<Vector3> vertices, List<int> triangles)
      {
+         // TODO: The segments overlap on one side of the joint. On the other side, there is a gap.
+         // Currently, we add some rounding to fill the gap, and that's the joint.
+         // Additional options could be to 
+         // - Add a miter joint, which extends both outer lines until they intersect. This intersection would be
+         //   calculated by adding the line's width to the outer length of both segments.
+         // - The inner part of the joint could be made to not overlap by doing the reverse the process for the outer
+         //   miter joint.
+         // - With a miter joint, the UV map could be made nice for drawing a texture or gradient on the line.
+         // - If inner joint is a miter but the outer is still curved, the rounded part of the curve wouldn't
+         //   agree super will with UVs, perhaps needing to be a solid color in a gradient situation. But in a situation
+         //   where we want a gradient, there might be so many points that miter angles are small, so the rounding
+         //   wouldn't matter anyway.
+         
          // Join segments with triangles in a curve
          for (var i = 0; i < points.Length - 2; i++) {
              var a = points[i];
