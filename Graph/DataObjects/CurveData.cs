@@ -18,61 +18,99 @@ public partial class CurveData : MeshInstance3D, IPrimerGraphData
         get => renderExtent;
         set
         {
-            if (value != renderExtent) GD.Print("RenderExtent: " + value);
+            // Comments on line interpolation method
+            // - There are multiple ways to do this, which will have different visual effects.
+            // - The approach implemented below identifies the line with a smaller number of points as "shorterLine".
+            // Points with index less than the length of the shorter line are blended between the two lines.
+            // Points with indext greater are added one after another with timing based on the total length of 
+            // segments to be added. It's usually not the case that we want to both move existing points and add new ones.
+            // So this approach handles the case of adjusting points in a line, and also adding length to a line at a
+            // constant rate. But it is perhaps a bit weird when it does both.
+            // - Other approaches could include
+            // -- Updating along the length of the line, including existing points, which would create a whiplash effect
+            // -- Adding duplicate points to the end of the shorter line, then updating all points at once. Seems bad?
+            // -- Adding points to the middle of the shorter line depending on lengths. Good for uniformly changing
+            // a whole curve to one with a different number of points, but seems more complicated.
+            //
+            // In any case, just wanted to record the thought that this is just one choice for how to do this, which
+            // works well for the case of adding data to a line. So if a new context arises, adding interpolation
+            // options would be possible.
+            
+            // if (value != renderExtent) GD.Print("RenderExtent: " + value);
             renderExtent = value;
-            if (value >= pointsOfStages.Count - 1) return;
+            if (value > pointsOfStages.Count - 1) return;
             var stepProgress = value % 1;
-            
-            // Todo: Lots of this could be calculated once and stored. Don't need to do it every update.
-            
-            // Identify the two stages to blend between
-            var prev = pointsOfStages[(int)value];
-            var next = pointsOfStages[(int)value + 1];
-            
-            var pointCountDifference = next.Length - prev.Length;
-            
-            // Idea: This only looks at the lengths of additional points
-            // If we did it with all of the point lengths, there would be a whiplash sort of effect
-            var lengthPerAdditionalPoint = new List<float>();
-            for (var i = 0; i < pointCountDifference; i++)
+            Vector3[] targetPoints;
+            if (stepProgress == 0)
             {
-                lengthPerAdditionalPoint.Add((next[prev.Length + i] - next[prev.Length - 1 + i]).Length());
+                // This is mainly for handling the case where we're right on the final stage
+                // Since in that case the other section breaks
+                // But also a small shortcut when it happens to be an integer.
+                targetPoints = pointsOfStages[(int)value];
             }
-            var lengthOfAdditionalPoints = lengthPerAdditionalPoint.Sum();
-            var lengthToExtend = stepProgress * lengthOfAdditionalPoints;
-            
-            var targetPoints = new Vector3[Mathf.Max(next.Length, prev.Length)];
-            var lengthSoFar = 0f;
-            foreach (var i in Enumerable.Range(0, targetPoints.Length))
+            else
             {
-                var minPointCount = Mathf.Min(prev.Length, next.Length);
-                // If the point exists in both stages, blend between them
-                if (i < minPointCount)
+                // Identify the two stages to blend between
+                var prev = pointsOfStages[(int)value];
+                var next = pointsOfStages[(int)value + 1];
+
+                // Swap the two stages if the next stage is shorter
+                // Need to record this to know whether to reverse the blending
+                var backward = false;
+                if (prev.Length > next.Length)
                 {
-                    targetPoints[i] = prev[i].Lerp(next[i], stepProgress);
-                    continue;
+                    (prev, next) = (next, prev);
+                    backward = true;
                 }
+
+                var pointCountDifference = next.Length - prev.Length;
+
+                var lengthPerAdditionalPoint = new List<float>();
+                for (var i = 0; i < pointCountDifference; i++)
+                {
+                    lengthPerAdditionalPoint.Add(
+                        (next[prev.Length + i] - next[prev.Length - 1 + i]).Length());
+                }
+
+                var lengthOfAdditionalPoints = lengthPerAdditionalPoint.Sum();
+                var lengthToExtend = stepProgress * lengthOfAdditionalPoints;
                 
-                // New points that have already been drawn
-                var segmentLength = lengthPerAdditionalPoint[i - minPointCount];
-                if (lengthToExtend > lengthSoFar + segmentLength)
+                if (backward) lengthToExtend = lengthOfAdditionalPoints - lengthToExtend;
+
+                targetPoints = new Vector3[Mathf.Max(next.Length, prev.Length)];
+                var lengthSoFar = 0f;
+                foreach (var i in Enumerable.Range(0, targetPoints.Length))
                 {
-                    targetPoints[i] = next[i];
+                    var minPointCount = Mathf.Min(prev.Length, next.Length);
+                    // If the point exists in both stages, blend between them
+                    if (i < minPointCount)
+                    {
+                        targetPoints[i] = prev[i].Lerp(next[i], stepProgress);
+                        continue;
+                    }
+
+                    // New points that have already been drawn
+                    var segmentLength = lengthPerAdditionalPoint[i - minPointCount];
+                    if (lengthToExtend > lengthSoFar + segmentLength)
+                    {
+                        targetPoints[i] = next[i];
+                    }
+                    // Segments in the progress of being drawn
+                    else if (lengthToExtend > lengthSoFar)
+                    {
+                        targetPoints[i] = next[i - 1]
+                            .Lerp(next[i], (lengthToExtend - lengthSoFar) / segmentLength);
+                    }
+                    // Segments that haven't been drawn yet. Just put the end points on top of the previous point.
+                    else
+                    {
+                        targetPoints[i] = targetPoints[i - 1];
+                    }
+
+                    lengthSoFar += segmentLength;
                 }
-                // Segments in the progress of being drawn
-                else if (lengthToExtend > lengthSoFar)
-                {
-                    targetPoints[i] = next[i - 1].Lerp(next[i], (lengthToExtend - lengthSoFar) / segmentLength);
-                }
-                // Segments that haven't been drawn yet. Just put the end points on top of the previous point.
-                else
-                {
-                    targetPoints[i] = targetPoints[i - 1];
-                }
-                
-                lengthSoFar += segmentLength;
             }
-            
+
             // Render a mesh based on the new set of points
             var arrayMesh = new ArrayMesh();
             Mesh = arrayMesh;
@@ -128,31 +166,31 @@ public partial class CurveData : MeshInstance3D, IPrimerGraphData
         throw new System.NotImplementedException();
     }
     
-    public void UpdateBlendShapes()
-    {
-        var arrayMesh = new ArrayMesh();
-        Mesh = arrayMesh;
-        
-        List<Array> stages = new();
-        for (var i = 0; i < pointsOfStages.Count; i++)
-        {
-            GD.Print("Stage " + i);
-            foreach (var point in pointsOfStages[i])
-            {
-                GD.Print(point);
-            }
-            stages.Add(MakeMeshData(pointsOfStages[i], includeIndexArray: i == 0));
-            if (i > 0) arrayMesh.AddBlendShape(i.ToString());
-        }
-        
-        GD.Print(stages.Count);
-        
-        arrayMesh.AddSurfaceFromArrays(
-            Mesh.PrimitiveType.Triangles,
-            stages[0],
-            new Array<Array>(stages.Skip(1))
-        );
-    }
+    // public void UpdateBlendShapes()
+    // {
+    //     var arrayMesh = new ArrayMesh();
+    //     Mesh = arrayMesh;
+    //     
+    //     List<Array> stages = new();
+    //     for (var i = 0; i < pointsOfStages.Count; i++)
+    //     {
+    //         GD.Print("Stage " + i);
+    //         foreach (var point in pointsOfStages[i])
+    //         {
+    //             GD.Print(point);
+    //         }
+    //         stages.Add(MakeMeshData(pointsOfStages[i], includeIndexArray: i == 0));
+    //         if (i > 0) arrayMesh.AddBlendShape(i.ToString());
+    //     }
+    //     
+    //     GD.Print(stages.Count);
+    //     
+    //     arrayMesh.AddSurfaceFromArrays(
+    //         Mesh.PrimitiveType.Triangles,
+    //         stages[0],
+    //         new Array<Array>(stages.Skip(1))
+    //     );
+    // }
     
     public Array MakeMeshData(Vector3[] points, bool includeIndexArray = true)
     {
