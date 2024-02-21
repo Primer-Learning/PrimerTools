@@ -38,9 +38,10 @@ public abstract partial class AnimationSequence : AnimationPlayer
 			Define();
 			CreateTopLevelAnimation();
 			
-			AssignedAnimation = "p/CombinedAnimation";
-			
-			var mainAnimation = GetAnimation(AssignedAnimation);
+			// Rewind through the animations so the start state is correct
+			// This is needed because animation creation code sets objects to the final state to 
+			// prepare for the next animation. So we're undoing that.
+			var mainAnimation = GetAnimation("p/CombinedAnimation");
 			for (var i = mainAnimation.TrackGetKeyCount(0) - 1; i >= 0; i--)
 			{
 				var time = mainAnimation.TrackGetKeyTime(0, i);
