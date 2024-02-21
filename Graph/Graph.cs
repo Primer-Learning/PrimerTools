@@ -31,6 +31,7 @@ public partial class Graph : Node3D
         var graph = new Graph();
         graph.Name = "Graph";
         parent.AddChild(graph);
+        graph.InstantiateAxes();
 
         // Make the graph and children visible in the editor and eligible to be saved in the scene. 
         var sceneRoot = graph.GetTree().EditedSceneRoot;
@@ -40,19 +41,19 @@ public partial class Graph : Node3D
         return graph;
     }
 
-    public override void _Ready()
-    {
-        if (Engine.IsEditorHint()) InstantiateAxes();
-    }
+    // public override void _Ready()
+    // {
+    //     if (Engine.IsEditorHint()) InstantiateAxes();
+    // }
     
     private void InstantiateAxes()
     {
         var axisScene = ResourceLoader.Load<PackedScene>("res://addons/PrimerTools/Graph/PackedScenes/axis.tscn"); 
         var x = axisScene.Instantiate<Axis>();
         var y = axisScene.Instantiate<Axis>();
+        var z = axisScene.Instantiate<Axis>();
         y.ticScene = ResourceLoader.Load<PackedScene>("res://addons/PrimerTools/Graph/PackedScenes/axis_tic_y.tscn");
         y.RotationDegrees = new Vector3(0, 0, 90);
-        var z = axisScene.Instantiate<Axis>();
         z.ticScene = ResourceLoader.Load<PackedScene>("res://addons/PrimerTools/Graph/PackedScenes/axis_tic_z.tscn");
         z.RotationDegrees = new Vector3(0, -90, 0);
         
@@ -81,7 +82,7 @@ public partial class Graph : Node3D
     public Axis ZAxis => GetNode<Axis>("Z");
     private List<Axis> Axes => new() { XAxis, YAxis, ZAxis };
 
-    public Animation Update()
+    public Animation Transition(float duration = 0.5f)
     {
         var removeTransitions = new List<Animation>();
         var updateTransitions = new List<Animation>();
@@ -96,12 +97,12 @@ public partial class Graph : Node3D
         }
         // For data objects
         updateTransitions.AddRange(
-            GetChildren().OfType<IPrimerGraphData>().Select(x => x.Transition())
+            GetChildren().OfType<IPrimerGraphData>().Select(x => x.Transition(duration))
         );
         return AnimationUtilities.Series(
-            removeTransitions.RunInParallel()
-            ,updateTransitions.RunInParallel() 
-            ,addTransitions.RunInParallel()
+            removeTransitions.RunInParallel(),
+            updateTransitions.RunInParallel(),
+            addTransitions.RunInParallel()
         );
     }
 
@@ -145,7 +146,7 @@ public partial class Graph : Node3D
         line.transformPointFromDataSpaceToPositionSpace = DataSpaceToPositionSpace;
         AddChild(line);
         line.Owner = GetTree().EditedSceneRoot;
-        line.Render();
+        // line.MakeMeshData();
         // line.transformPointFromDataSpaceToPositionSpace = DataSpaceToPositionSpace;
         // line.Reset();
         return line;

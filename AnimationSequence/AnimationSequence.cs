@@ -28,6 +28,16 @@ public abstract partial class AnimationSequence : AnimationPlayer
 	{
 		if (!Engine.IsEditorHint())
 		{
+			// Redo everything on play
+			// The reason for this is that non-serialized data is lost when rebuilding to play
+			// But just re-doing everything is a simple way to avoid that problem
+			// If it gets heavy we could think of other ways
+			// The proximate cause at time of writing is that CurveData loses track of its points.
+			// An alternate approach could create nodes for each point.
+			Reset();
+			Define();
+			CreateTopLevelAnimation();
+			
 			AssignedAnimation = "p/CombinedAnimation";
 			
 			var mainAnimation = GetAnimation(AssignedAnimation);

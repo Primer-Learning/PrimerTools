@@ -15,10 +15,18 @@ public static class AnimationUtilities
     {
         var animation = new Animation();
         
-        var trackIndex = animation.AddTrack(Animation.TrackType.Position3D);
-        animation.PositionTrackInsertKey(trackIndex, 0.0f, node.Position);
-        animation.PositionTrackInsertKey(trackIndex, duration, destination);
-        animation.TrackSetPath(trackIndex, node.GetPath());
+        // It turns out the specialized track is busted? The graph tics jump around, but I'm too lazy to
+        // make a test case to report it. I'll just use the generic track for now.
+        // var trackIndex = animation.AddTrack(Animation.TrackType.Position3D);
+        // animation.PositionTrackInsertKey(trackIndex, 0.0f, node.Position);
+        // animation.PositionTrackInsertKey(trackIndex, duration, destination);
+        // animation.TrackSetPath(trackIndex, node.GetPath());
+
+        var trackIndex = animation.AddTrack(Animation.TrackType.Value);
+        animation.TrackInsertKey(trackIndex, 0.0f, node.Position);
+        animation.TrackInsertKey(trackIndex, duration, destination);
+        animation.TrackSetPath(trackIndex, node.GetPath()+":position");
+        
         node.Position = destination;
 
         return animation;
@@ -30,10 +38,16 @@ public static class AnimationUtilities
 
         // if (finalScale == node.Scale) return null;
         
-        var trackIndex = animation.AddTrack(Animation.TrackType.Scale3D);
-        animation.ScaleTrackInsertKey(trackIndex, 0.0f, node.Scale);
-        animation.ScaleTrackInsertKey(trackIndex, duration, finalScale);
-        animation.TrackSetPath(trackIndex, node.GetPath());
+        // var trackIndex = animation.AddTrack(Animation.TrackType.Scale3D);
+        // animation.ScaleTrackInsertKey(trackIndex, 0.0f, node.Scale);
+        // animation.ScaleTrackInsertKey(trackIndex, duration, finalScale);
+        // animation.TrackSetPath(trackIndex, node.GetPath());
+        
+        var trackIndex = animation.AddTrack(Animation.TrackType.Value);
+        animation.TrackInsertKey(trackIndex, 0.0f, node.Scale);
+        animation.TrackInsertKey(trackIndex, duration, finalScale);
+        animation.TrackSetPath(trackIndex, node.GetPath()+":scale");
+        
         node.Scale = finalScale;
 
         return animation;

@@ -34,7 +34,7 @@ public partial class PointData : Node3D, IPrimerGraphData
         }
     }
     
-    public Animation Transition()
+    public Animation Transition(float duration)
     {
         var transitionAnimations = new List<Animation>();
         foreach (var (position, node) in pointObjects)

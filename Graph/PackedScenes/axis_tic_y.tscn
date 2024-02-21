@@ -1,16 +1,19 @@
-[gd_scene load_steps=4 format=3 uid="uid://salehjyt5hwh"]
+[gd_scene load_steps=5 format=3 uid="uid://salehjyt5hwh"]
 
 [ext_resource type="Script" path="res://addons/PrimerTools/Graph/Axis/AxisTic.cs" id="1_xtd3d"]
 [ext_resource type="Script" path="res://addons/PrimerTools/LaTeX/LatexNode.cs" id="2_ecvgd"]
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_s5tg3"]
+[sub_resource type="CylinderMesh" id="CylinderMesh_31fei"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wh18w"]
 
 [node name="axis_tic" type="Node3D"]
 script = ExtResource("1_xtd3d")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 transform = Transform3D(0.038, 0, 0, 0, 0.1, 0, 0, 0, 0.038, 0, 0, 0)
-mesh = SubResource("CylinderMesh_s5tg3")
+mesh = SubResource("CylinderMesh_31fei")
+surface_material_override/0 = SubResource("StandardMaterial3D_wh18w")
 
 [node name="LatexNode" type="Node3D" parent="."]
 transform = Transform3D(0, -8.74228e-09, -0.2, -0.2, -8.74228e-09, 0, -8.74228e-09, 0.2, -8.74228e-09, 1.81738e-08, 0.151382, 0)

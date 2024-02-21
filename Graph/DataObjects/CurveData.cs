@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Godot;
+using Godot.Collections;
 using PrimerTools.Utilities;
 
 namespace PrimerTools.Graph;
@@ -11,22 +12,75 @@ public partial class CurveData : MeshInstance3D, IPrimerGraphData
     public delegate Vector3 Transformation(Vector3 inputPoint);
     public Transformation transformPointFromDataSpaceToPositionSpace = point => point;
     
-    private Vector3[] rawPoints = new[]
+    private float renderExtent;
+    public float RenderExtent
     {
-        new Vector3(0, 0, 0),
-        new Vector3(1, 50, 0),
-        new Vector3(2, 20, 0)
-    };
-    private Vector3[] transformedPoints => rawPoints.Select( x => transformPointFromDataSpaceToPositionSpace(x)).ToArray();
+        get => renderExtent;
+        set
+        {
+            renderExtent = value;
+            if (value >= pointsOfStages.Count - 1) return;
+            
+            // Make a set of points that is a combination of the previous and next stage
+            var prev = pointsOfStages[(int)value];
+            var next = pointsOfStages[(int)value + 1];
+            var current = new Vector3[Mathf.Max(next.Length, prev.Length)];
+            foreach (var i in Enumerable.Range(0, current.Length))
+            {
+                var first = i < prev.Length ? prev[i] : prev[^1];
+                var second = i < next.Length ? next[i] : next[^1];
+                
+                current[i] = first.Lerp(second, value % 1);
+            }
+            
+            // Render a mesh based on the new set of points
+            var arrayMesh = new ArrayMesh();
+            Mesh = arrayMesh;
+            arrayMesh.AddSurfaceFromArrays(
+                Mesh.PrimitiveType.Triangles,
+                MakeMeshData(current)
+            );
+        }
+    }
+    
+    private Vector3[] dataPoints;
+    private Vector3[] transformedPoints => dataPoints.Select( x => transformPointFromDataSpaceToPositionSpace(x)).ToArray();
+    
+    private readonly List<Vector3[]> pointsOfStages = new();
+    // This is for storing mesh data, but at first, we'll recreate it every time it's needed.
+    // private List<Godot.Collections.Array> stages = new();
     
     private float width = 0.05f;
     private int jointVertices = 3;
     private int endCapVertices = 5;
     
-    public Animation Transition()
+    public void SetData(params Vector3[] data)
     {
-        // throw new System.NotImplementedException();
-        return new Animation();
+        dataPoints = data;
+    }
+    public void SetInitialData(params Vector3[] data)
+    {
+        dataPoints = data;
+        pointsOfStages.Add(dataPoints.Select( x => transformPointFromDataSpaceToPositionSpace(x)).ToArray());
+    }
+    
+    public Animation Transition(float duration)
+    {
+        foreach (var thing in dataPoints.Select( x => transformPointFromDataSpaceToPositionSpace(x)).ToArray())
+        {
+            GD.Print(thing);
+        }
+        pointsOfStages.Add(dataPoints.Select( x => transformPointFromDataSpaceToPositionSpace(x)).ToArray());
+        
+        var animation = new Animation();
+        
+        var trackIndex = animation.AddTrack(Animation.TrackType.Value);
+        animation.TrackInsertKey(trackIndex, 0.0f, RenderExtent);
+        animation.TrackInsertKey(trackIndex, duration, RenderExtent + 1);
+        animation.TrackSetPath(trackIndex, $"{GetPath()}:RenderExtent");
+        RenderExtent++;
+
+        return animation;
     }
 
     public Animation ShrinkToEnd()
@@ -34,60 +88,54 @@ public partial class CurveData : MeshInstance3D, IPrimerGraphData
         throw new System.NotImplementedException();
     }
     
-    public void Render()
+    public void UpdateBlendShapes()
+    {
+        var arrayMesh = new ArrayMesh();
+        Mesh = arrayMesh;
+        
+        List<Array> stages = new();
+        for (var i = 0; i < pointsOfStages.Count; i++)
+        {
+            GD.Print("Stage " + i);
+            foreach (var point in pointsOfStages[i])
+            {
+                GD.Print(point);
+            }
+            stages.Add(MakeMeshData(pointsOfStages[i], includeIndexArray: i == 0));
+            if (i > 0) arrayMesh.AddBlendShape(i.ToString());
+        }
+        
+        GD.Print(stages.Count);
+        
+        arrayMesh.AddSurfaceFromArrays(
+            Mesh.PrimitiveType.Triangles,
+            stages[0],
+            new Array<Array>(stages.Skip(1))
+        );
+    }
+    
+    public Array MakeMeshData(Vector3[] points, bool includeIndexArray = true)
     {
         var vertices = new List<Vector3>();
         var indices = new List<int>();
-        CreateSegments(transformedPoints, vertices, indices);
-        AddJoint(transformedPoints, vertices, indices);
-        AddEndCap(vertices, indices, transformedPoints[0], transformedPoints[1]);
-        AddEndCap(vertices, indices, transformedPoints[^1], transformedPoints[^2]);
-        var normalArray = Enumerable.Repeat(Vector3.Back, vertices.Count).ToArray();
+        CreateSegments(points, vertices, indices);
+        AddJoints(points, vertices, indices);
+        AddEndCap(vertices, indices, points[0], points[1]);
+        AddEndCap(vertices, indices, points[^1], points[^2]);
         
-
-        var arrayMesh = new ArrayMesh();
-        Mesh = arrayMesh;
-        var surfaceArray = new Godot.Collections.Array();
+        var vertexArray = vertices.ToArray();
+        var indexArray = indices.ToArray();
+        var normalArray = Enumerable.Repeat(Vector3.Back, vertexArray.Length).ToArray();
+        MeshUtilities.MakeDoubleSided(ref vertexArray, ref indexArray, ref normalArray);
+        
+        var surfaceArray = new Array();
         surfaceArray.Resize((int)Mesh.ArrayType.Max);
-        surfaceArray[(int)Mesh.ArrayType.Vertex] = vertices.ToArray();
+        surfaceArray[(int)Mesh.ArrayType.Vertex] = vertexArray;
         surfaceArray[(int)Mesh.ArrayType.Normal] = normalArray;
-        surfaceArray[(int)Mesh.ArrayType.Index] = indices.ToArray();
+        if (includeIndexArray) surfaceArray[(int)Mesh.ArrayType.Index] = indexArray;
 
-        arrayMesh.AddSurfaceFromArrays(
-            Mesh.PrimitiveType.Triangles,
-            surfaceArray
-        );
-        // arrayMesh.RegenNormalMaps();
-        
-        // var mesh = new Mesh {
-        //     vertices = vertexArray,
-        //     triangles = triangleArray,
-        // };
-        // mesh.RecalculateNormals();
-        // meshFilter.mesh = mesh;
-        // renderedLine = line;
+        return surfaceArray;
     }
-    
-     // private void CreateSegments(Vector3[] points, List<Vector3> vertices, List<int> triangles)
-     // {
-     //     for (var i = 0; i < points.Length - 1; i++) {
-     //         var currentPoint = points[i];
-     //         var nextPoint = points[i + 1];
-     //         var direction = (nextPoint - currentPoint).Normalized();
-     //         var perpendicular = new Vector3(-direction.Y, direction.X, 0) * width / 2;
-     //
-     //         // Add the four vertices of the rectangle to the list
-     //         var vertex1 = currentPoint + perpendicular;
-     //         var vertex2 = currentPoint - perpendicular;
-     //         var vertex3 = nextPoint + perpendicular;
-     //         var vertex4 = nextPoint - perpendicular;
-     //
-     //         // Add the indices of the two triangles to the list
-     //         var index = i * 4;
-     //         vertices.AddTriangle(vertex1, vertex3, vertex2);
-     //         vertices.AddTriangle(vertex2, vertex3, vertex4);
-     //     }
-     // }
      
      private void CreateSegments(Vector3[] points, List<Vector3> vertices, List<int> triangles)
         {
@@ -110,13 +158,15 @@ public partial class CurveData : MeshInstance3D, IPrimerGraphData
             }
         }
 
-     private void AddJoint(Vector3[] points, List<Vector3> vertices, List<int> triangles)
+     private void AddJoints(Vector3[] points, List<Vector3> vertices, List<int> triangles)
      {
          // Join segments with triangles in a curve
          for (var i = 0; i < points.Length - 2; i++) {
              var a = points[i];
              var b = points[i + 1];
              var c = points[i + 2];
+             
+             if ((c - a).Normalized() == (b - a).Normalized()) continue; // Skip if the points are in a straight line
      
              var quadIndex = i * 4;
              var center = vertices.Count;

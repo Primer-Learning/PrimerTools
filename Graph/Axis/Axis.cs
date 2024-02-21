@@ -54,10 +54,10 @@ public partial class Axis : Node3D
 		}
 	}
 
-	public override void _Ready()
-	{
-		UpdateChildren(0);
-	}
+	// public override void _Ready()
+	// {
+	// 	if (!Engine.IsEditorHint()) UpdateChildren(0);
+	// }
 	
 	internal (Animation removeAnimation, Animation updateAnimation, Animation addAnimation) UpdateChildren(float duration = 0.5f)
 	{
@@ -141,6 +141,9 @@ public partial class Axis : Node3D
 				tic.Name = name;
 				tic.SetLabel();
 				AddChild(tic);
+				tic.Owner = GetTree().EditedSceneRoot;
+				tic.SceneFilePath = "";
+				tic.MakeChildrenLocalRecursively(GetTree().EditedSceneRoot);
 				
 				tic.Position = GetPosition(tic);
 				tic.Scale = Vector3.Zero;
