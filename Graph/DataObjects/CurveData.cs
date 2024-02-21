@@ -18,19 +18,59 @@ public partial class CurveData : MeshInstance3D, IPrimerGraphData
         get => renderExtent;
         set
         {
+            if (value != renderExtent) GD.Print("RenderExtent: " + value);
             renderExtent = value;
             if (value >= pointsOfStages.Count - 1) return;
+            var stepProgress = value % 1;
             
-            // Make a set of points that is a combination of the previous and next stage
+            // Todo: Lots of this could be calculated once and stored. Don't need to do it every update.
+            
+            // Identify the two stages to blend between
             var prev = pointsOfStages[(int)value];
             var next = pointsOfStages[(int)value + 1];
-            var current = new Vector3[Mathf.Max(next.Length, prev.Length)];
-            foreach (var i in Enumerable.Range(0, current.Length))
+            
+            var pointCountDifference = next.Length - prev.Length;
+            
+            // Idea: This only looks at the lengths of additional points
+            // If we did it with all of the point lengths, there would be a whiplash sort of effect
+            var lengthPerAdditionalPoint = new List<float>();
+            for (var i = 0; i < pointCountDifference; i++)
             {
-                var first = i < prev.Length ? prev[i] : prev[^1];
-                var second = i < next.Length ? next[i] : next[^1];
+                lengthPerAdditionalPoint.Add((next[prev.Length + i] - next[prev.Length - 1 + i]).Length());
+            }
+            var lengthOfAdditionalPoints = lengthPerAdditionalPoint.Sum();
+            var lengthToExtend = stepProgress * lengthOfAdditionalPoints;
+            
+            var targetPoints = new Vector3[Mathf.Max(next.Length, prev.Length)];
+            var lengthSoFar = 0f;
+            foreach (var i in Enumerable.Range(0, targetPoints.Length))
+            {
+                var minPointCount = Mathf.Min(prev.Length, next.Length);
+                // If the point exists in both stages, blend between them
+                if (i < minPointCount)
+                {
+                    targetPoints[i] = prev[i].Lerp(next[i], stepProgress);
+                    continue;
+                }
                 
-                current[i] = first.Lerp(second, value % 1);
+                // New points that have already been drawn
+                var segmentLength = lengthPerAdditionalPoint[i - minPointCount];
+                if (lengthToExtend > lengthSoFar + segmentLength)
+                {
+                    targetPoints[i] = next[i];
+                }
+                // Segments in the progress of being drawn
+                else if (lengthToExtend > lengthSoFar)
+                {
+                    targetPoints[i] = next[i - 1].Lerp(next[i], (lengthToExtend - lengthSoFar) / segmentLength);
+                }
+                // Segments that haven't been drawn yet. Just put the end points on top of the previous point.
+                else
+                {
+                    targetPoints[i] = targetPoints[i - 1];
+                }
+                
+                lengthSoFar += segmentLength;
             }
             
             // Render a mesh based on the new set of points
@@ -38,13 +78,13 @@ public partial class CurveData : MeshInstance3D, IPrimerGraphData
             Mesh = arrayMesh;
             arrayMesh.AddSurfaceFromArrays(
                 Mesh.PrimitiveType.Triangles,
-                MakeMeshData(current)
+                MakeMeshData(targetPoints)
             );
         }
     }
     
     private Vector3[] dataPoints;
-    private Vector3[] transformedPoints => dataPoints.Select( x => transformPointFromDataSpaceToPositionSpace(x)).ToArray();
+    // private Vector3[] transformedPoints => dataPoints.Select( x => transformPointFromDataSpaceToPositionSpace(x)).ToArray();
     
     private readonly List<Vector3[]> pointsOfStages = new();
     // This is for storing mesh data, but at first, we'll recreate it every time it's needed.
@@ -120,8 +160,8 @@ public partial class CurveData : MeshInstance3D, IPrimerGraphData
         var indices = new List<int>();
         CreateSegments(points, vertices, indices);
         AddJoints(points, vertices, indices);
-        AddEndCap(vertices, indices, points[0], points[1]);
-        AddEndCap(vertices, indices, points[^1], points[^2]);
+        AddEndCap(vertices, indices, points);
+        AddEndCap(vertices, indices, points);
         
         var vertexArray = vertices.ToArray();
         var indexArray = indices.ToArray();
@@ -180,9 +220,6 @@ public partial class CurveData : MeshInstance3D, IPrimerGraphData
              var left = vertices[leftIndex];
              var right = vertices[rightIndex];
      
-             // miterVertices can also be calculated from the amount of degrees in the angle
-             // miterVertices = Vector3.Angle(left - b, right - b) / degreesPerVertex
-     
              if (jointVertices <= 0) {
                  triangles.AddTriangle(center, rightIndex, leftIndex, flip);
                  continue;
@@ -199,9 +236,35 @@ public partial class CurveData : MeshInstance3D, IPrimerGraphData
              triangles.AddTriangle(center + jointVertices, center, rightIndex, flip);
          }
      }
-     private void AddEndCap(List<Vector3> vertices, List<int> triangles, Vector3 point, Vector3 prev)
+     private void AddEndCap(List<Vector3> vertices, List<int> triangles, Vector3[] points, bool end = true)
      {
-         var direction = -(prev - point).Normalized() * width / 2;
+         Vector3 point;
+         Vector3 prev;
+         if (end)
+         {
+             point = points[^1];
+             prev = point;
+             for (var i = points.Length - 2; i >= 0; i--)
+             {
+                 if (points[i] == point) continue;
+                 prev = points[i];
+                 break;
+             }
+         }
+         else
+         {
+             point = points[0];
+             prev = point;
+             for (var i = 1; i < points.Length; i++)
+             {
+                 if (points[i] == point) continue;
+                 prev = points[i];
+                 break;
+             }
+         }
+         if (prev == point) return;
+         
+         var direction = (point - prev).Normalized() * width / 2;
          
          var perpendicular = new Vector3(direction.Y, -direction.X, 0);
          var center = vertices.Count;
