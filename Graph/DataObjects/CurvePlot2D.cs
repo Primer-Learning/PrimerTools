@@ -138,8 +138,6 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
 
     public Animation Transition(float duration)
     {
-        foreach (var thing in dataPoints.Select(x => transformPointFromDataSpaceToPositionSpace(x)).ToArray())
-            GD.Print(thing);
         // If there's not a previous stage, add the first point of the data as the first stage
         if (pointsOfStages.Count == 0)
             pointsOfStages.Add(new[] { transformPointFromDataSpaceToPositionSpace(dataPoints[0]) });
@@ -237,7 +235,14 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
             var b = points[i + 1];
             var c = points[i + 2];
 
-            if ((c - a).Normalized() == (b - a).Normalized()) continue; // Skip if the points are in a straight line
+            // The stuff below was trying to get around some Vector3.Slerp errors. But now we just rotate the vector.
+            // These still seem like good checks, though.
+            // It might be better to purge these points from the list rather than skipping a joint.
+            // A duplicated point would break the joint even though you might still want one there.
+           
+            if ((c - a).IsZeroApprox() || (b - a).IsZeroApprox()) continue;
+            if ((c - a).Normalized().IsEqualApprox((b - a).Normalized())) { continue; }
+            if ((c - a).Normalized().IsEqualApprox((a - b).Normalized())) { continue; }
 
             var quadIndex = i * 4;
             var center = vertices.Count;
@@ -260,7 +265,9 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
             for (var j = 0; j < jointVertices; j++)
             {
                 var t = (j + 1) / (float)(jointVertices + 1);
-                vertices.Add((left - b).Slerp(right - b, t) + b);
+                
+                var totalAngle = (left - b).AngleTo(right - b);
+                vertices.Add((left - b).Rotated(Vector3.Back, totalAngle * t) + b);
 
                 var corner = j == 0 ? leftIndex : center + j;
                 triangles.AddTriangle(corner, center, center + j + 1, flip);
