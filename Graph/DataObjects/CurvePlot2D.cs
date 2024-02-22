@@ -1,24 +1,28 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Godot;
-using Godot.Collections;
 using PrimerTools.Utilities;
+using Array = Godot.Collections.Array;
 
 namespace PrimerTools.Graph;
 
 [Tool]
-public partial class CurvePlot : MeshInstance3D, IPrimerGraphData
+public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
 {
     public delegate Vector3 Transformation(Vector3 inputPoint);
+
     public Transformation transformPointFromDataSpaceToPositionSpace = point => point;
     private StandardMaterial3D materialCache;
+
     private StandardMaterial3D Material
     {
         get => materialCache ??= new StandardMaterial3D();
         set => materialCache = value;
     }
-    
+
     private float renderExtent;
+
     public float RenderExtent
     {
         get => renderExtent;
@@ -41,7 +45,7 @@ public partial class CurvePlot : MeshInstance3D, IPrimerGraphData
             // In any case, just wanted to record the thought that this is just one choice for how to do this, which
             // works well for the case of adding data to a line. So if a new context arises, adding interpolation
             // options would be possible.
-            
+
             // if (value != renderExtent) GD.Print("RenderExtent: " + value);
             renderExtent = value;
             if (value > pointsOfStages.Count - 1) return;
@@ -73,14 +77,12 @@ public partial class CurvePlot : MeshInstance3D, IPrimerGraphData
 
                 var lengthPerAdditionalPoint = new List<float>();
                 for (var i = 0; i < pointCountDifference; i++)
-                {
                     lengthPerAdditionalPoint.Add(
                         (next[prev.Length + i] - next[prev.Length - 1 + i]).Length());
-                }
 
                 var lengthOfAdditionalPoints = lengthPerAdditionalPoint.Sum();
                 var lengthToExtend = stepProgress * lengthOfAdditionalPoints;
-                
+
                 if (backward) lengthToExtend = lengthOfAdditionalPoints - lengthToExtend;
 
                 targetPoints = new Vector3[Mathf.Max(next.Length, prev.Length)];
@@ -98,20 +100,14 @@ public partial class CurvePlot : MeshInstance3D, IPrimerGraphData
                     // New points that have already been drawn
                     var segmentLength = lengthPerAdditionalPoint[i - minPointCount];
                     if (lengthToExtend > lengthSoFar + segmentLength)
-                    {
                         targetPoints[i] = next[i];
-                    }
                     // Segments in the progress of being drawn
                     else if (lengthToExtend > lengthSoFar)
-                    {
                         targetPoints[i] = next[i - 1]
                             .Lerp(next[i], (lengthToExtend - lengthSoFar) / segmentLength);
-                    }
                     // Segments that haven't been drawn yet. Just put the end points on top of the previous point.
                     else
-                    {
                         targetPoints[i] = targetPoints[i - 1];
-                    }
 
                     lengthSoFar += segmentLength;
                 }
@@ -127,32 +123,31 @@ public partial class CurvePlot : MeshInstance3D, IPrimerGraphData
             Mesh.SurfaceSetMaterial(0, Material);
         }
     }
-    
+
     private Vector3[] dataPoints;
     private readonly List<Vector3[]> pointsOfStages = new();
-    
-    private float width = 0.05f;
-    private int jointVertices = 3;
-    private int endCapVertices = 5;
-    
+
+    public float width = 0.05f;
+    public int jointVertices = 3;
+    public int endCapVertices = 5;
+
     public void SetData(params Vector3[] data)
     {
         dataPoints = data;
     }
-    
+
     public Animation Transition(float duration)
     {
-        foreach (var thing in dataPoints.Select( x => transformPointFromDataSpaceToPositionSpace(x)).ToArray())
-        {
+        foreach (var thing in dataPoints.Select(x => transformPointFromDataSpaceToPositionSpace(x)).ToArray())
             GD.Print(thing);
-        }
         // If there's not a previous stage, add the first point of the data as the first stage
-        if (pointsOfStages.Count == 0) pointsOfStages.Add( new[] {transformPointFromDataSpaceToPositionSpace(dataPoints[0])});
-        pointsOfStages.Add(dataPoints.Select( x => transformPointFromDataSpaceToPositionSpace(x)).ToArray());
-        
+        if (pointsOfStages.Count == 0)
+            pointsOfStages.Add(new[] { transformPointFromDataSpaceToPositionSpace(dataPoints[0]) });
+        pointsOfStages.Add(dataPoints.Select(x => transformPointFromDataSpaceToPositionSpace(x)).ToArray());
+
         var animation = new Animation();
         animation.Length = duration;
-        
+
         var trackIndex = animation.AddTrack(Animation.TrackType.Value);
         animation.TrackInsertKey(trackIndex, 0.0f, RenderExtent);
         animation.TrackInsertKey(trackIndex, duration, RenderExtent + 1);
@@ -164,7 +159,7 @@ public partial class CurvePlot : MeshInstance3D, IPrimerGraphData
 
     public Animation ShrinkToEnd()
     {
-        throw new System.NotImplementedException();
+        throw new NotImplementedException();
     }
 
     private Array MakeMeshData(Vector3[] points)
@@ -180,15 +175,15 @@ public partial class CurvePlot : MeshInstance3D, IPrimerGraphData
         // Needed because the animations usually start by drawing a line from nothing.
         if (vertices.Count == 0)
         {
-            vertices = new List<Vector3> {Vector3.Zero};
-            indices = new List<int> {0, 0, 0};
+            vertices = new List<Vector3> { Vector3.Zero };
+            indices = new List<int> { 0, 0, 0 };
         }
-        
+
         var vertexArray = vertices.ToArray();
         var indexArray = indices.ToArray();
         var normalArray = Enumerable.Repeat(Vector3.Back, vertexArray.Length).ToArray();
         MeshUtilities.MakeDoubleSided(ref vertexArray, ref indexArray, ref normalArray);
-        
+
         var surfaceArray = new Array();
         surfaceArray.Resize((int)Mesh.ArrayType.Max);
         surfaceArray[(int)Mesh.ArrayType.Vertex] = vertexArray;
@@ -197,131 +192,138 @@ public partial class CurvePlot : MeshInstance3D, IPrimerGraphData
 
         return surfaceArray;
     }
-     
-     private void CreateSegments(Vector3[] points, List<Vector3> vertices, List<int> indices)
+
+    private void CreateSegments(Vector3[] points, List<Vector3> vertices, List<int> indices)
+    {
+        for (var i = 0; i < points.Length - 1; i++)
         {
-            for (var i = 0; i < points.Length - 1; i++) {
-                var currentPoint = points[i];
-                var nextPoint = points[i + 1];
-                var direction = (nextPoint - currentPoint).Normalized();
-                var perpendicular = new Vector3(-direction.Y, direction.X, 0) * width / 2;
+            var currentPoint = points[i];
+            var nextPoint = points[i + 1];
+            var direction = (nextPoint - currentPoint).Normalized();
+            var perpendicular = new Vector3(-direction.Y, direction.X, 0) * width / 2;
 
-                // Add the four vertices of the rectangle to the list
-                vertices.Add(currentPoint + perpendicular);
-                vertices.Add(currentPoint - perpendicular);
-                vertices.Add(nextPoint + perpendicular);
-                vertices.Add(nextPoint - perpendicular);
+            // Add the four vertices of the rectangle to the list
+            vertices.Add(currentPoint + perpendicular);
+            vertices.Add(currentPoint - perpendicular);
+            vertices.Add(nextPoint + perpendicular);
+            vertices.Add(nextPoint - perpendicular);
 
-                // Add the indices of the two triangles to the list
-                var index = i * 4;
-                indices.AddTriangle(index, index + 2, index + 1);
-                indices.AddTriangle(index + 1, index + 2, index + 3);
+            // Add the indices of the two triangles to the list
+            var index = i * 4;
+            indices.AddTriangle(index, index + 2, index + 1);
+            indices.AddTriangle(index + 1, index + 2, index + 3);
+        }
+    }
+
+    private void AddJoints(Vector3[] points, List<Vector3> vertices, List<int> triangles)
+    {
+        // TODO: The segments overlap on one side of the joint. On the other side, there is a gap.
+        // Currently, we add some rounding to fill the gap, and that's the joint.
+        // Additional options could be to 
+        // - Add a miter joint, which extends both outer lines until they intersect. This intersection would be
+        //   calculated by adding the line's width to the outer length of both segments.
+        // - The inner part of the joint could be made to not overlap by doing the reverse the process for the outer
+        //   miter joint.
+        // - With a miter joint, the UV map could be made nice for drawing a texture or gradient on the line.
+        // - If inner joint is a miter but the outer is still curved, the rounded part of the curve wouldn't
+        //   agree super will with UVs, perhaps needing to be a solid color in a gradient situation. But in a situation
+        //   where we want a gradient, there might be so many points that miter angles are small, so the rounding
+        //   wouldn't matter anyway.
+
+        // Join segments with triangles in a curve
+        for (var i = 0; i < points.Length - 2; i++)
+        {
+            var a = points[i];
+            var b = points[i + 1];
+            var c = points[i + 2];
+
+            if ((c - a).Normalized() == (b - a).Normalized()) continue; // Skip if the points are in a straight line
+
+            var quadIndex = i * 4;
+            var center = vertices.Count;
+            vertices.Add(b);
+
+            var flip = (b - a).Cross(c - b).Z < 0;
+            var (leftIndex, rightIndex) = flip
+                ? (quadIndex + 2, quadIndex + 4)
+                : (quadIndex + 3, quadIndex + 5);
+
+            var left = vertices[leftIndex];
+            var right = vertices[rightIndex];
+
+            if (jointVertices <= 0)
+            {
+                triangles.AddTriangle(center, rightIndex, leftIndex, flip);
+                continue;
+            }
+
+            for (var j = 0; j < jointVertices; j++)
+            {
+                var t = (j + 1) / (float)(jointVertices + 1);
+                vertices.Add((left - b).Slerp(right - b, t) + b);
+
+                var corner = j == 0 ? leftIndex : center + j;
+                triangles.AddTriangle(corner, center, center + j + 1, flip);
+            }
+
+            triangles.AddTriangle(center + jointVertices, center, rightIndex, flip);
+        }
+    }
+
+    private void AddEndCap(List<Vector3> vertices, List<int> triangles, Vector3[] points, bool end = true)
+    {
+        Vector3 point;
+        Vector3 prev;
+        if (end)
+        {
+            point = points[^1];
+            prev = point;
+            for (var i = points.Length - 2; i >= 0; i--)
+            {
+                if (points[i] == point) continue;
+                prev = points[i];
+                break;
+            }
+        }
+        else
+        {
+            point = points[0];
+            prev = point;
+            for (var i = 1; i < points.Length; i++)
+            {
+                if (points[i] == point) continue;
+                prev = points[i];
+                break;
             }
         }
 
-     private void AddJoints(Vector3[] points, List<Vector3> vertices, List<int> triangles)
-     {
-         // TODO: The segments overlap on one side of the joint. On the other side, there is a gap.
-         // Currently, we add some rounding to fill the gap, and that's the joint.
-         // Additional options could be to 
-         // - Add a miter joint, which extends both outer lines until they intersect. This intersection would be
-         //   calculated by adding the line's width to the outer length of both segments.
-         // - The inner part of the joint could be made to not overlap by doing the reverse the process for the outer
-         //   miter joint.
-         // - With a miter joint, the UV map could be made nice for drawing a texture or gradient on the line.
-         // - If inner joint is a miter but the outer is still curved, the rounded part of the curve wouldn't
-         //   agree super will with UVs, perhaps needing to be a solid color in a gradient situation. But in a situation
-         //   where we want a gradient, there might be so many points that miter angles are small, so the rounding
-         //   wouldn't matter anyway.
-         
-         // Join segments with triangles in a curve
-         for (var i = 0; i < points.Length - 2; i++) {
-             var a = points[i];
-             var b = points[i + 1];
-             var c = points[i + 2];
-             
-             if ((c - a).Normalized() == (b - a).Normalized()) continue; // Skip if the points are in a straight line
-     
-             var quadIndex = i * 4;
-             var center = vertices.Count;
-             vertices.Add(b);
-     
-             var flip = (b - a).Cross(c - b).Z < 0 ;
-             var (leftIndex, rightIndex) = flip
-                 ? (quadIndex + 2, quadIndex + 4)
-                 : (quadIndex + 3, quadIndex + 5);
-     
-             var left = vertices[leftIndex];
-             var right = vertices[rightIndex];
-     
-             if (jointVertices <= 0) {
-                 triangles.AddTriangle(center, rightIndex, leftIndex, flip);
-                 continue;
-             }
-     
-             for (var j = 0; j < jointVertices; j++) {
-                 var t = (j + 1) / (float)(jointVertices + 1);
-                 vertices.Add((left - b).Slerp(right - b, t) + b);
-     
-                 var corner = j == 0 ? leftIndex : center + j;
-                 triangles.AddTriangle(corner, center, center + j + 1, flip);
-             }
-     
-             triangles.AddTriangle(center + jointVertices, center, rightIndex, flip);
-         }
-     }
-     private void AddEndCap(List<Vector3> vertices, List<int> triangles, Vector3[] points, bool end = true)
-     {
-         Vector3 point;
-         Vector3 prev;
-         if (end)
-         {
-             point = points[^1];
-             prev = point;
-             for (var i = points.Length - 2; i >= 0; i--)
-             {
-                 if (points[i] == point) continue;
-                 prev = points[i];
-                 break;
-             }
-         }
-         else
-         {
-             point = points[0];
-             prev = point;
-             for (var i = 1; i < points.Length; i++)
-             {
-                 if (points[i] == point) continue;
-                 prev = points[i];
-                 break;
-             }
-         }
-         if (prev == point) return;
-         
-         var direction = (point - prev).Normalized() * width / 2;
-         
-         var perpendicular = new Vector3(direction.Y, -direction.X, 0);
-         var center = vertices.Count;
-         var totalVertices = (float)endCapVertices + 2;
+        if (prev == point) return;
 
-         vertices.Add(point);
-         vertices.Add(point - perpendicular);
+        var direction = (point - prev).Normalized() * width / 2;
 
-         for (var i = 1; i <= totalVertices; i++) {
-             var t = i / totalVertices;
-             var a = t < 0.5
-                 ? (-perpendicular).Slerp(direction, t * 2)
-                 : direction.Slerp(perpendicular, t * 2 - 1);
+        var perpendicular = new Vector3(direction.Y, -direction.X, 0);
+        var center = vertices.Count;
+        var totalVertices = (float)endCapVertices + 2;
 
-             vertices.Add(a + point);
-             triangles.AddTriangle(center, center + i, center + i + 1);
-         }
-     }
+        vertices.Add(point);
+        vertices.Add(point - perpendicular);
 
-     public void SetColor(Color color)
-     {
-         Material.AlbedoColor = color;
-     }
+        for (var i = 1; i <= totalVertices; i++)
+        {
+            var t = i / totalVertices;
+            var a = t < 0.5
+                ? (-perpendicular).Slerp(direction, t * 2)
+                : direction.Slerp(perpendicular, t * 2 - 1);
+
+            vertices.Add(a + point);
+            triangles.AddTriangle(center, center + i, center + i + 1);
+        }
+    }
+
+    public void SetColor(Color color)
+    {
+        Material.AlbedoColor = color;
+    }
 
     // public class PrimerLine : MonoBehaviour, IMeshController, IDisposable, IPrimerGraphData
 //     {
