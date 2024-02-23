@@ -127,7 +127,13 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
     private Vector3[] dataPoints;
     private readonly List<Vector3[]> pointsOfStages = new();
 
-    public float width = 0.05f;
+    private float _width;
+
+    public float Width
+    {
+        set => _width = value / 1000;
+        get => _width * 1000;
+    }
     public int jointVertices = 3;
     public int endCapVertices = 5;
 
@@ -198,7 +204,7 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
             var currentPoint = points[i];
             var nextPoint = points[i + 1];
             var direction = (nextPoint - currentPoint).Normalized();
-            var perpendicular = new Vector3(-direction.Y, direction.X, 0) * width / 2;
+            var perpendicular = new Vector3(-direction.Y, direction.X, 0) * _width / 2;
 
             // Add the four vertices of the rectangle to the list
             vertices.Add(currentPoint + perpendicular);
@@ -266,8 +272,10 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
             {
                 var t = (j + 1) / (float)(jointVertices + 1);
                 
-                var totalAngle = (left - b).AngleTo(right - b);
-                vertices.Add((left - b).Rotated(Vector3.Back, totalAngle * t) + b);
+                vertices.Add(MySlerp(left - b, right - b, t) + b);
+                
+                // var totalAngle = (left - b).AngleTo(right - b);
+                // vertices.Add((left - b).Rotated(Vector3.Back, totalAngle * t) + b);
 
                 var corner = j == 0 ? leftIndex : center + j;
                 triangles.AddTriangle(corner, center, center + j + 1, flip);
@@ -275,6 +283,25 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
 
             triangles.AddTriangle(center + jointVertices, center, rightIndex, flip);
         }
+    }
+    
+    public Vector3 MySlerp(Vector3 from, Vector3 to, float weight)
+    {
+        float s1 = from.Length();
+        float s2 = to.Length();
+        if (s1 == 0.0 || s2 == 0.0)
+            return from.Lerp(to, weight);
+        float num1 = Mathf.Lerp(s1, s2, weight);
+        float angle = from.AngleTo(to);
+        if (angle == 0.0)
+            return from.Lerp(to, weight);
+        Vector3 axis = from.Cross(to).Normalized();
+        if (axis.Length() == 0)
+        {
+            GD.Print($"Vectors that cross to zero: {from}, {to}");
+            return from.Lerp(to, weight);
+        }
+        return from.Rotated(axis, angle * weight) * (num1 / s1);
     }
 
     private void AddEndCap(List<Vector3> vertices, List<int> triangles, Vector3[] points, bool end = true)
@@ -306,7 +333,7 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
 
         if (prev == point) return;
 
-        var direction = (point - prev).Normalized() * width / 2;
+        var direction = (point - prev).Normalized() * _width / 2;
 
         var perpendicular = new Vector3(direction.Y, -direction.X, 0);
         var center = vertices.Count;
