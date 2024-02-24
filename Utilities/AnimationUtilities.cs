@@ -17,6 +17,7 @@ public static class AnimationUtilities
         
         // It turns out the specialized track is busted? The graph tics jump around, but I'm too lazy to
         // make a test case to report it. I'll just use the generic track for now.
+        
         // var trackIndex = animation.AddTrack(Animation.TrackType.Position3D);
         // animation.PositionTrackInsertKey(trackIndex, 0.0f, node.Position);
         // animation.PositionTrackInsertKey(trackIndex, duration, destination);
@@ -73,34 +74,38 @@ public static class AnimationUtilities
         var newAnimation = new Animation();
         
         var finalAnimationLength = 0.0;
-        foreach (var anim in animations)
+        // Loop through the animations
+        foreach (var memberAnimation in animations)
         {
             var animLength = 0.0;
-            for (var i = 0; i < anim.GetTrackCount(); i++)
+            // Loop through the tracks in each animation
+            for (var i = 0; i < memberAnimation.GetTrackCount(); i++)
             {
-                var trackType = anim.TrackGetType(i);
+                var path = memberAnimation.TrackGetPath(i);
+                var trackType = memberAnimation.TrackGetType(i);
                 if (trackType == Animation.TrackType.Animation)
                 {
-                    GD.PushWarning($"AnimationUtilities.CombineAnimations may not work well with animation playback tracks. Track path: {anim.TrackGetPath(i)}");
+                    GD.PushWarning($"AnimationUtilities.CombineAnimations may not work well with animation playback tracks. Track path: {memberAnimation.TrackGetPath(i)}");
                 }
-                var newTrackIndex = newAnimation.AddTrack(trackType);
-                for (var j = 0; j < anim.TrackGetKeyCount(i); j++)
+
+                int trackIndex;
+                if (trackPaths.Contains((path, trackType)))
                 {
-                    var keyTime = anim.TrackGetKeyTime(i, j);
-                    animLength = Mathf.Max(animLength, keyTime);
-                    newAnimation.TrackInsertKey(newTrackIndex, keyTime + (parallel ? 0 : finalAnimationLength), anim.TrackGetKeyValue(i, j));
-                }
-                
-                var path = anim.TrackGetPath(i);
-                if (!trackPaths.Contains((path, trackType)))
-                {
-                    trackPaths.Add((path, trackType));
-                    newAnimation.TrackSetPath(newTrackIndex, path);
+                    trackIndex = trackPaths.IndexOf((path, trackType));
                 }
                 else
                 {
-                    GD.PushWarning($"Combined animations have tracks with the same path and type. May only use last track. Track path: {path}, Track type: {trackType}");
-                    newAnimation.TrackSetPath(newTrackIndex, path);
+                    trackIndex = newAnimation.AddTrack(trackType);
+                    newAnimation.TrackSetPath(trackIndex, path);
+                    trackPaths.Add((path, trackType));
+                }
+                
+                // Loop through they keys in each track
+                for (var j = 0; j < memberAnimation.TrackGetKeyCount(i); j++)
+                {
+                    var keyTime = memberAnimation.TrackGetKeyTime(i, j);
+                    animLength = Mathf.Max(animLength, keyTime);
+                    newAnimation.TrackInsertKey(trackIndex, keyTime + (parallel ? 0 : finalAnimationLength), memberAnimation.TrackGetKeyValue(i, j));
                 }
             }
 
