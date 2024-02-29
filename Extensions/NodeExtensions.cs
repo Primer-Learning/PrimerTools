@@ -18,12 +18,23 @@ public static class NodeExtensions
         {
             GD.Print($"WHOA. Depth is {depth} at node", parent.Name);
             return;
-        } 
+        }
         foreach (var child in parent.GetChildren())
         {
             child.Owner = ancestorWhoNodesAreLocalWithRespectTo;
             child.SceneFilePath = "";
             child.MakeChildrenLocalRecursively(ancestorWhoNodesAreLocalWithRespectTo, depth: depth + 1);
         }
+    }
+    
+    public static void SetParent(this Node node, Node parent)
+    {
+        // AddChild doesn't work if there is already a parent. So we gotsta do this. DUMB IMO, but whatever.
+        if (node.GetParent() != null)
+        {
+            node.GetParent().RemoveChild(node);
+        }
+
+        parent?.AddChild(node);
     }
 }
