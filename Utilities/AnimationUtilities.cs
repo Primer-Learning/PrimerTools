@@ -9,8 +9,9 @@ public static class AnimationUtilities
 {
     // TODO: Add a delay method which just pushes the timing of all keys back and returns a new animation
 
+    private const float Epsilon = 0.0001f;
+    
     #region Node animation extensions
-
     public static Animation MoveTo(this Node3D node, Vector3 destination, float duration = 0.5f)
     {
         var animation = new Animation();
@@ -24,6 +25,7 @@ public static class AnimationUtilities
         // animation.TrackSetPath(trackIndex, node.GetPath());
 
         var trackIndex = animation.AddTrack(Animation.TrackType.Value);
+        animation.TrackSetInterpolationType(trackIndex, Animation.InterpolationType.Cubic);
         animation.TrackInsertKey(trackIndex, 0.0f, node.Position);
         animation.TrackInsertKey(trackIndex, duration, destination);
         animation.TrackSetPath(trackIndex, node.GetPath()+":position");
@@ -45,6 +47,7 @@ public static class AnimationUtilities
         // animation.TrackSetPath(trackIndex, node.GetPath());
         
         var trackIndex = animation.AddTrack(Animation.TrackType.Value);
+        animation.TrackSetInterpolationType(trackIndex, Animation.InterpolationType.Cubic);
         animation.TrackInsertKey(trackIndex, 0.0f, node.Scale);
         animation.TrackInsertKey(trackIndex, duration, finalScale);
         animation.TrackSetPath(trackIndex, node.GetPath()+":scale");
@@ -58,6 +61,109 @@ public static class AnimationUtilities
         return node.ScaleTo(Vector3.One * finalScale, duration);
     }
     #endregion
+
+    #region Material animation
+    public static Animation AnimateColorHsv(this MeshInstance3D meshInstance3D, Color finalColor, float duration = 0.5f)
+    {
+        var material = meshInstance3D.GetOrCreateOverrideMaterial();
+        
+        var animation = new Animation();
+        
+        var trackIndex = animation.AddTrack(Animation.TrackType.Value);
+        var hueDiff = finalColor.H - material.AlbedoColor.H;
+        if (Mathf.Abs(hueDiff) < 0.5f)
+        {
+            // Hues are closer than half the color wheel, so interpolate normally 
+            animation.TrackInsertKey(trackIndex, 0.0f, material.AlbedoColor.H);
+            animation.TrackInsertKey(trackIndex, duration, finalColor.H);
+            animation.TrackSetPath(trackIndex, meshInstance3D.GetPath()+":surface_material_override/0:albedo_color:h");
+        }
+        else
+        { 
+            // Hues are further than half the color wheel.
+            // There might be some elegant way to handle both of these cases together, but not sure it would be faster
+            // or less confusing.
+            if (hueDiff < 0) // If the final hue is less than the initial hue, we need to wrap around 1 
+            {
+                hueDiff = 1 - MathF.Abs(hueDiff); // -0.9 goes to 0.1 for example. We now care about the magnitude of the shorter path.
+                animation.TrackInsertKey(trackIndex, 0f, material.AlbedoColor.H);
+                animation.TrackInsertKey(trackIndex, duration * (1 - material.AlbedoColor.H) / hueDiff, 1f);
+                animation.TrackInsertKey(trackIndex, duration * (1 - material.AlbedoColor.H) / hueDiff + Epsilon, 0f);
+                animation.TrackInsertKey(trackIndex, duration, finalColor.H);
+                animation.TrackSetPath(trackIndex, meshInstance3D.GetPath()+":surface_material_override/0:albedo_color:h");
+            }
+            else // If the final hue is greater than the initial hue, we need to wrap around 0
+            {
+                hueDiff = 1 - MathF.Abs(hueDiff);
+                animation.TrackInsertKey(trackIndex, 0f, material.AlbedoColor.H);
+                animation.TrackInsertKey(trackIndex, duration * material.AlbedoColor.H / hueDiff, 0f);
+                animation.TrackInsertKey(trackIndex, duration * material.AlbedoColor.H / hueDiff + Epsilon, 1f);
+                animation.TrackInsertKey(trackIndex, duration, finalColor.H);
+                animation.TrackSetPath(trackIndex, meshInstance3D.GetPath()+":surface_material_override/0:albedo_color:h");
+            }
+        }
+        
+        trackIndex = animation.AddTrack(Animation.TrackType.Value);
+        animation.TrackInsertKey(trackIndex, 0f, material.AlbedoColor.S);
+        animation.TrackInsertKey(trackIndex, duration, finalColor.S);
+        animation.TrackSetPath(trackIndex, meshInstance3D.GetPath()+":surface_material_override/0:albedo_color:s");
+        
+        trackIndex = animation.AddTrack(Animation.TrackType.Value);
+        animation.TrackInsertKey(trackIndex, 0f, material.AlbedoColor.V);
+        animation.TrackInsertKey(trackIndex, duration, finalColor.V);
+        animation.TrackSetPath(trackIndex, meshInstance3D.GetPath()+":surface_material_override/0:albedo_color:v");
+        
+        material.AlbedoColor = finalColor;
+
+        return animation;
+    }
+    
+    public static Animation AnimateColorRgb(this MeshInstance3D meshInstance3D, Color finalColor, float duration = 0.5f)
+    {
+        var material = meshInstance3D.GetOrCreateOverrideMaterial();
+        
+        var animation = new Animation();
+        var trackIndex = animation.AddTrack(Animation.TrackType.Value);
+        animation.TrackInsertKey(trackIndex, 0.0f, material.AlbedoColor);
+        animation.TrackInsertKey(trackIndex, duration, finalColor);
+        animation.TrackSetPath(trackIndex, meshInstance3D.GetPath()+":surface_material_override/0:albedo_color");
+        material.AlbedoColor = finalColor;
+
+        return animation;
+    }
+    
+    private static StandardMaterial3D GetOrCreateOverrideMaterial(this MeshInstance3D meshInstance3D)
+    {
+        // Currently, this creates a new material if there's no existing override. I'm not certain whether this
+        // is terribly inefficient. I know Godot has inherited materials or something like that, which should be 
+        // more efficient, but I don't know if this uses that under the hood or what.
+        
+        // Use the surface material override if it's there and a StandardMaterial3D
+        var currentOverride = meshInstance3D.GetSurfaceOverrideMaterial(0);
+        if (currentOverride is StandardMaterial3D material)
+        {
+            return material;
+        }
+        if (currentOverride != null)
+        {
+            // There may be other material types this works for, but just working with StandardMaterial3D for now.
+            GD.PushWarning($"Surface override material of {meshInstance3D.Name} is not a StandardMaterial3D. " +
+                        $"Haven't handled that case for animations," +
+                        $"so replacing with a new StandardMaterial3D.");
+        }
+        
+        // If not, copy the mesh's material and put it in the override slot to avoid changing the color of all the objects that share the mesh.
+        // If neither exist, just create a new standard material and put it in the override slot.
+        var meshMaterial = meshInstance3D.Mesh.SurfaceGetMaterial(0);
+        var newOverrideMaterial = meshMaterial != null
+            ? (StandardMaterial3D)meshMaterial.Duplicate()
+            : new StandardMaterial3D();
+            
+        meshInstance3D.SetSurfaceOverrideMaterial(0, newOverrideMaterial);
+        return newOverrideMaterial;
+    }
+
+    #endregion    
     
     #region Combining animations
     public static Animation Parallel(params Animation[] animations)
