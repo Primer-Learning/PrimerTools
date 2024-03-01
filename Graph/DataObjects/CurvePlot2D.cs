@@ -136,12 +136,21 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
     }
     public int jointVertices = 3;
     public int endCapVertices = 5;
-
+    
+    /// <summary>
+    /// Sets the data which will be the target of the next transition
+    /// </summary>
+    /// <param name="data"></param>
     public void SetData(params Vector3[] data)
     {
         dataPoints = data;
     }
 
+    /// <summary>
+    /// Creates an animation that transitions to the current data, set by SetData.
+    /// </summary>
+    /// <param name="duration"></param>
+    /// <returns></returns>
     public Animation Transition(float duration)
     {
         // If there's not a previous stage, add the first point of the data as the first stage
