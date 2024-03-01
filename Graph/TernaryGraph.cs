@@ -20,6 +20,15 @@ public partial class TernaryGraph : Node3D
             new (0.5f, Mathf.Sqrt(3) / 2, 0)
         };
 
+        var center = (corners[0] + corners[1] + corners[2]) / 3;
+        var cornersToCenterNormalized = corners.Select(x => (center - x).Normalized()).ToArray();
+        var correctedCorners = new Vector3[]
+        {
+            corners[0] + (cornersToCenterNormalized[1] + cornersToCenterNormalized[2]) * chonk * 2,
+            corners[1] + (cornersToCenterNormalized[2] + cornersToCenterNormalized[0]) * chonk * 2,
+            corners[2] + (cornersToCenterNormalized[0] + cornersToCenterNormalized[1]) * chonk * 2
+        };
+
         for (var i = 0; i < 3; i++)
         {
             // Cylinder
@@ -34,7 +43,7 @@ public partial class TernaryGraph : Node3D
             mesh.TopRadius = chonk;
             cylinder.Mesh = mesh;
             
-            cylinder.Position = (corners[i] + corners[(i + 1) % 3]) / 2;
+            cylinder.Position = (correctedCorners[i] + correctedCorners[(i + 1) % 3]) / 2;
             cylinder.RotationDegrees = new Vector3(0, 0, 90 + 120 * i);
             
             // Sphere
@@ -52,7 +61,7 @@ public partial class TernaryGraph : Node3D
             sMesh.Radius = chonk * _pointSizeFactor;
             sphere.Mesh = sMesh;
             
-            sphere.Position = corners[i];
+            sphere.Position = correctedCorners[i];
             
             // Label
             var label = new LatexNode();
@@ -69,7 +78,7 @@ public partial class TernaryGraph : Node3D
             if (i < 2) offset = new Vector3(0, -0.13f, 0);
             else offset = new Vector3(0, 0.07f, 0);
             
-            label.Position = corners[i] + offset;
+            label.Position = correctedCorners[i] + offset;
             label.Scale = new Vector3(0.1f, 0.1f, 0.1f);
         }
     }
