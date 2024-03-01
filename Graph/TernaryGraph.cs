@@ -1,10 +1,16 @@
 ﻿using System.Linq;
 using Godot;
+using Primer;
+using PrimerTools.LaTeX;
 
 namespace PrimerTools.Graph;
 
 public partial class TernaryGraph : Node3D
 {
+    private float _pointSizeFactor = 3;
+    public string[] Labels = {"A", "B", "C"}; 
+    public Color[] Colors = {PrimerColor.red, PrimerColor.green, PrimerColor.blue}; 
+    
     public void CreateBounds(float chonk = 0.01f)
     {
         var corners = new Vector3[]
@@ -34,18 +40,38 @@ public partial class TernaryGraph : Node3D
             // Sphere
             var sphere = new MeshInstance3D();
             sphere.Name = $"Sphere {i}";
+            
             AddChild(sphere);
             sphere.Owner = GetTree().EditedSceneRoot;
             
             var sMesh = new SphereMesh();
-            sMesh.Height = 2 * chonk;
-            sMesh.Radius = chonk;
+            var mat = new StandardMaterial3D();
+            mat.AlbedoColor = Colors[i];
+            sMesh.SurfaceSetMaterial(0, mat);
+            sMesh.Height = 2 * chonk * _pointSizeFactor;
+            sMesh.Radius = chonk * _pointSizeFactor;
             sphere.Mesh = sMesh;
             
             sphere.Position = corners[i];
+            
+            // Label
+            var label = new LatexNode();
+            AddChild(label);
+            label.Owner = GetTree().EditedSceneRoot;
+
+            label.latex = Labels[i];
+            label.HorizontalAlignment = LatexNode.HorizontalAlignmentOptions.Center;
+            label.VerticalAlignment = LatexNode.VerticalAlignmentOptions.Center;
+            label.UpdateCharacters();
+            label.MakeChildrenLocalRecursively(GetTree().EditedSceneRoot);
+
+            Vector3 offset;
+            if (i < 2) offset = new Vector3(0, -0.13f, 0);
+            else offset = new Vector3(0, 0.07f, 0);
+            
+            label.Position = corners[i] + offset;
+            label.Scale = new Vector3(0.1f, 0.1f, 0.1f);
         }
-
-
     }
     
     public static Vector3 CoordinatesToPosition(float a, float b, float c)

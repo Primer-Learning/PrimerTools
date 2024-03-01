@@ -46,6 +46,7 @@ if mesh_objects:
         obj.location += translation
         obj.location *= SCALE_FACTOR
         obj.scale *= SCALE_FACTOR
+        # obj.rotation_euler = (3.14159265358 / 2, 0, 0) #This will only work if we rotate around the baseline instead of center
         bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
 
 bpy.data.objects.remove(first_obj, do_unlink=True)

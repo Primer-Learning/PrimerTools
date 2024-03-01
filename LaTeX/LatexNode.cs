@@ -29,11 +29,10 @@ public partial class LatexNode : Node3D
 		}
 		
 		var path = await latexToMesh.MeshFromExpression(latex, openBlender);
-		var newNode = ResourceLoader.Load<PackedScene>(path).Instantiate();
+		var newNode = ResourceLoader.Load<PackedScene>(path).Instantiate<Node3D>();
 		
 		AddChild(newNode);
-		// newNode.Owner = this;
-		// newNode.Owner = GetTree().EditedSceneRoot;
+		newNode.RotationDegrees = new Vector3(90, 0, 0);
 		
 		Align();
 	}
