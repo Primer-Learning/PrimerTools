@@ -14,6 +14,8 @@ public static class AnimationUtilities
     #region Node animation extensions
     public static Animation MoveTo(this Node3D node, Vector3 destination, float duration = 0.5f)
     {
+        if (duration == 0) duration = Epsilon;
+        
         var animation = new Animation();
         
         // It turns out the specialized track is busted? The graph tics jump around, but I'm too lazy to
@@ -37,6 +39,8 @@ public static class AnimationUtilities
     
     public static Animation ScaleTo(this Node3D node, Vector3 finalScale, float duration = 0.5f)
     {
+        if (duration == 0) duration = Epsilon;
+        
         var animation = new Animation();
 
         // if (finalScale == node.Scale) return null;
