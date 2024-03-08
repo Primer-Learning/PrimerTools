@@ -12,7 +12,7 @@ public static class AnimationUtilities
     private const float Epsilon = 0.0001f;
     
     #region Node animation extensions
-    public static Animation MoveTo(this Node3D node, Vector3 destination, float duration = 0.5f)
+    public static Animation MoveTo(this Node3D node, Vector3 destination, float stopDistance = 0, float duration = 0.5f)
     {
         if (duration == 0) duration = Epsilon;
         
@@ -25,6 +25,9 @@ public static class AnimationUtilities
         // animation.PositionTrackInsertKey(trackIndex, 0.0f, node.Position);
         // animation.PositionTrackInsertKey(trackIndex, duration, destination);
         // animation.TrackSetPath(trackIndex, node.GetPath());
+        
+        var difference = destination - node.Position;
+        destination -= difference.Normalized() * stopDistance;
 
         var trackIndex = animation.AddTrack(Animation.TrackType.Value);
         animation.TrackSetInterpolationType(trackIndex, Animation.InterpolationType.Cubic);
@@ -63,7 +66,19 @@ public static class AnimationUtilities
 
         return animation;
     }
-    
+
+    public static Animation WalkTo(this Node3D node, Vector3 destination, float stopDistance = 0, float duration = 0.5f, float prepTurnDuration = 0.1f)
+    {
+        var difference = destination - node.Position;
+        
+        var prepRotation = node.RotateTo(new Quaternion(Vector3.Back, difference.Normalized()), prepTurnDuration);
+        var move = node.MoveTo(destination, stopDistance, duration);
+
+        return Parallel(
+            prepRotation,
+            move
+        );
+    }
     public static Animation ScaleTo(this Node3D node, Vector3 finalScale, float duration = 0.5f)
     {
         if (duration == 0) duration = Epsilon;
