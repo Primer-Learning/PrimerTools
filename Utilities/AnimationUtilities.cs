@@ -8,7 +8,7 @@ namespace PrimerTools;
 public static class AnimationUtilities
 {
     // TODO: Add a delay method which just pushes the timing of all keys back and returns a new animation
-
+    
     private const float Epsilon = 0.0001f;
     
     #region Node animation extensions
@@ -33,6 +33,33 @@ public static class AnimationUtilities
         animation.TrackSetPath(trackIndex, node.GetPath()+":position");
         
         node.Position = destination;
+
+        return animation;
+    }
+    
+    public static Animation RotateTo(this Node3D node, Vector3 eulerAnglesInDegrees, float duration = 0.5f)
+    {
+        var eulerAnglesInRadians = new Vector3(
+            Mathf.DegToRad(eulerAnglesInDegrees.X),
+            Mathf.DegToRad(eulerAnglesInDegrees.Y),
+            Mathf.DegToRad(eulerAnglesInDegrees.Z)
+        );
+        return node.RotateTo(Quaternion.FromEuler(eulerAnglesInRadians), duration);
+    }
+    
+    public static Animation RotateTo(this Node3D node, Quaternion destination, float duration = 0.5f)
+    {
+        if (duration == 0) duration = Epsilon;
+        
+        var animation = new Animation();
+        
+        var trackIndex = animation.AddTrack(Animation.TrackType.Value);
+        animation.TrackSetInterpolationType(trackIndex, Animation.InterpolationType.Cubic);
+        animation.TrackInsertKey(trackIndex, 0.0f, node.Quaternion);
+        animation.TrackInsertKey(trackIndex, duration, destination);
+        animation.TrackSetPath(trackIndex, node.GetPath()+":quaternion");
+        
+        node.Quaternion = destination;
 
         return animation;
     }

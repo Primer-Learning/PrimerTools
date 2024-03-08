@@ -5,18 +5,18 @@ namespace PrimerTools.AnimationSequence;
 [Tool]
 public abstract partial class AnimationSequence : AnimationPlayer
 {
-	private AnimationPlayer referenceAnimationPlayer;
-	private AnimationLibrary referenceAnimationLibrary;
+	private AnimationPlayer _referenceAnimationPlayer;
+	private AnimationLibrary _referenceAnimationLibrary;
 
-	private int animationsMade = 0;
+	private int _animationsMade = 0;
 
-	private bool run = true;
+	private bool _run = true;
 	[Export] private bool Run {
-		get => run;
+		get => _run;
 		set {
-			var oldRun = run;
-			run = value;
-			if (run && !oldRun && Engine.IsEditorHint()) { // Avoids running on build
+			var oldRun = _run;
+			_run = value;
+			if (_run && !oldRun && Engine.IsEditorHint()) { // Avoids running on build
 				Reset();
 				Define();
 				CreateTopLevelAnimation();
@@ -44,8 +44,15 @@ public abstract partial class AnimationSequence : AnimationPlayer
 			var mainAnimation = GetAnimation("p/CombinedAnimation");
 			for (var i = mainAnimation.TrackGetKeyCount(0) - 1; i >= 0; i--)
 			{
-				var time = mainAnimation.TrackGetKeyTime(0, i);
-				Seek(time, update: true);
+				var name = mainAnimation.AnimationTrackGetKeyAnimation(0, i);
+				var anim = _referenceAnimationPlayer.GetAnimation(name);
+				for (var j = 0; j < anim.GetTrackCount(); j++)
+				{
+					var path = anim.TrackGetPath(j);
+					GetNode(path).Set(path.GetConcatenatedSubNames(), anim.TrackGetKeyValue(j, 0));
+				}
+
+				GD.Print(name);
 			}
 			
 			Play("p/CombinedAnimation");
@@ -71,11 +78,11 @@ public abstract partial class AnimationSequence : AnimationPlayer
 			child.Free();
 		}
 		
-		referenceAnimationPlayer = MakeReferenceAnimationPlayer();
-		referenceAnimationLibrary = MakeOrGetAnimationLibrary(referenceAnimationPlayer, "p");
+		_referenceAnimationPlayer = MakeReferenceAnimationPlayer();
+		_referenceAnimationLibrary = MakeOrGetAnimationLibrary(_referenceAnimationPlayer, "p");
 		
 		// Reset the index for the library
-		animationsMade = 0;
+		_animationsMade = 0;
 	}
 
 	#region Animation Methods
@@ -95,7 +102,7 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		}
 		
 		// Put the library in the animation player
-		AddAnimationToLibrary(animation, $"anim{animationsMade++}", referenceAnimationLibrary);
+		AddAnimationToLibrary(animation, $"anim{_animationsMade++}", _referenceAnimationLibrary);
 	}
 	#endregion
 	
@@ -111,10 +118,10 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		
 		// TODO: Make time the minimum of next start time and previous end time
 		var time = 0.0f;
-		foreach (var animationName in referenceAnimationPlayer.GetAnimationList())
+		foreach (var animationName in _referenceAnimationPlayer.GetAnimationList())
 		{
 			animation.TrackInsertKey(trackIndex, time, animationName);
-			time += referenceAnimationPlayer.GetAnimation(animationName).Length;
+			time += _referenceAnimationPlayer.GetAnimation(animationName).Length;
 		}
 		animation.Length = time;
 		
