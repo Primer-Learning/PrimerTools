@@ -39,7 +39,6 @@ public static class AnimationUtilities
 
         return animation;
     }
-    
     public static Animation RotateTo(this Node3D node, Vector3 eulerAnglesInDegrees, float duration = 0.5f)
     {
         var eulerAnglesInRadians = new Vector3(
@@ -49,7 +48,6 @@ public static class AnimationUtilities
         );
         return node.RotateTo(Quaternion.FromEuler(eulerAnglesInRadians), duration);
     }
-    
     public static Animation RotateTo(this Node3D node, Quaternion destination, float duration = 0.5f)
     {
         if (duration == 0) duration = Epsilon;
@@ -66,7 +64,6 @@ public static class AnimationUtilities
 
         return animation;
     }
-
     public static Animation WalkTo(this Node3D node, Vector3 destination, float stopDistance = 0, float duration = 0.5f, float prepTurnDuration = 0.1f)
     {
         var difference = destination - node.Position;
@@ -279,6 +276,28 @@ public static class AnimationUtilities
     public static Animation RunInParallel(this IEnumerable<Animation> animations)
     {
         return Parallel(animations.ToArray());
+    }
+    
+    #endregion
+    
+    #region AnimationPlayer extensions
+
+    public static Animation CopyAnimationAndLocalizeTrackPaths(this AnimationPlayer animationPlayer, StringName name)
+    {
+        var original = animationPlayer.GetAnimation(name);
+        if (original == null) throw new Exception($"Animation {name} not found in {animationPlayer.Name}");
+        var anim = original.Duplicate() as Animation;
+        // Get the path to the animation player
+        var rootOfRelativePath = animationPlayer.GetParent().GetPath();
+        
+        // Loop through the tracks in the animation
+        // For each track, get the path to the node and make it absolute
+        for (var i = 0; i < anim.GetTrackCount(); i++)
+        {
+            anim.TrackSetPath(i, rootOfRelativePath + "/" + anim.TrackGetPath(i));
+        }
+
+        return anim;
     }
     
     #endregion

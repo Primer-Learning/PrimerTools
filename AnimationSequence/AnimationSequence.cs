@@ -87,17 +87,18 @@ public abstract partial class AnimationSequence : AnimationPlayer
 
 	#region Animation Methods
 
-	protected void RegisterAnimation(Animation animation)
+	protected void RegisterAnimation(Animation animation, bool log = false)
 	{
 		for (var i = 0; i < animation.GetTrackCount(); i++)
 		{
 			// This runs at edit time, so it assumes an absolute path in the context of the editor.
 			// A path relative to AnimationSequence also works, though this code is unnecessary in that case.
 			var path = animation.TrackGetPath(i);
-			// GD.Print("Path is " + path);
+			if (log) GD.Print("Path is " + path);
 			var node = GetNode(path);
 			// Make the path relative to AnimationSequence node so it will work in editor and player contexts
 			var relativePath = GetPathTo(node) + ":" + path.GetConcatenatedSubNames();
+			if (log) GD.Print("Relative path is " + relativePath);
 			animation.TrackSetPath(i, relativePath);
 		}
 		
