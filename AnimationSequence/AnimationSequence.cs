@@ -51,8 +51,6 @@ public abstract partial class AnimationSequence : AnimationPlayer
 					var path = anim.TrackGetPath(j);
 					GetNode(path).Set(path.GetConcatenatedSubNames(), anim.TrackGetKeyValue(j, 0));
 				}
-
-				GD.Print(name);
 			}
 			
 			Play("p/CombinedAnimation");

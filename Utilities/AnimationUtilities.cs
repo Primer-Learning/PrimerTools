@@ -287,16 +287,20 @@ public static class AnimationUtilities
         var original = animationPlayer.GetAnimation(name);
         if (original == null) throw new Exception($"Animation {name} not found in {animationPlayer.Name}");
         var anim = original.Duplicate() as Animation;
+
+        return animationPlayer.LocalizeTrackPaths(anim);
+    }
+
+    public static Animation LocalizeTrackPaths(this AnimationPlayer animationPlayer, Animation anim)
+    {
         // Get the path to the animation player
         var rootOfRelativePath = animationPlayer.GetParent().GetPath();
-        
         // Loop through the tracks in the animation
         // For each track, get the path to the node and make it absolute
         for (var i = 0; i < anim.GetTrackCount(); i++)
         {
             anim.TrackSetPath(i, rootOfRelativePath + "/" + anim.TrackGetPath(i));
         }
-
         return anim;
     }
     
