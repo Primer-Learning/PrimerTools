@@ -35,7 +35,7 @@ public partial class Graph : Node3D
         // Make the graph and children visible in the editor and eligible to be saved in the scene. 
         var sceneRoot = graph.GetTree().EditedSceneRoot;
         graph.Owner = sceneRoot;
-        graph.MakeChildrenLocalRecursively(sceneRoot);
+        graph.MakeSelfAndChildrenLocal(sceneRoot);
         
         return graph;
     }

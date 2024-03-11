@@ -10,20 +10,20 @@ public static class NodeExtensions
     // This one may not be necessary, since it's equivalent to the other one if you feed it the same node.
     public static void MakeAncestorsLocal(this Node parent)
     {
-        parent.MakeChildrenLocalRecursively(parent);
+        parent.MakeSelfAndChildrenLocal(parent);
     }
-    public static void MakeChildrenLocalRecursively(this Node parent, Node ancestorWhoNodesAreLocalWithRespectTo, int depth = 0)
+    public static void MakeSelfAndChildrenLocal(this Node parent, Node ancestorWhoNodesAreLocalWithRespectTo, int depth = 0)
     {
-        if (depth > 20)
+        parent.Owner = ancestorWhoNodesAreLocalWithRespectTo;
+        parent.SceneFilePath = "";
+        if (depth > 100)
         {
             GD.Print($"WHOA. Depth is {depth} at node", parent.Name);
             return;
         }
         foreach (var child in parent.GetChildren())
         {
-            child.Owner = ancestorWhoNodesAreLocalWithRespectTo;
-            child.SceneFilePath = "";
-            child.MakeChildrenLocalRecursively(ancestorWhoNodesAreLocalWithRespectTo, depth: depth + 1);
+            child.MakeSelfAndChildrenLocal(ancestorWhoNodesAreLocalWithRespectTo, depth: depth + 1);
         }
     }
     

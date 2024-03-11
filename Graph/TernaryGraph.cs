@@ -72,7 +72,7 @@ public partial class TernaryGraph : Node3D
             label.HorizontalAlignment = LatexNode.HorizontalAlignmentOptions.Center;
             label.VerticalAlignment = LatexNode.VerticalAlignmentOptions.Center;
             label.UpdateCharacters();
-            label.MakeChildrenLocalRecursively(GetTree().EditedSceneRoot);
+            label.MakeSelfAndChildrenLocal(GetTree().EditedSceneRoot);
 
             Vector3 offset;
             if (i < 2) offset = new Vector3(0, -0.13f, 0);

@@ -104,6 +104,10 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		// Put the library in the animation player
 		AddAnimationToLibrary(animation, $"anim{_animationsMade++}", _referenceAnimationLibrary);
 	}
+	protected void RegisterAnimation(params Animation[] animations)
+	{
+		RegisterAnimation(animations.RunInParallel());
+	}
 	#endregion
 	
 	#region Animation Library Handling

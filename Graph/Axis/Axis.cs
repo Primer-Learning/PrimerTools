@@ -143,7 +143,7 @@ public partial class Axis : Node3D
 				AddChild(tic);
 				tic.Owner = GetTree().EditedSceneRoot;
 				tic.SceneFilePath = "";
-				tic.MakeChildrenLocalRecursively(GetTree().EditedSceneRoot);
+				tic.MakeSelfAndChildrenLocal(GetTree().EditedSceneRoot);
 				
 				tic.Position = GetPosition(tic);
 				tic.Scale = Vector3.Zero;

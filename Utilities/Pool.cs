@@ -31,7 +31,7 @@ public class Pool<T> : Stack<T> where T : Node3D, new()
         return (T)scene.Instantiate();
     }
     
-    public T GetFromPool(Node3D parent = null)
+    public T GetFromPool()
     {
         var pooledNode = Count > 0 ? Pop() : NewPooledObject();
         pooledNode.Visible = true;
