@@ -39,6 +39,10 @@ public static class AnimationUtilities
 
         return animation;
     }
+    public static Animation RotateTo(this Node3D node, float xDeg, float yDeg, float zDeg, float duration = 0.5f)
+    {
+        return node.RotateTo(new Vector3(xDeg, yDeg, zDeg), duration);
+    }
     public static Animation RotateTo(this Node3D node, Vector3 eulerAnglesInDegrees, float duration = 0.5f)
     {
         var eulerAnglesInRadians = new Vector3(
@@ -103,6 +107,58 @@ public static class AnimationUtilities
     {
         return node.ScaleTo(Vector3.One * finalScale, duration);
     }
+    #endregion
+
+    #region Animation modifiers
+
+    public static Animation WithDelay(this Animation animation, float delay)
+    {
+        var newAnimation = new Animation();
+        for (var i = 0; i < animation.GetTrackCount(); i++)
+        {
+            // Add a new track of the same type to newAnimation
+            newAnimation.AddTrack(animation.TrackGetType(i));
+            newAnimation.TrackSetPath(i, animation.TrackGetPath(i));
+            newAnimation.TrackSetInterpolationType(i, animation.TrackGetInterpolationType(i));
+            
+            for (var j = 0; j < animation.TrackGetKeyCount(i); j++)
+            {
+                // Set keys
+                newAnimation.TrackInsertKey(i, animation.TrackGetKeyTime(i, j) + delay,
+                    animation.TrackGetKeyValue(i, j));
+            }
+        }
+        return newAnimation;
+    }
+    public static Animation WithDuration(this Animation animation, float duration)
+    {
+        var newAnimation = new Animation();
+        var lastKeyTime = 0.0;
+        for (var i = 0; i < animation.GetTrackCount(); i++)
+        {
+            var time = animation.TrackGetKeyTime(i, animation.TrackGetKeyCount(i) - 1);
+            lastKeyTime = Mathf.Max(lastKeyTime, time);
+        }
+        
+        var timeScale = duration / lastKeyTime;
+        
+        for (var i = 0; i < animation.GetTrackCount(); i++)
+        {
+            // Add a new track of the same type to newAnimation
+            newAnimation.AddTrack(animation.TrackGetType(i));
+            newAnimation.TrackSetPath(i, animation.TrackGetPath(i));
+            newAnimation.TrackSetInterpolationType(i, animation.TrackGetInterpolationType(i));
+            
+            for (var j = 0; j < animation.TrackGetKeyCount(i); j++)
+            {
+                // Set keys
+                newAnimation.TrackInsertKey(i, animation.TrackGetKeyTime(i, j) * timeScale,
+                    animation.TrackGetKeyValue(i, j));
+            }
+        }
+        return newAnimation;
+    }
+
     #endregion
 
     #region Material animation
