@@ -12,7 +12,7 @@ public static class AnimationUtilities
     private const float Epsilon = 0.0001f;
     
     #region Node animation extensions
-    public static Animation MoveTo(this Node3D node, Vector3 destination, float stopDistance = 0, float duration = 0.5f)
+    public static Animation MoveTo(this Node3D node, Vector3 destination, float stopDistance = 0, float duration = 0.5f, bool global = false)
     {
         if (duration == 0) duration = Epsilon;
         
@@ -25,17 +25,27 @@ public static class AnimationUtilities
         // animation.PositionTrackInsertKey(trackIndex, 0.0f, node.Position);
         // animation.PositionTrackInsertKey(trackIndex, duration, destination);
         // animation.TrackSetPath(trackIndex, node.GetPath());
-        
-        var difference = destination - node.Position;
+
+        var difference = global
+            ? destination - node.GlobalPosition
+            : destination - node.Position;
+         
         destination -= difference.Normalized() * stopDistance;
 
         var trackIndex = animation.AddTrack(Animation.TrackType.Value);
         animation.TrackSetInterpolationType(trackIndex, Animation.InterpolationType.Cubic);
-        animation.TrackInsertKey(trackIndex, 0.0f, node.Position);
+        animation.TrackInsertKey(trackIndex, 0.0f, global ? node.GlobalPosition : node.Position);
         animation.TrackInsertKey(trackIndex, duration, destination);
-        animation.TrackSetPath(trackIndex, node.GetPath()+":position");
+        animation.TrackSetPath(trackIndex, node.GetPath()+ (global ? ":global_position" : ":position"));
         
-        node.Position = destination;
+        if (global)
+        {
+            node.GlobalPosition = destination;
+        }
+        else
+        {
+            node.Position = destination;
+        }
 
         return animation;
     }
@@ -84,18 +94,15 @@ public static class AnimationUtilities
     {
         if (duration == 0) duration = Epsilon;
         
-        var animation = new Animation();
-
-        // if (finalScale == node.Scale) return null;
+        // True zero scale causes the rotation to be set to identity. So we'll use a small value instead.
+        if (finalScale == Vector3.Zero) finalScale = Vector3.One * Epsilon;
+        var initialScale = node.Scale == Vector3.Zero ? Vector3.One * Epsilon : node.Scale;
         
-        // var trackIndex = animation.AddTrack(Animation.TrackType.Scale3D);
-        // animation.ScaleTrackInsertKey(trackIndex, 0.0f, node.Scale);
-        // animation.ScaleTrackInsertKey(trackIndex, duration, finalScale);
-        // animation.TrackSetPath(trackIndex, node.GetPath());
+        var animation = new Animation();
         
         var trackIndex = animation.AddTrack(Animation.TrackType.Value);
         animation.TrackSetInterpolationType(trackIndex, Animation.InterpolationType.Cubic);
-        animation.TrackInsertKey(trackIndex, 0.0f, node.Scale);
+        animation.TrackInsertKey(trackIndex, 0.0f, initialScale);
         animation.TrackInsertKey(trackIndex, duration, finalScale);
         animation.TrackSetPath(trackIndex, node.GetPath()+":scale");
         
@@ -156,6 +163,8 @@ public static class AnimationUtilities
                     animation.TrackGetKeyValue(i, j));
             }
         }
+
+        newAnimation.Length = duration;
         return newAnimation;
     }
 
@@ -283,8 +292,18 @@ public static class AnimationUtilities
         foreach (var memberAnimation in animations)
         {
             var animLength = 0.0;
+            var trackCount = memberAnimation.GetTrackCount();
+            
+            // This is for handling "null" animations with nonzero length.
+            // which are used as delays when combining animations in series.
+            // Perhaps other situations as well.
+            // The current situation at time of writing is that I want an animation to be 
+            // keyframed if in edit mode for previews, but handled by physics if in play mode.
+            // But we want to time taken the by the animation to be the same in both cases.
+            if (trackCount == 0) { animLength = memberAnimation.Length; }
+            
             // Loop through the tracks in each animation
-            for (var i = 0; i < memberAnimation.GetTrackCount(); i++)
+            for (var i = 0; i < trackCount; i++)
             {
                 var path = memberAnimation.TrackGetPath(i);
                 var trackType = memberAnimation.TrackGetType(i);
@@ -305,7 +324,7 @@ public static class AnimationUtilities
                     trackPaths.Add((path, trackType));
                 }
                 
-                // Loop through they keys in each track
+                // Loop through the keys in each track
                 for (var j = 0; j < memberAnimation.TrackGetKeyCount(i); j++)
                 {
                     var keyTime = memberAnimation.TrackGetKeyTime(i, j);
