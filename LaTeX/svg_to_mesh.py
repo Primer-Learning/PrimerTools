@@ -1,5 +1,6 @@
 import bpy
 from mathutils import Vector
+import math
 import sys
 
 SCALE_FACTOR = 1180
@@ -48,6 +49,47 @@ if mesh_objects:
         obj.scale *= SCALE_FACTOR
         # obj.rotation_euler = (3.14159265358 / 2, 0, 0) #This will only work if we rotate around the baseline instead of center
         bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+
+
+    # # Create new empty object at the origin to parent all objects to
+    # for obj in mesh_objects:
+    #     # Set the parent while keeping world space location
+    #
+    # # Rotate the parent by 90 degrees around the x-axis
+    #
+    # for obj in mesh_objects:
+    #     # remove the relationship why keeping world space location
+    #
+    # # Destroy the parent object
+
+    # Create a new empty object at the origin to parent all objects to
+    bpy.ops.object.empty_add(type='PLAIN_AXES', location=(0, 0, 0))
+    parent_object = bpy.context.object
+    
+    for obj in mesh_objects:
+        # Set the parent while keeping world space location
+        obj.select_set(True)
+        parent_object.select_set(True)
+        bpy.context.view_layer.objects.active = parent_object
+        bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
+    
+    # Rotate the parent by 90 degrees around the x-axis
+    parent_object.rotation_euler[0] += math.radians(90)
+    
+    # Update the scene to apply transformation
+    # bpy.context.view_layer.update()
+
+    for obj in mesh_objects:
+        # Remove the parent while keeping world space location
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
+        bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
+        # This is not allowed because the objects are curves, which are fundamentally 2D.
+        bpy.ops.object.convert(target='MESH')
+        bpy.ops.object.transform_apply(location=False, rotation=True, scale=False)
+
+    # Destroy the parent object
+    bpy.data.objects.remove(parent_object)
 
 bpy.data.objects.remove(first_obj, do_unlink=True)
 

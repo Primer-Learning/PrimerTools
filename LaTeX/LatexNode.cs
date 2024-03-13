@@ -32,7 +32,8 @@ public partial class LatexNode : Node3D
 		var newNode = ResourceLoader.Load<PackedScene>(path).Instantiate<Node3D>();
 		
 		AddChild(newNode);
-		newNode.RotationDegrees = new Vector3(90, 0, 0);
+		newNode.MakeSelfAndChildrenLocal(GetTree().EditedSceneRoot);
+		newNode.RotationDegrees = new Vector3(0, 0, 0);
 		
 		Align();
 	}
@@ -83,10 +84,14 @@ public partial class LatexNode : Node3D
 		
 		var left = visualInstance3Ds.Select(x => x.GetAabb().Position.X * x.Scale.X + x.Position.X).Min();
 		var right = visualInstance3Ds.Select(x => x.GetAabb().End.X * x.Scale.X + x.Position.X).Max();
-		var top = visualInstance3Ds.Select(x => x.GetAabb().Position.Z * x.Scale.Z + x.Position.Z).Min();
-		var bottom = visualInstance3Ds.Select(x => x.GetAabb().End.Z * x.Scale.Z + x.Position.Z).Max();
-
-		float x, z;
+		var bottom = visualInstance3Ds.Select(x => x.GetAabb().Position.Y * x.Scale.Y + x.Position.Y).Min();
+		var top = visualInstance3Ds.Select(x => x.GetAabb().End.Y * x.Scale.Y + x.Position.Y).Max();
+		GD.Print($"Top: {top}");
+		GD.Print($"Bottom: {bottom}");
+		GD.Print($"Left: {left}");
+		GD.Print($"Right: {right}");
+		
+		float x, y;
 		switch (horizontalAlignment)
 		{
 			case HorizontalAlignmentOptions.Left:
@@ -106,23 +111,23 @@ public partial class LatexNode : Node3D
 		switch (verticalAlignment)
 		{
 			case VerticalAlignmentOptions.Bottom:
-				z = -bottom;
+				y = -bottom;
 				break;
 			case VerticalAlignmentOptions.Top:
-				z = -top;
+				y = -top;
 				break;
 			case VerticalAlignmentOptions.Center:
-				z = -(bottom + top) / 2;
+				y = -(bottom + top) / 2;
 				break;
 			case VerticalAlignmentOptions.Baseline:
-				z = 0;
+				y = 0;
 				break;
 			default:
-				z = 0;
+				y = 0;
 				break;
 		}
 		
-		((Node3D)GetChild(0)).Position = new Vector3(x,0, z);
+		((Node3D)GetChild(0)).Position = new Vector3(x, y,0);
 	}
 
 	#endregion
