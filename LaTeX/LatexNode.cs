@@ -25,13 +25,14 @@ public partial class LatexNode : Node3D
 	public async void UpdateCharacters() {
 		foreach (var child in GetChildren())
 		{
-			child.QueueFree();
+			child.Free();
 		}
 		
 		var path = await latexToMesh.MeshFromExpression(latex, openBlender);
 		var newNode = ResourceLoader.Load<PackedScene>(path).Instantiate<Node3D>();
 		
 		AddChild(newNode);
+		// Uncomment for testing a LaTeX object in its own scene.
 		newNode.MakeSelfAndChildrenLocal(GetTree().EditedSceneRoot);
 		newNode.RotationDegrees = new Vector3(0, 0, 0);
 		
@@ -86,47 +87,25 @@ public partial class LatexNode : Node3D
 		var right = visualInstance3Ds.Select(x => x.GetAabb().End.X * x.Scale.X + x.Position.X).Max();
 		var bottom = visualInstance3Ds.Select(x => x.GetAabb().Position.Y * x.Scale.Y + x.Position.Y).Min();
 		var top = visualInstance3Ds.Select(x => x.GetAabb().End.Y * x.Scale.Y + x.Position.Y).Max();
-		GD.Print($"Top: {top}");
-		GD.Print($"Bottom: {bottom}");
-		GD.Print($"Left: {left}");
-		GD.Print($"Right: {right}");
 		
 		float x, y;
-		switch (horizontalAlignment)
+		x = horizontalAlignment switch
 		{
-			case HorizontalAlignmentOptions.Left:
-				x = -left;
-				break;
-			case HorizontalAlignmentOptions.Right:
-				x = -right;
-				break;
-			case HorizontalAlignmentOptions.Center:
-				x = -(left + right) / 2;
-				break;
-			default:
-				x = 0;
-				break;
-		}
+			HorizontalAlignmentOptions.Left => -left,
+			HorizontalAlignmentOptions.Right => -right,
+			HorizontalAlignmentOptions.Center => -(left + right) / 2,
+			_ => 0
+		};
 
-		switch (verticalAlignment)
+		y = verticalAlignment switch
 		{
-			case VerticalAlignmentOptions.Bottom:
-				y = -bottom;
-				break;
-			case VerticalAlignmentOptions.Top:
-				y = -top;
-				break;
-			case VerticalAlignmentOptions.Center:
-				y = -(bottom + top) / 2;
-				break;
-			case VerticalAlignmentOptions.Baseline:
-				y = 0;
-				break;
-			default:
-				y = 0;
-				break;
-		}
-		
+			VerticalAlignmentOptions.Bottom => -bottom,
+			VerticalAlignmentOptions.Top => -top,
+			VerticalAlignmentOptions.Center => -(bottom + top) / 2,
+			VerticalAlignmentOptions.Baseline => 0,
+			_ => 0
+		};
+
 		((Node3D)GetChild(0)).Position = new Vector3(x, y,0);
 	}
 

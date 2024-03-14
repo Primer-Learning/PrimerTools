@@ -142,19 +142,12 @@ public partial class Graph : Node3D
     public CurvePlot2D AddLine()
     {
         var line = new CurvePlot2D();
-        line.transformPointFromDataSpaceToPositionSpace = DataSpaceToPositionSpace;
+        line.TransformPointFromDataSpaceToPositionSpace = DataSpaceToPositionSpace;
         AddChild(line);
         line.Owner = GetTree().EditedSceneRoot;
-        // line.MakeMeshData();
-        // line.transformPointFromDataSpaceToPositionSpace = DataSpaceToPositionSpace;
-        // line.Reset();
         return line;
     }
-    // public PrimerLine AddLine(string name)
-    // {
-    //     return AddLine(name, PrimerColor.white);
-    // }
-    //
+    
     // public StackedArea AddStackedArea(string name)
     // {
     //     var gnome = new SimpleGnome(transform);
@@ -163,21 +156,23 @@ public partial class Graph : Node3D
     //     area.transformPointFromDataSpaceToPositionSpace = DataSpaceToPositionSpace;
     //     return area;
     // }
-    //
-    // public BarPlot AddBarPlot(string name)
-    // {
-    //     var gnome = new Primer.SimpleGnome(transform);
-    //     var barPlot = gnome.Add<BarPlot>(name);
-    //     barPlot.transformPointFromDataSpaceToPositionSpace = DataSpaceToPositionSpace;
-    //     return barPlot;
-    // }
+    
+    public BarPlot AddBarPlot(string name = "Bar Plot")
+    {
+        var barPlot = new BarPlot();
+        barPlot.TransformPointFromDataSpaceToPositionSpace = DataSpaceToPositionSpace;
+        AddChild(barPlot);
+        barPlot.Owner = GetTree().EditedSceneRoot;
+        barPlot.Name = name;
+        return barPlot;
+    }
     
     public Vector3 DataSpaceToPositionSpace(Vector3 point)
     {
         return new Vector3(
-            (point.X - XAxis.min) / XAxis.RangeSize * XAxis.lengthMinusPadding,
-            (point.Y - YAxis.min) / YAxis.RangeSize * YAxis.lengthMinusPadding,
-            (point.Z - ZAxis.min) / ZAxis.RangeSize * ZAxis.lengthMinusPadding
+            (point.X - XAxis.min) / XAxis.RangeSize * XAxis.LengthMinusPadding,
+            (point.Y - YAxis.min) / YAxis.RangeSize * YAxis.LengthMinusPadding,
+            (point.Z - ZAxis.min) / ZAxis.RangeSize * ZAxis.LengthMinusPadding
         );
     }
     

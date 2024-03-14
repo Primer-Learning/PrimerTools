@@ -75,7 +75,6 @@ public static class AnimationUtilities
         animation.TrackSetPath(trackIndex, node.GetPath()+":quaternion");
         
         node.Quaternion = destination;
-
         return animation;
     }
     public static Animation WalkTo(this Node3D node, Vector3 destination, float stopDistance = 0, float duration = 0.5f, float prepTurnDuration = 0.1f)

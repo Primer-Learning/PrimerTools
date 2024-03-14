@@ -9,7 +9,6 @@ namespace PrimerTools.Graph;
 public partial class Axis : Node3D
 {
 	private ExportedMemberChangeChecker exportedMemberChangeChecker;
-	// private AnimationPlayer animationPlayer;
 	private int animationsMade = 0;
 	
 	public float min = 0;
@@ -40,9 +39,12 @@ public partial class Axis : Node3D
 		}
 		set => padding = value;
 	}
-	public float lengthMinusPadding => length - padding.X - padding.Y;
+	public float LengthMinusPadding => length - padding.X - padding.Y;
 	float thickness = 1;
-	public float scale => lengthMinusPadding / RangeSize;
+	public float DataScale => LengthMinusPadding / RangeSize;
+	
+	public bool showArrows = true;
+	public bool showRod = true;
 	
 	public override void _Process(double delta)
 	{
@@ -83,6 +85,7 @@ public partial class Axis : Node3D
 	private Animation UpdateRod(float duration)
 	{
 		var rod = GetNode<Node3D>("Rod");
+		if (!showRod) { rod.Visible = false; }
 
 		return AnimationUtilities.Parallel(
 			rod.MoveTo(new Vector3(-padding.X, 0f, 0f), duration),
@@ -96,6 +99,11 @@ public partial class Axis : Node3D
 	{
 		var endArrow = GetNode<Node3D>("Head");
 		var startArrow = GetNode<Node3D>("Tail");
+		if (!showArrows)
+		{
+			endArrow.Visible = false;
+			startArrow.Visible = false;
+		}
 		
 		if (length == 0)
 		{
@@ -114,6 +122,7 @@ public partial class Axis : Node3D
 	[Export] public float ticStep = 2;
 	public bool showZero;
 	public int labelNumberOffset;
+	public bool showTicCylinders = true;
 	[Export] public PackedScene ticScene;
 	
 	public int autoTicCount = 0;
@@ -121,7 +130,7 @@ public partial class Axis : Node3D
 
 	private (Animation removeAnimation, Animation updateAnimation, Animation addAnimation) UpdateTics(float duration)
 	{
-		Vector3 GetPosition(AxisTic tic) => new(tic.data.value * scale, 0, 0);
+		Vector3 GetPosition(AxisTic tic) => new(tic.data.value * DataScale, 0, 0);
 		var ticsToRemove = GetChildren().Select(x => x as AxisTic).Where(x => x != null).ToList();
 		var newTicAnimations = new List<Animation>();
 		var ticMovementAnimations = new List<Animation>();
@@ -139,7 +148,6 @@ public partial class Axis : Node3D
 				tic = ticScene.Instantiate<AxisTic>();
 				tic.data = data;
 				tic.Name = name;
-				tic.SetLabel();
 				AddChild(tic);
 				tic.Owner = GetTree().EditedSceneRoot;
 				tic.SceneFilePath = "";
@@ -148,6 +156,8 @@ public partial class Axis : Node3D
 				tic.Position = GetPosition(tic);
 				tic.Scale = Vector3.Zero;
 				newTicAnimations.Add(tic.ScaleTo(1, duration));
+				tic.SetLabel();
+				if (!showTicCylinders) tic.GetNode<MeshInstance3D>("MeshInstance3D").Visible = false;
 			}
 			else
 			{
