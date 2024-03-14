@@ -45,7 +45,7 @@ public partial class PointData : Node3D, IPrimerGraphData
         return transitionAnimations.RunInParallel();
     }
 
-    public Animation ShrinkToEnd()
+    public Animation Disappear()
     {
         throw new System.NotImplementedException();
     }

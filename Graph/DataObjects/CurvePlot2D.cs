@@ -11,8 +11,8 @@ namespace PrimerTools.Graph;
 public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
 {
     public delegate Vector3 Transformation(Vector3 inputPoint);
-
-    public Transformation transformPointFromDataSpaceToPositionSpace = point => point;
+    public Transformation TransformPointFromDataSpaceToPositionSpace = point => point;
+    
     private StandardMaterial3D materialCache;
 
     private StandardMaterial3D Material
@@ -146,6 +146,8 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
         dataPoints = data;
     }
 
+    
+
     /// <summary>
     /// Creates an animation that transitions to the current data, set by SetData.
     /// </summary>
@@ -155,8 +157,8 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
     {
         // If there's not a previous stage, add the first point of the data as the first stage
         if (pointsOfStages.Count == 0)
-            pointsOfStages.Add(new[] { transformPointFromDataSpaceToPositionSpace(dataPoints[0]) });
-        pointsOfStages.Add(dataPoints.Select(x => transformPointFromDataSpaceToPositionSpace(x)).ToArray());
+            pointsOfStages.Add(new[] { TransformPointFromDataSpaceToPositionSpace(dataPoints[0]) });
+        pointsOfStages.Add(dataPoints.Select(x => TransformPointFromDataSpaceToPositionSpace(x)).ToArray());
 
         var animation = new Animation();
         animation.Length = duration;
@@ -170,7 +172,7 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
         return animation;
     }
 
-    public Animation ShrinkToEnd()
+    public Animation Disappear()
     {
         throw new NotImplementedException();
     }
