@@ -121,8 +121,9 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		
 		// TODO: Make time the minimum of next start time and previous end time
 		var time = 0.0f;
-		foreach (var animationName in _referenceAnimationPlayer.GetAnimationList())
+		for  (var i = 0; i < _referenceAnimationPlayer.GetAnimationList().Length; i++)
 		{
+			var animationName = $"p/anim{i}";
 			animation.TrackInsertKey(trackIndex, time, animationName);
 			time += _referenceAnimationPlayer.GetAnimation(animationName).Length;
 		}
