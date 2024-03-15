@@ -1,14 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using Godot;
 using Primer;
+using PrimerTools.LaTeX;
 
 namespace PrimerTools.Graph;
 
 public partial class BarPlot : Node3D, IPrimerGraphData
 {
     public Color[] colors = PrimerColor.rainbow.ToArray();
+    
+    public bool showValuesOnBars = false;
+    public float barLabelVerticalOffset = 0.1f;
     
     public delegate Vector3 Transformation(Vector3 inputPoint);
     public Transformation TransformPointFromDataSpaceToPositionSpace = point => point;
@@ -48,7 +53,7 @@ public partial class BarPlot : Node3D, IPrimerGraphData
                 bar = new MeshInstance3D();
                 var mesh = new BoxMesh();
                 mesh.Size = TransformPointFromDataSpaceToPositionSpace(new Vector3(barWidth, 0, barDepth));
-                bar.Position = TransformPointFromDataSpaceToPositionSpace(new Vector3(i + offset, 0, 0));
+                bar.Position = new Vector3(rectProperties[i].Item1, 0, 0);
                 bar.Mesh = mesh;
                 bar.Name = $"Bar {i}";
                 AddChild(bar);
@@ -56,6 +61,22 @@ public partial class BarPlot : Node3D, IPrimerGraphData
                 var newMat = new StandardMaterial3D();
                 newMat.AlbedoColor = colors[i % colors.Length];
                 bar.Mesh.SurfaceSetMaterial(0, newMat);
+
+                if (showValuesOnBars)
+                {
+                    // TODO: Consider not using LaTeX here. It's overkill, but is currently more work
+                    // at time of writing.
+                    var label = new LatexNode();
+                    label.latex = 0.ToString();
+                    label.Name = $"Label {i}";
+                    label.HorizontalAlignment = LatexNode.HorizontalAlignmentOptions.Center;
+                    label.VerticalAlignment = LatexNode.VerticalAlignmentOptions.Bottom;
+                    label.UpdateCharacters();
+                    AddChild(label);
+                    label.Owner = GetTree().EditedSceneRoot;
+                    label.Position = bar.Position + Vector3.Up * barLabelVerticalOffset; 
+                    label.Scale = Vector3.Zero;
+                }
             }
             
             // Create an animation for the bar to move to the new position/height/width
@@ -88,6 +109,39 @@ public partial class BarPlot : Node3D, IPrimerGraphData
             animation.TrackSetInterpolationType(trackCount, Animation.InterpolationType.Cubic);
             trackCount++;
             ((BoxMesh)bar.Mesh).Size = new Vector3(targetWidth, targetHeight, ((BoxMesh)bar.Mesh).Size.Z);
+
+            if (showValuesOnBars)
+            {
+                // Label position
+                var theLabel = GetNode<LatexNode>($"Label {i}");
+                var targetLabelPos = new Vector3(rectProperties[i].Item1,
+                    rectProperties[i].Item2 + barLabelVerticalOffset, 0);
+                animation.AddTrack(Animation.TrackType.Value);
+                animation.TrackSetPath(trackCount, theLabel.GetPath() + ":position");
+                animation.TrackInsertKey(trackCount, 0, theLabel.Position);
+                animation.TrackInsertKey(trackCount, duration, targetLabelPos);
+                animation.TrackSetInterpolationType(trackCount, Animation.InterpolationType.Cubic);
+                trackCount++;
+                theLabel.Position = targetLabelPos;
+
+                var targetLabelScale = rectProperties[i].Item3 / 2 * Vector3.One;
+                animation.AddTrack(Animation.TrackType.Value);
+                animation.TrackSetPath(trackCount, theLabel.GetPath() + ":scale");
+                animation.TrackInsertKey(trackCount, 0, theLabel.Scale);
+                animation.TrackInsertKey(trackCount, duration, targetLabelScale);
+                animation.TrackSetInterpolationType(trackCount, Animation.InterpolationType.Cubic);
+                trackCount++;
+                theLabel.Scale = targetLabelScale;
+                
+                animation.AddTrack(Animation.TrackType.Value);
+                animation.TrackSetPath(trackCount, theLabel.GetPath() + ":SetIntegerExpression");
+                animation.TrackInsertKey(trackCount, 0, theLabel.SetIntegerExpression);
+                animation.TrackInsertKey(trackCount, duration, Mathf.RoundToInt(data[i]));
+                animation.TrackSetInterpolationType(trackCount, Animation.InterpolationType.Cubic);
+                theLabel.SetIntegerExpression = Mathf.RoundToInt(data[i]);
+                
+                trackCount++;
+            }
         }
 
         return animation;

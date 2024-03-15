@@ -18,7 +18,17 @@ public partial class LatexNode : Node3D
 	}
 
 	[Export] public bool openBlender = false;
-	[Export] public string latex = "$z^2 + y^2 = 1$";
+	[Export] public string latex = "$1$";
+
+	public string numberPrefix = "";
+	public string numberSuffix = "";
+	public int SetIntegerExpression {
+		get => latex.ToInt();
+		set {
+			latex = numberPrefix + value + numberSuffix;
+			UpdateCharacters();
+		}
+	}
 	
 	private readonly LatexToMesh latexToMesh = new();
 	
@@ -33,7 +43,7 @@ public partial class LatexNode : Node3D
 		
 		AddChild(newNode);
 		// Uncomment for testing a LaTeX object in its own scene.
-		newNode.MakeSelfAndChildrenLocal(GetTree().EditedSceneRoot);
+		// newNode.MakeSelfAndChildrenLocal(GetTree().EditedSceneRoot);
 		newNode.RotationDegrees = new Vector3(0, 0, 0);
 		
 		Align();
