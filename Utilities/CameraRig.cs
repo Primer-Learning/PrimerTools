@@ -5,31 +5,40 @@ namespace PrimerTools;
 [Tool]
 public partial class CameraRig : Node3D
 {
+    private const float DefaultDistance = 10;
+    private const float DefaultFov = 30;
+    
     Camera3D _camera;
     Camera3D Camera
     {
         get
         {
+            if (!IsInsideTree()) return null;
             // Try to get it from the scene
             _camera = GetNodeOrNull<Camera3D>("Camera3D");
             if (_camera != null) return _camera;
             
             // If the camera is not in the scene, create a new one
             _camera = new Camera3D();
+            _camera.Fov = DefaultFov;
             AddChild(_camera);
             _camera.Owner = GetTree().EditedSceneRoot;
-            _camera.Position = Vector3.Back * 10;
+            _camera.Position = Vector3.Back * DefaultDistance;
             _camera.Name = "Camera3D";
-
+            
             return _camera;
         }
     }
 
     [Export]
-    private float Distance
+    public float Distance
     {
-        get => Camera.Position.Z;
-        set => Camera.Position = new Vector3(Camera.Position.X, Camera.Position.Y, value);
+        get => Camera is null ? DefaultDistance : Camera.Position.Z;
+        set
+        {
+            if (Camera is null) return; 
+            Camera.Position = new Vector3(Camera.Position.X, Camera.Position.Y, value);
+        }
     }
 
     public Animation ZoomTo(float distance)
