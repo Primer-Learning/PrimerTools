@@ -306,6 +306,7 @@ public static class AnimationUtilities
             {
                 var path = memberAnimation.TrackGetPath(i);
                 var trackType = memberAnimation.TrackGetType(i);
+                var trackInterpolationType = memberAnimation.TrackGetInterpolationType(i);
                 if (trackType == Animation.TrackType.Animation)
                 {
                     GD.PushWarning($"AnimationUtilities.CombineAnimations may not work well with animation playback tracks. Track path: {memberAnimation.TrackGetPath(i)}");
@@ -315,10 +316,16 @@ public static class AnimationUtilities
                 if (trackPaths.Contains((path, trackType)))
                 {
                     trackIndex = trackPaths.IndexOf((path, trackType));
+                    if (trackInterpolationType != newAnimation.TrackGetInterpolationType(trackIndex)) 
+                    {
+                        GD.PushWarning($"AnimationUtilities.CombineAnimations: Interpolation type mismatch for path {path}. " +
+                                        $"Using first interpolation type {newAnimation.TrackGetType(trackIndex)} instead of {trackType}.");
+                    }
                 }
                 else
                 {
                     trackIndex = newAnimation.AddTrack(trackType);
+                    newAnimation.TrackSetInterpolationType(trackIndex, trackInterpolationType);
                     newAnimation.TrackSetPath(trackIndex, path);
                     trackPaths.Add((path, trackType));
                 }
