@@ -110,7 +110,6 @@ public static class AnimationUtilities
     public static Animation RotateTo(this Node3D node, Quaternion destination, float duration = 0.5f)
     {
         if (duration == 0) duration = Epsilon;
-        
         var animation = new Animation();
         
         var trackIndex = animation.AddTrack(Animation.TrackType.Value);
@@ -136,23 +135,11 @@ public static class AnimationUtilities
     }
     public static Animation ScaleTo(this Node3D node, Vector3 finalScale, float duration = 0.5f)
     {
-        if (duration == 0) duration = Epsilon;
-        
         // True zero scale causes the rotation to be set to identity. So we'll use a small value instead.
         if (finalScale == Vector3.Zero) finalScale = Vector3.One * Epsilon;
-        var initialScale = node.Scale == Vector3.Zero ? Vector3.One * Epsilon : node.Scale;
+        if(node.Scale == Vector3.Zero) node.Scale = Vector3.One * Epsilon;
         
-        var animation = new Animation();
-        
-        var trackIndex = animation.AddTrack(Animation.TrackType.Value);
-        animation.TrackSetInterpolationType(trackIndex, Animation.InterpolationType.Cubic);
-        animation.TrackInsertKey(trackIndex, 0.0f, initialScale);
-        animation.TrackInsertKey(trackIndex, duration, finalScale);
-        animation.TrackSetPath(trackIndex, node.GetPath()+":scale");
-        
-        node.Scale = finalScale;
-
-        return animation;
+        return node.AnimateValue(finalScale, "scale", duration);
     }
     public static Animation ScaleTo(this Node3D node, float finalScale, float duration = 0.5f)
     {
