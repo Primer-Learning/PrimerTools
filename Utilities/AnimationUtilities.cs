@@ -12,42 +12,87 @@ public static class AnimationUtilities
     private const float Epsilon = 0.0001f;
     
     #region Node animation extensions
-    public static Animation MoveTo(this Node3D node, Vector3 destination, float stopDistance = 0, float duration = 0.5f, bool global = false)
+
+    public static Animation AnimateValue<TNode, TValue>(this TNode node, TValue value, string propertyPath, float duration = 0.5f) where TNode : Node
+    {
+        // One day, make an enum of the different interpolation types and use a switch statement to choose the handles.
+        // For now, just use smooth step.
+        
+        // Bezier handle notes
+        // Desmos toy: https://www.desmos.com/calculator/beccajalrw
+        // For 0,0 to 1,1, handles should be...
+        // Smooth step: (1/3, 0) and (2/3, 1) [Default]
+        // Quadratic in (approximate): (0.56, 0) and (1, 1) [Constant acceleration up to a max speed]
+        // Quadratic out (approximate): (0, 0) and (0.44, 1) [Constant deceleration down from a max speed]
+        // Linear: (0, 0) and (1, 1)
+        // Quadratic in-out (approximate): (0.44, 0) and (0.56, 1)
+        // Cubic in-out (approximate): (2/3, 0) and (1/3, 1)
+        
+        // Godot handles are relative to the anchor
+        // x values are in seconds
+        // y values in the unit of the property being animated
+        
+        return node.AnimateValue(value, propertyPath, new Vector2(duration / 3, 0), new Vector2(- duration / 3, 0), duration);
+    }
+    public static Animation AnimateValue<TNode, TValue>(this TNode node, TValue value, string propertyPath, Vector2 outHandle, Vector2 inHandle, float duration = 0.5f) where TNode : Node
     {
         if (duration == 0) duration = Epsilon;
-        
         var animation = new Animation();
-        
-        // It turns out the specialized track is busted? The graph tics jump around, but I'm too lazy to
-        // make a test case to report it. I'll just use the generic track for now.
-        
-        // var trackIndex = animation.AddTrack(Animation.TrackType.Position3D);
-        // animation.PositionTrackInsertKey(trackIndex, 0.0f, node.Position);
-        // animation.PositionTrackInsertKey(trackIndex, duration, destination);
-        // animation.TrackSetPath(trackIndex, node.GetPath());
 
+        GD.Print(typeof(TNode));
+        
+        switch (value)
+        {
+            case double:
+                GD.PrintErr("AnimateValue does not support double. Use float instead.");
+                break;
+            case float floatValue:
+                var trackIndex = animation.AddTrack(Animation.TrackType.Bezier);
+                animation.TrackSetPath(trackIndex, node.GetPath()+":" + propertyPath);
+                
+                // First key
+                animation.BezierTrackInsertKey(trackIndex, 0.0f, node.Get(propertyPath).AsSingle());
+                animation.BezierTrackSetKeyOutHandle(trackIndex, 0, outHandle);
+                // Second key
+                animation.BezierTrackInsertKey(trackIndex, duration, floatValue);
+                animation.BezierTrackSetKeyOutHandle(trackIndex, 1, inHandle);
+                
+                node.Set(propertyPath, floatValue);
+                break;
+            case Vector3 vectorValue:
+                string[] propertyNames = {"x", "y", "z"};
+                
+                for (var i = 0; i < 3; i++)
+                {
+                    trackIndex = animation.AddTrack(Animation.TrackType.Bezier);
+                    animation.TrackSetPath(trackIndex, node.GetPath()+":" + propertyPath + ":" + propertyNames[i]);
+                    // First key
+                    animation.BezierTrackInsertKey(trackIndex, 0.0f, node.Get(propertyPath).AsVector3()[i]);
+                    animation.BezierTrackSetKeyOutHandle(trackIndex, 0, outHandle);
+                    // Second key
+                    animation.BezierTrackInsertKey(trackIndex, duration, vectorValue[i]);
+                    animation.BezierTrackSetKeyOutHandle(trackIndex, 1, inHandle);
+                }
+
+                node.Set(propertyPath, vectorValue);
+                break;
+            default:
+                GD.PrintErr("Unsupported type for AnimateValue");
+                break;
+        }
+        return animation;
+    }
+    public static Animation MoveTo(this Node3D node, Vector3 destination, float stopDistance = 0, float duration = 0.5f, bool global = false)
+    {
         var difference = global
             ? destination - node.GlobalPosition
             : destination - node.Position;
          
         destination -= difference.Normalized() * stopDistance;
-
-        var trackIndex = animation.AddTrack(Animation.TrackType.Value);
-        animation.TrackSetInterpolationType(trackIndex, Animation.InterpolationType.Cubic);
-        animation.TrackInsertKey(trackIndex, 0.0f, global ? node.GlobalPosition : node.Position);
-        animation.TrackInsertKey(trackIndex, duration, destination);
-        animation.TrackSetPath(trackIndex, node.GetPath()+ (global ? ":global_position" : ":position"));
         
-        if (global)
-        {
-            node.GlobalPosition = destination;
-        }
-        else
-        {
-            node.Position = destination;
-        }
-
-        return animation;
+        var propertyPath = global ? "global_position" : "position";
+        
+        return node.AnimateValue(destination, propertyPath, duration);
     }
     public static Animation RotateTo(this Node3D node, float xDeg, float yDeg, float zDeg, float duration = 0.5f)
     {
