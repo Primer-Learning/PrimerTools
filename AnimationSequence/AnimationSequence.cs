@@ -5,6 +5,7 @@ namespace PrimerTools.AnimationSequence;
 [Tool]
 public abstract partial class AnimationSequence : AnimationPlayer
 {
+	private const string mainAnimationName = "p/CombinedAnimation";
 	private AnimationPlayer _referenceAnimationPlayer;
 	private AnimationLibrary _referenceAnimationLibrary;
 
@@ -38,22 +39,20 @@ public abstract partial class AnimationSequence : AnimationPlayer
 			Define();
 			CreateTopLevelAnimation();
 			
-			// Rewind through the animations so the start state is correct
-			// This is needed because animation creation code sets objects to the final state to 
-			// prepare for the next animation. So we're undoing that.
-			var mainAnimation = GetAnimation("p/CombinedAnimation");
+			// Rewind through the individual animations on the reference player
+			// so the start state is correct.
+			// This is needed because animation creation code sets objects to the
+			// final state to prepare for the next animation. So we're undoing that.
+			var mainAnimation = GetAnimation(mainAnimationName);
 			for (var i = mainAnimation.TrackGetKeyCount(0) - 1; i >= 0; i--)
 			{
 				var name = mainAnimation.AnimationTrackGetKeyAnimation(0, i);
-				var anim = _referenceAnimationPlayer.GetAnimation(name);
-				for (var j = 0; j < anim.GetTrackCount(); j++)
-				{
-					var path = anim.TrackGetPath(j);
-					GetNode(path).Set(path.GetConcatenatedSubNames(), anim.TrackGetKeyValue(j, 0));
-				}
+				_referenceAnimationPlayer.CurrentAnimation = name;
+				_referenceAnimationPlayer.Seek(0, update: true);
 			}
 			
-			Play("p/CombinedAnimation");
+			CurrentAnimation = mainAnimationName;
+			Play();
 		}
 	}
 
