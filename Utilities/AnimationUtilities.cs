@@ -9,7 +9,7 @@ public static class AnimationUtilities
 {
     // TODO: Add a delay method which just pushes the timing of all keys back and returns a new animation
     
-    private const float Epsilon = 0.0001f;
+    public const float Epsilon = 0.0001f;
     
     #region Node animation extensions
 
@@ -38,8 +38,6 @@ public static class AnimationUtilities
     {
         if (duration == 0) duration = Epsilon;
         var animation = new Animation();
-
-        GD.Print(typeof(TNode));
         
         switch (value)
         {
@@ -55,7 +53,7 @@ public static class AnimationUtilities
                 animation.BezierTrackSetKeyOutHandle(trackIndex, 0, outHandle);
                 // Second key
                 animation.BezierTrackInsertKey(trackIndex, duration, floatValue);
-                animation.BezierTrackSetKeyOutHandle(trackIndex, 1, inHandle);
+                animation.BezierTrackSetKeyInHandle(trackIndex, 1, inHandle);
                 
                 node.Set(propertyPath, floatValue);
                 break;
@@ -80,6 +78,8 @@ public static class AnimationUtilities
                 GD.PrintErr("Unsupported type for AnimateValue");
                 break;
         }
+
+        animation.Length = duration;
         return animation;
     }
     public static Animation MoveTo(this Node3D node, Vector3 destination, float stopDistance = 0, float duration = 0.5f, bool global = false)
@@ -119,6 +119,7 @@ public static class AnimationUtilities
         animation.TrackSetPath(trackIndex, node.GetPath()+":quaternion");
         
         node.Quaternion = destination;
+        animation.Length = duration;
         return animation;
     }
     public static Animation WalkTo(this Node3D node, Vector3 destination, float stopDistance = 0, float duration = 0.5f, float prepTurnDuration = 0.1f)
@@ -371,6 +372,11 @@ public static class AnimationUtilities
                 }
             }
 
+            // If the memberAnimation.Length was set to a nonzero value, we use animLength,
+            // which is the time of the latest keyframe. Otherwise, we respect memberAnimation.Length.
+            // 
+            animLength = memberAnimation.Length == 0 ? animLength : memberAnimation.Length;
+            if (animLength == 0) GD.PushWarning($"Animation has length of zero. Idk which one, lmao.");
             if (parallel)
             {
                 finalAnimationLength = Mathf.Max(finalAnimationLength, animLength);
