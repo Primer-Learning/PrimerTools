@@ -10,10 +10,10 @@ public static class AnimationUtilities
     // TODO: Add a delay method which just pushes the timing of all keys back and returns a new animation
     
     public const float Epsilon = 0.0001f;
+    public const float DefaultDuration = 0.5f;
     
     #region Node animation extensions
-
-    public static Animation AnimateValue<TNode, TValue>(this TNode node, TValue value, string propertyPath, float duration = 0.5f) where TNode : Node
+    public static Animation AnimateValue<TNode, TValue>(this TNode node, TValue value, string propertyPath, float duration = DefaultDuration) where TNode : Node
     {
         // One day, make an enum of the different interpolation types and use a switch statement to choose the handles.
         // For now, just use smooth step.
@@ -34,7 +34,7 @@ public static class AnimationUtilities
         
         return node.AnimateValue(value, propertyPath, new Vector2(duration / 3, 0), new Vector2(- duration / 3, 0), duration);
     }
-    public static Animation AnimateValue<TNode, TValue>(this TNode node, TValue value, string propertyPath, Vector2 outHandle, Vector2 inHandle, float duration = 0.5f) where TNode : Node
+    public static Animation AnimateValue<TNode, TValue>(this TNode node, TValue value, string propertyPath, Vector2 outHandle, Vector2 inHandle, float duration = DefaultDuration) where TNode : Node
     {
         if (duration == 0) duration = Epsilon;
         var animation = new Animation();
@@ -82,7 +82,34 @@ public static class AnimationUtilities
         animation.Length = duration;
         return animation;
     }
-    public static Animation MoveTo(this Node3D node, Vector3 destination, float stopDistance = 0, float duration = 0.5f, bool global = false)
+    
+    public static Animation AnimateBool<TNode>(this TNode node, bool value, string propertyPath, bool resetAtEnd = false, float duration = DefaultDuration) where TNode : Node
+    {
+        var originalValue = node.Get(propertyPath);
+        
+        if (duration == 0) duration = resetAtEnd 
+            ? Epsilon * 3
+            : Epsilon;
+        
+        var animation = new Animation();
+        
+        var trackIndex = animation.AddTrack(Animation.TrackType.Value);
+        animation.TrackSetPath(trackIndex, node.GetPath() + ":" + propertyPath);
+        animation.TrackInsertKey(trackIndex, 0, originalValue);
+        animation.TrackInsertKey(trackIndex, Epsilon, value);
+
+        if (resetAtEnd)
+        {
+            animation.TrackInsertKey(trackIndex, duration - Epsilon, value);
+            animation.TrackInsertKey(trackIndex, duration, originalValue);
+        }
+        
+        node.Set(propertyPath, resetAtEnd ? originalValue : value);
+        animation.Length = duration;
+        return animation;
+    }
+    
+    public static Animation MoveTo(this Node3D node, Vector3 destination, float stopDistance = 0, float duration = DefaultDuration, bool global = false)
     {
         var difference = global
             ? destination - node.GlobalPosition
@@ -94,11 +121,11 @@ public static class AnimationUtilities
         
         return node.AnimateValue(destination, propertyPath, duration);
     }
-    public static Animation RotateTo(this Node3D node, float xDeg, float yDeg, float zDeg, float duration = 0.5f)
+    public static Animation RotateTo(this Node3D node, float xDeg, float yDeg, float zDeg, float duration = DefaultDuration)
     {
         return node.RotateTo(new Vector3(xDeg, yDeg, zDeg), duration);
     }
-    public static Animation RotateTo(this Node3D node, Vector3 eulerAnglesInDegrees, float duration = 0.5f)
+    public static Animation RotateTo(this Node3D node, Vector3 eulerAnglesInDegrees, float duration = DefaultDuration)
     {
         var eulerAnglesInRadians = new Vector3(
             Mathf.DegToRad(eulerAnglesInDegrees.X),
@@ -107,7 +134,7 @@ public static class AnimationUtilities
         );
         return node.RotateTo(Quaternion.FromEuler(eulerAnglesInRadians), duration);
     }
-    public static Animation RotateTo(this Node3D node, Quaternion destination, float duration = 0.5f)
+    public static Animation RotateTo(this Node3D node, Quaternion destination, float duration = DefaultDuration)
     {
         if (duration == 0) duration = Epsilon;
         var animation = new Animation();
@@ -122,7 +149,7 @@ public static class AnimationUtilities
         animation.Length = duration;
         return animation;
     }
-    public static Animation WalkTo(this Node3D node, Vector3 destination, float stopDistance = 0, float duration = 0.5f, float prepTurnDuration = 0.1f)
+    public static Animation WalkTo(this Node3D node, Vector3 destination, float stopDistance = 0, float duration = DefaultDuration, float prepTurnDuration = 0.1f)
     {
         var difference = destination - node.Position;
         
@@ -134,7 +161,7 @@ public static class AnimationUtilities
             move
         );
     }
-    public static Animation ScaleTo(this Node3D node, Vector3 finalScale, float duration = 0.5f)
+    public static Animation ScaleTo(this Node3D node, Vector3 finalScale, float duration = DefaultDuration)
     {
         // True zero scale causes the rotation to be set to identity. So we'll use a small value instead.
         if (finalScale == Vector3.Zero) finalScale = Vector3.One * Epsilon;
@@ -142,12 +169,68 @@ public static class AnimationUtilities
         
         return node.AnimateValue(finalScale, "scale", duration);
     }
-    public static Animation ScaleTo(this Node3D node, float finalScale, float duration = 0.5f)
+    public static Animation ScaleTo(this Node3D node, float finalScale, float duration = DefaultDuration)
     {
         return node.ScaleTo(Vector3.One * finalScale, duration);
     }
     #endregion
 
+    #region RigidBody animation extensions    
+    
+    public static Animation AnimateFreeze(this RigidBody3D rigidBody, bool value, bool resetAtEnd = false, float duration = DefaultDuration)
+    {
+        return rigidBody.AnimateBool(value, "freeze", resetAtEnd, duration);
+    }
+    
+    public static Animation MoveTo(this RigidBody3D rigidBody,
+        Vector3 destination,
+        float stopDistance = 0,
+        float duration = DefaultDuration,
+        bool global = false)
+    {
+        if (!global) GD.PushWarning("RigidBody.MoveTo was designed with global = true in mind. The result is probably bad with global = false. Get rekt.");
+        if (global)
+        {
+            // Assumes the rigidBody's scale is 1, which seems to be forced when not frozen.
+            // Haven't really thought through whether it's the global or local scale that's 1.
+            // I am the bad end of day version of myself. Hope everything is good, future/present Justin.
+			
+            // What is the local transform for the rigid body child that corresponds to the target global position 
+            // of the rigidbody?
+			
+            // Current transform of the rigid body
+            // Transform after applying the movement
+
+            var intendedGlobalMovementTransform = new Transform3D(
+                new Basis(1, 0, 0, 0, 1, 0, 0, 0, 1),
+                destination - rigidBody.GlobalPosition
+            );
+            var finalGlobalTransformation = intendedGlobalMovementTransform * rigidBody.GlobalTransform;
+            var localTransformationOfChildren = rigidBody.GlobalTransform.Inverse() * finalGlobalTransformation;
+			
+            destination = localTransformationOfChildren.Origin;
+            global = false;
+        }
+		
+        return Parallel(
+            rigidBody.GetNode<Node3D>(rigidBody.Name.ToString()).MoveTo(destination, stopDistance: stopDistance, duration: duration, global: global),
+            rigidBody.GetNode<Node3D>("CollisionShape3D").MoveTo(destination, stopDistance: stopDistance, duration: duration, global: global)
+        );
+    }
+
+    // public static Animation UnfreezeForDuration(this RigidBody3D rigidBody, float duration)
+    // {
+    //     var animation = new Animation();
+    //     var trackIndex = animation.AddTrack(Animation.TrackType.Value);
+    //     animation.TrackSetPath(trackIndex, rigidBody.GetPath() + ":freeze");
+    //     animation.TrackInsertKey(trackIndex, 0, false);
+    //     animation.TrackInsertKey(trackIndex, duration, true);
+    //     animation.Length = duration;
+    //     return animation;
+    // } 
+
+    #endregion
+    
     #region Animation modifiers
 
     public static Animation WithDelay(this Animation animation, float delay)
@@ -203,7 +286,7 @@ public static class AnimationUtilities
     #endregion
 
     #region Material animation
-    public static Animation AnimateColorHsv(this MeshInstance3D meshInstance3D, Color finalColor, float duration = 0.5f)
+    public static Animation AnimateColorHsv(this MeshInstance3D meshInstance3D, Color finalColor, float duration = DefaultDuration)
     {
         var material = meshInstance3D.GetOrCreateOverrideMaterial();
         
@@ -258,7 +341,7 @@ public static class AnimationUtilities
         return animation;
     }
     
-    public static Animation AnimateColorRgb(this MeshInstance3D meshInstance3D, Color finalColor, float duration = 0.5f)
+    public static Animation AnimateColorRgb(this MeshInstance3D meshInstance3D, Color finalColor, float duration = DefaultDuration)
     {
         var material = meshInstance3D.GetOrCreateOverrideMaterial();
         
