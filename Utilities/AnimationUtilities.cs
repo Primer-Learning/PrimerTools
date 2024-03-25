@@ -283,6 +283,7 @@ public static class AnimationUtilities
     }
     public static Animation WithDuration(this Animation animation, float duration)
     {
+        if (duration == 0) duration = Epsilon;
         var newAnimation = new Animation();
         var lastKeyTime = 0.0;
         for (var i = 0; i < animation.GetTrackCount(); i++)
