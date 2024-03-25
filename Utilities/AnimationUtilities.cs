@@ -188,7 +188,7 @@ public static class AnimationUtilities
         float duration = DefaultDuration,
         bool global = false)
     {
-        if (!global) GD.PushWarning("RigidBody.MoveTo was designed with global = true in mind. The result is probably bad with global = false. Get rekt.");
+        // if (!global) GD.PushWarning("RigidBody.MoveTo was designed with global = true in mind. The result is probably bad with global = false. Get rekt.");
         if (global)
         {
             // Assumes the rigidBody's scale is 1, which seems to be forced when not frozen.
