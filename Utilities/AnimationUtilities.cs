@@ -41,8 +41,11 @@ public static class AnimationUtilities
         
         switch (value)
         {
-            case double:
-                GD.PrintErr("AnimateValue does not support double. Use float instead.");
+            case double doubleValue:
+                node.AnimateValue( (float) doubleValue, propertyPath, outHandle, inHandle, duration);
+                break;
+            case int intValue:
+                node.AnimateValue( (float) intValue, propertyPath, outHandle, inHandle, duration);
                 break;
             case float floatValue:
                 var trackIndex = animation.AddTrack(Animation.TrackType.Bezier);
@@ -217,33 +220,95 @@ public static class AnimationUtilities
         float duration = DefaultDuration,
         bool global = false)
     {
-        // if (!global) GD.PushWarning("RigidBody.MoveTo was designed with global = true in mind. The result is probably bad with global = false. Get rekt.");
+        // When moving a rigid body, we need to keyframe the children instead of the  rigid body itself,
+        // since keyframes on the rigidbody will override the physics updates.
+        // Also, the keyframes on the children need to be local, since global keyframes
+        // will also effectively override the physics updates.
+        
+        // If the movement was given as local to the rigid body, we need to convert it to local to the children.
+        if (!global)
+        {
+            var intendedLocalRotationTransform = new Transform3D(
+                new Basis(1, 0, 0, 0, 1, 0, 0, 0, 1),
+                destination - rigidBody.Position
+            );
+            var finalLocalTransformation = intendedLocalRotationTransform * rigidBody.Transform;
+            var localTransformationOfChildren = rigidBody.Transform.Inverse() * finalLocalTransformation;
+			         
+            destination = localTransformationOfChildren.Origin;
+        }
+        // Same conversion but for global movement
         if (global)
         {
-            // Assumes the rigidBody's scale is 1, which seems to be forced when not frozen.
-            // Haven't really thought through whether it's the global or local scale that's 1.
-            // I am the bad end of day version of myself. Hope everything is good, future/present Justin.
-			
-            // What is the local transform for the rigid body child that corresponds to the target global position 
-            // of the rigidbody?
-			
-            // Current transform of the rigid body
-            // Transform after applying the movement
-
             var intendedGlobalMovementTransform = new Transform3D(
                 new Basis(1, 0, 0, 0, 1, 0, 0, 0, 1),
                 destination - rigidBody.GlobalPosition
             );
             var finalGlobalTransformation = intendedGlobalMovementTransform * rigidBody.GlobalTransform;
             var localTransformationOfChildren = rigidBody.GlobalTransform.Inverse() * finalGlobalTransformation;
-			
+			         
             destination = localTransformationOfChildren.Origin;
-            global = false;
+            global = false; // Not used, but just to make it clear that the destination is now local
         }
 		
         return Parallel(
-            rigidBody.GetNode<Node3D>(rigidBody.Name.ToString()).MoveTo(destination, stopDistance: stopDistance, duration: duration, global: global),
-            rigidBody.GetNode<Node3D>("CollisionShape3D").MoveTo(destination, stopDistance: stopDistance, duration: duration, global: global)
+            rigidBody.GetNode<Node3D>(rigidBody.Name.ToString()).MoveTo(destination, stopDistance: stopDistance, duration: duration, global: false),
+            rigidBody.GetNode<Node3D>("CollisionShape3D").MoveTo(destination, stopDistance: stopDistance, duration: duration, global: false)
+        );
+    }
+    
+    public static Animation RotateTo(this RigidBody3D rigidBody,
+        Quaternion destination,
+        float duration = DefaultDuration,
+        bool global = false)
+    {
+        // When moving a rigid body, we need to keyframe the children instead of the  rigid body itself,
+        // since keyframes on the rigidbody will override the physics updates.
+        // Also, the keyframes on the children need to be local, since global keyframes
+        // will also effectively override the physics updates.
+        
+        // If the movement was given as local to the rigid body, we need to convert it to local to the children.
+        if (!global)
+        {
+            var intendedLocalRotationTransform = new Transform3D(
+                new Basis(rigidBody.Quaternion.Inverse() * destination),
+                rigidBody.Position
+            );
+            var finalLocalTransformation = intendedLocalRotationTransform * rigidBody.Transform;
+            var localTransformationOfChildren = rigidBody.Transform.Inverse() * finalLocalTransformation;
+			         
+            destination = new Quaternion(localTransformationOfChildren.Basis);
+        }
+        // Same conversion but for global movement
+        if (global)
+        {
+            var intendedGlobalRotationTransform = new Transform3D(
+                new Basis(Quaternion.FromEuler(rigidBody.GlobalRotation).Inverse() * destination),
+                rigidBody.Position
+            );
+            var finalGlobalTransformation = intendedGlobalRotationTransform * rigidBody.GlobalTransform;
+            var localTransformationOfChildren = rigidBody.GlobalTransform.Inverse() * finalGlobalTransformation;
+			         
+            destination = new Quaternion(localTransformationOfChildren.Basis);
+        }
+		
+        return Parallel(
+            rigidBody.GetNode<Node3D>(rigidBody.Name.ToString()).RotateTo(destination, duration: duration),
+            rigidBody.GetNode<Node3D>("CollisionShape3D").RotateTo(destination, duration: duration)
+        );
+    }
+    public static Animation ScaleTo(this RigidBody3D rigidBody,
+        Vector3 destination,
+        float duration = DefaultDuration)
+    {
+        // When moving a rigid body, we need to keyframe the children instead of the  rigid body itself,
+        // since keyframes on the rigidbody will override the physics updates.
+        // Also, the keyframes on the children need to be local, since global keyframes
+        // will also effectively override the physics updates.
+       
+        return Parallel(
+            rigidBody.GetNode<Node3D>(rigidBody.Name.ToString()).ScaleTo(destination, duration: duration),
+            rigidBody.GetNode<Node3D>("CollisionShape3D").ScaleTo(destination, duration: duration)
         );
     }
 
