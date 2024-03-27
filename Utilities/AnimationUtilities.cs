@@ -257,6 +257,20 @@ public static class AnimationUtilities
         );
     }
     
+    public static Animation RotateTo(this RigidBody3D rigidBody, float xDeg, float yDeg, float zDeg, float duration = DefaultDuration)
+    {
+        return rigidBody.RotateTo(new Vector3(xDeg, yDeg, zDeg), duration);
+    }
+    public static Animation RotateTo(this RigidBody3D rigidBody, Vector3 eulerAnglesInDegrees, float duration = DefaultDuration)
+    {
+        var eulerAnglesInRadians = new Vector3(
+            Mathf.DegToRad(eulerAnglesInDegrees.X),
+            Mathf.DegToRad(eulerAnglesInDegrees.Y),
+            Mathf.DegToRad(eulerAnglesInDegrees.Z)
+        );
+        return rigidBody.RotateTo(Quaternion.FromEuler(eulerAnglesInRadians), duration);
+    }
+    
     public static Animation RotateTo(this RigidBody3D rigidBody,
         Quaternion destination,
         float duration = DefaultDuration,
