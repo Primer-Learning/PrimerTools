@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Godot;
 
 namespace PrimerTools.AnimationSequence;
@@ -8,8 +9,9 @@ public abstract partial class AnimationSequence : AnimationPlayer
 	private const string mainAnimationName = "p/CombinedAnimation";
 	private AnimationPlayer _referenceAnimationPlayer;
 	private AnimationLibrary _referenceAnimationLibrary;
-
-	private int _animationsMade = 0;
+	
+	// This also tracks how many animations have been made
+	private List<float> _startTimes = new();
 
 	private bool _run = true;
 	[Export] private bool Run {
@@ -78,13 +80,13 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		_referenceAnimationPlayer = MakeReferenceAnimationPlayer();
 		_referenceAnimationLibrary = MakeOrGetAnimationLibrary(_referenceAnimationPlayer, "p");
 		
-		// Reset the index for the library
-		_animationsMade = 0;
+		// Reset times list
+		_startTimes.Clear();
 	}
 
 	#region Animation Methods
 
-	protected void RegisterAnimation(Animation animation, bool log = false)
+	protected void RegisterAnimation(Animation animation, float time = -1, bool log = false)
 	{
 		for (var i = 0; i < animation.GetTrackCount(); i++)
 		{
@@ -100,7 +102,8 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		}
 		
 		// Put the library in the animation player
-		AddAnimationToLibrary(animation, $"anim{_animationsMade++}", _referenceAnimationLibrary);
+		AddAnimationToLibrary(animation, $"anim{_startTimes.Count}", _referenceAnimationLibrary);
+		_startTimes.Add(time);
 	}
 	protected void RegisterAnimation(params Animation[] animations)
 	{
@@ -123,7 +126,18 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		for  (var i = 0; i < _referenceAnimationPlayer.GetAnimationList().Length; i++)
 		{
 			var animationName = $"p/anim{i}";
+			// Handle start time
+			if (_startTimes[i] > time) // If next start time is after previous end time, use it
+			{
+				time = _startTimes[i];
+			}
+			else if (_startTimes[i] > 0) // Otherwise, use the previous end time. If it the time was set, warn that it's not used.
+			{
+				GD.PushWarning($"Animation {i} starts before the previous animation ends. Pushing it back.");
+			}
+			
 			animation.TrackInsertKey(trackIndex, time, animationName);
+			// End time for next iteration or final length
 			time += _referenceAnimationPlayer.GetAnimation(animationName).Length;
 		}
 		animation.Length = time;

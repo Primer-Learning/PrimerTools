@@ -211,6 +211,13 @@ public static class AnimationUtilities
     
     public static Animation AnimateFreeze(this RigidBody3D rigidBody, bool value, bool resetAtEnd = false, float duration = DefaultDuration)
     {
+        // TODO: Solve a deep mystery.
+        // If the rigidbody is set to not freeze in this method, it will not accept initial velocity.
+        // From the perspective of this method, this means "resetAtEnd" must be true if you want initial velocity.
+        // But in AnimateBool, it's the node.Set() call that determines whether initial velocity works.
+        // If node.Set() sets freeze to true, or if the call is omitted, the initial velocity works.
+        // The strange thing about this is that when you observe the remote tree, the rigidbody is frozen at
+        // the beginning in either case, (I believe) since it is set to the original value during the rewind.
         return rigidBody.AnimateBool(value, "freeze", resetAtEnd, duration);
     }
     
