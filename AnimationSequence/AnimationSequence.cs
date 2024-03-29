@@ -61,11 +61,26 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		var mainAnimation = GetAnimation(MainLibraryName + "/" + MainAnimationName);
 		for (var i = mainAnimation.TrackGetKeyCount(0) - 1; i >= 0; i--)
 		{
+			// Track is zero, because that's the animation track. The key is the name of the animation.
 			var name = mainAnimation.AnimationTrackGetKeyAnimation(0, i);
+			var individualAnimation = _referenceAnimationPlayer.GetAnimation(name);
+			SetMethodCallTracksEnabledState(individualAnimation, false);
 			_referenceAnimationPlayer.CurrentAnimation = name;
 			_referenceAnimationPlayer.Seek(0, update: true);
+			SetMethodCallTracksEnabledState(individualAnimation, true);
 		}
-		_referenceAnimationPlayer.Pause();
+		if (Engine.IsEditorHint()) _referenceAnimationPlayer.Pause();
+	}
+
+	private void SetMethodCallTracksEnabledState(Animation animation, bool enabled)
+	{
+		for (var i = 0; i < animation.GetTrackCount(); i++)
+		{
+			if (animation.TrackGetType(i) == Animation.TrackType.Method)
+			{
+				animation.TrackSetEnabled(i, enabled);
+			}
+		}
 	}
 
 	protected abstract void Define();
