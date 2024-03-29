@@ -365,6 +365,8 @@ public static class AnimationUtilities
                     animation.TrackGetKeyValue(i, j));
             }
         }
+
+        newAnimation.Length = animation.Length + delay;
         return newAnimation;
     }
     public static Animation WithDuration(this Animation animation, float duration)
@@ -571,9 +573,10 @@ public static class AnimationUtilities
                 }
             }
 
+            if (memberAnimation.Length > 0 && memberAnimation.Length < animLength)
+                GD.PushWarning("Animation has length less than the time of the latest keyframe. Usually this is a mistake.");
             // If the memberAnimation.Length was set to a nonzero value, we use animLength,
             // which is the time of the latest keyframe. Otherwise, we respect memberAnimation.Length.
-            // 
             animLength = memberAnimation.Length == 0 ? animLength : memberAnimation.Length;
             if (animLength == 0) GD.PushWarning($"Animation has length of zero. Idk which one, lmao.");
             if (parallel)
