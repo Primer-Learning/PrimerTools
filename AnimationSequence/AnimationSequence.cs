@@ -6,7 +6,9 @@ namespace PrimerTools.AnimationSequence;
 [Tool]
 public abstract partial class AnimationSequence : AnimationPlayer
 {
-	private const string mainAnimationName = "p/CombinedAnimation";
+	private const string MainAnimationName = "CombinedAnimation";
+	private const string MainLibraryName = "q";
+	private const string ReferenceLibraryName = "r";
 	private AnimationPlayer _referenceAnimationPlayer;
 	private AnimationLibrary _referenceAnimationLibrary;
 	
@@ -45,7 +47,7 @@ public abstract partial class AnimationSequence : AnimationPlayer
 			// so the start state is correct.
 			// This is needed because animation creation code sets objects to the
 			// final state to prepare for the next animation. So we're undoing that.
-			var mainAnimation = GetAnimation(mainAnimationName);
+			var mainAnimation = GetAnimation(MainLibraryName + "/" + MainAnimationName);
 			for (var i = mainAnimation.TrackGetKeyCount(0) - 1; i >= 0; i--)
 			{
 				var name = mainAnimation.AnimationTrackGetKeyAnimation(0, i);
@@ -53,7 +55,7 @@ public abstract partial class AnimationSequence : AnimationPlayer
 				_referenceAnimationPlayer.Seek(0, update: true);
 			}
 			
-			CurrentAnimation = mainAnimationName;
+			CurrentAnimation = MainLibraryName + "/" + MainAnimationName;
 			Play();
 		}
 	}
@@ -64,13 +66,6 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		// All children are dynamically created and should be removed when the sequence is reset
 		// It's good to keep track of these as children since they are in the editor, rather than a list of references
 		// that may be lost.
-		// TODO: Potential other cases
-		// - Children that need to be dynamically created as children of another object. Possible solution
-		//	 could be to intentionally create those as objects that have a known location in the scene tree,
-		//	 and then include their children in this loop.
-		// - Objects that are made in the editor and shouldn't be removed. This approach might be good for complex
-		//   objects that are difficult to capture in code. Possible approach is to just remake those too, but just
-		//   use packed scenes.
 		
 		foreach (var child in GetChildren())
 		{
@@ -78,7 +73,7 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		}
 		
 		_referenceAnimationPlayer = MakeReferenceAnimationPlayer();
-		_referenceAnimationLibrary = MakeOrGetAnimationLibrary(_referenceAnimationPlayer, "p");
+		_referenceAnimationLibrary = MakeOrGetAnimationLibrary(_referenceAnimationPlayer, ReferenceLibraryName);
 		
 		// Reset times list
 		_startTimes.Clear();
@@ -114,18 +109,26 @@ public abstract partial class AnimationSequence : AnimationPlayer
 	#region Animation Library Handling
 	private void CreateTopLevelAnimation()
 	{
+		var library = MakeOrGetAnimationLibrary(this, MainLibraryName);
+		
 		var animation = new Animation();
+		if (library.HasAnimation(MainAnimationName))
+		{
+			animation = library.GetAnimation(MainAnimationName);
+			var playbackTrackIndex = animation.FindTrack($"{Name}/ReferenceAnimationPlayer:animation",
+				Animation.TrackType.Animation);
+			if (playbackTrackIndex != -1) animation.RemoveTrack(playbackTrackIndex);
+		}
+		
 		var trackIndex = animation.AddTrack(Animation.TrackType.Animation);
-		
-		// TODO: Make a dictionary of animations and start times
-		// Start times can be gotten from the top-level animation player if they exist already
 		animation.TrackSetPath(trackIndex, $"{Name}/ReferenceAnimationPlayer:animation");
+		animation.TrackMoveTo(trackIndex, 0);
 		
-		// TODO: Make time the minimum of next start time and previous end time
 		var time = 0.0f;
 		for  (var i = 0; i < _referenceAnimationPlayer.GetAnimationList().Length; i++)
 		{
-			var animationName = $"p/anim{i}";
+			GD.Print("has amination");
+			var animationName = $"{ReferenceLibraryName}/anim{i}";
 			// Handle start time
 			if (_startTimes[i] > time) // If next start time is after previous end time, use it
 			{
@@ -136,14 +139,14 @@ public abstract partial class AnimationSequence : AnimationPlayer
 				GD.PushWarning($"Animation {i} starts before the previous animation ends. Pushing it back.");
 			}
 			
-			animation.TrackInsertKey(trackIndex, time, animationName);
+			// Use track index zero because the animation playback track is moved to 0 above.
+			animation.TrackInsertKey(0, time, animationName);
 			// End time for next iteration or final length
 			time += _referenceAnimationPlayer.GetAnimation(animationName).Length;
 		}
 		animation.Length = time;
 		
-		var library = MakeOrGetAnimationLibrary(this, "p");
-		AddAnimationToLibrary(animation, "CombinedAnimation", library);
+		AddAnimationToLibrary(animation, MainAnimationName, library);
 	}
 	
 	private AnimationPlayer MakeReferenceAnimationPlayer()
@@ -174,6 +177,9 @@ public abstract partial class AnimationSequence : AnimationPlayer
 	{
 		if (library.HasAnimation(animationName))
 		{
+			return;
+			
+			// No longer replacing the whole animation
 			library.RemoveAnimation(animationName);
 		}
 		library.AddAnimation(animationName, animation);
