@@ -14,7 +14,7 @@ public abstract partial class AnimationSequence : AnimationPlayer
 	
 	// This also tracks how many animations have been made
 	private List<float> _startTimes = new();
-
+	
 	private bool _run = true;
 	[Export] private bool Run {
 		get => _run;
@@ -25,9 +25,11 @@ public abstract partial class AnimationSequence : AnimationPlayer
 				Reset();
 				Define();
 				CreateTopLevelAnimation();
+				if (RewindOnRun) Rewind();
 			}
 		}
 	}
+	[Export] public bool RewindOnRun;
 	
 	public override void _Ready()
 	{
@@ -47,17 +49,23 @@ public abstract partial class AnimationSequence : AnimationPlayer
 			// so the start state is correct.
 			// This is needed because animation creation code sets objects to the
 			// final state to prepare for the next animation. So we're undoing that.
-			var mainAnimation = GetAnimation(MainLibraryName + "/" + MainAnimationName);
-			for (var i = mainAnimation.TrackGetKeyCount(0) - 1; i >= 0; i--)
-			{
-				var name = mainAnimation.AnimationTrackGetKeyAnimation(0, i);
-				_referenceAnimationPlayer.CurrentAnimation = name;
-				_referenceAnimationPlayer.Seek(0, update: true);
-			}
+			Rewind();
 			
 			CurrentAnimation = MainLibraryName + "/" + MainAnimationName;
 			Play();
 		}
+	}
+
+	private void Rewind()
+	{
+		var mainAnimation = GetAnimation(MainLibraryName + "/" + MainAnimationName);
+		for (var i = mainAnimation.TrackGetKeyCount(0) - 1; i >= 0; i--)
+		{
+			var name = mainAnimation.AnimationTrackGetKeyAnimation(0, i);
+			_referenceAnimationPlayer.CurrentAnimation = name;
+			_referenceAnimationPlayer.Seek(0, update: true);
+		}
+		_referenceAnimationPlayer.Pause();
 	}
 
 	protected abstract void Define();
@@ -127,7 +135,6 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		var time = 0.0f;
 		for  (var i = 0; i < _referenceAnimationPlayer.GetAnimationList().Length; i++)
 		{
-			GD.Print("has amination");
 			var animationName = $"{ReferenceLibraryName}/anim{i}";
 			// Handle start time
 			if (_startTimes[i] > time) // If next start time is after previous end time, use it
