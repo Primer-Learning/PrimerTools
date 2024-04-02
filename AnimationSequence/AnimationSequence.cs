@@ -25,11 +25,12 @@ public abstract partial class AnimationSequence : AnimationPlayer
 				Reset();
 				Define();
 				CreateTopLevelAnimation();
-				if (RewindOnRun) Rewind();
+				if (RewindOnRun) Rewind(timeToRewindTo);
 			}
 		}
 	}
 	[Export] public bool RewindOnRun;
+	[Export] public float timeToRewindTo = 0;
 	
 	public override void _Ready()
 	{
@@ -49,14 +50,14 @@ public abstract partial class AnimationSequence : AnimationPlayer
 			// so the start state is correct.
 			// This is needed because animation creation code sets objects to the
 			// final state to prepare for the next animation. So we're undoing that.
-			Rewind();
+			Rewind(0);
 			
 			CurrentAnimation = MainLibraryName + "/" + MainAnimationName;
 			Play();
 		}
 	}
 
-	private void Rewind()
+	private void Rewind(float timeToRewindTo)
 	{
 		var mainAnimation = GetAnimation(MainLibraryName + "/" + MainAnimationName);
 		for (var i = mainAnimation.TrackGetKeyCount(0) - 1; i >= 0; i--)
@@ -68,6 +69,11 @@ public abstract partial class AnimationSequence : AnimationPlayer
 			_referenceAnimationPlayer.CurrentAnimation = name;
 			_referenceAnimationPlayer.Seek(0, update: true);
 			SetMethodCallTracksEnabledState(individualAnimation, true);
+
+			if (mainAnimation.TrackGetKeyTime(0, i) < timeToRewindTo)
+			{
+				break;
+			}
 		}
 		if (Engine.IsEditorHint()) _referenceAnimationPlayer.Pause();
 	}
