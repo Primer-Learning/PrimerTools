@@ -18,14 +18,23 @@ public partial class LatexNode : Node3D
 	}
 
 	[Export] public bool openBlender = false;
-	[Export] public string latex = "$1$";
+	[Export] public string latex = "1";
 
 	public string numberPrefix = "";
 	public string numberSuffix = "";
+	private bool isInteger = false;
+	// ^ This is just here to prevent errors on build when Godot runs all the getters and setters.
+	// I would put a warning below if this is accessed when isInteger is false, but I don't want 
+	// warnings I ignore every time I build.
 	public int SetIntegerExpression {
-		get => latex.ToInt();
+		get
+		{
+			if (!isInteger) return -1;
+			return latex.ToInt();
+		} 
 		set {
 			latex = numberPrefix + value + numberSuffix;
+			isInteger = true;
 			UpdateCharacters();
 		}
 	}
