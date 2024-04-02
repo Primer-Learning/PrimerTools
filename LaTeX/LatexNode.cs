@@ -58,6 +58,23 @@ public partial class LatexNode : Node3D
 		Align();
 	}
 
+	public void SetColor(Color color)
+	{
+		foreach (var child in GetChildren())
+		{
+			foreach (var grandchild in child.GetChildren())
+			{
+				if (grandchild is GeometryInstance3D geometryInstance3D)
+				{
+					geometryInstance3D.MaterialOverride = new StandardMaterial3D()
+					{
+						AlbedoColor = color
+					};
+				}
+			}
+		}
+	}
+	
 	#region Alignment
 
 	public enum HorizontalAlignmentOptions
