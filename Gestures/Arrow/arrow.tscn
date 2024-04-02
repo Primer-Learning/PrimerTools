@@ -1,0 +1,27 @@
+[gd_scene load_steps=4 format=3 uid="uid://tug6o7ke0tmd"]
+
+[ext_resource type="Script" path="res://addons/PrimerTools/Gestures/Arrow/Arrow.cs" id="1_j1bvc"]
+[ext_resource type="PackedScene" uid="uid://b5orfxct60gxc" path="res://addons/PrimerTools/Gestures/Arrow/arrow_head.blend" id="2_vd7g4"]
+[ext_resource type="PackedScene" uid="uid://cwg812eome4k" path="res://addons/PrimerTools/Gestures/Arrow/arrow_shaft.blend" id="3_ojc82"]
+
+[node name="arrow" type="Node3D" node_paths=PackedStringArray("shaftObject", "headObject", "tailObject")]
+transform = Transform3D(0.72463, -0.689138, 0, 0.689138, 0.72463, 0, 0, 0, 1, 0, 0, 0)
+script = ExtResource("1_j1bvc")
+showHeadArrow = true
+width = 1.0
+Length = 1.69052
+XYPlaneRotation = 43.5619
+tailPoint = Vector3(1.225, 1.165, 0)
+shaftObject = NodePath("shaft")
+headObject = NodePath("head")
+tailObject = NodePath("tail")
+
+[node name="head" parent="." instance=ExtResource("2_vd7g4")]
+transform = Transform3D(-1, 8.74228e-08, 0, -8.74228e-08, -1, 0, 0, 0, 1, 0, 0, 0)
+
+[node name="shaft" parent="." instance=ExtResource("3_ojc82")]
+transform = Transform3D(1.64052, 0, 0, 0, 1, 0, 0, 0, 1, 0.05, 0, 0)
+
+[node name="tail" parent="." instance=ExtResource("2_vd7g4")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.511, 0, 0)
+visible = false
