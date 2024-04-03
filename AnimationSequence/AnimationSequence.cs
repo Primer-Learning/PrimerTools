@@ -24,7 +24,7 @@ public abstract partial class AnimationSequence : AnimationPlayer
 			if (_run && !oldRun && Engine.IsEditorHint()) { // Avoids running on build
 				Reset();
 				Define();
-				CreateTopLevelAnimation();
+				CreateTopLevelAnimationForEditor();
 				if (RewindOnRun) Rewind(timeToRewindTo);
 			}
 		}
@@ -44,7 +44,10 @@ public abstract partial class AnimationSequence : AnimationPlayer
 			// An alternate approach could create nodes for each point.
 			Reset();
 			Define();
-			CreateTopLevelAnimation();
+			CreateTopLevelAnimationForEditor();
+			
+			// Not using this. See the comment above the method definition.
+			// CreateTopLevelAnimationForPlayer();
 			
 			// Rewind through the individual animations on the reference player
 			// so the start state is correct.
@@ -59,23 +62,44 @@ public abstract partial class AnimationSequence : AnimationPlayer
 
 	private void Rewind(float timeToRewindTo)
 	{
-		var mainAnimation = GetAnimation(MainLibraryName + "/" + MainAnimationName);
-		for (var i = mainAnimation.TrackGetKeyCount(0) - 1; i >= 0; i--)
-		{
-			// Track is zero, because that's the animation track. The key is the name of the animation.
-			var name = mainAnimation.AnimationTrackGetKeyAnimation(0, i);
-			var individualAnimation = _referenceAnimationPlayer.GetAnimation(name);
-			SetMethodCallTracksEnabledState(individualAnimation, false);
-			_referenceAnimationPlayer.CurrentAnimation = name;
-			_referenceAnimationPlayer.Seek(0, update: true);
-			SetMethodCallTracksEnabledState(individualAnimation, true);
-
-			if (mainAnimation.TrackGetKeyTime(0, i) < timeToRewindTo)
+		// if (Engine.IsEditorHint())
+		// {
+			var mainAnimation = GetAnimation(MainLibraryName + "/" + MainAnimationName);
+			for (var i = mainAnimation.TrackGetKeyCount(0) - 1; i >= 0; i--)
 			{
-				break;
+				// Track is zero, because that's the animation track. The key is the name of the animation.
+				var name = mainAnimation.AnimationTrackGetKeyAnimation(0, i);
+				var individualAnimation = _referenceAnimationPlayer.GetAnimation(name);
+				SetMethodCallTracksEnabledState(individualAnimation, false);
+				_referenceAnimationPlayer.CurrentAnimation = name;
+				_referenceAnimationPlayer.Seek(0, update: true);
+				SetMethodCallTracksEnabledState(individualAnimation, true);
+
+				if (mainAnimation.TrackGetKeyTime(0, i) < timeToRewindTo)
+				{
+					break;
+				}
 			}
-		}
-		if (Engine.IsEditorHint()) _referenceAnimationPlayer.Pause();
+			if (Engine.IsEditorHint()) _referenceAnimationPlayer.Pause();
+			
+		// This section was meant to handle the case where the animations are combined into one
+		// by CreateTopLevelAnimationForPlayer. But not doing that. See the comment above the method definition.
+		// }
+		// else
+		// {
+		// 	foreach (var animation in _referenceAnimationPlayer.GetAnimationList())
+		// 	{
+		// 		GD.Print(animation);
+		// 	}
+		// 	
+		// 	// If we're not in the editor, the animations are already combined into one,
+		// 	// So we just have to seek that one.
+		// 	var mainAnimation = _referenceAnimationPlayer.GetAnimation($"{ReferenceLibraryName}/final_combined");
+		// 	SetMethodCallTracksEnabledState(mainAnimation, false);
+		// 	_referenceAnimationPlayer.CurrentAnimation = $"{ReferenceLibraryName}/final_combined";
+		// 	_referenceAnimationPlayer.Seek(timeToRewindTo, update: true);
+		// 	SetMethodCallTracksEnabledState(mainAnimation, true);
+		// }
 	}
 
 	private void SetMethodCallTracksEnabledState(Animation animation, bool enabled)
@@ -133,13 +157,13 @@ public abstract partial class AnimationSequence : AnimationPlayer
 	{
 		RegisterAnimation(animations.RunInParallel());
 	}
-	#endregion
 	
-	#region Animation Library Handling
-	private void CreateTopLevelAnimation()
+	private void CreateTopLevelAnimationForEditor()
 	{
 		var library = MakeOrGetAnimationLibrary(this, MainLibraryName);
-		
+	
+		// If the animation already exists, remove the playback track
+		// This is so the audio track will stay.
 		var animation = new Animation();
 		if (library.HasAnimation(MainAnimationName))
 		{
@@ -149,6 +173,7 @@ public abstract partial class AnimationSequence : AnimationPlayer
 			if (playbackTrackIndex != -1) animation.RemoveTrack(playbackTrackIndex);
 		}
 		
+		// With the playback track removed (if it ever existed), we can add the new one
 		var trackIndex = animation.AddTrack(Animation.TrackType.Animation);
 		animation.TrackSetPath(trackIndex, $"{Name}/ReferenceAnimationPlayer:animation");
 		animation.TrackMoveTo(trackIndex, 0);
@@ -177,6 +202,79 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		AddAnimationToLibrary(animation, MainAnimationName, library);
 	}
 	
+	// I made this method to try to solve the issue that sometimes things that scale to zero
+	// don't scale all the way down to zero. I thought it was because the final keyframe wasn't
+	// always evaluated at its final value. To solve that, the method below combined everything
+	// into one big animations so keyframes couldn't be skipped.
+	// But, it now seems the issue wasn't general, but instead because the scissors screws
+	// weren't being told to scale, leaving a little speck.
+	// I could have sworn the issue happened for real sometimes, so I'm keeping the method for now.
+	// But it won't be used unless the issue comes up again.
+	private void CreateTopLevelAnimationForPlayer()
+	{
+		var library = MakeOrGetAnimationLibrary(this, MainLibraryName);
+	
+		// If an animation already exists, remove it. We're about to make a bunch of other tracks.
+		var animation = new Animation();
+		if (library.HasAnimation(MainAnimationName))
+		{
+			animation = library.GetAnimation(MainAnimationName);
+			var playbackTrackIndex = animation.FindTrack($"{Name}/ReferenceAnimationPlayer:animation",
+				Animation.TrackType.Animation);
+			if (playbackTrackIndex != -1) animation.RemoveTrack(playbackTrackIndex);
+		}
+		
+		// With the playback track removed (if it ever existed), we can add the new one
+		
+		// But actually let's just add all the tracks individually, I think.
+		// var trackIndex = animation.AddTrack(Animation.TrackType.Animation);
+		// animation.TrackSetPath(trackIndex, $"{Name}/ReferenceAnimationPlayer:animation");
+		// animation.TrackMoveTo(trackIndex, 0);
+
+		var animationsWithDelays = new List<Animation>();
+		var time = 0.0f;
+		for  (var i = 0; i < _referenceAnimationPlayer.GetAnimationList().Length; i++)
+		{
+			/* Ideas for implementation:
+			 - Create a new list of animations, adding the delay according to
+			 the start time or current time, same as the code below. Then use
+			 CombineAnimations to create the single combined animation. And put
+			 it in an animation playback track.
+			 - Copy the tracks from every animation straight onto this one. Downside
+			 here would be that I'm duplicating a lot of code from CombineAnimations.
+			*/
+			
+			// Handle start time
+			if (_startTimes[i] > time) // If next start time is after previous end time, use it
+			{
+				time = _startTimes[i];
+			}
+			else if (_startTimes[i] > 0) // Otherwise, use the previous end time. If it the time was set, warn that it's not used.
+			{
+				GD.PushWarning($"Animation {i} starts before the previous animation ends. Pushing it back.");
+			}
+			
+			var nonDelayedAnimation = _referenceAnimationPlayer.GetAnimation($"{ReferenceLibraryName}/anim{i}");
+			animationsWithDelays.Add(nonDelayedAnimation.WithDelay(time));
+			// End time for next iteration or final length
+			time += nonDelayedAnimation.Length;
+		}
+		animation.Length = time;
+		
+		// Combine the animations with delays and put then in the reference library
+		AddAnimationToLibrary(animationsWithDelays.RunInParallel(), "final_combined", _referenceAnimationLibrary);
+		// Add the animation playback track to the top-level animation
+		// And add the final combined animation to the top level animation
+		var trackIndex = animation.AddTrack(Animation.TrackType.Animation);
+		animation.TrackSetPath(trackIndex, $"{Name}/ReferenceAnimationPlayer:animation");
+		// animation.TrackInsertKey(0, time, $"{ReferenceLibraryName}/final_combined");
+		
+		// AddAnimationToLibrary(animation, MainAnimationName, library);
+	}
+	
+	#endregion
+	
+	#region Animation Library Handling
 	private AnimationPlayer MakeReferenceAnimationPlayer()
 	{
 		// This animation player is used as a container for the library of animations
@@ -208,7 +306,7 @@ public abstract partial class AnimationSequence : AnimationPlayer
 			return;
 			
 			// No longer replacing the whole animation
-			library.RemoveAnimation(animationName);
+			// library.RemoveAnimation(animationName);
 		}
 		library.AddAnimation(animationName, animation);
 	}
