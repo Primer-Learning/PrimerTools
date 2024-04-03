@@ -573,8 +573,10 @@ public static class AnimationUtilities
                 }
             }
 
-            if (memberAnimation.Length > 0 && memberAnimation.Length < animLength)
-                GD.PushWarning("Animation has length less than the time of the latest keyframe. Usually this is a mistake.");
+            if (memberAnimation.Length > 0 && memberAnimation.Length + Epsilon < animLength)
+            {
+                GD.PushWarning($"Animation has length {memberAnimation.Length} less than the time of the latest keyframe {animLength}. Usually this is a mistake.");
+            }
             // If the memberAnimation.Length was set to a nonzero value, we use animLength,
             // which is the time of the latest keyframe. Otherwise, we respect memberAnimation.Length.
             animLength = memberAnimation.Length == 0 ? animLength : memberAnimation.Length;
