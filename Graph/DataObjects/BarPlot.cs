@@ -10,20 +10,20 @@ namespace PrimerTools.Graph;
 
 public partial class BarPlot : Node3D, IPrimerGraphData
 {
-    public Color[] colors = PrimerColor.rainbow.ToArray();
+    public Color[] Colors = PrimerColor.rainbow.ToArray();
     
-    public bool showValuesOnBars = false;
-    public float barLabelVerticalOffset = 0.1f;
+    public bool ShowValuesOnBars = false;
+    public float BarLabelVerticalOffset = 0.2f;
     
     public delegate Vector3 Transformation(Vector3 inputPoint);
     public Transformation TransformPointFromDataSpaceToPositionSpace = point => point;
     
     private List<Tuple<float, float, float>> renderedRectProperties = new();
-    public List<float> data;
+    public List<float> Data;
 
     private List<Tuple<float, float, float>> DataAsRectProperties()
     {
-        return data.Select( (value, i) =>
+        return Data.Select( (value, i) =>
             new Tuple<float, float, float>(
                 TransformPointFromDataSpaceToPositionSpace(new Vector3(i + offset, 0, 0)).X,
                 TransformPointFromDataSpaceToPositionSpace(new Vector3(0, value, 0)).Y,
@@ -59,10 +59,10 @@ public partial class BarPlot : Node3D, IPrimerGraphData
                 AddChild(bar);
                 bar.Owner = GetTree().EditedSceneRoot;
                 var newMat = new StandardMaterial3D();
-                newMat.AlbedoColor = colors[i % colors.Length];
+                newMat.AlbedoColor = Colors[i % Colors.Length];
                 bar.Mesh.SurfaceSetMaterial(0, newMat);
 
-                if (showValuesOnBars)
+                if (ShowValuesOnBars)
                 {
                     // TODO: Consider not using LaTeX here. It's overkill, but is currently more work
                     // at time of writing.
@@ -74,7 +74,7 @@ public partial class BarPlot : Node3D, IPrimerGraphData
                     label.UpdateCharacters();
                     AddChild(label);
                     label.Owner = GetTree().EditedSceneRoot;
-                    label.Position = bar.Position + Vector3.Up * barLabelVerticalOffset; 
+                    label.Position = bar.Position + Vector3.Up * BarLabelVerticalOffset; 
                     label.Scale = Vector3.Zero;
                 }
             }
@@ -83,6 +83,7 @@ public partial class BarPlot : Node3D, IPrimerGraphData
             
             // Position track
             var targetPosition = new Vector3(rectProperties[i].Item1, rectProperties[i].Item2 / 2, 0);
+            // TODO: Use AnimateValue here
             animation.AddTrack(Animation.TrackType.Value);
             animation.TrackSetPath(trackCount, bar.GetPath()+ ":position");
             animation.TrackInsertKey(trackCount, 0, bar.Position);
@@ -110,12 +111,12 @@ public partial class BarPlot : Node3D, IPrimerGraphData
             trackCount++;
             ((BoxMesh)bar.Mesh).Size = new Vector3(targetWidth, targetHeight, ((BoxMesh)bar.Mesh).Size.Z);
 
-            if (showValuesOnBars)
+            if (ShowValuesOnBars)
             {
                 // Label position
                 var theLabel = GetNode<LatexNode>($"Label {i}");
                 var targetLabelPos = new Vector3(rectProperties[i].Item1,
-                    rectProperties[i].Item2 + barLabelVerticalOffset, 0);
+                    rectProperties[i].Item2 + BarLabelVerticalOffset, 0);
                 animation.AddTrack(Animation.TrackType.Value);
                 animation.TrackSetPath(trackCount, theLabel.GetPath() + ":position");
                 animation.TrackInsertKey(trackCount, 0, theLabel.Position);
@@ -136,9 +137,9 @@ public partial class BarPlot : Node3D, IPrimerGraphData
                 animation.AddTrack(Animation.TrackType.Value);
                 animation.TrackSetPath(trackCount, theLabel.GetPath() + ":SetIntegerExpression");
                 animation.TrackInsertKey(trackCount, 0, theLabel.SetIntegerExpression);
-                animation.TrackInsertKey(trackCount, duration, Mathf.RoundToInt(data[i]));
+                animation.TrackInsertKey(trackCount, duration, Mathf.RoundToInt(Data[i]));
                 animation.TrackSetInterpolationType(trackCount, Animation.InterpolationType.Cubic);
-                theLabel.SetIntegerExpression = Mathf.RoundToInt(data[i]);
+                theLabel.SetIntegerExpression = Mathf.RoundToInt(Data[i]);
                 
                 trackCount++;
             }
@@ -154,12 +155,12 @@ public partial class BarPlot : Node3D, IPrimerGraphData
     
     public void SetData(params float[] bars)
     {
-        data = bars.ToList();
+        Data = bars.ToList();
     }
 
     public void AddData(params float[] newData)
     {
-        data ??= new List<float>();
-        data.AddRange(newData);
+        Data ??= new List<float>();
+        Data.AddRange(newData);
     }
 }

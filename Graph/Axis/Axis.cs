@@ -10,6 +10,8 @@ public partial class Axis : Node3D
 {
 	private ExportedMemberChangeChecker exportedMemberChangeChecker;
 	private int animationsMade = 0;
+
+	private const float ArrowHeadScaleFactor = 0.07f;
 	
 	public float min = 0;
 	[Export] private float Min {
@@ -40,7 +42,7 @@ public partial class Axis : Node3D
 		set => padding = value;
 	}
 	public float LengthMinusPadding => length - padding.X - padding.Y;
-	float thickness = 1;
+	public float Thiccness = 1;
 	public float DataScale => LengthMinusPadding / RangeSize;
 	
 	public bool showArrows = true;
@@ -91,7 +93,7 @@ public partial class Axis : Node3D
 			rod.MoveTo(new Vector3(-padding.X, 0f, 0f), duration),
 			rod.ScaleTo(length == 0 
 				? Vector3.Zero
-				: new Vector3(length, thickness, thickness), duration)
+				: new Vector3(length, Thiccness, Thiccness), duration)
 		);
 	}
 
@@ -104,7 +106,9 @@ public partial class Axis : Node3D
 			endArrow.Visible = false;
 			startArrow.Visible = false;
 		}
-		
+
+		endArrow.Scale = Vector3.One * Thiccness * ArrowHeadScaleFactor;
+		startArrow.Scale = Vector3.One * Thiccness * ArrowHeadScaleFactor;
 		if (length == 0)
 		{
 			endArrow.Scale = Vector3.Zero;
@@ -155,7 +159,7 @@ public partial class Axis : Node3D
 				
 				tic.Position = GetPosition(tic);
 				tic.Scale = Vector3.Zero;
-				newTicAnimations.Add(tic.ScaleTo(1, duration));
+				newTicAnimations.Add(tic.ScaleTo(Thiccness, duration));
 				tic.SetLabel();
 				if (!showTicCylinders) tic.GetNode<MeshInstance3D>("MeshInstance3D").Visible = false;
 			}
