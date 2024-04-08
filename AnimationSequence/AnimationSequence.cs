@@ -13,7 +13,7 @@ public abstract partial class AnimationSequence : AnimationPlayer
 	private AnimationLibrary _referenceAnimationLibrary;
 	
 	// This also tracks how many animations have been made
-	private List<float> _startTimes = new();
+	private readonly List<float> _startTimes = new();
 	
 	private bool _run = true;
 	[Export] private bool Run {
@@ -53,9 +53,10 @@ public abstract partial class AnimationSequence : AnimationPlayer
 			// so the start state is correct.
 			// This is needed because animation creation code sets objects to the
 			// final state to prepare for the next animation. So we're undoing that.
-			Rewind(0);
+			Rewind(timeToRewindTo);
 			
 			CurrentAnimation = MainLibraryName + "/" + MainAnimationName;
+			Seek(timeToRewindTo);
 			Play();
 		}
 	}
@@ -80,7 +81,7 @@ public abstract partial class AnimationSequence : AnimationPlayer
 					break;
 				}
 			}
-			if (Engine.IsEditorHint()) _referenceAnimationPlayer.Pause();
+		_referenceAnimationPlayer.Pause();
 			
 		// This section was meant to handle the case where the animations are combined into one
 		// by CreateTopLevelAnimationForPlayer. But not doing that. See the comment above the method definition.
