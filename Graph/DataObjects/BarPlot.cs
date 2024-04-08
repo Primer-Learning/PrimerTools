@@ -13,7 +13,8 @@ public partial class BarPlot : Node3D, IPrimerGraphData
     public Color[] Colors = PrimerColor.rainbow.ToArray();
     
     public bool ShowValuesOnBars = false;
-    public float BarLabelVerticalOffset = 0.2f;
+    public float BarLabelVerticalOffset = 0.5f;
+    private Vector3 parentGraphSize => new Vector3(GetParent<Graph>().XAxis.length, GetParent<Graph>().YAxis.length, GetParent<Graph>().ZAxis.length);
     
     public delegate Vector3 Transformation(Vector3 inputPoint);
     public Transformation TransformPointFromDataSpaceToPositionSpace = point => point;
@@ -74,7 +75,7 @@ public partial class BarPlot : Node3D, IPrimerGraphData
                     label.UpdateCharacters();
                     AddChild(label);
                     label.Owner = GetTree().EditedSceneRoot;
-                    label.Position = bar.Position + Vector3.Up * BarLabelVerticalOffset; 
+                    label.Position = bar.Position + Vector3.Up * BarLabelVerticalOffset * parentGraphSize.Y / 10; 
                     label.Scale = Vector3.Zero;
                 }
             }
@@ -116,7 +117,7 @@ public partial class BarPlot : Node3D, IPrimerGraphData
                 // Label position
                 var theLabel = GetNode<LatexNode>($"Label {i}");
                 var targetLabelPos = new Vector3(rectProperties[i].Item1,
-                    rectProperties[i].Item2 + BarLabelVerticalOffset, 0);
+                    rectProperties[i].Item2 + BarLabelVerticalOffset * parentGraphSize.Y / 10, 0);
                 animation.AddTrack(Animation.TrackType.Value);
                 animation.TrackSetPath(trackCount, theLabel.GetPath() + ":position");
                 animation.TrackInsertKey(trackCount, 0, theLabel.Position);
