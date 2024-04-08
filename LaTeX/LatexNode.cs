@@ -5,6 +5,16 @@ namespace PrimerTools.LaTeX;
 [Tool]
 public partial class LatexNode : Node3D
 {
+	public static LatexNode Create(string latex)
+	{
+		var node = new LatexNode();
+		node.latex = latex;
+		node.UpdateCharacters();
+		node.Name = latex;
+		return node;
+	}
+	
+	
 	private bool run = true;
 	[Export] public bool Run {
 		get => run;
@@ -91,8 +101,8 @@ public partial class LatexNode : Node3D
 		Bottom
 	}
 	
-	private VerticalAlignmentOptions verticalAlignment = VerticalAlignmentOptions.Baseline;
-	private HorizontalAlignmentOptions horizontalAlignment = HorizontalAlignmentOptions.Left;
+	private VerticalAlignmentOptions verticalAlignment = VerticalAlignmentOptions.Center;
+	private HorizontalAlignmentOptions horizontalAlignment = HorizontalAlignmentOptions.Center;
 	
 	[Export] public VerticalAlignmentOptions VerticalAlignment {
 		get => verticalAlignment;
