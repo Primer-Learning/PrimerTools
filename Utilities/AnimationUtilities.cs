@@ -524,6 +524,13 @@ public static class AnimationUtilities
         // Loop through the animations
         foreach (var memberAnimation in animations)
         {
+            if (memberAnimation == null)
+            {
+                GD.PrintErr("Can't combine a null animation. Use an empty animation instead.");
+                var stackTrace = new System.Diagnostics.StackTrace(true);
+                throw new Exception("Can't combine a null animation. Use an empty animation instead. \n" + stackTrace);
+            }
+            
             var animLength = 0.0;
             var trackCount = memberAnimation.GetTrackCount();
             

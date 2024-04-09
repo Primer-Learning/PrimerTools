@@ -198,7 +198,9 @@ public abstract partial class AnimationSequence : AnimationPlayer
 			// End time for next iteration or final length
 			time += _referenceAnimationPlayer.GetAnimation(animationName).Length;
 		}
-		animation.Length = time;
+		
+		// Make the animation 100s longer than it actually is, so the editor leaves some room
+		animation.Length = time + 100;
 		
 		AddAnimationToLibrary(animation, MainAnimationName, library);
 	}
