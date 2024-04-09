@@ -52,13 +52,13 @@ public static class AnimationUtilities
                 animation.TrackSetPath(trackIndex, node.GetPath()+":" + propertyPath);
                 
                 // First key
-                animation.BezierTrackInsertKey(trackIndex, 0.0f, node.Get(propertyPath).AsSingle());
+                animation.BezierTrackInsertKey(trackIndex, 0.0f, node.GetIndexed(propertyPath).AsSingle());
                 animation.BezierTrackSetKeyOutHandle(trackIndex, 0, outHandle);
                 // Second key
                 animation.BezierTrackInsertKey(trackIndex, duration, floatValue);
                 animation.BezierTrackSetKeyInHandle(trackIndex, 1, inHandle);
                 
-                node.Set(propertyPath, floatValue);
+                node.SetIndexed(propertyPath, floatValue);
                 break;
             case Vector3 vectorValue:
                 string[] propertyNames = {"x", "y", "z"};
@@ -68,14 +68,14 @@ public static class AnimationUtilities
                     trackIndex = animation.AddTrack(Animation.TrackType.Bezier);
                     animation.TrackSetPath(trackIndex, node.GetPath()+":" + propertyPath + ":" + propertyNames[i]);
                     // First key
-                    animation.BezierTrackInsertKey(trackIndex, 0.0f, node.Get(propertyPath).AsVector3()[i]);
+                    animation.BezierTrackInsertKey(trackIndex, 0.0f, node.GetIndexed(propertyPath).AsVector3()[i]);
                     animation.BezierTrackSetKeyOutHandle(trackIndex, 0, outHandle);
                     // Second key
                     animation.BezierTrackInsertKey(trackIndex, duration, vectorValue[i]);
-                    animation.BezierTrackSetKeyOutHandle(trackIndex, 1, inHandle);
+                    animation.BezierTrackSetKeyInHandle(trackIndex, 1, inHandle);
                 }
 
-                node.Set(propertyPath, vectorValue);
+                node.SetIndexed(propertyPath, vectorValue);
                 break;
             default:
                 GD.PrintErr("Unsupported type for AnimateValue");
