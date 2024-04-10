@@ -1,5 +1,8 @@
+using System;
+using System.Globalization;
 using System.Linq;
 using Godot;
+using PrimerTools.Graph;
 
 namespace PrimerTools.LaTeX;
 [Tool]
@@ -28,24 +31,31 @@ public partial class LatexNode : Node3D
 	}
 
 	[Export] public bool openBlender = false;
-	[Export] public string latex = "1";
+	[Export] public string latex = "\\LaTeX";
 
 	public string numberPrefix = "";
 	public string numberSuffix = "";
-	private bool isInteger = false;
-	// ^ This is just here to prevent errors on build when Godot runs all the getters and setters.
-	// I would put a warning below if this is accessed when isInteger is false, but I don't want 
-	// warnings I ignore every time I build.
-	public int SetIntegerExpression {
-		get
+	public int DecimalPlacesToShow = 0;
+	private float number;
+	public float SetNumericalExpression {
+		get => number;
+		set
 		{
-			if (!isInteger) return -1;
-			return latex.ToInt();
-		} 
-		set {
-			latex = numberPrefix + value + numberSuffix;
-			isInteger = true;
+			var precision = Mathf.Pow(10, DecimalPlacesToShow);
+			var rounded = Mathf.Round(value * precision) / precision;
+			var approx = "";
+			// Whether to show the approximation symbol
+			// For now, we'll just show it if the number is zero
+			// if (Mathf.Abs(value - rounded) > 0.00001)
+			if (rounded == 0 && value != 0)
+			{
+				approx = "\\sim ";
+			}
+			GD.Print(numberSuffix);
+			latex = "$" + approx + numberPrefix + value.ToString("F" + DecimalPlacesToShow) + numberSuffix + "$";
 			UpdateCharacters();
+			
+			number = value;
 		}
 	}
 	
