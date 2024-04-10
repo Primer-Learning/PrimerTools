@@ -1,4 +1,5 @@
 using Godot;
+using PrimerTools;
 using PrimerTools.AnimationSequence;
 using PrimerTools.Graph;
 
@@ -49,10 +50,10 @@ public partial class GraphTest : AnimationSequence
 		// );
 		// RegisterAnimation(data.Transition());
 		
-		graph.XAxis.length = 7;
-		graph.YAxis.max = 120;
-		graph.XAxis.max = 12;
-		graph.ZAxis.length = 0;
+		// graph.XAxis.length = 7;
+		// graph.YAxis.max = 120;
+		// graph.XAxis.max = 12;
+		// graph.ZAxis.length = 0;
 		
 		// var line = graph.AddLine();
 		// line.SetInitialData(
