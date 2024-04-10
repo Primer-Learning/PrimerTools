@@ -13,7 +13,11 @@ public partial class BarPlot : Node3D, IPrimerGraphData
     public Color[] Colors = PrimerColor.rainbow.ToArray();
     
     public bool ShowValuesOnBars = false;
+    public float BarLabelScaleFactor = 1;
     public float BarLabelVerticalOffset = 0.5f;
+    public string BarLabelPrefix = "";
+    public string BarLabelSuffix = "";
+    public int BarLabelDecimalPlaces = 0;
     private Vector3 parentGraphSize => new Vector3(GetParent<Graph>().XAxis.length, GetParent<Graph>().YAxis.length, GetParent<Graph>().ZAxis.length);
     
     public delegate Vector3 Transformation(Vector3 inputPoint);
@@ -36,14 +40,15 @@ public partial class BarPlot : Node3D, IPrimerGraphData
     private float offset = 1;
     private float barWidth = 0.8f;
     private float barDepth = 0.01f;
-    
-    public Animation Transition(float duration)
+
+    public Animation Transition(float duration = AnimationUtilities.DefaultDuration)
     {
-        var animation = new Animation();
         var trackCount = 0;
-        
+
         var rectProperties = DataAsRectProperties();
-        
+
+        var animations = new List<Animation>();
+
         // Iterate through the data points
         for (var i = 0; i < rectProperties.Count; i++)
         {
@@ -75,78 +80,47 @@ public partial class BarPlot : Node3D, IPrimerGraphData
                     label.UpdateCharacters();
                     AddChild(label);
                     label.Owner = GetTree().EditedSceneRoot;
-                    label.Position = bar.Position + Vector3.Up * BarLabelVerticalOffset * parentGraphSize.Y / 10; 
+                    label.Position = bar.Position + Vector3.Up * BarLabelVerticalOffset * parentGraphSize.Y / 10;
                     label.Scale = Vector3.Zero;
                 }
             }
             
-            // Create an animation for the bar to move to the new position/height/width
-            
-            // Position track
+            // Position animation
             var targetPosition = new Vector3(rectProperties[i].Item1, rectProperties[i].Item2 / 2, 0);
-            // TODO: Use AnimateValue here
-            animation.AddTrack(Animation.TrackType.Value);
-            animation.TrackSetPath(trackCount, bar.GetPath()+ ":position");
-            animation.TrackInsertKey(trackCount, 0, bar.Position);
-            animation.TrackInsertKey(trackCount, duration, targetPosition);
-            animation.TrackSetInterpolationType(trackCount, Animation.InterpolationType.Cubic);
-            trackCount++;
-            bar.Position = targetPosition;
-            
-            // Height track
+            animations.Add(bar.AnimateValue(targetPosition, "position"));
+            // Height animation
             var targetHeight = rectProperties[i].Item2;
-            animation.AddTrack(Animation.TrackType.Value);
-            animation.TrackSetPath(trackCount, bar.GetPath()+ ":mesh:size:y");
-            animation.TrackInsertKey(trackCount, 0, ((BoxMesh)bar.Mesh).Size.Y);
-            animation.TrackInsertKey(trackCount, duration, targetHeight);
-            animation.TrackSetInterpolationType(trackCount, Animation.InterpolationType.Cubic);
-            trackCount++;
-            
-            // Width track
+            animations.Add(bar.AnimateValue(targetHeight, "mesh:size:y"));
+            // Width animation
             var targetWidth = rectProperties[i].Item3;
-            animation.AddTrack(Animation.TrackType.Value);
-            animation.TrackSetPath(trackCount, bar.GetPath()+ ":mesh:size:x");
-            animation.TrackInsertKey(trackCount, 0, ((BoxMesh)bar.Mesh).Size.X);
-            animation.TrackInsertKey(trackCount, duration, targetWidth);
-            animation.TrackSetInterpolationType(trackCount, Animation.InterpolationType.Cubic);
-            trackCount++;
-            ((BoxMesh)bar.Mesh).Size = new Vector3(targetWidth, targetHeight, ((BoxMesh)bar.Mesh).Size.Z);
-
+            animations.Add(bar.AnimateValue(targetWidth, "mesh:size:x"));
+            
             if (ShowValuesOnBars)
             {
-                // Label position
                 var theLabel = GetNode<LatexNode>($"Label {i}");
+                
                 var targetLabelPos = new Vector3(rectProperties[i].Item1,
                     rectProperties[i].Item2 + BarLabelVerticalOffset * parentGraphSize.Y / 10, 0);
-                animation.AddTrack(Animation.TrackType.Value);
-                animation.TrackSetPath(trackCount, theLabel.GetPath() + ":position");
-                animation.TrackInsertKey(trackCount, 0, theLabel.Position);
-                animation.TrackInsertKey(trackCount, duration, targetLabelPos);
-                animation.TrackSetInterpolationType(trackCount, Animation.InterpolationType.Cubic);
-                trackCount++;
-                theLabel.Position = targetLabelPos;
+                animations.Add(theLabel.MoveTo(targetLabelPos));
+            
+                var targetLabelScale = BarLabelScaleFactor * rectProperties[i].Item3 / 2 * Vector3.One;
+                animations.Add(theLabel.ScaleTo(targetLabelScale));
 
-                var targetLabelScale = rectProperties[i].Item3 / 2 * Vector3.One;
-                animation.AddTrack(Animation.TrackType.Value);
-                animation.TrackSetPath(trackCount, theLabel.GetPath() + ":scale");
-                animation.TrackInsertKey(trackCount, 0, theLabel.Scale);
-                animation.TrackInsertKey(trackCount, duration, targetLabelScale);
-                animation.TrackSetInterpolationType(trackCount, Animation.InterpolationType.Cubic);
-                trackCount++;
-                theLabel.Scale = targetLabelScale;
-                
-                animation.AddTrack(Animation.TrackType.Value);
-                animation.TrackSetPath(trackCount, theLabel.GetPath() + ":SetIntegerExpression");
-                animation.TrackInsertKey(trackCount, 0, theLabel.SetIntegerExpression);
-                animation.TrackInsertKey(trackCount, duration, Mathf.RoundToInt(Data[i]));
-                animation.TrackSetInterpolationType(trackCount, Animation.InterpolationType.Cubic);
-                theLabel.SetIntegerExpression = Mathf.RoundToInt(Data[i]);
-                
-                trackCount++;
+                var labelTextAnimation = new Animation();
+                theLabel.numberSuffix = BarLabelSuffix;
+                theLabel.numberPrefix = BarLabelPrefix;
+                theLabel.DecimalPlacesToShow = BarLabelDecimalPlaces;
+                trackCount = labelTextAnimation.AddTrack(Animation.TrackType.Value);
+                labelTextAnimation.TrackSetPath(trackCount, theLabel.GetPath() + ":SetNumericalExpression");
+                labelTextAnimation.TrackInsertKey(trackCount, 0, theLabel.SetNumericalExpression);
+                labelTextAnimation.TrackInsertKey(trackCount, duration, Mathf.RoundToInt(Data[i]));
+                labelTextAnimation.TrackSetInterpolationType(trackCount, Animation.InterpolationType.Linear);
+                theLabel.SetNumericalExpression = Mathf.RoundToInt(Data[i]);
+                animations.Add(labelTextAnimation);
             }
         }
 
-        return animation;
+        return animations.RunInParallel();
     }
 
     public Animation Disappear()
