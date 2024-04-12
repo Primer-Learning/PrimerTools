@@ -1,4 +1,7 @@
+using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using Godot;
 
 namespace PrimerTools.AnimationSequence;
@@ -27,10 +30,16 @@ public abstract partial class AnimationSequence : AnimationPlayer
 				CreateTopLevelAnimationForEditor();
 				if (RewindOnRun) Rewind(timeToRewindTo);
 			}
+
+			_run = false;
 		}
 	}
-	[Export] public bool RewindOnRun;
-	[Export] public float timeToRewindTo = 0;
+	[Export] private bool RewindOnRun;
+	[Export] private float timeToRewindTo = 0;
+	[Export] private bool NewRecordingPath {
+		get => false;
+		set => SetSceneMoviePath();
+	}
 	
 	public override void _Ready()
 	{
@@ -314,5 +323,35 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		library.AddAnimation(animationName, animation);
 	}
 	
+	#endregion
+
+	#region Movie maker mode path handling
+
+	private void SetSceneMoviePath()
+	{
+		// Establish base directory
+		GD.Print(Directory.GetCurrentDirectory());
+		var baseDirectory = Path.Combine(Directory.GetCurrentDirectory(), "..", "png", GetTree().EditedSceneRoot.Name);
+		GD.Print(baseDirectory);
+		
+		// Move take_current if it exists
+		var sceneDirectory = Path.Combine(baseDirectory, "current_take");
+		if (Directory.Exists(sceneDirectory) && Directory.EnumerateFileSystemEntries(sceneDirectory).Any())
+		{
+			var number = 1;
+			while (Directory.Exists(Path.Combine(baseDirectory, $"take_{number}")))
+			{
+				number++;
+			}
+			Directory.Move(sceneDirectory, Path.Combine(baseDirectory, $"take_{number}"));
+		}
+		
+		// Set the path for the movie maker mode
+		Directory.CreateDirectory(sceneDirectory);
+		var file = Path.Combine(sceneDirectory, "frame.png");
+		GD.Print(file);
+		GetTree().EditedSceneRoot.SetMeta("movie_file", file);
+	}
+
 	#endregion
 }
