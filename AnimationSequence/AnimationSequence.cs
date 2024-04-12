@@ -27,8 +27,7 @@ public abstract partial class AnimationSequence : AnimationPlayer
 			if (_run && !oldRun && Engine.IsEditorHint()) { // Avoids running on build
 				Reset();
 				Define();
-				if (createSingleAnimation) CreateSingleClipTopLevelAnimation();
-				else CreateMultiClipTopLevelAnimation();
+				CreateTopLevelAnimation(makeSingleClip);
 				
 				if (RewindOnRun) Rewind(timeToRewindTo);
 			}
@@ -38,7 +37,7 @@ public abstract partial class AnimationSequence : AnimationPlayer
 	[Export] private bool RewindOnRun;
 	[Export] private float timeToRewindTo = 0;
 
-	[Export] private bool createSingleAnimation;
+	[Export] private bool makeSingleClip;
 	[ExportGroup("Recording options")]
 	[Export] private bool NewRecordingPath {
 		get => false;
@@ -47,28 +46,27 @@ public abstract partial class AnimationSequence : AnimationPlayer
 	
 	public override void _Ready()
 	{
-		if (!Engine.IsEditorHint())
-		{
-			// Redo everything on play
-			// The reason for this is that non-serialized data is lost when rebuilding to play
-			// But just re-doing everything is a simple way to avoid that problem
-			// If it gets heavy we could think of other ways
-			// The proximate cause at time of writing is that CurveData loses track of its points.
-			// An alternate approach could create nodes for each point.
-			Reset();
-			Define();
-			CreateSingleClipTopLevelAnimation();
+		if (Engine.IsEditorHint()) return;
+		
+		// Redo everything on play
+		// The reason for this is that non-serialized data is lost when rebuilding to play
+		// But just re-doing everything is a simple way to avoid that problem
+		// If it gets heavy we could think of other ways
+		// The proximate cause at time of writing is that CurveData loses track of its points.
+		// An alternate approach could create nodes for each point.
+		Reset();
+		Define();
+		CreateTopLevelAnimation(singleClip: true);
 			
-			// Rewind through the individual animations on the reference player
-			// so the start state is correct.
-			// This is needed because animation creation code sets objects to the
-			// final state to prepare for the next animation. So we're undoing that.
-			Rewind(timeToRewindTo);
+		// Rewind through the individual animations on the reference player
+		// so the start state is correct.
+		// This is needed because animation creation code sets objects to the
+		// final state to prepare for the next animation. So we're undoing that.
+		Rewind(timeToRewindTo);
 			
-			CurrentAnimation = MainLibraryName + "/" + MainAnimationName;
-			Seek(timeToRewindTo);
-			Play();
-		}
+		CurrentAnimation = MainLibraryName + "/" + MainAnimationName;
+		Seek(timeToRewindTo);
+		Play();
 	}
 
 	private void Rewind(float timeToRewindTo)
@@ -176,10 +174,15 @@ public abstract partial class AnimationSequence : AnimationPlayer
 	}
 	
 	/// <summary>
-	/// Create the top-level animation as a series of clips.
-	/// This is useful if you want to be able to edit the individual animations in the editor.
+	/// Create the main animation for the scene.
 	/// </summary>
-	private void CreateMultiClipTopLevelAnimation()
+	/// <param name="singleClip">
+	/// By default, each registered animation has its own clip, which is useful for moving them around
+	/// while building the scene.
+	/// If singleClip is true, all animations are combined into a single animation,
+	/// which is more reliable for scrubbing and recording.
+	/// </param>
+	private void CreateTopLevelAnimation(bool singleClip)
 	{
 		var library = MakeOrGetAnimationLibrary(this, MainLibraryName);
 	
@@ -199,6 +202,9 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		animation.TrackSetPath(trackIndex, $"{Name}/ReferenceAnimationPlayer:animation");
 		animation.TrackMoveTo(trackIndex, 0);
 		
+		if (singleClip) animation.TrackInsertKey(0, 0, $"{ReferenceLibraryName}/final_combined");
+		
+		var animationsWithDelays = new List<Animation>();
 		var time = 0.0f;
 		for  (var i = 0; i < _referenceAnimationPlayer.GetAnimationList().Length; i++)
 		{
@@ -212,9 +218,14 @@ public abstract partial class AnimationSequence : AnimationPlayer
 			{
 				GD.PushWarning($"Animation {i} starts before the previous animation ends. Pushing it back.");
 			}
+
+			if (singleClip)
+			{
+				var nonDelayedAnimation = _referenceAnimationPlayer.GetAnimation($"{ReferenceLibraryName}/anim{i}");
+				animationsWithDelays.Add(nonDelayedAnimation.WithDelay(time));
+			}
+			else animation.TrackInsertKey(0, time, animationName);
 			
-			// Use track index zero because the animation playback track is moved to 0 above.
-			animation.TrackInsertKey(0, time, animationName);
 			// End time for next iteration or final length
 			time += _referenceAnimationPlayer.GetAnimation(animationName).Length;
 		}
@@ -222,75 +233,7 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		// Make the animation 100s longer than it actually is, so the editor leaves some room
 		animation.Length = time + 100;
 		
-		AddAnimationToLibrary(animation, MainAnimationName, library);
-	}
-	
-	/// <summary>
-	/// Creates the top-level animation as a single clip.
-	/// This is useful for ensuring all keyframes are evaluated. Multi-clip animations may fail to evaluate
-	/// the final keyframe of clips.
-	/// Best for recording and scrubbing through the full scene.
-	/// </summary>
-	private void CreateSingleClipTopLevelAnimation()
-	{
-		var library = MakeOrGetAnimationLibrary(this, MainLibraryName);
-	
-		// If the animation already exists, remove the playback track
-		// This is so the audio track will stay.
-		var animation = new Animation();
-		if (library.HasAnimation(MainAnimationName))
-		{
-			animation = library.GetAnimation(MainAnimationName);
-			var playbackTrackIndex = animation.FindTrack($"{Name}/ReferenceAnimationPlayer:animation",
-				Animation.TrackType.Animation);
-			if (playbackTrackIndex != -1) animation.RemoveTrack(playbackTrackIndex);
-		}
-		
-		// With the playback track removed (if it ever existed), we can add the new one
-		
-		// But actually let's just add all the tracks individually, I think.
-		// var trackIndex = animation.AddTrack(Animation.TrackType.Animation);
-		// animation.TrackSetPath(trackIndex, $"{Name}/ReferenceAnimationPlayer:animation");
-		// animation.TrackMoveTo(trackIndex, 0);
-
-		var animationsWithDelays = new List<Animation>();
-		var time = 0.0f;
-		for  (var i = 0; i < _referenceAnimationPlayer.GetAnimationList().Length; i++)
-		{
-			/* Ideas for implementation:
-			 - Create a new list of animations, adding the delay according to
-			 the start time or current time, same as the code below. Then use
-			 CombineAnimations to create the single combined animation. And put
-			 it in an animation playback track.
-			 - Copy the tracks from every animation straight onto this one. Downside
-			 here would be that I'm duplicating a lot of code from CombineAnimations.
-			*/
-			
-			// Handle start time
-			if (_startTimes[i] > time) // If next start time is after previous end time, use it
-			{
-				time = _startTimes[i];
-			}
-			else if (_startTimes[i] > 0) // Otherwise, use the previous end time. If it the time was set, warn that it's not used.
-			{
-				GD.PushWarning($"Animation {i} starts before the previous animation ends. Pushing it back.");
-			}
-			
-			var nonDelayedAnimation = _referenceAnimationPlayer.GetAnimation($"{ReferenceLibraryName}/anim{i}");
-			animationsWithDelays.Add(nonDelayedAnimation.WithDelay(time));
-			// End time for next iteration or final length
-			time += nonDelayedAnimation.Length;
-		}
-		animation.Length = time + 100;
-		
-		// Combine the animations with delays and put then in the reference library
-		AddAnimationToLibrary(animationsWithDelays.RunInParallel(), "final_combined", _referenceAnimationLibrary);
-		// Add the animation playback track to the top-level animation
-		// And add the final combined animation to the top level animation
-		var trackIndex = animation.AddTrack(Animation.TrackType.Animation);
-		animation.TrackSetPath(trackIndex, $"{Name}/ReferenceAnimationPlayer:animation");
-		animation.TrackInsertKey(trackIndex, 0, $"{ReferenceLibraryName}/final_combined");
-		animation.TrackMoveTo(trackIndex, 0);
+		if (singleClip) AddAnimationToLibrary(animationsWithDelays.RunInParallel(), "final_combined", _referenceAnimationLibrary);
 		
 		AddAnimationToLibrary(animation, MainAnimationName, library);
 	}
