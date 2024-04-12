@@ -18,29 +18,30 @@ public abstract partial class AnimationSequence : AnimationPlayer
 	// This also tracks how many animations have been made
 	private readonly List<float> _startTimes = new();
 	
-	private bool _run = true;
-	[Export] private bool Run {
+	// _run is initially set to false so the Define won't be run on build
+	// It is then always true so it runs when the box is clicked.
+	private bool _run = false;
+	[Export] private bool RunButton {
 		get => _run;
 		set {
-			var oldRun = _run;
-			_run = value;
-			if (_run && !oldRun && Engine.IsEditorHint()) { // Avoids running on build
+			if (!value && _run && Engine.IsEditorHint()) {
+				GD.Print("running");
 				Reset();
 				Define();
 				CreateTopLevelAnimation(makeSingleClip);
 				
-				if (RewindOnRun) Rewind(timeToRewindTo);
+				Rewind(timeToRewindTo);
 			}
-			_run = false;
+			_run = true;
 		}
 	}
-	[Export] private bool RewindOnRun;
+	
+	[Export] private bool makeSingleClip;
 	[Export] private float timeToRewindTo = 0;
 
-	[Export] private bool makeSingleClip;
 	[ExportGroup("Recording options")]
-	[Export] private bool NewRecordingPath {
-		get => false;
+	[Export] private bool NewRecordingPathButton {
+		get => true;
 		set => SetSceneMoviePath();
 	}
 	
@@ -57,71 +58,13 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		Reset();
 		Define();
 		CreateTopLevelAnimation(singleClip: true);
-			
-		// Rewind through the individual animations on the reference player
-		// so the start state is correct.
-		// This is needed because animation creation code sets objects to the
-		// final state to prepare for the next animation. So we're undoing that.
-		Rewind(timeToRewindTo);
-			
+		
 		CurrentAnimation = MainLibraryName + "/" + MainAnimationName;
-		Seek(timeToRewindTo);
+		Pause();
+		Seek(timeToRewindTo, update: true);
 		Play();
 	}
-
-	private void Rewind(float timeToRewindTo)
-	{
-		// if (Engine.IsEditorHint())
-		// {
-			var mainAnimation = GetAnimation(MainLibraryName + "/" + MainAnimationName);
-			for (var i = mainAnimation.TrackGetKeyCount(0) - 1; i >= 0; i--)
-			{
-				// Track is zero, because that's the animation track. The key is the name of the animation.
-				var name = mainAnimation.AnimationTrackGetKeyAnimation(0, i);
-				var individualAnimation = _referenceAnimationPlayer.GetAnimation(name);
-				SetMethodCallTracksEnabledState(individualAnimation, false);
-				_referenceAnimationPlayer.CurrentAnimation = name;
-				_referenceAnimationPlayer.Seek(0, update: true);
-				SetMethodCallTracksEnabledState(individualAnimation, true);
-
-				if (mainAnimation.TrackGetKeyTime(0, i) < timeToRewindTo)
-				{
-					break;
-				}
-			}
-		_referenceAnimationPlayer.Pause();
-			
-		// This section was meant to handle the case where the animations are combined into one
-		// by CreateTopLevelAnimationForPlayer. But not doing that. See the comment above the method definition.
-		// }
-		// else
-		// {
-		// 	foreach (var animation in _referenceAnimationPlayer.GetAnimationList())
-		// 	{
-		// 		GD.Print(animation);
-		// 	}
-		// 	
-		// 	// If we're not in the editor, the animations are already combined into one,
-		// 	// So we just have to seek that one.
-		// 	var mainAnimation = _referenceAnimationPlayer.GetAnimation($"{ReferenceLibraryName}/final_combined");
-		// 	SetMethodCallTracksEnabledState(mainAnimation, false);
-		// 	_referenceAnimationPlayer.CurrentAnimation = $"{ReferenceLibraryName}/final_combined";
-		// 	_referenceAnimationPlayer.Seek(timeToRewindTo, update: true);
-		// 	SetMethodCallTracksEnabledState(mainAnimation, true);
-		// }
-	}
-
-	private void SetMethodCallTracksEnabledState(Animation animation, bool enabled)
-	{
-		for (var i = 0; i < animation.GetTrackCount(); i++)
-		{
-			if (animation.TrackGetType(i) == Animation.TrackType.Method)
-			{
-				animation.TrackSetEnabled(i, enabled);
-			}
-		}
-	}
-
+	
 	protected abstract void Define();
 	private void Reset()
 	{
@@ -279,7 +222,7 @@ public abstract partial class AnimationSequence : AnimationPlayer
 	
 	#endregion
 
-	#region Movie maker mode path handling
+	#region Movie Maker Mode Path Handling
 
 	private void SetSceneMoviePath()
 	{
@@ -307,5 +250,42 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		GetTree().EditedSceneRoot.SetMeta("movie_file", file);
 	}
 
+	#endregion
+	
+	#region Rewinding
+	private void Rewind(float time)
+	{
+		// If single clip, this doesn't really make sense, and the playhead overrides the state anyway
+		if (!makeSingleClip) 
+		{
+			var mainAnimation = GetAnimation(MainLibraryName + "/" + MainAnimationName);
+			for (var i = mainAnimation.TrackGetKeyCount(0) - 1; i >= 0; i--)
+			{
+				// Track is zero, because that's the animation track. The key is the name of the animation.
+				var name = mainAnimation.AnimationTrackGetKeyAnimation(0, i);
+				var individualAnimation = _referenceAnimationPlayer.GetAnimation(name);
+				SetMethodCallTracksEnabledState(individualAnimation, false);
+				_referenceAnimationPlayer.CurrentAnimation = name;
+				_referenceAnimationPlayer.Seek(0, update: true);
+				SetMethodCallTracksEnabledState(individualAnimation, true);
+
+				if (mainAnimation.TrackGetKeyTime(0, i) < time)
+				{
+					break;
+				}
+			}
+		}
+		_referenceAnimationPlayer.Pause();
+	}
+	private void SetMethodCallTracksEnabledState(Animation animation, bool enabled)
+	{
+		for (var i = 0; i < animation.GetTrackCount(); i++)
+		{
+			if (animation.TrackGetType(i) == Animation.TrackType.Method)
+			{
+				animation.TrackSetEnabled(i, enabled);
+			}
+		}
+	}
 	#endregion
 }
