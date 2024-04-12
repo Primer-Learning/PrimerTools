@@ -27,15 +27,19 @@ public abstract partial class AnimationSequence : AnimationPlayer
 			if (_run && !oldRun && Engine.IsEditorHint()) { // Avoids running on build
 				Reset();
 				Define();
-				CreateTopLevelAnimationForEditor();
+				if (createSingleAnimation) CreateSingleClipTopLevelAnimation();
+				else CreateMultiClipTopLevelAnimation();
+				
 				if (RewindOnRun) Rewind(timeToRewindTo);
 			}
-
 			_run = false;
 		}
 	}
 	[Export] private bool RewindOnRun;
 	[Export] private float timeToRewindTo = 0;
+
+	[Export] private bool createSingleAnimation;
+	[ExportGroup("Recording options")]
 	[Export] private bool NewRecordingPath {
 		get => false;
 		set => SetSceneMoviePath();
@@ -53,10 +57,7 @@ public abstract partial class AnimationSequence : AnimationPlayer
 			// An alternate approach could create nodes for each point.
 			Reset();
 			Define();
-			CreateTopLevelAnimationForEditor();
-			
-			// Not using this. See the comment above the method definition.
-			// CreateTopLevelAnimationForPlayer();
+			CreateSingleClipTopLevelAnimation();
 			
 			// Rewind through the individual animations on the reference player
 			// so the start state is correct.
@@ -144,6 +145,12 @@ public abstract partial class AnimationSequence : AnimationPlayer
 
 	#region Animation Methods
 
+	/// <summary>
+	/// Registers an animation to be included in the top-level animation.
+	/// </summary>
+	/// <param name="animation"></param>
+	/// <param name="time"></param>
+	/// <param name="log"></param>
 	protected void RegisterAnimation(Animation animation, float time = -1, bool log = false)
 	{
 		for (var i = 0; i < animation.GetTrackCount(); i++)
@@ -168,7 +175,11 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		RegisterAnimation(animations.RunInParallel());
 	}
 	
-	private void CreateTopLevelAnimationForEditor()
+	/// <summary>
+	/// Create the top-level animation as a series of clips.
+	/// This is useful if you want to be able to edit the individual animations in the editor.
+	/// </summary>
+	private void CreateMultiClipTopLevelAnimation()
 	{
 		var library = MakeOrGetAnimationLibrary(this, MainLibraryName);
 	
@@ -214,19 +225,18 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		AddAnimationToLibrary(animation, MainAnimationName, library);
 	}
 	
-	// I made this method to try to solve the issue that sometimes things that scale to zero
-	// don't scale all the way down to zero. I thought it was because the final keyframe wasn't
-	// always evaluated at its final value. To solve that, the method below combined everything
-	// into one big animations so keyframes couldn't be skipped.
-	// But, it now seems the issue wasn't general, but instead because the scissors screws
-	// weren't being told to scale, leaving a little speck.
-	// I could have sworn the issue happened for real sometimes, so I'm keeping the method for now.
-	// But it won't be used unless the issue comes up again.
-	private void CreateTopLevelAnimationForPlayer()
+	/// <summary>
+	/// Creates the top-level animation as a single clip.
+	/// This is useful for ensuring all keyframes are evaluated. Multi-clip animations may fail to evaluate
+	/// the final keyframe of clips.
+	/// Best for recording and scrubbing through the full scene.
+	/// </summary>
+	private void CreateSingleClipTopLevelAnimation()
 	{
 		var library = MakeOrGetAnimationLibrary(this, MainLibraryName);
 	
-		// If an animation already exists, remove it. We're about to make a bunch of other tracks.
+		// If the animation already exists, remove the playback track
+		// This is so the audio track will stay.
 		var animation = new Animation();
 		if (library.HasAnimation(MainAnimationName))
 		{
@@ -271,7 +281,7 @@ public abstract partial class AnimationSequence : AnimationPlayer
 			// End time for next iteration or final length
 			time += nonDelayedAnimation.Length;
 		}
-		animation.Length = time;
+		animation.Length = time + 100;
 		
 		// Combine the animations with delays and put then in the reference library
 		AddAnimationToLibrary(animationsWithDelays.RunInParallel(), "final_combined", _referenceAnimationLibrary);
@@ -279,9 +289,10 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		// And add the final combined animation to the top level animation
 		var trackIndex = animation.AddTrack(Animation.TrackType.Animation);
 		animation.TrackSetPath(trackIndex, $"{Name}/ReferenceAnimationPlayer:animation");
-		// animation.TrackInsertKey(0, time, $"{ReferenceLibraryName}/final_combined");
+		animation.TrackInsertKey(trackIndex, 0, $"{ReferenceLibraryName}/final_combined");
+		animation.TrackMoveTo(trackIndex, 0);
 		
-		// AddAnimationToLibrary(animation, MainAnimationName, library);
+		AddAnimationToLibrary(animation, MainAnimationName, library);
 	}
 	
 	#endregion
