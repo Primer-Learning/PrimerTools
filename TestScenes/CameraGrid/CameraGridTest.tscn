@@ -1,0 +1,186 @@
+[gd_scene load_steps=9 format=3 uid="uid://daohf2ydofxwo"]
+
+[ext_resource type="Script" path="res://addons/PrimerTools/Camera/CameraRig.cs" id="1_5pgg5"]
+[ext_resource type="Environment" uid="uid://xpav3hoy6ldu" path="res://addons/PrimerTools/primer_environment.tres" id="2_0grag"]
+[ext_resource type="Script" path="res://addons/PrimerTools/Camera/CameraGrid.cs" id="2_5g65c"]
+[ext_resource type="PackedScene" uid="uid://tug6o7ke0tmd" path="res://addons/PrimerTools/Gestures/Arrow/arrow.tscn" id="4_5vfdg"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_vsghc"]
+
+[sub_resource type="ViewportTexture" id="ViewportTexture_hxx4v"]
+viewport_path = NodePath("Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ml86d"]
+transparency = 1
+albedo_texture = SubResource("ViewportTexture_hxx4v")
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_gy4eu"]
+material = SubResource("StandardMaterial3D_ml86d")
+size = Vector2(1.77778, 1)
+
+[node name="CameraGridTest" type="Node3D"]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+visible = false
+mesh = SubResource("BoxMesh_vsghc")
+
+[node name="Camera rig" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.956305, 0.292372, 0, -0.292372, 0.956305, 0, 0, 0)
+script = ExtResource("1_5pgg5")
+Distance = 10.0
+
+[node name="Camera3D" type="Camera3D" parent="Camera rig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 10)
+fov = 30.0
+
+[node name="Grid" type="Node3D" parent="Camera rig/Camera3D"]
+script = ExtResource("2_5g65c")
+DrawButton = true
+lineWidth = 5
+
+[node name="@SubViewportContainer@119158" type="SubViewportContainer" parent="Camera rig/Camera3D/Grid"]
+
+[node name="@SubViewport@119159" type="SubViewport" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158"]
+transparent_bg = true
+size = Vector2i(1920, 1080)
+
+[node name="@ColorRect@119161" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
+offset_left = -2.0
+offset_right = 3.0
+offset_bottom = 1080.0
+
+[node name="@ColorRect@119162" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
+offset_left = 190.0
+offset_right = 195.0
+offset_bottom = 1080.0
+
+[node name="@ColorRect@119163" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
+offset_left = 382.0
+offset_right = 387.0
+offset_bottom = 1080.0
+
+[node name="@ColorRect@119164" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
+offset_left = 574.0
+offset_right = 579.0
+offset_bottom = 1080.0
+
+[node name="@ColorRect@119165" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
+offset_left = 766.0
+offset_right = 771.0
+offset_bottom = 1080.0
+
+[node name="@ColorRect@119166" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
+offset_left = 958.0
+offset_right = 963.0
+offset_bottom = 1080.0
+
+[node name="@ColorRect@119167" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
+offset_left = 1150.0
+offset_right = 1155.0
+offset_bottom = 1080.0
+
+[node name="@ColorRect@119168" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
+offset_left = 1342.0
+offset_right = 1347.0
+offset_bottom = 1080.0
+
+[node name="@ColorRect@119169" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
+offset_left = 1534.0
+offset_right = 1539.0
+offset_bottom = 1080.0
+
+[node name="@ColorRect@119170" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
+offset_left = 1726.0
+offset_right = 1731.0
+offset_bottom = 1080.0
+
+[node name="@ColorRect@119171" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
+offset_left = 1918.0
+offset_right = 1923.0
+offset_bottom = 1080.0
+
+[node name="@ColorRect@119172" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
+offset_top = -2.0
+offset_right = 1920.0
+offset_bottom = 3.0
+
+[node name="@ColorRect@119173" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
+offset_top = 106.0
+offset_right = 1920.0
+offset_bottom = 111.0
+
+[node name="@ColorRect@119174" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
+offset_top = 214.0
+offset_right = 1920.0
+offset_bottom = 219.0
+
+[node name="@ColorRect@119175" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
+offset_top = 322.0
+offset_right = 1920.0
+offset_bottom = 327.0
+
+[node name="@ColorRect@119176" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
+offset_top = 430.0
+offset_right = 1920.0
+offset_bottom = 435.0
+
+[node name="@ColorRect@119177" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
+offset_top = 538.0
+offset_right = 1920.0
+offset_bottom = 543.0
+
+[node name="@ColorRect@119178" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
+offset_top = 646.0
+offset_right = 1920.0
+offset_bottom = 651.0
+
+[node name="@ColorRect@119179" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
+offset_top = 754.0
+offset_right = 1920.0
+offset_bottom = 759.0
+
+[node name="@ColorRect@119180" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
+offset_top = 862.0
+offset_right = 1920.0
+offset_bottom = 867.0
+
+[node name="@ColorRect@119181" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
+offset_top = 970.0
+offset_right = 1920.0
+offset_bottom = 975.0
+
+[node name="@ColorRect@119182" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
+offset_top = 1078.0
+offset_right = 1920.0
+offset_bottom = 1083.0
+
+[node name="@ColorRect@119183" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
+offset_left = 945.0
+offset_top = 521.0
+offset_right = 995.0
+offset_bottom = 526.0
+rotation = 0.785398
+
+[node name="@ColorRect@119184" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
+offset_left = 941.0
+offset_top = 555.0
+offset_right = 991.0
+offset_bottom = 560.0
+rotation = -0.785398
+
+[node name="@MeshInstance3D@119160" type="MeshInstance3D" parent="Camera rig/Camera3D/Grid"]
+transform = Transform3D(0.0267949, 0, 0, 0, -1.17124e-09, -0.0267949, 0, 0.0267949, -1.17124e-09, 0, 0, -0.05)
+mesh = SubResource("PlaneMesh_gy4eu")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = ExtResource("2_0grag")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.968942, -0.225578, 0.101317, 0.0669034, 0.63357, 0.770787, -0.238064, -0.74007, 0.628985, 8.08326, 3.75246, 7.83629)
+shadow_enabled = true
+
+[node name="arrow" parent="." instance=ExtResource("4_5vfdg")]
+transform = Transform3D(0.72463, -0.689138, 0, 0.689138, 0.72463, 0, 0, 0, 1, -2.69356, 4.76837e-07, -0.87912)
+tailPadding = 0.685
+Length = 2.461
+tailPoint = Vector3(1.78331, 1.69597, 0)
