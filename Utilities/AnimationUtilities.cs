@@ -554,7 +554,7 @@ public static class AnimationUtilities
                 }
 
                 int trackIndex;
-                if (trackPaths.Contains((path, trackType)))
+                if (trackPaths.Contains((path, trackType)) && trackType != Animation.TrackType.Method)
                 {
                     trackIndex = trackPaths.IndexOf((path, trackType));
                     if (trackInterpolationType != newAnimation.TrackGetInterpolationType(trackIndex)) 
