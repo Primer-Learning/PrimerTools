@@ -39,12 +39,22 @@ public abstract partial class AnimationSequence : AnimationPlayer
 	[Export] private bool makeSingleClip;
 	[Export] private float timeToRewindTo = 0;
 
-	[ExportGroup("Recording options")]
-	[Export] private bool NewRecordingPathButton {
-		get => true;
-		set => SetSceneMoviePath();
+	private bool _shouldActuallyUpdatePath = false;
+	[ExportGroup("Recording options")] 
+	[Export] private bool NewRecordingPathButton
+	{
+		get => _shouldActuallyUpdatePath;
+		set
+		{
+			if (!value && _shouldActuallyUpdatePath)
+			{
+				_shouldActuallyUpdatePath = true;
+				SetSceneMoviePath();
+			}
+			_shouldActuallyUpdatePath = true;
+		}
 	}
-	
+
 	public override void _Ready()
 	{
 		if (Engine.IsEditorHint()) return;
