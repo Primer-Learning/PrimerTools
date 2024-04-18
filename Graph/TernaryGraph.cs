@@ -76,10 +76,11 @@ public partial class TernaryGraph : Node3D
 
             Vector3 offset;
             if (i < 2) offset = new Vector3(0, -0.13f, 0);
-            else offset = new Vector3(0, 0.07f, 0);
+            else offset = new Vector3(0, 0.12f, 0);
             
             label.Position = correctedCorners[i] + offset;
             label.Scale = new Vector3(0.1f, 0.1f, 0.1f);
+            label.Name = Labels[i];
         }
     }
     
