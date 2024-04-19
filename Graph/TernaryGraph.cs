@@ -8,7 +8,9 @@ namespace PrimerTools.Graph;
 public partial class TernaryGraph : Node3D
 {
     private float _pointSizeFactor = 3;
-    public string[] Labels = {"A", "B", "C"}; 
+    public string[] LabelStrings = {"A", "B", "C"};
+
+    public LatexNode[] Labels = new LatexNode[3]; 
     public Color[] Colors = {PrimerColor.red, PrimerColor.green, PrimerColor.blue}; 
     
     public void CreateBounds(float chonk = 0.01f)
@@ -68,7 +70,7 @@ public partial class TernaryGraph : Node3D
             AddChild(label);
             label.Owner = GetTree().EditedSceneRoot;
 
-            label.latex = Labels[i];
+            label.latex = LabelStrings[i];
             label.HorizontalAlignment = LatexNode.HorizontalAlignmentOptions.Center;
             label.VerticalAlignment = LatexNode.VerticalAlignmentOptions.Center;
             label.UpdateCharacters();
@@ -80,7 +82,8 @@ public partial class TernaryGraph : Node3D
             
             label.Position = correctedCorners[i] + offset;
             label.Scale = new Vector3(0.1f, 0.1f, 0.1f);
-            label.Name = Labels[i];
+            label.Name = LabelStrings[i];
+            Labels[i] = label;
         }
     }
     
