@@ -31,6 +31,9 @@ public partial class TernaryGraph : Node3D
             corners[2] + (cornersToCenterNormalized[0] + cornersToCenterNormalized[1]) * chonk * 2
         };
 
+        var cylinderMat = new StandardMaterial3D();
+        cylinderMat.AlbedoColor = PrimerColor.white;
+
         for (var i = 0; i < 3; i++)
         {
             // Cylinder
@@ -43,6 +46,7 @@ public partial class TernaryGraph : Node3D
             mesh.Height = 1;
             mesh.BottomRadius = chonk;
             mesh.TopRadius = chonk;
+            mesh.SurfaceSetMaterial(0, cylinderMat);
             cylinder.Mesh = mesh;
             
             cylinder.Position = (correctedCorners[i] + correctedCorners[(i + 1) % 3]) / 2;

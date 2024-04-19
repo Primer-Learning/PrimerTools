@@ -6,6 +6,3 @@
 
 [node name="LatexNode" parent="." index="1"]
 transform = Transform3D(-8.74228e-09, 0.2, -8.74228e-09, 0, -8.74228e-09, -0.2, -0.2, -8.74228e-09, 3.82137e-16, 0, -0.264387, 0)
-
-[node name="@Node3D@21394" parent="LatexNode" index="0"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.292616, -0.958111, 0)

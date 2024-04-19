@@ -7,15 +7,15 @@
 
 [sub_resource type="BoxMesh" id="BoxMesh_vsghc"]
 
-[sub_resource type="ViewportTexture" id="ViewportTexture_hxx4v"]
-viewport_path = NodePath("Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159")
+[sub_resource type="ViewportTexture" id="ViewportTexture_06f3y"]
+viewport_path = NodePath("Camera rig/Camera3D/Grid/@SubViewportContainer@128263/@SubViewport@128264")
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ml86d"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_3hoah"]
 transparency = 1
-albedo_texture = SubResource("ViewportTexture_hxx4v")
+albedo_texture = SubResource("ViewportTexture_06f3y")
 
-[sub_resource type="PlaneMesh" id="PlaneMesh_gy4eu"]
-material = SubResource("StandardMaterial3D_ml86d")
+[sub_resource type="PlaneMesh" id="PlaneMesh_ivvnj"]
+material = SubResource("StandardMaterial3D_3hoah")
 size = Vector2(1.77778, 1)
 
 [node name="CameraGridTest" type="Node3D"]
@@ -36,141 +36,77 @@ fov = 30.0
 [node name="Grid" type="Node3D" parent="Camera rig/Camera3D"]
 script = ExtResource("2_5g65c")
 DrawButton = true
+xSpacingFraction = 0.335
+xCenterFraction = 0.496
+ySpacingFraction = 0.31
+yCenterFraction = 0.505
 lineWidth = 5
 
-[node name="@SubViewportContainer@119158" type="SubViewportContainer" parent="Camera rig/Camera3D/Grid"]
+[node name="@SubViewportContainer@128263" type="SubViewportContainer" parent="Camera rig/Camera3D/Grid"]
 
-[node name="@SubViewport@119159" type="SubViewport" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158"]
+[node name="@SubViewport@128264" type="SubViewport" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@128263"]
 transparent_bg = true
+handle_input_locally = false
 size = Vector2i(1920, 1080)
+render_target_update_mode = 4
 
-[node name="@ColorRect@119161" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
-offset_left = -2.0
-offset_right = 3.0
+[node name="@ColorRect@128266" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@128263/@SubViewport@128264"]
+offset_left = -336.0
+offset_right = -331.0
 offset_bottom = 1080.0
 
-[node name="@ColorRect@119162" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
-offset_left = 190.0
-offset_right = 195.0
+[node name="@ColorRect@128267" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@128263/@SubViewport@128264"]
+offset_left = 307.0
+offset_right = 312.0
 offset_bottom = 1080.0
 
-[node name="@ColorRect@119163" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
-offset_left = 382.0
-offset_right = 387.0
+[node name="@ColorRect@128268" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@128263/@SubViewport@128264"]
+offset_left = 950.0
+offset_right = 955.0
 offset_bottom = 1080.0
 
-[node name="@ColorRect@119164" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
-offset_left = 574.0
-offset_right = 579.0
+[node name="@ColorRect@128269" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@128263/@SubViewport@128264"]
+offset_left = 1593.0
+offset_right = 1598.0
 offset_bottom = 1080.0
 
-[node name="@ColorRect@119165" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
-offset_left = 766.0
-offset_right = 771.0
-offset_bottom = 1080.0
-
-[node name="@ColorRect@119166" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
-offset_left = 958.0
-offset_right = 963.0
-offset_bottom = 1080.0
-
-[node name="@ColorRect@119167" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
-offset_left = 1150.0
-offset_right = 1155.0
-offset_bottom = 1080.0
-
-[node name="@ColorRect@119168" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
-offset_left = 1342.0
-offset_right = 1347.0
-offset_bottom = 1080.0
-
-[node name="@ColorRect@119169" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
-offset_left = 1534.0
-offset_right = 1539.0
-offset_bottom = 1080.0
-
-[node name="@ColorRect@119170" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
-offset_left = 1726.0
-offset_right = 1731.0
-offset_bottom = 1080.0
-
-[node name="@ColorRect@119171" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
-offset_left = 1918.0
-offset_right = 1923.0
-offset_bottom = 1080.0
-
-[node name="@ColorRect@119172" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
-offset_top = -2.0
+[node name="@ColorRect@128270" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@128263/@SubViewport@128264"]
+offset_top = -125.0
 offset_right = 1920.0
-offset_bottom = 3.0
+offset_bottom = -120.0
 
-[node name="@ColorRect@119173" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
-offset_top = 106.0
+[node name="@ColorRect@128271" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@128263/@SubViewport@128264"]
+offset_top = 209.0
 offset_right = 1920.0
-offset_bottom = 111.0
+offset_bottom = 214.0
 
-[node name="@ColorRect@119174" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
-offset_top = 214.0
+[node name="@ColorRect@128272" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@128263/@SubViewport@128264"]
+offset_top = 543.0
 offset_right = 1920.0
-offset_bottom = 219.0
+offset_bottom = 548.0
 
-[node name="@ColorRect@119175" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
-offset_top = 322.0
+[node name="@ColorRect@128273" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@128263/@SubViewport@128264"]
+offset_top = 877.0
 offset_right = 1920.0
-offset_bottom = 327.0
+offset_bottom = 882.0
 
-[node name="@ColorRect@119176" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
-offset_top = 430.0
-offset_right = 1920.0
-offset_bottom = 435.0
-
-[node name="@ColorRect@119177" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
-offset_top = 538.0
-offset_right = 1920.0
-offset_bottom = 543.0
-
-[node name="@ColorRect@119178" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
-offset_top = 646.0
-offset_right = 1920.0
-offset_bottom = 651.0
-
-[node name="@ColorRect@119179" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
-offset_top = 754.0
-offset_right = 1920.0
-offset_bottom = 759.0
-
-[node name="@ColorRect@119180" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
-offset_top = 862.0
-offset_right = 1920.0
-offset_bottom = 867.0
-
-[node name="@ColorRect@119181" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
-offset_top = 970.0
-offset_right = 1920.0
-offset_bottom = 975.0
-
-[node name="@ColorRect@119182" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
-offset_top = 1078.0
-offset_right = 1920.0
-offset_bottom = 1083.0
-
-[node name="@ColorRect@119183" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
-offset_left = 945.0
-offset_top = 521.0
-offset_right = 995.0
-offset_bottom = 526.0
+[node name="@ColorRect@128274" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@128263/@SubViewport@128264"]
+offset_left = 937.0
+offset_top = 526.0
+offset_right = 987.0
+offset_bottom = 531.0
 rotation = 0.785398
 
-[node name="@ColorRect@119184" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@119158/@SubViewport@119159"]
-offset_left = 941.0
-offset_top = 555.0
-offset_right = 991.0
-offset_bottom = 560.0
+[node name="@ColorRect@128275" type="ColorRect" parent="Camera rig/Camera3D/Grid/@SubViewportContainer@128263/@SubViewport@128264"]
+offset_left = 933.0
+offset_top = 560.0
+offset_right = 983.0
+offset_bottom = 565.0
 rotation = -0.785398
 
-[node name="@MeshInstance3D@119160" type="MeshInstance3D" parent="Camera rig/Camera3D/Grid"]
+[node name="@MeshInstance3D@128265" type="MeshInstance3D" parent="Camera rig/Camera3D/Grid"]
 transform = Transform3D(0.0267949, 0, 0, 0, -1.17124e-09, -0.0267949, 0, 0.0267949, -1.17124e-09, 0, 0, -0.05)
-mesh = SubResource("PlaneMesh_gy4eu")
+mesh = SubResource("PlaneMesh_ivvnj")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = ExtResource("2_0grag")

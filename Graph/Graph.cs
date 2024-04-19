@@ -1,6 +1,7 @@
 using Godot;
 using System.Collections.Generic;
 using System.Linq;
+using PrimerTools.LaTeX;
 
 namespace PrimerTools.Graph;
 
@@ -69,6 +70,45 @@ public partial class Graph : Node3D
     public Axis ZAxis => GetNode<Axis>("Z");
     private List<Axis> Axes => new() { XAxis, YAxis, ZAxis };
 
+    public enum AxisLabelAlignmentOptions
+    {
+        Along,
+        End
+    }
+
+    public AxisLabelAlignmentOptions XAxisAlignment = AxisLabelAlignmentOptions.End;
+    public float XAxisLabelOffset = 1;
+    public float XAxisLabelScale = 1;
+    private string xAxisLabel = "";
+    private LatexNode xAxisLatexNode;
+    public string XAxisLabel
+    {
+        get => xAxisLabel;
+        set
+        {
+            xAxisLabel = value;
+            if (IsInstanceValid(xAxisLatexNode)) xAxisLatexNode.Free();
+            xAxisLatexNode = LatexNode.Create(value);
+            AddChild(xAxisLatexNode);
+        }
+    }
+    
+    public AxisLabelAlignmentOptions YAxisAlignment = AxisLabelAlignmentOptions.End;
+    public float YAxisLabelOffset = 1;
+    public float YAxisLabelScale = 1;
+    private string yAxisLabel = "";
+    private LatexNode yAxisLatexNode;
+    public string YAxisLabel
+    {
+        get => yAxisLabel;
+        set
+        {
+            yAxisLabel = value;
+            yAxisLatexNode = LatexNode.Create(value);
+            AddChild(yAxisLatexNode);
+        }
+    }
+
     public Animation Transition(float duration = 0.5f)
     {
         var removeTransitions = new List<Animation>();
@@ -86,37 +126,48 @@ public partial class Graph : Node3D
         updateTransitions.AddRange(
             GetChildren().OfType<IPrimerGraphData>().Select(x => x.Transition(duration))
         );
+        // Labels
+        if (xAxisLatexNode is not null)
+        {
+            updateTransitions.Add(
+                xAxisLatexNode.MoveTo(
+                    XAxisAlignment == AxisLabelAlignmentOptions.Along
+                        ? new Vector3(XAxis.LengthMinusPadding / 2, -XAxisLabelOffset, 0)
+                        : new Vector3(XAxis.LengthMinusPadding + XAxisLabelOffset, 0, 0)
+                )
+            );
+            updateTransitions.Add(        
+                xAxisLatexNode.ScaleTo(Vector3.One * XAxisLabelScale)
+            );
+        }
+        if (yAxisLatexNode is not null)
+        {
+            updateTransitions.Add(
+                yAxisLatexNode.MoveTo(
+                    YAxisAlignment == AxisLabelAlignmentOptions.Along
+                        ? new Vector3(-YAxisLabelOffset, YAxis.LengthMinusPadding / 2, 0)
+                        : new Vector3(0, YAxis.LengthMinusPadding + YAxisLabelOffset, 0)
+                )
+            );
+            updateTransitions.Add(
+                yAxisLatexNode.RotateTo(
+                    YAxisAlignment == AxisLabelAlignmentOptions.Along
+                        ? new Vector3(0, 0, 90)
+                        : Vector3.Zero
+                )
+            );
+            updateTransitions.Add(        
+                yAxisLatexNode.ScaleTo(Vector3.One * YAxisLabelScale)
+            );
+        }
+        
+        
         return AnimationUtilities.Series(
             removeTransitions.RunInParallel(),
             updateTransitions.RunInParallel(),
             addTransitions.RunInParallel()
         );
     }
-
-    // Saving for reference when it's animation time
-    // public Tween Transition()
-    // {
-    //     var removeTransitions = new List<Tween>();
-    //     var updateTransitions = new List<Tween>();
-    //     var addTransitions = new List<Tween>();
-    //
-    //     foreach (var axis in Axes)
-    //     {
-    //         if (axis.length == 0) continue;
-    //         var (remove, update, add) = axis.PrepareTransitionParts();
-    //         removeTransitions.Add(remove);
-    //         updateTransitions.Add(update);
-    //         addTransitions.Add(add);
-    //     }
-    //     updateTransitions.AddRange(
-    //         GetComponentsInChildren<IPrimerGraphData>().Select(x => x.Transition())
-    //     );
-    //     return Tween.Series(
-    //         removeTransitions.RunInParallel(),
-    //         updateTransitions.RunInParallel(),
-    //         addTransitions.RunInParallel()
-    //     );
-    // }
 
     // public Tween ShrinkPlottedDataToEnd()
     // {
@@ -127,12 +178,13 @@ public partial class Graph : Node3D
     // public Tween Appear() => Axes.Select(x => x.Appear()).RunInParallel();
     // public Tween Disappear() => Axes.Select(x => x.Disappear()).RunInParallel();
     
-    public CurvePlot2D AddLine()
+    public CurvePlot2D AddLine(string name = "Curve")
     {
         var line = new CurvePlot2D();
         line.TransformPointFromDataSpaceToPositionSpace = DataSpaceToPositionSpace;
         AddChild(line);
         line.Owner = GetTree().EditedSceneRoot;
+        line.Name = name;
         return line;
     }
     
