@@ -37,7 +37,7 @@ public partial class LatexNode : Node3D
 	public string numberSuffix = "";
 	public int DecimalPlacesToShow = 0;
 	private float number;
-	public float SetNumericalExpression {
+	public float NumericalExpression {
 		get => number;
 		set
 		{
@@ -51,12 +51,24 @@ public partial class LatexNode : Node3D
 			{
 				approx = "\\sim ";
 			}
-			GD.Print(numberSuffix);
 			latex = "$" + approx + numberPrefix + value.ToString("F" + DecimalPlacesToShow) + numberSuffix + "$";
 			UpdateCharacters();
 			
 			number = value;
 		}
+	}
+
+	public Animation AnimateNumericalExpression(float value, float duration = AnimationUtilities.DefaultDuration)
+	{
+		var labelTextAnimation = new Animation();
+		var trackCount = labelTextAnimation.AddTrack(Animation.TrackType.Value);
+		labelTextAnimation.TrackSetPath(trackCount, GetPath() + ":NumericalExpression");
+		labelTextAnimation.TrackInsertKey(trackCount, 0, NumericalExpression);
+		labelTextAnimation.TrackInsertKey(trackCount, duration, value);
+		labelTextAnimation.TrackSetInterpolationType(trackCount, Animation.InterpolationType.Linear);
+		NumericalExpression = value;
+
+		return labelTextAnimation;
 	}
 	
 	private readonly LatexToMesh latexToMesh = new();

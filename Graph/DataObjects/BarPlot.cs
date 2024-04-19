@@ -106,17 +106,12 @@ public partial class BarPlot : Node3D, IPrimerGraphData
                 var targetLabelScale = BarLabelScaleFactor * rectProperties[i].Item3 / 2 * Vector3.One;
                 animations.Add(theLabel.ScaleTo(targetLabelScale));
 
-                var labelTextAnimation = new Animation();
+                // var labelTextAnimation = new Animation();
                 theLabel.numberSuffix = BarLabelSuffix;
                 theLabel.numberPrefix = BarLabelPrefix;
                 theLabel.DecimalPlacesToShow = BarLabelDecimalPlaces;
-                trackCount = labelTextAnimation.AddTrack(Animation.TrackType.Value);
-                labelTextAnimation.TrackSetPath(trackCount, theLabel.GetPath() + ":SetNumericalExpression");
-                labelTextAnimation.TrackInsertKey(trackCount, 0, theLabel.SetNumericalExpression);
-                labelTextAnimation.TrackInsertKey(trackCount, duration, Mathf.RoundToInt(Data[i]));
-                labelTextAnimation.TrackSetInterpolationType(trackCount, Animation.InterpolationType.Linear);
-                theLabel.SetNumericalExpression = Mathf.RoundToInt(Data[i]);
-                animations.Add(labelTextAnimation);
+                
+                animations.Add(theLabel.AnimateNumericalExpression(Mathf.RoundToInt(Data[i])));
             }
         }
 
