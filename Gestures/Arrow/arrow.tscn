@@ -7,8 +7,8 @@
 [node name="arrow" type="Node3D" node_paths=PackedStringArray("shaftObject", "headObject", "tailObject")]
 transform = Transform3D(0.72463, -0.689138, 0, 0.689138, 0.72463, 0, 0, 0, 1, 0, 0, 0)
 script = ExtResource("1_j1bvc")
-showHeadArrow = true
-width = 1.0
+ShowHeadArrow = true
+Chonk = 1.0
 Length = 1.69052
 XYPlaneRotation = 43.5619
 tailPoint = Vector3(1.225, 1.165, 0)
@@ -17,7 +17,7 @@ headObject = NodePath("head")
 tailObject = NodePath("tail")
 
 [node name="head" parent="." instance=ExtResource("2_vd7g4")]
-transform = Transform3D(-1, 8.74228e-08, 0, -8.74228e-08, -1, 0, 0, 0, 1, 0, 0, 0)
+transform = Transform3D(-1, 1.50996e-07, 0, -1.50996e-07, -1, 0, 0, 0, 1, 0, 0, 0)
 
 [node name="shaft" parent="." instance=ExtResource("3_ojc82")]
 transform = Transform3D(1.64052, 0, 0, 0, 1, 0, 0, 0, 1, 0.05, 0, 0)

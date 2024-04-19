@@ -5,6 +5,12 @@ using PrimerTools;
 public partial class Arrow : Node3D
 {
     public static readonly PackedScene ArrowScene = ResourceLoader.Load<PackedScene>("res://addons/PrimerTools/Gestures/Arrow/arrow.tscn");
+
+    public static Arrow CreateArrow()
+    {
+        var arrow = ArrowScene.Instantiate<Arrow>();
+        return arrow;
+    }
     
     private ExportedMemberChangeChecker _exportedMemberChangeChecker;
 
@@ -24,11 +30,11 @@ public partial class Arrow : Node3D
 
     private bool _showTailArrow;
 
-    [Export] public bool showTailArrow;
-    [Export] public bool showHeadArrow;
-    [Export] public float tailPadding;
-    [Export] public float headPadding;
-    [Export] public float width;
+    [Export] public bool ShowTailArrow;
+    [Export] public bool ShowHeadArrow;
+    [Export] public float TailPadding;
+    [Export] public float HeadPadding;
+    [Export] public float Chonk;
 
     // Length and rotation approach
     [Export] public float Length
@@ -64,31 +70,31 @@ public partial class Arrow : Node3D
         }
         Rotation = new Vector3(0, 0, Mathf.Atan2(tailPoint.Y, tailPoint.X));
         
-        var lengthToCutFromHead = showHeadArrow ? shaftAdjustment * width + headPadding : headPadding;
+        var lengthToCutFromHead = ShowHeadArrow ? shaftAdjustment * Chonk + HeadPadding : HeadPadding;
         shaftObject.Position = Vector3.Right * lengthToCutFromHead;
         
         // Not a truly robust scale correction, but should work when all the scales of parents are uniform.
         var totalLength = tailPoint.Length();
-        var lengthToCutFromTail = showTailArrow
-            ? shaftAdjustment * width + tailPadding
-            : tailPadding;
-        shaftObject.Scale = new Vector3(totalLength - lengthToCutFromHead - lengthToCutFromTail, width, 1);
+        var lengthToCutFromTail = ShowTailArrow
+            ? shaftAdjustment * Chonk + TailPadding
+            : TailPadding;
+        shaftObject.Scale = new Vector3(totalLength - lengthToCutFromHead - lengthToCutFromTail, Chonk, 1);
         
-        if (showHeadArrow)
+        if (ShowHeadArrow)
         {
             headObject.Visible = true;
-            headObject.Position = Vector3.Right * headPadding;
-            headObject.Scale = Vector3.One * width;
+            headObject.Position = Vector3.Right * HeadPadding;
+            headObject.Scale = Vector3.One * Chonk;
         }
         else
         {
             headObject.Visible = false;
         }
-        if (showTailArrow)
+        if (ShowTailArrow)
         {
             tailObject.Visible = true;
-            tailObject.Position = Vector3.Right * (totalLength - tailPadding);
-            tailObject.Scale = Vector3.One * width;
+            tailObject.Position = Vector3.Right * (totalLength - TailPadding);
+            tailObject.Scale = Vector3.One * Chonk;
         }
         else
         {
@@ -112,15 +118,16 @@ public partial class Arrow : Node3D
     //
     public Animation ScaleUpFromTail()
     {
-        var truePosition = Position;
-        var trueScale = Scale;
+        // Ensure the arrow reflects recent property changes
+        Update();
+        
+        var finalPosition = Position;
         Scale = Vector3.One;
-        var t = Transform;
-        Position += t.Basis.X * (Length - tailPadding);
-        Scale = trueScale;
+        Position += Transform.Basis.X * (Length - TailPadding);
+        Scale = Vector3.Zero;
         return AnimationUtilities.Parallel(
             this.ScaleTo(Vector3.One),
-            this.MoveTo(truePosition)
+            this.MoveTo(finalPosition)
         );
     }
     // public Tween ScaleDownToTail()
