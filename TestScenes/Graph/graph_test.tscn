@@ -2657,21 +2657,21 @@ albedo_color = Color(0.839216, 0.231373, 0.313726, 1)
 
 [sub_resource type="BoxMesh" id="BoxMesh_ejigp"]
 material = SubResource("StandardMaterial3D_jl75u")
-size = Vector3(0.368, 0, -0.0004)
+size = Vector3(0.368, 0.16, -0.0004)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_e1iff"]
 albedo_color = Color(1, 0.580392, 0, 1)
 
 [sub_resource type="BoxMesh" id="BoxMesh_u0e0h"]
 material = SubResource("StandardMaterial3D_e1iff")
-size = Vector3(0.368, 0, -0.0004)
+size = Vector3(0.368, 0.32, -0.0004)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rj3o0"]
 albedo_color = Color(0.905882, 0.886275, 0.278431, 1)
 
 [sub_resource type="BoxMesh" id="BoxMesh_aav5d"]
 material = SubResource("StandardMaterial3D_rj3o0")
-size = Vector3(0.368, 0, -0.0004)
+size = Vector3(0.368, 0.48, -0.0004)
 
 [sub_resource type="Environment" id="Environment_14y1i"]
 background_mode = 1
@@ -3017,33 +3017,33 @@ VerticalAlignment = 0
 script = ExtResource("9_xj13v")
 
 [node name="Bar 0" type="MeshInstance3D" parent="AnimationPlayer/Graph/Bar Plot"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.46, 0, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.46, 0.08, 0)
 mesh = SubResource("BoxMesh_ejigp")
 
 [node name="Label 0" type="Node3D" parent="AnimationPlayer/Graph/Bar Plot"]
-transform = Transform3D(0, 0, 0, 0, 0, 0, 0, 0, 0, 0.46, 0.1, 0)
+transform = Transform3D(0.184, 0, 0, 0, 0.184, 0, 0, 0, 0.184, 0.46, 0.26, 0)
 script = ExtResource("6_jh272")
-latex = "-1"
+latex = "$10$"
 VerticalAlignment = 3
 
 [node name="Bar 1" type="MeshInstance3D" parent="AnimationPlayer/Graph/Bar Plot"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.92, 0, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.92, 0.16, 0)
 mesh = SubResource("BoxMesh_u0e0h")
 
 [node name="Label 1" type="Node3D" parent="AnimationPlayer/Graph/Bar Plot"]
-transform = Transform3D(0, 0, 0, 0, 0, 0, 0, 0, 0, 0.92, 0.1, 0)
+transform = Transform3D(0.184, 0, 0, 0, 0.184, 0, 0, 0, 0.184, 0.92, 0.42, 0)
 script = ExtResource("6_jh272")
-latex = "-1"
+latex = "$20$"
 VerticalAlignment = 3
 
 [node name="Bar 2" type="MeshInstance3D" parent="AnimationPlayer/Graph/Bar Plot"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.38, 0, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.38, 0.24, 0)
 mesh = SubResource("BoxMesh_aav5d")
 
 [node name="Label 2" type="Node3D" parent="AnimationPlayer/Graph/Bar Plot"]
-transform = Transform3D(0, 0, 0, 0, 0, 0, 0, 0, 0, 1.38, 0.1, 0)
+transform = Transform3D(0.184, 0, 0, 0, 0.184, 0, 0, 0, 0.184, 1.38, 0.58, 0)
 script = ExtResource("6_jh272")
-latex = "-1"
+latex = "$30$"
 VerticalAlignment = 3
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
@@ -3055,7 +3055,7 @@ environment = SubResource("Environment_14y1i")
 [node name="Camera rig" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.095, 0.305, 0)
 script = ExtResource("10_inb6s")
-Distance = 3.415
+Distance = 10.0
 
 [node name="Camera3D" type="Camera3D" parent="Camera rig"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 3.415)

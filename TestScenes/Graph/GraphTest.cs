@@ -12,15 +12,15 @@ public partial class GraphTest : AnimationSequence
 	{
 		#region MyRegion
 
-		var graph = Graph.CreateAsOwnedChild(this);
+		var graph = Graph.CreateInstance();
 		
 		graph.Position = Vector3.Left;
 		graph.XAxis.length = 5;
-		graph.XAxis.showTicCylinders = false;
-		graph.XAxis.showArrows = false;
-		graph.XAxis.showRod = false;
-		graph.YAxis.max = 100;
-		graph.YAxis.ticStep = 20;
+		graph.XAxis.ShowTicCylinders = false;
+		graph.XAxis.ShowArrows = false;
+		graph.XAxis.ShowRod = false;
+		graph.YAxis.Max = 100;
+		graph.YAxis.TicStep = 20;
 		graph.YAxis.length = 2;
 		graph.YAxis.Visible = false;
 		// graph.YAxis.showTicCylinders = false;

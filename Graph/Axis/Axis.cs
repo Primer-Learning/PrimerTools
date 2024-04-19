@@ -13,40 +13,40 @@ public partial class Axis : Node3D
 
 	private const float ArrowHeadScaleFactor = 0.07f;
 	
-	public float min = 0;
-	[Export] private float Min {
-		get => min;
-		set => min = value;
-	}
-	public float max = 10;
-	[Export] private float Max {
-		get => max;
-		set => max = value;
-	}
+	[Export] public float Min = 0;
+	// [Export] private float Min {
+	// 	get => min;
+	// 	set => min = value;
+	// }
+	[Export] public float Max = 10;
+	// [Export] private float Max {
+	// 	get => max;
+	// 	set => max = value;
+	// }
 	internal float length = 1;
 	[Export] private float Length {
 		get => length;
 		set => length = Mathf.Max(0, value);
 	}
 	
-	public float RangeSize => Mathf.Max(0.001f, max - min);
+	public float RangeSize => Mathf.Max(0.001f, Max - Min);
 	
 	private Vector2 padding = new (0.2f, 0.2f);
 	[Export] public Vector2 Padding {
-		get
+		get => padding;
+		set
 		{
-			if (padding.X + padding.Y > length)
-				return new Vector2(length / 2, length / 2);
-			return padding;
+			if (value.X + value.Y > length)
+				value =  new Vector2(length / 2, length / 2);
+			padding = value;
 		}
-		set => padding = value;
 	}
 	public float LengthMinusPadding => length - padding.X - padding.Y;
-	public float Thiccness = 1;
-	public float DataScale => LengthMinusPadding / RangeSize;
+	[Export] public float Chonk = 1;
+	public float DataSpaceScale => LengthMinusPadding / RangeSize;
 	
-	public bool showArrows = true;
-	public bool showRod = true;
+	public bool ShowArrows = true;
+	public bool ShowRod = true;
 	
 	public override void _Process(double delta)
 	{
@@ -65,7 +65,7 @@ public partial class Axis : Node3D
 	
 	internal (Animation removeAnimation, Animation updateAnimation, Animation addAnimation) UpdateChildren(float duration = 0.5f)
 	{
-		if (min != 0)
+		if (Min != 0)
 		{
 			GD.PrintErr("Idk how to deal with non-zero min yet.");
 			return (null, null, null);
@@ -87,13 +87,15 @@ public partial class Axis : Node3D
 	private Animation UpdateRod(float duration)
 	{
 		var rod = GetNode<Node3D>("Rod");
-		if (!showRod) { rod.Visible = false; }
+		if (!ShowRod) { rod.Visible = false; }
+		
+		GD.Print($"Padding is {Padding}");
 
 		return AnimationUtilities.Parallel(
-			rod.MoveTo(new Vector3(-padding.X, 0f, 0f), duration),
+			rod.MoveTo(new Vector3(-Padding.X, 0f, 0f), duration: duration),
 			rod.ScaleTo(length == 0 
 				? Vector3.Zero
-				: new Vector3(length, Thiccness, Thiccness), duration)
+				: new Vector3(length, Chonk, Chonk), duration)
 		);
 	}
 
@@ -101,14 +103,14 @@ public partial class Axis : Node3D
 	{
 		var endArrow = GetNode<Node3D>("Head");
 		var startArrow = GetNode<Node3D>("Tail");
-		if (!showArrows)
+		if (!ShowArrows)
 		{
 			endArrow.Visible = false;
 			startArrow.Visible = false;
 		}
 
-		endArrow.Scale = Vector3.One * Thiccness * ArrowHeadScaleFactor;
-		startArrow.Scale = Vector3.One * Thiccness * ArrowHeadScaleFactor;
+		endArrow.Scale = Vector3.One * Chonk * ArrowHeadScaleFactor;
+		startArrow.Scale = Vector3.One * Chonk * ArrowHeadScaleFactor;
 		if (length == 0)
 		{
 			endArrow.Scale = Vector3.Zero;
@@ -122,19 +124,20 @@ public partial class Axis : Node3D
 	}
 
 	#region Tics
-	internal bool transitionTicsAllTogether = false;
-	[Export] public float ticStep = 2;
-	public bool showZero;
-	public int labelNumberOffset;
-	public bool showTicCylinders = true;
-	[Export] public PackedScene ticScene;
+	internal bool TransitionTicsAllTogether = false;
+	[Export] public float TicStep = 2;
+	public bool ShowZero;
+	public int LabelNumberOffset;
+	public bool ShowTicCylinders = true;
+	[Export] public PackedScene TicScene;
 	
-	public int autoTicCount = 0;
-	public List<TicData> manualTicks = new();
+	public int AutoTicCount = 0;
+	public List<TicData> ManualTicks = new();
 
 	private (Animation removeAnimation, Animation updateAnimation, Animation addAnimation) UpdateTics(float duration)
 	{
-		Vector3 GetPosition(AxisTic tic) => new(tic.data.value * DataScale, 0, 0);
+		Vector3 GetPosition(AxisTic tic) => new(tic.data.value * DataSpaceScale, 0, 0);
+		
 		var ticsToRemove = GetChildren().Select(x => x as AxisTic).Where(x => x != null).ToList();
 		var newTicAnimations = new List<Animation>();
 		var ticMovementAnimations = new List<Animation>();
@@ -149,7 +152,7 @@ public partial class Axis : Node3D
 
 			if (tic == null)
 			{
-				tic = ticScene.Instantiate<AxisTic>();
+				tic = TicScene.Instantiate<AxisTic>();
 				tic.data = data;
 				tic.Name = name;
 				AddChild(tic);
@@ -159,9 +162,9 @@ public partial class Axis : Node3D
 				
 				tic.Position = GetPosition(tic);
 				tic.Scale = Vector3.Zero;
-				newTicAnimations.Add(tic.ScaleTo(Thiccness, duration));
+				newTicAnimations.Add(tic.ScaleTo(Chonk, duration));
 				tic.SetLabel();
-				if (!showTicCylinders) tic.GetNode<MeshInstance3D>("MeshInstance3D").Visible = false;
+				if (!ShowTicCylinders) tic.GetNode<MeshInstance3D>("MeshInstance3D").Visible = false;
 			}
 			else
 			{
@@ -187,23 +190,23 @@ public partial class Axis : Node3D
 	
 	private void UpdateTicStep()
 	{
-		if (autoTicCount <= 0)
+		if (AutoTicCount <= 0)
 			return;
             
 		// This looks at the existing tic step because it's meant to avoid destroying existing tics 
 		// as much as possible.
-		while (max / ticStep > autoTicCount)
+		while (Max / TicStep > AutoTicCount)
 		{
-			switch (ticStep.ToString()[0])
+			switch (TicStep.ToString()[0])
 			{
 				case '1':
-					ticStep *= 2;
+					TicStep *= 2;
 					break;
 				case '2':
-					ticStep = Mathf.RoundToInt(ticStep * 2.5f);
+					TicStep = Mathf.RoundToInt(TicStep * 2.5f);
 					break;
 				case '5':
-					ticStep *= 2;
+					TicStep *= 2;
 					break;
 			}
 		}
@@ -214,25 +217,26 @@ public partial class Axis : Node3D
 		UpdateTicStep(); // Looks at autoTicCount and adjusts ticStep accordingly.
             
 		var calculated = new List<TicData>();
+		if (length == 0) return calculated;
 
-		if (showZero)
-			calculated.Add(new TicData(0, labelNumberOffset));
+		if (ShowZero)
+			calculated.Add(new TicData(0, LabelNumberOffset));
 
-		for (var i = Mathf.Max(ticStep, min); i <= max; i += ticStep)
-			calculated.Add(new TicData(i, labelNumberOffset));
+		for (var i = Mathf.Max(TicStep, Min); i <= Max; i += TicStep)
+			calculated.Add(new TicData(i, LabelNumberOffset));
 
-		for (var i = Mathf.Min(-ticStep, max); i >= min; i -= ticStep)
-			calculated.Add(new TicData(i, labelNumberOffset));
+		for (var i = Mathf.Min(-TicStep, Max); i >= Min; i -= TicStep)
+			calculated.Add(new TicData(i, LabelNumberOffset));
 
 		return calculated;
 	}
 	
 	private List<TicData> PrepareTics()
 	{
-		if (manualTicks.Count > 0)
-			return manualTicks;
+		if (ManualTicks.Count > 0)
+			return ManualTicks;
             
-		if (ticStep <= 0)
+		if (TicStep <= 0)
 			return new List<TicData>();
 
 		return CalculateTics();
