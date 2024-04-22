@@ -102,6 +102,15 @@ public partial class TernaryGraph : Node3D
         );
     }
 
+    public static Vector3 CoordinatesToPosition(Vector3 point)
+    {
+        return CoordinatesToPosition(point.X, point.Y, point.Z);
+    }
+    public static Vector3 CoordinatesToPositionButXAndYAreTheOnesThatMatter(Vector3 point)
+    {
+        return CoordinatesToPosition(0, point.X, point.Y);
+    }
+
     private static void ValidateCoordinates(params float[] coords)
     {
         var sum = coords.Sum();

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Godot;
 using PrimerTools;
 
@@ -22,7 +23,7 @@ public partial class Arrow : Node3D
 
         if (Engine.IsEditorHint() && _exportedMemberChangeChecker.CheckForChanges())
         {
-            Update();
+            Transition();
         }
         
         // if (nodeThatHeadFollows != null || nodeThatTailFollows != null) Update();
@@ -64,30 +65,44 @@ public partial class Arrow : Node3D
     // Todo: Make this an animation, like Transition. This will make it easier to 
     // move the arrow while keeping its tail point, for example. Or to change multiple parameters at once.
     // Currently, these need to manually be animated.
-    public void Update()
+    public Animation Transition()
     {
-        if (nodeThatHeadFollows != null) GlobalPosition = nodeThatHeadFollows.GlobalPosition;
+        var animations = new List<Animation>();
+
+        if (nodeThatHeadFollows != null)
+        {
+            // GlobalPosition = nodeThatHeadFollows.GlobalPosition;
+            animations.Add(this.MoveTo(nodeThatHeadFollows.GlobalPosition, global: true));
+        }
+        
         if (nodeThatTailFollows != null)
         {
             tailPoint = nodeThatTailFollows.GlobalPosition - GlobalPosition;
         }
-        Rotation = new Vector3(0, 0, Mathf.Atan2(tailPoint.Y, tailPoint.X));
+        
+        animations.Add(this.RotateTo(new Vector3(0, 0, Mathf.Atan2(tailPoint.Y, tailPoint.X) * 180 / Mathf.Pi)));
+        // Rotation = new Vector3(0, 0, Mathf.Atan2(tailPoint.Y, tailPoint.X));
         
         var lengthToCutFromHead = ShowHeadArrow ? shaftAdjustment * Chonk + HeadPadding : HeadPadding;
-        shaftObject.Position = Vector3.Right * lengthToCutFromHead;
+        animations.Add(shaftObject.MoveTo(Vector3.Right * lengthToCutFromHead));
+        // shaftObject.Position = Vector3.Right * lengthToCutFromHead;
         
         // Not a truly robust scale correction, but should work when all the scales of parents are uniform.
         var totalLength = tailPoint.Length();
         var lengthToCutFromTail = ShowTailArrow
             ? shaftAdjustment * Chonk + TailPadding
             : TailPadding;
-        shaftObject.Scale = new Vector3(totalLength - lengthToCutFromHead - lengthToCutFromTail, Chonk, 1);
+        
+        animations.Add(shaftObject.ScaleTo(new Vector3(totalLength - lengthToCutFromHead - lengthToCutFromTail, Chonk, 1)));
+        // shaftObject.Scale = new Vector3(totalLength - lengthToCutFromHead - lengthToCutFromTail, Chonk, 1);
         
         if (ShowHeadArrow)
         {
             headObject.Visible = true;
-            headObject.Position = Vector3.Right * HeadPadding;
-            headObject.Scale = Vector3.One * Chonk;
+            // headObject.Position = Vector3.Right * HeadPadding;
+            animations.Add(headObject.MoveTo(Vector3.Right * HeadPadding));
+            // headObject.Scale = Vector3.One * Chonk;
+            animations.Add(headObject.ScaleTo(Vector3.One * Chonk));
         }
         else
         {
@@ -96,13 +111,17 @@ public partial class Arrow : Node3D
         if (ShowTailArrow)
         {
             tailObject.Visible = true;
-            tailObject.Position = Vector3.Right * (totalLength - TailPadding);
-            tailObject.Scale = Vector3.One * Chonk;
+            // tailObject.Position = Vector3.Right * (totalLength - TailPadding);
+            animations.Add(tailObject.MoveTo(Vector3.Right * (totalLength - TailPadding)));
+            // tailObject.Scale = Vector3.One * Chonk;
+            animations.Add(tailObject.ScaleTo(Vector3.One * Chonk));
         }
         else
         {
             tailObject.Visible = false;
         }
+
+        return animations.RunInParallel();
     }
     
     // public Tween ScaleUpFromHead()
@@ -122,7 +141,7 @@ public partial class Arrow : Node3D
     public Animation ScaleUpFromTail()
     {
         // Ensure the arrow reflects recent property changes
-        Update();
+        Transition();
         
         var finalPosition = Position;
         Scale = Vector3.One;

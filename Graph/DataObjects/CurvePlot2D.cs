@@ -145,6 +145,10 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
     {
         dataPoints = data;
     }
+    public Vector3[] GetData()
+    {
+        return dataPoints;
+    }
 
     
 
@@ -160,16 +164,18 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
             pointsOfStages.Add(new[] { TransformPointFromDataSpaceToPositionSpace(dataPoints[0]) });
         pointsOfStages.Add(dataPoints.Select(x => TransformPointFromDataSpaceToPositionSpace(x)).ToArray());
 
-        var animation = new Animation();
-        animation.Length = duration;
+        return this.AnimateValue(RenderExtent + 1, "RenderExtent");
 
-        var trackIndex = animation.AddTrack(Animation.TrackType.Value);
-        animation.TrackInsertKey(trackIndex, 0.0f, RenderExtent);
-        animation.TrackInsertKey(trackIndex, duration, RenderExtent + 1);
-        animation.TrackSetPath(trackIndex, $"{GetPath()}:RenderExtent");
-        RenderExtent++;
-
-        return animation;
+        // var animation = new Animation();
+        // animation.Length = duration;
+        //
+        // var trackIndex = animation.AddTrack(Animation.TrackType.Value);
+        // animation.TrackInsertKey(trackIndex, 0.0f, RenderExtent);
+        // animation.TrackInsertKey(trackIndex, duration, RenderExtent + 1);
+        // animation.TrackSetPath(trackIndex, $"{GetPath()}:RenderExtent");
+        // RenderExtent++;
+        //
+        // return animation;
     }
 
     public Animation Disappear()
