@@ -61,6 +61,9 @@ public partial class Arrow : Node3D
     [Export] internal Node3D nodeThatTailFollows;
     [Export] internal Node3D nodeThatHeadFollows;
     
+    // Todo: Make this an animation, like Transition. This will make it easier to 
+    // move the arrow while keeping its tail point, for example. Or to change multiple parameters at once.
+    // Currently, these need to manually be animated.
     public void Update()
     {
         if (nodeThatHeadFollows != null) GlobalPosition = nodeThatHeadFollows.GlobalPosition;

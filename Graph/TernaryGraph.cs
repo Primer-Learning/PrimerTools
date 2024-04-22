@@ -1,6 +1,6 @@
 ﻿using System.Linq;
 using Godot;
-using Primer;
+using PrimerAssets;
 using PrimerTools.LaTeX;
 
 namespace PrimerTools.Graph;
@@ -11,7 +11,7 @@ public partial class TernaryGraph : Node3D
     public string[] LabelStrings = {"A", "B", "C"};
 
     public LatexNode[] Labels = new LatexNode[3]; 
-    public Color[] Colors = {PrimerColor.red, PrimerColor.green, PrimerColor.blue}; 
+    public Color[] Colors = {new Color(1, 0, 0), new Color(0, 1, 0), new Color(0, 0, 1)}; 
     
     public void CreateBounds(float chonk = 0.01f)
     {
@@ -32,7 +32,7 @@ public partial class TernaryGraph : Node3D
         };
 
         var cylinderMat = new StandardMaterial3D();
-        cylinderMat.AlbedoColor = PrimerColor.white;
+        cylinderMat.AlbedoColor = new Color(1, 1, 1);
 
         for (var i = 0; i < 3; i++)
         {

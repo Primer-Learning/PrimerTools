@@ -85,7 +85,6 @@ public static class AnimationUtilities
         animation.Length = duration;
         return animation;
     }
-    
     public static Animation AnimateBool<TNode>(this TNode node, bool value, string propertyPath, bool resetAtEnd = false, float duration = DefaultDuration) where TNode : Node
     {
         var originalValue = node.Get(propertyPath);
@@ -111,7 +110,6 @@ public static class AnimationUtilities
         animation.Length = duration;
         return animation;
     }
-    
     public static Animation MoveTo(this Node3D node, Vector3 destination, float stopDistance = 0, float duration = DefaultDuration, bool global = false)
     {
         var difference = global
@@ -407,7 +405,6 @@ public static class AnimationUtilities
     public static Animation AnimateColorHsv(this MeshInstance3D meshInstance3D, Color finalColor, float duration = DefaultDuration)
     {
         var material = meshInstance3D.GetOrCreateOverrideMaterial();
-        
         var animation = new Animation();
         
         var trackIndex = animation.AddTrack(Animation.TrackType.Value);
