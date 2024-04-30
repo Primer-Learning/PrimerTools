@@ -12,8 +12,11 @@ public partial class LatexNode : Node3D
 	{
 		var node = new LatexNode();
 		node.latex = latex;
-		node.UpdateCharacters();
-		node.Name = latex;
+		if (latex != "")
+		{
+			node.UpdateCharacters();
+			node.Name = latex;
+		}
 		return node;
 	}
 	
@@ -74,6 +77,7 @@ public partial class LatexNode : Node3D
 	private readonly LatexToMesh latexToMesh = new();
 	
 	public async void UpdateCharacters() {
+		if (latex == "") return;
 		foreach (var child in GetChildren())
 		{
 			child.Free();
