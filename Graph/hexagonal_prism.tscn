@@ -1,0 +1,5 @@
+[gd_scene load_steps=2 format=3 uid="uid://dufftdgcc6vle"]
+
+[ext_resource type="PackedScene" uid="uid://7hggfooniu2k" path="res://addons/PrimerTools/Graph/hexagonal_prism.blend" id="1_nrpse"]
+
+[node name="hexagonal_prism" instance=ExtResource("1_nrpse")]
