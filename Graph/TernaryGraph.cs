@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using Godot;
 using PrimerAssets;
 using PrimerTools.LaTeX;
@@ -120,5 +121,26 @@ public partial class TernaryGraph : Node3D
 
         if (coords.Any(x => x < 0))
             GD.PushWarning($"Coordinates must all be positive, but they are {coords.Join()}");
+    }
+
+    public delegate void TernaryMethod(float a, float b, float c, int index);
+    public static void IterateOverTriangleWithNumUnitsPerSide(int unitsPerSide, TernaryMethod ternaryMethod)
+    {
+        var increment = 1f / (unitsPerSide - 1);
+        var k = 0;
+        for (var i = 0; i <= unitsPerSide; i++)
+        {
+            for (var j = 0; j < unitsPerSide; j++)
+            {
+                if (j + i >= unitsPerSide) continue;
+                var a = (unitsPerSide - 1 - i - j) * increment ;
+                var b = i * increment;
+                var c = j * increment;
+
+                ternaryMethod(a, b, c, k);
+
+                k++;
+            }
+        }
     }
 }

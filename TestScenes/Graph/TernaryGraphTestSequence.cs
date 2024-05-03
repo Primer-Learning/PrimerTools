@@ -25,7 +25,7 @@ public partial class TernaryGraphTestSequence : AnimationSequence
 		
 		var numBars = ternaryPlot.BarsPerSide * (ternaryPlot.BarsPerSide + 1) / 2;
 		var data = new float[numBars];
-		var rng = new System.Random(23);
+		var rng = new System.Random(System.Environment.TickCount);
 		for (var i = 0; i < numBars; i++)
 		{
 			data[i] = (float)rng.NextDouble();
