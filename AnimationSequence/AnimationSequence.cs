@@ -31,12 +31,17 @@ public abstract partial class AnimationSequence : AnimationPlayer
 				CreateTopLevelAnimation(makeSingleClip);
 				
 				Rewind(timeToRewindTo);
+				if (makeChildrenLocal)
+				{
+					this.MakeSelfAndChildrenLocal(GetTree().EditedSceneRoot);
+				}
 			}
 			_run = true;
 		}
 	}
 	
 	[Export] private bool makeSingleClip;
+	[Export] private bool makeChildrenLocal;
 	[Export] private float timeToRewindTo = 0;
 
 	private bool _shouldActuallyUpdatePath = false;
