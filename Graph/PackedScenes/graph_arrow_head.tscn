@@ -1,5 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://d1y06ar34m5qm"]
-
-[ext_resource type="PackedScene" uid="uid://csldocd4lfo40" path="res://addons/PrimerTools/Graph/PackedScenes/arrow_head.blend" id="1_2ompr"]
-
-[node name="arrow_head" instance=ExtResource("1_2ompr")]

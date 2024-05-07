@@ -164,6 +164,7 @@ public partial class Axis : Node3D
 				tic.Scale = Vector3.Zero;
 				newTicAnimations.Add(tic.ScaleTo(Chonk, duration));
 				tic.SetLabel();
+				tic.SetLabelScale(0);
 				if (!ShowTicCylinders) tic.GetNode<MeshInstance3D>("MeshInstance3D").Visible = false;
 			}
 			else
@@ -172,6 +173,7 @@ public partial class Axis : Node3D
 			}
 			
 			ticMovementAnimations.Add(tic.MoveTo(GetPosition(tic)));
+			ticMovementAnimations.Add(tic.AnimateLabelScale(0.2f));
 			
 			if (length == 0)
 			{

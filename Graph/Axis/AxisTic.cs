@@ -15,5 +15,15 @@ public partial class AxisTic : Node3D
         latexNode.latex = data.label;
         latexNode.UpdateCharacters();
         this.MakeSelfAndChildrenLocal(GetTree().EditedSceneRoot);
-    } 
+    }
+
+    public void SetLabelScale(float scale)
+    {
+        latexNode.Scale = Vector3.One * scale;
+    }
+
+    public Animation AnimateLabelScale(float scale)
+    {
+        return latexNode.ScaleTo(scale);
+    }
 }

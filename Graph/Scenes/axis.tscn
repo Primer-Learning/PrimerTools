@@ -1,0 +1,28 @@
+[gd_scene load_steps=5 format=3 uid="uid://dw3ic4fy1t6jc"]
+
+[ext_resource type="PackedScene" uid="uid://d1y06ar34m5qm" path="res://addons/PrimerTools/Graph/Scenes/graph_arrow_head.tscn" id="1_1vsiv"]
+[ext_resource type="Script" path="res://addons/PrimerTools/Graph/Axis/Axis.cs" id="1_gobhs"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ntcfd"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_gedf0"]
+material = SubResource("StandardMaterial3D_ntcfd")
+height = 1.0
+
+[node name="Axis" type="Node3D"]
+script = ExtResource("1_gobhs")
+Length = 3.0
+Chonk = 1.83
+
+[node name="Rod" type="Node3D" parent="."]
+transform = Transform3D(3, 0, 0, 0, 1, 0, 0, 0, 1, -0.2, 0, 0)
+
+[node name="RodMesh" type="MeshInstance3D" parent="Rod"]
+transform = Transform3D(-1.74846e-09, 1, -1.18109e-17, -0.0399939, -4.37047e-08, -0.000698097, -0.000698097, -7.62869e-10, 0.0399939, 0.5, 0, 0)
+mesh = SubResource("CylinderMesh_gedf0")
+
+[node name="Head" parent="." instance=ExtResource("1_1vsiv")]
+transform = Transform3D(-3.0598e-09, 0.07, 0, -0.07, -3.0598e-09, 0, 0, 0, 0.07, 2.8, 0, 0)
+
+[node name="Tail" parent="." instance=ExtResource("1_1vsiv")]
+transform = Transform3D(-3.0598e-09, -0.07, 0, 0.07, -3.0598e-09, 0, 0, 0, 0.07, -0.2, 0, 0)

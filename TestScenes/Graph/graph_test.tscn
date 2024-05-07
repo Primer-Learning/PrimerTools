@@ -3,13 +3,14 @@
 [ext_resource type="Script" path="res://addons/PrimerTools/TestScenes/Graph/GraphTest.cs" id="1_bnpil"]
 [ext_resource type="Script" path="res://addons/PrimerTools/Graph/Graph.cs" id="2_tg7t8"]
 [ext_resource type="Script" path="res://addons/PrimerTools/Graph/Axis/Axis.cs" id="3_ghgrm"]
-[ext_resource type="PackedScene" uid="uid://c57q0rwh3i0n8" path="res://addons/PrimerTools/Graph/PackedScenes/axis_tic_x.tscn" id="4_aj5uq"]
+[ext_resource type="PackedScene" uid="uid://c57q0rwh3i0n8" path="res://addons/PrimerTools/Graph/Scenes/axis_tic_x.tscn" id="4_aj5uq"]
 [ext_resource type="Script" path="res://addons/PrimerTools/Graph/Axis/AxisTic.cs" id="5_3pfs6"]
 [ext_resource type="Script" path="res://addons/PrimerTools/LaTeX/LatexNode.cs" id="6_jh272"]
-[ext_resource type="PackedScene" uid="uid://salehjyt5hwh" path="res://addons/PrimerTools/Graph/PackedScenes/axis_tic_y.tscn" id="7_p7og7"]
-[ext_resource type="PackedScene" uid="uid://dgevknceo3tes" path="res://addons/PrimerTools/Graph/PackedScenes/axis_tic_z.tscn" id="8_fuss1"]
+[ext_resource type="PackedScene" uid="uid://salehjyt5hwh" path="res://addons/PrimerTools/Graph/Scenes/axis_tic_y.tscn" id="7_p7og7"]
+[ext_resource type="PackedScene" uid="uid://dgevknceo3tes" path="res://addons/PrimerTools/Graph/Scenes/axis_tic_z.tscn" id="8_fuss1"]
 [ext_resource type="Script" path="res://addons/PrimerTools/Graph/DataObjects/BarPlot.cs" id="9_xj13v"]
 [ext_resource type="Script" path="res://addons/PrimerTools/Utilities/CameraRig.cs" id="10_inb6s"]
+
 
 [sub_resource type="Animation" id="Animation_gfh0s"]
 length = 102.004

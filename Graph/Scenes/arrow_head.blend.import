@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://csldocd4lfo40"
-path="res://.godot/imported/arrow_head.blend-44fb6473b4bb8ec9102774726babd94d.scn"
+path="res://.godot/imported/arrow_head.blend-7f2ec83d078b316a3950eb8f9b445b8b.scn"
 
 [deps]
 
-source_file="res://addons/PrimerTools/Graph/PackedScenes/arrow_head.blend"
-dest_files=["res://.godot/imported/arrow_head.blend-44fb6473b4bb8ec9102774726babd94d.scn"]
+source_file="res://addons/PrimerTools/Graph/Scenes/arrow_head.blend"
+dest_files=["res://.godot/imported/arrow_head.blend-7f2ec83d078b316a3950eb8f9b445b8b.scn"]
 
 [params]
 
@@ -22,7 +22,6 @@ meshes/generate_lods=true
 meshes/create_shadow_meshes=false
 meshes/light_baking=1
 meshes/lightmap_texel_size=0.2
-meshes/force_disable_compression=false
 skins/use_named_skins=true
 animation/import=true
 animation/fps=30
@@ -57,7 +56,6 @@ _subresources={
 }
 }
 }
-gltf/naming_version=0
 gltf/embedded_image_handling=1
 blender/nodes/visible=0
 blender/nodes/punctual_lights=true

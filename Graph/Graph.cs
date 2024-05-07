@@ -35,14 +35,14 @@ public partial class Graph : Node3D
     
     private void InstantiateAxes()
     {
-        var axisScene = ResourceLoader.Load<PackedScene>("res://addons/PrimerTools/Graph/PackedScenes/axis.tscn"); 
+        var axisScene = ResourceLoader.Load<PackedScene>("res://addons/PrimerTools/Graph/Scenes/axis.tscn"); 
         var x = axisScene.Instantiate<Axis>();
         var y = axisScene.Instantiate<Axis>();
         var z = axisScene.Instantiate<Axis>();
-        x.TicScene = ResourceLoader.Load<PackedScene>("res://addons/PrimerTools/Graph/PackedScenes/axis_tic_x.tscn");
-        y.TicScene = ResourceLoader.Load<PackedScene>("res://addons/PrimerTools/Graph/PackedScenes/axis_tic_y.tscn");
+        x.TicScene = ResourceLoader.Load<PackedScene>("res://addons/PrimerTools/Graph/Scenes/axis_tic_x.tscn");
+        y.TicScene = ResourceLoader.Load<PackedScene>("res://addons/PrimerTools/Graph/Scenes/axis_tic_y.tscn");
         y.RotationDegrees = new Vector3(0, 0, 90);
-        z.TicScene = ResourceLoader.Load<PackedScene>("res://addons/PrimerTools/Graph/PackedScenes/axis_tic_z.tscn");
+        z.TicScene = ResourceLoader.Load<PackedScene>("res://addons/PrimerTools/Graph/Scenes/axis_tic_z.tscn");
         z.RotationDegrees = new Vector3(0, -90, 0);
         
         AddChild(x);
@@ -126,7 +126,7 @@ public partial class Graph : Node3D
         updateTransitions.AddRange(
             GetChildren().OfType<IPrimerGraphData>().Select(x => x.Transition(duration))
         );
-        // Labels
+        // Axis labels
         if (xAxisLatexNode is not null)
         {
             updateTransitions.Add(
