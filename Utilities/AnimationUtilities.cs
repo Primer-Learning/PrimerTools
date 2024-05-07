@@ -139,6 +139,14 @@ public static class AnimationUtilities
     {
         if (duration == 0) duration = Epsilon;
         var animation = new Animation();
+
+        // Quaternion breaks if scale is zero.
+        // Animated rotation is usually useless for zero-scale objects, but can be used
+        // alongside scaling animations.
+        // Also, animation methods are sometimes used to change values in a non-animated way.
+        if (node.Scale.X < Epsilon) node.Scale = Vector3.One * Epsilon;
+        
+        node.Quaternion = node.Quaternion.Normalized();
         
         var trackIndex = animation.AddTrack(Animation.TrackType.Value);
         animation.TrackSetInterpolationType(trackIndex, Animation.InterpolationType.Cubic);
