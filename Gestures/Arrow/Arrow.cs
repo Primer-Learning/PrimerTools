@@ -152,6 +152,13 @@ public partial class Arrow : Node3D
             this.MoveTo(finalPosition)
         );
     }
+    public Animation ScaleDownToTail()
+    {
+        return AnimationUtilities.Parallel(
+            this.ScaleTo(Vector3.Zero),
+            this.MoveTo(Position + tailPoint)
+        );
+    }
     // public Tween ScaleDownToTail()
     // {
     //     var fakePosition = transform.localPosition + transform.right * (length - tailPadding);
