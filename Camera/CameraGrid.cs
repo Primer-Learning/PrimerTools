@@ -74,8 +74,9 @@ public partial class CameraGrid : Node3D
         AddChild(viewPortRenderer);
         viewPortRenderer.Owner = GetTree().EditedSceneRoot;
         viewPortRenderer.RotationDegrees = new Vector3(90, 0, 0);
-        viewPortRenderer.Position = new Vector3(0, 0, -CamNearPlane);
-        var scale = 2 * CamNearPlane * Mathf.Tan(CamFov / 2 * Mathf.Pi / 180);
+        var doubleNearPlane = 2 * CamNearPlane;
+        viewPortRenderer.Position = new Vector3(0, 0, -doubleNearPlane);
+        var scale = 2 * doubleNearPlane * Mathf.Tan(CamFov / 2 * Mathf.Pi / 180);
         GD.Print($"Field of view {CamFov}, Near plane {CamNearPlane}, scale {scale}");
         viewPortRenderer.Scale = Vector3.One * scale;
 
