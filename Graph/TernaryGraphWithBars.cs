@@ -41,9 +41,9 @@ public partial class TernaryGraphWithBars : TernaryGraph
         var mat = new StandardMaterial3D();
         mat.AlbedoColor = PrimerColor.MixColorsByWeight(
             colors: Colors.ToArray(),
-            new []{ a, b, c },
-            subtractive: true,
-            messWithBrightness: true
+            new []{ a, b, c }
+            // subtractive: true,
+            // messWithBrightness: true
         );
 
         bar.GetNode<MeshInstance3D>("Cylinder").Mesh.SurfaceSetMaterial(0, mat); 

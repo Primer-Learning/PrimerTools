@@ -10,8 +10,9 @@ public partial class TernaryGraph : Node3D
 {
     private float _pointSizeFactor = 3;
     public string[] LabelStrings = {"A", "B", "C"};
-
-    public LatexNode[] Labels = new LatexNode[3]; 
+    public LatexNode[] Labels = new LatexNode[3];
+    public float LabelScale = 0.1f;
+    
     public Color[] Colors = {new Color(1, 0, 0), new Color(0, 1, 0), new Color(0, 0, 1)}; 
     
     public void CreateBounds(float chonk = 0.01f)
@@ -86,10 +87,29 @@ public partial class TernaryGraph : Node3D
             else offset = new Vector3(0, 0.12f, 0);
             
             label.Position = correctedCorners[i] + offset;
-            label.Scale = new Vector3(0.1f, 0.1f, 0.1f);
+            label.Scale = new Vector3(LabelScale, LabelScale, LabelScale);
             label.Name = LabelStrings[i];
             Labels[i] = label;
         }
+    }
+
+    public Animation ScaleBoundingObjectsUpFromZero()
+    {
+        var children = GetChildren().OfType<MeshInstance3D>().ToArray();
+        foreach (var node in children)
+        {
+            node.Scale = Vector3.Zero;
+        }
+        return children.Select(x => x.ScaleTo(1)).RunInParallel();
+    }
+
+    public Animation ScaleLabelsUpFromZero()
+    {
+        foreach (var node in Labels)
+        {
+            node.Scale = Vector3.Zero;
+        }
+        return Labels.Select(x => x.ScaleTo(LabelScale)).RunInParallel();
     }
     
     public static Vector3 CoordinatesToPosition(float a, float b, float c)
@@ -102,7 +122,7 @@ public partial class TernaryGraph : Node3D
             0
         );
     }
-
+    
     public static Vector3 CoordinatesToPosition(Vector3 point)
     {
         return CoordinatesToPosition(point.X, point.Y, point.Z);
