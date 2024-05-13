@@ -354,7 +354,7 @@ public static class AnimationUtilities
     
     #region Animation modifiers
 
-    public static Animation WithDelay(this Animation animation, float delay)
+    public static Animation WithDelay(this Animation animation, float delay = DefaultDuration)
     {
         var newAnimation = new Animation();
         for (var i = 0; i < animation.GetTrackCount(); i++)
