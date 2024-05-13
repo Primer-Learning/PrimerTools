@@ -83,8 +83,8 @@ public partial class TernaryGraph : Node3D
             label.MakeSelfAndChildrenLocal(GetTree().EditedSceneRoot);
 
             Vector3 offset;
-            if (i < 2) offset = new Vector3(0, -0.13f, 0);
-            else offset = new Vector3(0, 0.12f, 0);
+            if (i < 2) offset = new Vector3(0, -0.16f, 0);
+            else offset = new Vector3(0, 0.15f, 0);
             
             label.Position = correctedCorners[i] + offset;
             label.Scale = new Vector3(LabelScale, LabelScale, LabelScale);
