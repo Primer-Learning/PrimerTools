@@ -128,7 +128,10 @@ public abstract partial class AnimationSequence : AnimationPlayer
 	}
 	protected void RegisterAnimation(params Animation[] animations)
 	{
-		if (animations.Length == 0) GD.PrintErr("Can't register an empty animation");
+		if (animations.Length == 0)
+		{
+			PrimerGD.PrintErrorWithStackTrace("Can't register an empty animation");
+		}
 		RegisterAnimation(animations.RunInParallel());
 	}
 	
