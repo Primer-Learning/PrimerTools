@@ -70,7 +70,37 @@ public partial class TernaryGraph : Node3D
             sphere.Mesh = sMesh;
             
             sphere.Position = correctedCorners[i];
-            
+        }
+        
+        CreateLabels(chonk);
+    }
+
+    /// <summary>
+    /// Used to be part of CreateBounds, but I wanted one with just labels. So this is hacked.
+    /// It's still called from CreateBounds to avoid breaking old scenes.
+    /// </summary>
+    public void CreateLabels(float chonk = 0.01f)
+    {
+        // This part is duplicated in CreateBounds
+        var corners = new Vector3[]
+        {
+            new (0, 0, 0),
+            new (1, 0, 0),
+            new (0.5f, Mathf.Sqrt(3) / 2, 0)
+        };
+
+        var center = (corners[0] + corners[1] + corners[2]) / 3;
+        var cornersToCenterNormalized = corners.Select(x => (center - x).Normalized()).ToArray();
+        var correctedCorners = new Vector3[]
+        {
+            corners[0] + (cornersToCenterNormalized[1] + cornersToCenterNormalized[2]) * chonk * 2,
+            corners[1] + (cornersToCenterNormalized[2] + cornersToCenterNormalized[0]) * chonk * 2,
+            corners[2] + (cornersToCenterNormalized[0] + cornersToCenterNormalized[1]) * chonk * 2
+        };
+        // End duplicated part
+        
+        for (var i = 0; i < 3; i++)
+        {
             // Label
             var label = new LatexNode();
             AddChild(label);
