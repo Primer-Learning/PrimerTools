@@ -1,8 +1,7 @@
 using Godot;
-using System;
 
 [Tool]
-public partial class CameraGrid : Node3D
+public partial class CameraGrid : CanvasImitator
 {
     private ExportedMemberChangeChecker _exportedMemberChangeChecker;
     public override void _Process(double delta)
@@ -38,12 +37,6 @@ public partial class CameraGrid : Node3D
     [Export(PropertyHint.Range, "1, 50")]
     private int lineWidth = 10;
     
-    private int subViewPortWidth = 1920;
-    private int subViewPortHeight = 1080;
-    
-    private float CamFov => GetParent<Camera3D>().Fov;
-    private float CamNearPlane => GetParent<Camera3D>().Near;
-    
     public override void _Ready()
     {
         if (!Engine.IsEditorHint()) QueueFree();
@@ -56,69 +49,42 @@ public partial class CameraGrid : Node3D
         { 
             child.Free();
         }
-
-        var subViewPortContainer = new SubViewportContainer();
-        AddChild(subViewPortContainer);
-        subViewPortContainer.Owner = GetTree().EditedSceneRoot;
-        
-        var subViewPort = new SubViewport();
-        subViewPortContainer.AddChild(subViewPort);
-        subViewPort.Owner = GetTree().EditedSceneRoot;
-        subViewPort.Size = new Vector2I(subViewPortWidth, subViewPortHeight);
-        subViewPort.TransparentBg = true;
-        
-        var viewPortRenderer = new MeshInstance3D();
-        var viewPortRendererMesh = new PlaneMesh();
-        viewPortRendererMesh.Size = new Vector2(16f/9, 1);
-        viewPortRenderer.Mesh = viewPortRendererMesh;
-        AddChild(viewPortRenderer);
-        viewPortRenderer.Owner = GetTree().EditedSceneRoot;
-        viewPortRenderer.RotationDegrees = new Vector3(90, 0, 0);
-        var doubleNearPlane = 2 * CamNearPlane;
-        viewPortRenderer.Position = new Vector3(0, 0, -doubleNearPlane);
-        var scale = 2 * doubleNearPlane * Mathf.Tan(CamFov / 2 * Mathf.Pi / 180);
-        GD.Print($"Field of view {CamFov}, Near plane {CamNearPlane}, scale {scale}");
-        viewPortRenderer.Scale = Vector3.One * scale;
-
-        var mat = new StandardMaterial3D();
-        mat.Transparency = BaseMaterial3D.TransparencyEnum.Alpha;
-        mat.AlbedoTexture = subViewPort.GetTexture();
-        viewPortRenderer.Mesh.SurfaceSetMaterial(0, mat);
+        CreateDisplayMesh();
         
         // Loop through and make all the rects
         // Vertical
         // - lineWidth / 2 is to center the line
-        var xCenter = (int) (subViewPortWidth * xCenterFraction) - lineWidth / 2;
-        var xCellWidth = (int) (subViewPortWidth * xSpacingFraction);
+        var xCenter = (int) (SubViewPortWidth * xCenterFraction) - lineWidth / 2;
+        var xCellWidth = (int) (SubViewPortWidth * xSpacingFraction);
         if (xCellWidth == 0)
         {
             GD.PrintErr("xCellWidth is 0");
             return;
         }
         
-        for (var i = xCenter % xCellWidth - xCellWidth; i < subViewPortWidth; i += xCellWidth)
+        for (var i = xCenter % xCellWidth - xCellWidth; i < SubViewPortWidth; i += xCellWidth)
         {
             var vrect = new ColorRect();
-            vrect.Size = new Vector2I(lineWidth, subViewPortHeight);
+            vrect.Size = new Vector2I(lineWidth, SubViewPortHeight);
             vrect.Position = new Vector2I(i, 0);
-            subViewPort.AddChild(vrect);
+            SubViewPort.AddChild(vrect);
             vrect.Owner = GetTree().EditedSceneRoot;
         }
         
         // Horizontal
-        var yCenter = (int) (subViewPortHeight * yCenterFraction) - lineWidth / 2;
-        var yCellHeight = (int) (subViewPortHeight * ySpacingFraction);
+        var yCenter = (int) (SubViewPortHeight * yCenterFraction) - lineWidth / 2;
+        var yCellHeight = (int) (SubViewPortHeight * ySpacingFraction);
         if (yCellHeight == 0)
         {
             GD.PrintErr("yCellHeight is 0");
             return;
         }
-        for (var i = yCenter % yCellHeight - yCellHeight; i < subViewPortHeight; i += yCellHeight)
+        for (var i = yCenter % yCellHeight - yCellHeight; i < SubViewPortHeight; i += yCellHeight)
         {
             var hrect = new ColorRect();
-            hrect.Size = new Vector2I(subViewPortWidth, lineWidth);
+            hrect.Size = new Vector2I(SubViewPortWidth, lineWidth);
             hrect.Position = new Vector2I(0, i);
-            subViewPort.AddChild(hrect);
+            SubViewPort.AddChild(hrect);
             hrect.Owner = GetTree().EditedSceneRoot;
         }
 
@@ -134,7 +100,7 @@ public partial class CameraGrid : Node3D
             xCenter + lineWidth / 2 + (int)((slashWidth - slashLength) / 2f / Mathf.Sqrt2),
             yCenter + lineWidth / 2 - (int)((slashLength + slashWidth) / 2f / Mathf.Sqrt2)
         );
-        subViewPort.AddChild(xSlash1);
+        SubViewPort.AddChild(xSlash1);
         xSlash1.Owner = GetTree().EditedSceneRoot;
         var xSlash2 = new ColorRect();
         xSlash2.Size = new Vector2I(slashLength, slashWidth);
@@ -143,7 +109,7 @@ public partial class CameraGrid : Node3D
             xCenter + lineWidth / 2 - (int)((slashWidth + slashLength) / 2f / Mathf.Sqrt2),
             yCenter + lineWidth / 2 + (int)((slashLength - slashWidth) / 2f / Mathf.Sqrt2)
         );
-        subViewPort.AddChild(xSlash2);
+        SubViewPort.AddChild(xSlash2);
         xSlash2.Owner = GetTree().EditedSceneRoot;
     }
 }
