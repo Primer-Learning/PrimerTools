@@ -77,6 +77,23 @@ public static class AnimationUtilities
 
                 node.SetIndexed(propertyPath, vectorValue);
                 break;
+            case Quaternion quaternionValue:
+                string[] quaternionPropertyNames = {"x", "y", "z", "w"};
+                
+                for (var i = 0; i < 4; i++)
+                {
+                    trackIndex = animation.AddTrack(Animation.TrackType.Bezier);
+                    animation.TrackSetPath(trackIndex, node.GetPath()+":" + propertyPath + ":" + quaternionPropertyNames[i]);
+                    // First key
+                    animation.BezierTrackInsertKey(trackIndex, 0.0f, node.GetIndexed(propertyPath).AsQuaternion()[i]);
+                    animation.BezierTrackSetKeyOutHandle(trackIndex, 0, outHandle);
+                    // Second key
+                    animation.BezierTrackInsertKey(trackIndex, duration, quaternionValue[i]);
+                    animation.BezierTrackSetKeyInHandle(trackIndex, 1, inHandle);
+                }
+
+                node.SetIndexed(propertyPath, quaternionValue);
+                break;
             default:
                 GD.PrintErr("Unsupported type for AnimateValue");
                 break;
@@ -138,7 +155,7 @@ public static class AnimationUtilities
     public static Animation RotateTo(this Node3D node, Quaternion destination, float duration = DefaultDuration)
     {
         if (duration == 0) duration = Epsilon;
-        var animation = new Animation();
+        // var animation = new Animation();
 
         // Quaternion breaks if scale is zero.
         // Animated rotation is usually useless for zero-scale objects, but can be used
@@ -148,15 +165,7 @@ public static class AnimationUtilities
         
         node.Quaternion = node.Quaternion.Normalized();
         
-        var trackIndex = animation.AddTrack(Animation.TrackType.Value);
-        animation.TrackSetInterpolationType(trackIndex, Animation.InterpolationType.Cubic);
-        animation.TrackInsertKey(trackIndex, 0.0f, node.Quaternion);
-        animation.TrackInsertKey(trackIndex, duration, destination);
-        animation.TrackSetPath(trackIndex, node.GetPath()+":quaternion");
-        
-        node.Quaternion = destination;
-        animation.Length = duration;
-        return animation;
+        return node.AnimateValue(destination, "quaternion", duration);
     }
     public static Animation WalkTo(this Node3D node, Vector3 destination, float stopDistance = 0, float duration = DefaultDuration, float prepTurnDuration = 0.1f)
     {
