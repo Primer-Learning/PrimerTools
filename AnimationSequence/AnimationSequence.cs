@@ -63,6 +63,13 @@ public abstract partial class AnimationSequence : AnimationPlayer
 	public override void _Ready()
 	{
 		if (Engine.IsEditorHint()) return;
+		if (Engine.GetWriteMoviePath() != "") // We recordin
+		{
+			// If there's more than one fps viewer, you messed up
+			var fpsViewer = GetParent().GetChildren().OfType<FPSViewer>().FirstOrDefault();
+			
+			if (fpsViewer != null) fpsViewer.Visible = false;
+		}
 		
 		// Redo everything on play
 		// The reason for this is that non-serialized data is lost when rebuilding to play
