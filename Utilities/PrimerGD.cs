@@ -25,7 +25,7 @@ public static class PrimerGD
         what.CopyTo(whatWithStackTrace, 0);
         
         var stackTrace = new System.Diagnostics.StackTrace(true);
-        whatWithStackTrace[what.Length + 1] = "\n" + stackTrace;
+        whatWithStackTrace[what.Length] = "\n" + stackTrace;
         
         return whatWithStackTrace;
     }

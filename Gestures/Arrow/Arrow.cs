@@ -77,6 +77,7 @@ public partial class Arrow : Node3D
         
         if (nodeThatTailFollows != null)
         {
+            // This assumes global scale is Vector3.one
             tailPoint = nodeThatTailFollows.GlobalPosition - GlobalPosition;
         }
         
