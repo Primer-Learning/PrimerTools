@@ -222,7 +222,23 @@ public static class AnimationUtilities
     // }
     #endregion
 
-    #region RigidBody animation extensions    
+    #region RigidBody animation extensions
+
+    private static MeshInstance3D GetMeshInstanceForRigidBody(this RigidBody3D rigidBody)
+    {
+        var meshes = rigidBody.GetChildren().OfType<MeshInstance3D>().ToArray();
+        switch (meshes.Length)
+        {
+            case > 1:
+                PrimerGD.PrintErrorWithStackTrace("RigidBody has more than one child of type MeshInstance3D. This could be fine, but current code assumes just one.");
+                break;
+            case < 1:
+                PrimerGD.PrintErrorWithStackTrace("RigidBody no child of type MeshInstance3D.");
+                break;
+        }
+
+        return meshes.First();
+    }
     
     public static Animation AnimateFreeze(this RigidBody3D rigidBody, bool value, bool resetAtEnd = false, float duration = DefaultDuration)
     {
@@ -272,9 +288,9 @@ public static class AnimationUtilities
             destination = localTransformationOfChildren.Origin;
             global = false; // Not used, but just to make it clear that the destination is now local
         }
-		
+
         return Parallel(
-            rigidBody.GetNode<Node3D>(rigidBody.Name.ToString()).MoveTo(destination, stopDistance: stopDistance, duration: duration, global: false),
+            rigidBody.GetMeshInstanceForRigidBody().MoveTo(destination, stopDistance: stopDistance, duration: duration, global: false),
             rigidBody.GetNode<Node3D>("CollisionShape3D").MoveTo(destination, stopDistance: stopDistance, duration: duration, global: false)
         );
     }
@@ -327,9 +343,9 @@ public static class AnimationUtilities
 			         
             destination = new Quaternion(localTransformationOfChildren.Basis);
         }
-		
+        
         return Parallel(
-            rigidBody.GetNode<Node3D>(rigidBody.Name.ToString()).RotateTo(destination, duration: duration),
+            rigidBody.GetMeshInstanceForRigidBody().RotateTo(destination, duration: duration),
             rigidBody.GetNode<Node3D>("CollisionShape3D").RotateTo(destination, duration: duration)
         );
     }
@@ -341,9 +357,9 @@ public static class AnimationUtilities
         // since keyframes on the rigidbody will override the physics updates.
         // Also, the keyframes on the children need to be local, since global keyframes
         // will also effectively override the physics updates.
-       
+
         return Parallel(
-            rigidBody.GetNode<Node3D>(rigidBody.Name.ToString()).ScaleTo(destination, duration: duration),
+            rigidBody.GetMeshInstanceForRigidBody().ScaleTo(destination, duration: duration),
             rigidBody.GetNode<Node3D>("CollisionShape3D").ScaleTo(destination, duration: duration)
         );
     }
