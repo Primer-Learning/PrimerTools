@@ -1,6 +1,5 @@
 using Godot;
 using PrimerTools;
-using PrimerTools.AnimationSequence;
 
 [Tool]
 public partial class RigidBodyTestScene : AnimationSequence

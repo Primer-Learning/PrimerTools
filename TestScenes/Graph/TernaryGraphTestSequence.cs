@@ -1,7 +1,6 @@
 using Godot;
 using PrimerAssets;
 using PrimerTools;
-using PrimerTools.AnimationSequence;
 using PrimerTools.Graph;
 
 [Tool]

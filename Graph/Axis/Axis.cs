@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
-using PrimerTools.AnimationSequence;
+using PrimerTools;
 
 namespace PrimerTools.Graph;
 
