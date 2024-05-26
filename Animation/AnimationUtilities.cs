@@ -7,9 +7,10 @@ namespace PrimerTools;
 
 public static class AnimationUtilities
 {
-    // TODO: Add a delay method which just pushes the timing of all keys back and returns a new animation
     
-    public const float Epsilon = 0.0001f;
+    public const float TimeEpsilon = 0.001f; // Smaller than this, and keyframes can merge when combining animations.
+                                             // I don't know where exactly.
+    public const float LengthEpsilon = 0.000001f; // Tolerance is different for length.
     public const float DefaultDuration = 0.5f;
     
     #region Node animation extensions
@@ -36,7 +37,7 @@ public static class AnimationUtilities
     }
     public static Animation AnimateValue<TNode, TValue>(this TNode node, TValue value, string propertyPath, Vector2 outHandle, Vector2 inHandle, float duration = DefaultDuration) where TNode : Node
     {
-        if (duration == 0) duration = Epsilon;
+        if (duration == 0) duration = TimeEpsilon;
         var animation = new Animation();
         
         switch (value)
@@ -107,19 +108,21 @@ public static class AnimationUtilities
         var originalValue = node.Get(propertyPath);
         
         if (duration == 0) duration = resetAtEnd 
-            ? Epsilon * 3
-            : Epsilon;
+            ? TimeEpsilon * 3
+            : TimeEpsilon;
         
         var animation = new Animation();
         
         var trackIndex = animation.AddTrack(Animation.TrackType.Value);
+        
         animation.TrackSetPath(trackIndex, node.GetPath() + ":" + propertyPath);
+
         animation.TrackInsertKey(trackIndex, 0, originalValue);
-        animation.TrackInsertKey(trackIndex, Epsilon, value);
+        animation.TrackInsertKey(trackIndex, TimeEpsilon, value);
 
         if (resetAtEnd)
         {
-            animation.TrackInsertKey(trackIndex, duration - Epsilon, value);
+            animation.TrackInsertKey(trackIndex, duration - TimeEpsilon, value);
             animation.TrackInsertKey(trackIndex, duration, originalValue);
         }
         
@@ -154,14 +157,14 @@ public static class AnimationUtilities
     }
     public static Animation RotateTo(this Node3D node, Quaternion destination, float duration = DefaultDuration)
     {
-        if (duration == 0) duration = Epsilon;
+        if (duration == 0) duration = TimeEpsilon;
         // var animation = new Animation();
 
         // Quaternion breaks if scale is zero.
         // Animated rotation is usually useless for zero-scale objects, but can be used
         // alongside scaling animations.
         // Also, animation methods are sometimes used to change values in a non-animated way.
-        if (node.Scale.X < Epsilon) node.Scale = Vector3.One * Epsilon;
+        if (node.Scale.X < TimeEpsilon) node.Scale = Vector3.One * LengthEpsilon;
         
         node.Quaternion = node.Quaternion.Normalized();
         
@@ -182,8 +185,8 @@ public static class AnimationUtilities
     public static Animation ScaleTo(this Node3D node, Vector3 finalScale, float duration = DefaultDuration)
     {
         // True zero scale causes the rotation to be set to identity. So we'll use a small value instead.
-        if (finalScale == Vector3.Zero) finalScale = Vector3.One * Epsilon;
-        if(node.Scale == Vector3.Zero) node.Scale = Vector3.One * Epsilon;
+        if (finalScale == Vector3.Zero) finalScale = Vector3.One * LengthEpsilon;
+        if(node.Scale == Vector3.Zero) node.Scale = Vector3.One * LengthEpsilon;
         
         return node.AnimateValue(finalScale, "scale", duration);
     }
@@ -242,13 +245,6 @@ public static class AnimationUtilities
     
     public static Animation AnimateFreeze(this RigidBody3D rigidBody, bool value, bool resetAtEnd = false, float duration = DefaultDuration)
     {
-        // TODO: Solve a deep mystery.
-        // If the rigidbody is set to not freeze in this method, it will not accept initial velocity.
-        // From the perspective of this method, this means "resetAtEnd" must be true if you want initial velocity.
-        // But in AnimateBool, it's the node.Set() call that determines whether initial velocity works.
-        // If node.Set() sets freeze to true, or if the call is omitted, the initial velocity works.
-        // The strange thing about this is that when you observe the remote tree, the rigidbody is frozen at
-        // the beginning in either case, (I believe) since it is set to the original value during the rewind.
         return rigidBody.AnimateBool(value, "freeze", resetAtEnd, duration);
     }
     
@@ -402,7 +398,7 @@ public static class AnimationUtilities
     }
     public static Animation WithDuration(this Animation animation, float duration)
     {
-        if (duration == 0) duration = Epsilon;
+        if (duration == 0) duration = TimeEpsilon;
         var newAnimation = new Animation();
         var lastKeyTime = 0.0;
         for (var i = 0; i < animation.GetTrackCount(); i++)
@@ -459,7 +455,7 @@ public static class AnimationUtilities
                 hueDiff = 1 - MathF.Abs(hueDiff); // -0.9 goes to 0.1 for example. We now care about the magnitude of the shorter path.
                 animation.TrackInsertKey(trackIndex, 0f, material.AlbedoColor.H);
                 animation.TrackInsertKey(trackIndex, duration * (1 - material.AlbedoColor.H) / hueDiff, 1f);
-                animation.TrackInsertKey(trackIndex, duration * (1 - material.AlbedoColor.H) / hueDiff + Epsilon, 0f);
+                animation.TrackInsertKey(trackIndex, duration * (1 - material.AlbedoColor.H) / hueDiff + TimeEpsilon, 0f);
                 animation.TrackInsertKey(trackIndex, duration, finalColor.H);
                 animation.TrackSetPath(trackIndex, meshInstance3D.GetPath()+":surface_material_override/0:albedo_color:h");
             }
@@ -468,7 +464,7 @@ public static class AnimationUtilities
                 hueDiff = 1 - MathF.Abs(hueDiff);
                 animation.TrackInsertKey(trackIndex, 0f, material.AlbedoColor.H);
                 animation.TrackInsertKey(trackIndex, duration * material.AlbedoColor.H / hueDiff, 0f);
-                animation.TrackInsertKey(trackIndex, duration * material.AlbedoColor.H / hueDiff + Epsilon, 1f);
+                animation.TrackInsertKey(trackIndex, duration * material.AlbedoColor.H / hueDiff + TimeEpsilon, 1f);
                 animation.TrackInsertKey(trackIndex, duration, finalColor.H);
                 animation.TrackSetPath(trackIndex, meshInstance3D.GetPath()+":surface_material_override/0:albedo_color:h");
             }
@@ -610,7 +606,7 @@ public static class AnimationUtilities
                 }
             }
 
-            if (memberAnimation.Length > 0 && memberAnimation.Length + Epsilon < animLength)
+            if (memberAnimation.Length > 0 && memberAnimation.Length + TimeEpsilon < animLength)
             {
                 GD.PushWarning($"Animation has length {memberAnimation.Length} less than the time of the latest keyframe {animLength}. Usually this is a mistake.");
             }
