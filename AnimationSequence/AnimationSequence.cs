@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using Godot;
 
-namespace PrimerTools.AnimationSequence;
+namespace PrimerTools;
 
 [Tool]
 public abstract partial class AnimationSequence : AnimationPlayer
@@ -60,6 +60,9 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		}
 	}
 
+	public static AnimationSequence Instance { get; private set; }
+	public static int TEST_INT = 25;
+
 	public override void _Ready()
 	{
 		if (Engine.IsEditorHint()) return;
@@ -104,6 +107,8 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		
 		// Reset times list
 		_startTimes.Clear();
+		
+		Instance = this;
 	}
 
 	#region Animation Methods
@@ -271,7 +276,7 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		
 		// Set the path for the movie maker mode
 		Directory.CreateDirectory(sceneDirectory);
-		var file = Path.Combine(sceneDirectory, "frame.png");
+		var file = Path.Combine(sceneDirectory, "movie.avi");
 		GD.Print(file);
 		GetTree().EditedSceneRoot.SetMeta("movie_file", file);
 	}
