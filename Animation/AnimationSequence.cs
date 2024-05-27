@@ -17,6 +17,8 @@ public abstract partial class AnimationSequence : AnimationPlayer
 	
 	// This also tracks how many animations have been made
 	private readonly List<float> _startTimes = new();
+
+	protected bool TooBigAndHaveToUseSeparateAnimations;
 	
 	// _run is initially set to false so the Define won't be run on build
 	// It is then always true so it runs when the box is clicked.
@@ -61,7 +63,6 @@ public abstract partial class AnimationSequence : AnimationPlayer
 	}
 
 	public static AnimationSequence Instance { get; private set; }
-	public static int TEST_INT = 25;
 
 	public override void _Ready()
 	{
@@ -82,20 +83,42 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		// An alternate approach could create nodes for each point.
 		Reset();
 		Define();
-		CreateTopLevelAnimation(singleClip: true);
-		var mainAnimName = MainLibraryName + "/" + MainAnimationName;
-		var anim = GetAnimation(mainAnimName);
-		anim.RemoveTrack(0);
-		CurrentAnimation = mainAnimName;
-		Pause(); // Setting current animation automatically plays. We need to pause so seeking works.
-		Seek(timeToRewindTo);
-		Play();
-		
-		// You can't start playing an animation playback track from the middle of an animation
-		// I guess since the key is only at the beginning, so the middle is beyond the key.
-		_referenceAnimationPlayer.CurrentAnimation = ReferenceLibraryName + "/final_combined";
-		_referenceAnimationPlayer.Seek(timeToRewindTo);
-		_referenceAnimationPlayer.Play();
+
+		if (!TooBigAndHaveToUseSeparateAnimations)
+		{
+			CreateTopLevelAnimation(singleClip: true);
+			var mainAnimName = MainLibraryName + "/" + MainAnimationName;
+			var anim = GetAnimation(mainAnimName);
+			anim.RemoveTrack(0);
+			CurrentAnimation = mainAnimName;
+			Pause(); // Setting current animation automatically plays. We need to pause so seeking works.
+			Seek(timeToRewindTo);
+			Play();
+			
+			// You can't start playing an animation playback track from the middle of an animation
+			// I guess since the key is only at the beginning, so the middle is beyond the key.
+			_referenceAnimationPlayer.CurrentAnimation = ReferenceLibraryName + "/final_combined";
+			_referenceAnimationPlayer.Seek(timeToRewindTo);
+			_referenceAnimationPlayer.Play();
+		}
+		else
+		{
+			CreateTopLevelAnimation(singleClip: false);
+			Rewind(timeToRewindTo);
+			var mainAnimName = MainLibraryName + "/" + MainAnimationName;
+			// var anim = GetAnimation(mainAnimName);
+			// anim.RemoveTrack(0);
+			CurrentAnimation = mainAnimName;
+			Pause(); // Setting current animation automatically plays. We need to pause so seeking works.
+			Seek(timeToRewindTo);
+			Play();
+			
+			// You can't start playing an animation playback track from the middle of an animation
+			// I guess since the key is only at the beginning, so the middle is beyond the key.
+			// _referenceAnimationPlayer.CurrentAnimation = ReferenceLibraryName + "/final_combined";
+			// _referenceAnimationPlayer.Seek(timeToRewindTo);
+			// _referenceAnimationPlayer.Play();
+		}
 	}
 	
 	protected abstract void Define();
