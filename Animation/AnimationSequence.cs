@@ -192,7 +192,7 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		{
 			var animationName = $"{ReferenceLibraryName}/anim{i}";
 			// Handle start time
-			if (_startTimes[i] > time) // If next start time is after previous end time, use it
+			if (_startTimes[i] >= time) // If next start time is after previous end time, use it
 			{
 				time = _startTimes[i];
 			}
