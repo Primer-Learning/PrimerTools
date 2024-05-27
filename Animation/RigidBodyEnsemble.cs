@@ -49,4 +49,12 @@ public partial class RigidBodyEnsemble : Node3D
 	{
 		return ScaleTo(Vector3.One * finalScale, duration);
 	}
+
+	public virtual Animation Break(float duration = 0.5f)
+	{
+		var rigidChildren = GetChildren().OfType<RigidBody3D>();
+		var animation = rigidChildren.Select(x => x.AnimateFreeze(false, resetAtEnd: true, duration: duration)).RunInParallel();
+		animation.Length = duration;
+		return animation;
+	}
 }
