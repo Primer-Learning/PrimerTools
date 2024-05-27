@@ -142,20 +142,20 @@ public static class AnimationUtilities
         
         return node.AnimateValue(destination, propertyPath, duration);
     }
-    public static Animation RotateTo(this Node3D node, float xDeg, float yDeg, float zDeg, float duration = DefaultDuration)
+    public static Animation RotateTo(this Node3D node, float xDeg, float yDeg, float zDeg, bool global = false, float duration = DefaultDuration)
     {
-        return node.RotateTo(new Vector3(xDeg, yDeg, zDeg), duration);
+        return node.RotateTo(new Vector3(xDeg, yDeg, zDeg), global: global, duration);
     }
-    public static Animation RotateTo(this Node3D node, Vector3 eulerAnglesInDegrees, float duration = DefaultDuration)
+    public static Animation RotateTo(this Node3D node, Vector3 eulerAnglesInDegrees, bool global = false, float duration = DefaultDuration)
     {
         var eulerAnglesInRadians = new Vector3(
             Mathf.DegToRad(eulerAnglesInDegrees.X),
             Mathf.DegToRad(eulerAnglesInDegrees.Y),
             Mathf.DegToRad(eulerAnglesInDegrees.Z)
         );
-        return node.RotateTo(Quaternion.FromEuler(eulerAnglesInRadians), duration);
+        return node.RotateTo(Quaternion.FromEuler(eulerAnglesInRadians), global: global, duration);
     }
-    public static Animation RotateTo(this Node3D node, Quaternion destination, float duration = DefaultDuration)
+    public static Animation RotateTo(this Node3D node, Quaternion destination, bool global = false, float duration = DefaultDuration)
     {
         if (duration == 0) duration = TimeEpsilon;
         // var animation = new Animation();
@@ -167,6 +167,14 @@ public static class AnimationUtilities
         if (node.Scale.X < TimeEpsilon) node.Scale = Vector3.One * LengthEpsilon;
         
         node.Quaternion = node.Quaternion.Normalized();
+
+        if (global)
+        {
+            var parent = node.GetParent();
+            if (parent is not Node3D node3DParent) return node.AnimateValue(destination, "quaternion", duration);
+
+            destination = Quaternion.FromEuler(node3DParent.GlobalRotation).Inverse() * destination;
+        }
         
         return node.AnimateValue(destination, "quaternion", duration);
     }
@@ -174,7 +182,7 @@ public static class AnimationUtilities
     {
         var difference = destination - node.Position;
         
-        var prepRotation = node.RotateTo(new Quaternion(Vector3.Back, difference.Normalized()), prepTurnDuration);
+        var prepRotation = node.RotateTo(new Quaternion(Vector3.Back, difference.Normalized()), global: false, prepTurnDuration);
         var move = node.MoveTo(destination, stopDistance, duration);
 
         return Parallel(
