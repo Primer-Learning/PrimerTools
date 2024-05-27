@@ -79,19 +79,13 @@ public static class AnimationUtilities
                 node.SetIndexed(propertyPath, vectorValue);
                 break;
             case Quaternion quaternionValue:
-                string[] quaternionPropertyNames = {"x", "y", "z", "w"};
-                
-                for (var i = 0; i < 4; i++)
-                {
-                    trackIndex = animation.AddTrack(Animation.TrackType.Bezier);
-                    animation.TrackSetPath(trackIndex, node.GetPath()+":" + propertyPath + ":" + quaternionPropertyNames[i]);
-                    // First key
-                    animation.BezierTrackInsertKey(trackIndex, 0.0f, node.GetIndexed(propertyPath).AsQuaternion()[i]);
-                    animation.BezierTrackSetKeyOutHandle(trackIndex, 0, outHandle);
-                    // Second key
-                    animation.BezierTrackInsertKey(trackIndex, duration, quaternionValue[i]);
-                    animation.BezierTrackSetKeyInHandle(trackIndex, 1, inHandle);
-                }
+                trackIndex = animation.AddTrack(Animation.TrackType.Value);
+                animation.TrackSetPath(trackIndex, node.GetPath()+":" + propertyPath);
+                // First key
+                animation.TrackInsertKey(trackIndex, 0.0f, node.GetIndexed(propertyPath).AsQuaternion());
+                // Second key
+                animation.TrackInsertKey(trackIndex, duration, quaternionValue);
+                animation.TrackSetInterpolationType(trackIndex, Animation.InterpolationType.CubicAngle);
 
                 node.SetIndexed(propertyPath, quaternionValue);
                 break;
