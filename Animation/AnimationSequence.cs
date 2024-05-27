@@ -83,8 +83,13 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		Reset();
 		Define();
 		CreateTopLevelAnimation(singleClip: true);
-		CurrentAnimation = MainLibraryName + "/" + MainAnimationName;
+		var mainAnimName = MainLibraryName + "/" + MainAnimationName;
+		var anim = GetAnimation(mainAnimName);
+		anim.RemoveTrack(0);
+		CurrentAnimation = mainAnimName;
 		Pause(); // Setting current animation automatically plays. We need to pause so seeking works.
+		Seek(timeToRewindTo);
+		Play();
 		
 		// You can't start playing an animation playback track from the middle of an animation
 		// I guess since the key is only at the beginning, so the middle is beyond the key.
