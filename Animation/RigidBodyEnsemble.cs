@@ -50,10 +50,12 @@ public partial class RigidBodyEnsemble : Node3D
 		return ScaleTo(Vector3.One * finalScale, duration);
 	}
 
-	public virtual Animation Break(float duration = 0.5f)
+	public virtual Animation Break(float duration = 0.5f, bool forever = false)
 	{
 		var rigidChildren = GetChildren().OfType<RigidBody3D>();
-		var animation = rigidChildren.Select(x => x.AnimateFreeze(false, resetAtEnd: true, duration: duration)).RunInParallel();
+		// This should always reset to ensure the rigidbody is frozen when the animation starts playing.
+		// But if 'forever', just re-freeze after 1000s but correct the animation's Length property.
+		var animation = rigidChildren.Select(x => x.AnimateFreeze(false, resetAtEnd: true, duration: forever ? 1000 : duration)).RunInParallel();
 		animation.Length = duration;
 		return animation;
 	}
