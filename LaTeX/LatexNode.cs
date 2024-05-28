@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using Godot;
@@ -96,19 +97,53 @@ public partial class LatexNode : Node3D
 
 	public void SetColor(Color color)
 	{
+		MakeMaterialUnique();
 		foreach (var child in GetChildren())
 		{
 			foreach (var grandchild in child.GetChildren())
 			{
-				if (grandchild is GeometryInstance3D geometryInstance3D)
+				if (grandchild is MeshInstance3D meshInstance3D)
 				{
-					geometryInstance3D.MaterialOverride = new StandardMaterial3D()
-					{
-						AlbedoColor = color
-					};
+					((StandardMaterial3D)meshInstance3D.Mesh.SurfaceGetMaterial(0)).AlbedoColor = color;
 				}
 			}
 		}
+	}
+
+	private bool _materialsAreUnique = false;
+	private void MakeMaterialUnique()
+	{
+		if (_materialsAreUnique) return;
+		foreach (var child in GetChildren())
+		{
+			foreach (var grandchild in child.GetChildren())
+			{
+				if (grandchild is MeshInstance3D meshInstance3D)
+				{
+					meshInstance3D.Mesh.SurfaceSetMaterial(0,(StandardMaterial3D) meshInstance3D.Mesh.SurfaceGetMaterial(0).Duplicate(true));
+				}
+			}
+		}
+
+		_materialsAreUnique = true;
+	}
+	public Animation AnimateColor(Color color)
+	{
+		MakeMaterialUnique();
+		var animations = new List<Animation>();
+		foreach (var child in GetChildren())
+		{
+			foreach (var grandchild in child.GetChildren())
+			{
+				if (grandchild is MeshInstance3D meshInstance3D)
+				{
+					animations.Add(
+						meshInstance3D.AnimateColorRgb(color)
+					);
+				}
+			}
+		}
+		return animations.RunInParallel();
 	}
 	
 	#region Alignment
