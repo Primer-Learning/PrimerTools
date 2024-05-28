@@ -9,14 +9,25 @@ namespace PrimerTools;
 [Tool]
 public abstract partial class AnimationSequence : AnimationPlayer
 {
+	/* Multiple animation tracks to work around cache max issue
+	- Make RegisterAnimation create the players and libraries
+	- Verify that they are being created
+	- Add a track to the CombinedAnimation
+	- Add an animation to the second track
+	- Test combined and non-combined in editor
+	- Test in play mode
+	
+	 */
+	
 	private const string MainAnimationName = "CombinedAnimation";
-	private const string MainLibraryName = "q";
-	private const string ReferenceLibraryName = "r";
-	private AnimationPlayer _referenceAnimationPlayer;
-	private AnimationLibrary _referenceAnimationLibrary;
+	private const string MainLibraryName = "main";
+	private const string ReferenceLibraryBaseName = "ref";
+	private List<AnimationPlayer> _referenceAnimationPlayers = new();
+	private List<AnimationLibrary> _referenceAnimationLibraries = new();
 	
 	// This also tracks how many animations have been made
-	private readonly List<float> _startTimes = new();
+	// Now, per track!
+	private readonly List<List<float>> _startTimes = new();
 
 	protected bool TooBigAndHaveToUseSeparateAnimations;
 	
@@ -95,11 +106,13 @@ public abstract partial class AnimationSequence : AnimationPlayer
 			Seek(timeToRewindTo);
 			Play();
 			
+			// TODO: Loop through ref players
+			
 			// You can't start playing an animation playback track from the middle of an animation
 			// I guess since the key is only at the beginning, so the middle is beyond the key.
-			_referenceAnimationPlayer.CurrentAnimation = ReferenceLibraryName + "/final_combined";
-			_referenceAnimationPlayer.Seek(timeToRewindTo);
-			_referenceAnimationPlayer.Play();
+			_referenceAnimationPlayers[0].CurrentAnimation = ReferenceLibraryBaseName + "/final_combined";
+			_referenceAnimationPlayers[0].Seek(timeToRewindTo);
+			_referenceAnimationPlayers[0].Play();
 		}
 		else
 		{
@@ -115,9 +128,9 @@ public abstract partial class AnimationSequence : AnimationPlayer
 			
 			// You can't start playing an animation playback track from the middle of an animation
 			// I guess since the key is only at the beginning, so the middle is beyond the key.
-			// _referenceAnimationPlayer.CurrentAnimation = ReferenceLibraryName + "/final_combined";
-			// _referenceAnimationPlayer.Seek(timeToRewindTo);
-			// _referenceAnimationPlayer.Play();
+			// _referenceAnimationPlayers.CurrentAnimation = ReferenceLibraryBaseName + "/final_combined";
+			// _referenceAnimationPlayers.Seek(timeToRewindTo);
+			// _referenceAnimationPlayers.Play();
 		}
 	}
 	
@@ -133,10 +146,8 @@ public abstract partial class AnimationSequence : AnimationPlayer
 			child.Free();
 		}
 		
-		_referenceAnimationPlayer = MakeReferenceAnimationPlayer();
-		_referenceAnimationLibrary = MakeOrGetAnimationLibrary(_referenceAnimationPlayer, ReferenceLibraryName);
-		
-		// Reset times list
+		_referenceAnimationPlayers.Clear();
+		_referenceAnimationLibraries.Clear();
 		_startTimes.Clear();
 		
 		Instance = this;
@@ -147,11 +158,13 @@ public abstract partial class AnimationSequence : AnimationPlayer
 	/// <summary>
 	/// Registers an animation to be included in the top-level animation.
 	/// </summary>
-	/// <param name="animation"></param>
-	/// <param name="time"></param>
-	/// <param name="log"></param>
-	protected void RegisterAnimation(Animation animation, float time = -1, bool log = false)
+	/// <param name="animation"></param> The animation to register.
+	/// <param name="time"></param> The time at which this animation should play.
+	/// <param name="playbackTrackIndex"></param> Specifies playback track the animation will be registered to.
+	/// <param name="log"></param> Print extra information. Useful if the paths seem wrong. But it's been tested pretty thoroughly at this point.
+	protected void RegisterAnimation(Animation animation, float time = -1, int playbackTrackIndex = 0, bool log = false)
 	{
+		// Correct paths
 		for (var i = 0; i < animation.GetTrackCount(); i++)
 		{
 			// This runs at edit time, so it assumes an absolute path in the context of the editor.
@@ -165,9 +178,18 @@ public abstract partial class AnimationSequence : AnimationPlayer
 			animation.TrackSetPath(i, relativePath);
 		}
 		
+		for (var i = 0; i <= playbackTrackIndex; i++)
+		{
+			if (_referenceAnimationPlayers.Count > i) continue; // Don't remake ones that exist
+			
+			_referenceAnimationPlayers.Add(MakeReferenceAnimationPlayer(i));
+			_referenceAnimationLibraries.Add(MakeOrGetAnimationLibrary(_referenceAnimationPlayers[i], ReferenceLibraryBaseName + i));
+			_startTimes.Add(new List<float>());
+		}
+		
 		// Put the library in the animation player
-		AddAnimationToLibrary(animation, $"anim{_startTimes.Count}", _referenceAnimationLibrary);
-		_startTimes.Add(time);
+		AddAnimationToLibrary(animation, $"anim{_startTimes[playbackTrackIndex].Count}", _referenceAnimationLibraries[playbackTrackIndex]);
+		_startTimes[playbackTrackIndex].Add(time);
 	}
 	protected void RegisterAnimation(params Animation[] animations)
 	{
@@ -196,49 +218,53 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		var animation = new Animation();
 		if (library.HasAnimation(MainAnimationName))
 		{
+			// TODO: Loop through reference players for deleting tracks
+			
 			animation = library.GetAnimation(MainAnimationName);
-			var playbackTrackIndex = animation.FindTrack($"{Name}/ReferenceAnimationPlayer:animation",
+			var playbackTrackIndex = animation.FindTrack($"{Name}/ReferenceAnimationPlayer{0}:animation",
 				Animation.TrackType.Animation);
 			if (playbackTrackIndex != -1) animation.RemoveTrack(playbackTrackIndex);
 		}
 		
 		// With the playback track removed (if it ever existed), we can add the new one
 		var trackIndex = animation.AddTrack(Animation.TrackType.Animation);
-		animation.TrackSetPath(trackIndex, $"{Name}/ReferenceAnimationPlayer:animation");
+		animation.TrackSetPath(trackIndex, $"{Name}/ReferenceAnimationPlayer{0}:animation");
 		animation.TrackMoveTo(trackIndex, 0);
 		
-		if (singleClip) animation.TrackInsertKey(0, 0, $"{ReferenceLibraryName}/final_combined");
+		if (singleClip) animation.TrackInsertKey(0, 0, $"{ReferenceLibraryBaseName}{0}/final_combined");
 		
 		var animationsWithDelays = new List<Animation>();
 		var time = 0.0f;
-		for  (var i = 0; i < _referenceAnimationPlayer.GetAnimationList().Length; i++)
+		
+		// TODO: Loop through reference players
+		for  (var i = 0; i < _referenceAnimationPlayers[0].GetAnimationList().Length; i++)
 		{
-			var animationName = $"{ReferenceLibraryName}/anim{i}";
+			var animationName = $"{ReferenceLibraryBaseName}{0}/anim{i}";
 			// Handle start time
-			if (_startTimes[i] >= time) // If next start time is after previous end time, use it
+			if (_startTimes[0][i] >= time) // If next start time is after previous end time, use it
 			{
-				time = _startTimes[i];
+				time = _startTimes[0][i];
 			}
-			else if (_startTimes[i] > 0) // Otherwise, use the previous end time. If it the time was set, warn that it's not used.
+			else if (_startTimes[0][i] > 0) // Otherwise, use the previous end time. If it the time was set, warn that it's not used.
 			{
 				GD.PushWarning($"Animation {i} starts before the previous animation ends. Pushing it back.");
 			}
 
 			if (singleClip)
 			{
-				var nonDelayedAnimation = _referenceAnimationPlayer.GetAnimation($"{ReferenceLibraryName}/anim{i}");
+				var nonDelayedAnimation = _referenceAnimationPlayers[0].GetAnimation($"{ReferenceLibraryBaseName}{0}/anim{i}");
 				animationsWithDelays.Add(nonDelayedAnimation.WithDelay(time));
 			}
 			else animation.TrackInsertKey(0, time, animationName);
 			
 			// End time for next iteration or final length
-			time += _referenceAnimationPlayer.GetAnimation(animationName).Length;
+			time += _referenceAnimationPlayers[0].GetAnimation(animationName).Length;
 		}
 		
 		// Make the animation 100s longer than it actually is, so the editor leaves some room
 		animation.Length = time + 100;
 		
-		if (singleClip) AddAnimationToLibrary(animationsWithDelays.RunInParallel(), "final_combined", _referenceAnimationLibrary);
+		if (singleClip) AddAnimationToLibrary(animationsWithDelays.RunInParallel(), "final_combined", _referenceAnimationLibraries[0]);
 		
 		AddAnimationToLibrary(animation, MainAnimationName, library);
 	}
@@ -246,13 +272,14 @@ public abstract partial class AnimationSequence : AnimationPlayer
 	#endregion
 	
 	#region Animation Library Handling
-	private AnimationPlayer MakeReferenceAnimationPlayer()
+	private AnimationPlayer MakeReferenceAnimationPlayer(int index)
 	{
 		// This animation player is used as a container for the library of animations
 		// It's necessary because an animation playback track needs to reference an AnimationPlayer, not just a library
 		var newPlayer = new AnimationPlayer();
-		newPlayer.Name = "ReferenceAnimationPlayer";
+		newPlayer.Name = $"ReferenceAnimationPlayer{index}";
 		AddChild(newPlayer);
+		MoveChild(newPlayer, 0);
 		newPlayer.Owner = GetParent();
 		return newPlayer;
 	}
@@ -320,15 +347,16 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		// If single clip, this doesn't really make sense, and the playhead overrides the state anyway
 		if (!makeSingleClip) 
 		{
+			// TODO: Loop through ref anim players. The trackId in the loop definition below will increment
 			var mainAnimation = GetAnimation(MainLibraryName + "/" + MainAnimationName);
 			for (var i = mainAnimation.TrackGetKeyCount(0) - 1; i >= 0; i--)
 			{
 				// Track is zero, because that's the animation track. The key is the name of the animation.
 				var name = mainAnimation.AnimationTrackGetKeyAnimation(0, i);
-				var individualAnimation = _referenceAnimationPlayer.GetAnimation(name);
+				var individualAnimation = _referenceAnimationPlayers[0].GetAnimation(name);
 				SetMethodCallTracksEnabledState(individualAnimation, false);
-				_referenceAnimationPlayer.CurrentAnimation = name;
-				_referenceAnimationPlayer.Seek(0, update: true);
+				_referenceAnimationPlayers[0].CurrentAnimation = name;
+				_referenceAnimationPlayers[0].Seek(0, update: true);
 				SetMethodCallTracksEnabledState(individualAnimation, true);
 
 				if (mainAnimation.TrackGetKeyTime(0, i) < time)
@@ -337,7 +365,7 @@ public abstract partial class AnimationSequence : AnimationPlayer
 				}
 			}
 		}
-		_referenceAnimationPlayer.Pause();
+		_referenceAnimationPlayers[0].Pause();
 	}
 	private void SetMethodCallTracksEnabledState(Animation animation, bool enabled)
 	{
