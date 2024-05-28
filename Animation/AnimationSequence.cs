@@ -93,48 +93,27 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		// An alternate approach could create nodes for each point.
 		Reset();
 		Define();
-
-		if (!TooBigAndHaveToUseSeparateAnimations)
+		CreateTopLevelAnimation(singleClip: true);
+		var mainAnimName = MainLibraryName + "/" + MainAnimationName;
+		
+		// For seeking to work with single-animation tracks, we actually need to play the reference
+		// players manually.
+		// Animation playback tracks are kinda dumb and only know about their starting key,
+		// so you can't play them from the middle of an animation.
+		// We keep the audio track, though.
+		TopLevelAnimationWithPlaybackTracksRemoved(); // We happen to not need the return value here.
+		CurrentAnimation = mainAnimName;
+		Pause(); // Setting current animation automatically plays. We need to pause so seeking works.
+		Seek(timeToRewindTo);
+		Play();
+		
+		for (var i = 0; i < _referenceAnimationPlayers.Count; i++)
 		{
-			CreateTopLevelAnimation(singleClip: true);
-			var mainAnimName = MainLibraryName + "/" + MainAnimationName;
-			var anim = GetAnimation(mainAnimName);
-			anim.RemoveTrack(0);
-			CurrentAnimation = mainAnimName;
-			Pause(); // Setting current animation automatically plays. We need to pause so seeking works.
-			Seek(timeToRewindTo);
-			Play();
-			
-			// TODO: Loop through ref players
-			
-			// You can't start playing an animation playback track from the middle of an animation
-			// I guess since the key is only at the beginning, so the middle is beyond the key.
-
-			for (var i = 0; i < _referenceAnimationPlayers.Count; i++)
-			{
-				_referenceAnimationPlayers[i].CurrentAnimation = ReferenceLibraryBaseName + i + "/final_combined";
-				_referenceAnimationPlayers[i].Seek(timeToRewindTo);
-				_referenceAnimationPlayers[i].Play();
-			}
+			_referenceAnimationPlayers[i].CurrentAnimation = ReferenceLibraryBaseName + i + "/final_combined";
+			_referenceAnimationPlayers[i].Pause();
+			_referenceAnimationPlayers[i].Seek(timeToRewindTo);
+			_referenceAnimationPlayers[i].Play();
 		}
-		// else
-		// {
-		// 	CreateTopLevelAnimation(singleClip: false);
-		// 	Rewind(timeToRewindTo);
-		// 	var mainAnimName = MainLibraryName + "/" + MainAnimationName;
-		// 	// var anim = GetAnimation(mainAnimName);
-		// 	// anim.RemoveTrack(0);
-		// 	CurrentAnimation = mainAnimName;
-		// 	Pause(); // Setting current animation automatically plays. We need to pause so seeking works.
-		// 	Seek(timeToRewindTo);
-		// 	Play();
-		// 	
-		// 	// You can't start playing an animation playback track from the middle of an animation
-		// 	// I guess since the key is only at the beginning, so the middle is beyond the key.
-		// 	// _referenceAnimationPlayers.CurrentAnimation = ReferenceLibraryBaseName + "/final_combined";
-		// 	// _referenceAnimationPlayers.Seek(timeToRewindTo);
-		// 	// _referenceAnimationPlayers.Play();
-		// }
 	}
 	
 	protected abstract void Define();
@@ -202,6 +181,30 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		}
 		RegisterAnimation(animations.RunInParallel());
 	}
+
+	private Animation TopLevelAnimationWithPlaybackTracksRemoved()
+	{
+		// Somewhat jank. If the main animation exists already return it with animation playback tracks stripped
+		// Otherwise, return a new animation.
+		// Meant to extract logic that was used in two places, but a lil weird since one doesn't even use the return value.
+		// Oh well, it works fine.
+		
+		var library = MakeOrGetAnimationLibrary(this, MainLibraryName);
+		if (library.HasAnimation(MainAnimationName))
+		{
+			var anim = library.GetAnimation(MainAnimationName);
+			for (var i = anim.GetTrackCount() - 1; i >= 0; i--)
+			{
+				if (anim.TrackGetType(i) == Animation.TrackType.Animation)
+				{
+					anim.RemoveTrack(i);
+				} 
+			}
+			return anim;
+		}
+		
+		return new Animation();
+	}
 	
 	/// <summary>
 	/// Create the main animation for the scene.
@@ -215,21 +218,11 @@ public abstract partial class AnimationSequence : AnimationPlayer
 	private void CreateTopLevelAnimation(bool singleClip)
 	{
 		var library = MakeOrGetAnimationLibrary(this, MainLibraryName);
-		var topLevelAnimation = new Animation();
+		// var topLevelAnimation = new Animation()?;
 	
 		// If the animation already exists, remove the playback tracks
 		// This is so the audio track will stay.
-		if (library.HasAnimation(MainAnimationName))
-		{
-			topLevelAnimation = library.GetAnimation(MainAnimationName);
-			for (var i = topLevelAnimation.GetTrackCount() - 1; i >= 0; i--)
-			{
-				if (topLevelAnimation.TrackGetType(i) == Animation.TrackType.Animation)
-				{
-					topLevelAnimation.RemoveTrack(i);
-				} 
-			}
-		}
+		var topLevelAnimation = TopLevelAnimationWithPlaybackTracksRemoved();
 
 		var latestTime = 0f; // For determining the length of the combined animation that could have multiple tracks
 		for (var i = 0; i < _referenceAnimationPlayers.Count; i++)
