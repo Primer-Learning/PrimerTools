@@ -88,8 +88,6 @@ public partial class Axis : Node3D
 	{
 		var rod = GetNode<Node3D>("Rod");
 		if (!ShowRod) { rod.Visible = false; }
-		
-		GD.Print($"Padding is {Padding}");
 
 		return AnimationUtilities.Parallel(
 			rod.MoveTo(new Vector3(-Padding.X, 0f, 0f), duration: duration),
