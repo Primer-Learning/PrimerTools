@@ -15,15 +15,15 @@ public abstract partial class AnimationSequence : AnimationPlayer
 	- Add a track to the CombinedAnimation
 	- Add an animation to the second track
 	- Test combined and non-combined in editor
+	- Rewind
 	- Test in play mode
-	
 	 */
 	
 	private const string MainAnimationName = "CombinedAnimation";
 	private const string MainLibraryName = "main";
 	private const string ReferenceLibraryBaseName = "ref";
-	private List<AnimationPlayer> _referenceAnimationPlayers = new();
-	private List<AnimationLibrary> _referenceAnimationLibraries = new();
+	private readonly List<AnimationPlayer> _referenceAnimationPlayers = new();
+	private readonly List<AnimationLibrary> _referenceAnimationLibraries = new();
 	
 	// This also tracks how many animations have been made
 	// Now, per track!
@@ -38,12 +38,11 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		get => _run;
 		set {
 			if (!value && _run && Engine.IsEditorHint()) {
-				GD.Print("running");
 				Reset();
 				Define();
 				CreateTopLevelAnimation(makeSingleClip);
 				
-				// Rewind(timeToRewindTo);
+				Rewind(timeToRewindTo);
 				if (makeChildrenLocal)
 				{
 					this.MakeSelfAndChildrenLocal(GetTree().EditedSceneRoot);
@@ -110,28 +109,32 @@ public abstract partial class AnimationSequence : AnimationPlayer
 			
 			// You can't start playing an animation playback track from the middle of an animation
 			// I guess since the key is only at the beginning, so the middle is beyond the key.
-			_referenceAnimationPlayers[0].CurrentAnimation = ReferenceLibraryBaseName + "/final_combined";
-			_referenceAnimationPlayers[0].Seek(timeToRewindTo);
-			_referenceAnimationPlayers[0].Play();
+
+			for (var i = 0; i < _referenceAnimationPlayers.Count; i++)
+			{
+				_referenceAnimationPlayers[i].CurrentAnimation = ReferenceLibraryBaseName + i + "/final_combined";
+				_referenceAnimationPlayers[i].Seek(timeToRewindTo);
+				_referenceAnimationPlayers[i].Play();
+			}
 		}
-		else
-		{
-			CreateTopLevelAnimation(singleClip: false);
-			Rewind(timeToRewindTo);
-			var mainAnimName = MainLibraryName + "/" + MainAnimationName;
-			// var anim = GetAnimation(mainAnimName);
-			// anim.RemoveTrack(0);
-			CurrentAnimation = mainAnimName;
-			Pause(); // Setting current animation automatically plays. We need to pause so seeking works.
-			Seek(timeToRewindTo);
-			Play();
-			
-			// You can't start playing an animation playback track from the middle of an animation
-			// I guess since the key is only at the beginning, so the middle is beyond the key.
-			// _referenceAnimationPlayers.CurrentAnimation = ReferenceLibraryBaseName + "/final_combined";
-			// _referenceAnimationPlayers.Seek(timeToRewindTo);
-			// _referenceAnimationPlayers.Play();
-		}
+		// else
+		// {
+		// 	CreateTopLevelAnimation(singleClip: false);
+		// 	Rewind(timeToRewindTo);
+		// 	var mainAnimName = MainLibraryName + "/" + MainAnimationName;
+		// 	// var anim = GetAnimation(mainAnimName);
+		// 	// anim.RemoveTrack(0);
+		// 	CurrentAnimation = mainAnimName;
+		// 	Pause(); // Setting current animation automatically plays. We need to pause so seeking works.
+		// 	Seek(timeToRewindTo);
+		// 	Play();
+		// 	
+		// 	// You can't start playing an animation playback track from the middle of an animation
+		// 	// I guess since the key is only at the beginning, so the middle is beyond the key.
+		// 	// _referenceAnimationPlayers.CurrentAnimation = ReferenceLibraryBaseName + "/final_combined";
+		// 	// _referenceAnimationPlayers.Seek(timeToRewindTo);
+		// 	// _referenceAnimationPlayers.Play();
+		// }
 	}
 	
 	protected abstract void Define();
@@ -224,7 +227,6 @@ public abstract partial class AnimationSequence : AnimationPlayer
 				if (topLevelAnimation.TrackGetType(i) == Animation.TrackType.Animation)
 				{
 					topLevelAnimation.RemoveTrack(i);
-					GD.Print("Removing track");
 				} 
 			}
 		}
@@ -233,10 +235,10 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		for (var i = 0; i < _referenceAnimationPlayers.Count; i++)
 		{
 			// With the playback track removed (if it ever existed), we can add the new ones
-			var trackIndex = topLevelAnimation.AddTrack(Animation.TrackType.Animation);
-			topLevelAnimation.TrackSetPath(trackIndex, $"{Name}/ReferenceAnimationPlayer{i}:animation");
-			// animation.TrackMoveTo(trackIndex, i);
-			if (singleClip) topLevelAnimation.TrackInsertKey(trackIndex, 0, $"{ReferenceLibraryBaseName}{i}/final_combined");
+			var tempIndex = topLevelAnimation.AddTrack(Animation.TrackType.Animation);
+			topLevelAnimation.TrackSetPath(tempIndex, $"{Name}/ReferenceAnimationPlayer{i}:animation");
+			topLevelAnimation.TrackMoveTo(tempIndex, i); // Now the index is i
+			if (singleClip) topLevelAnimation.TrackInsertKey(i, 0, $"{ReferenceLibraryBaseName}{i}/final_combined");
 			
 			var animationsWithDelays = new List<Animation>();
 			var time = 0.0f;
@@ -253,9 +255,12 @@ public abstract partial class AnimationSequence : AnimationPlayer
 				{
 					GD.PushWarning($"Animation {j} in library {i} starts before the previous animation ends. Pushing it back.");
 				}
-
+				
 				if (singleClip)
 				{
+					// In this case, we've already added the key before the loop.
+					// But we need add the current jth animation to the list of animations
+					// to make the single clip out of.
 					var nonDelayedAnimation = _referenceAnimationPlayers[i]
 						.GetAnimation($"{ReferenceLibraryBaseName}{i}/anim{j}");
 					animationsWithDelays.Add(nonDelayedAnimation.WithDelay(time));
@@ -303,7 +308,7 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		return library;
 	}
 	
-	private void AddAnimationToLibrary(Animation animation, string animationName, AnimationLibrary library)
+	private static void AddAnimationToLibrary(Animation animation, string animationName, AnimationLibrary library)
 	{
 		if (library.HasAnimation(animationName))
 		{
@@ -350,28 +355,37 @@ public abstract partial class AnimationSequence : AnimationPlayer
 	#region Rewinding
 	private void Rewind(float time)
 	{
-		// If single clip, this doesn't really make sense, and the playhead overrides the state anyway
+		// If single clip, this isn't needed, and the playhead overrides the state anyway
 		if (!makeSingleClip) 
 		{
 			// TODO: Loop through ref anim players. The trackId in the loop definition below will increment
+			
 			var mainAnimation = GetAnimation(MainLibraryName + "/" + MainAnimationName);
-			for (var i = mainAnimation.TrackGetKeyCount(0) - 1; i >= 0; i--)
+			
+			for (var i = 0; i < _referenceAnimationPlayers.Count; i++)
 			{
-				// Track is zero, because that's the animation track. The key is the name of the animation.
-				var name = mainAnimation.AnimationTrackGetKeyAnimation(0, i);
-				var individualAnimation = _referenceAnimationPlayers[0].GetAnimation(name);
-				SetMethodCallTracksEnabledState(individualAnimation, false);
-				_referenceAnimationPlayers[0].CurrentAnimation = name;
-				_referenceAnimationPlayers[0].Seek(0, update: true);
-				SetMethodCallTracksEnabledState(individualAnimation, true);
-
-				if (mainAnimation.TrackGetKeyTime(0, i) < time)
+				for (var j = mainAnimation.TrackGetKeyCount(i) - 1; j >= 0; j--)
 				{
-					break;
+					// Track is zero, because that's the animation track. The key is the name of the animation.
+					var name = mainAnimation.AnimationTrackGetKeyAnimation(i, j);
+					var individualAnimation = _referenceAnimationPlayers[i].GetAnimation(name);
+					SetMethodCallTracksEnabledState(individualAnimation, false);
+					_referenceAnimationPlayers[i].CurrentAnimation = name;
+					_referenceAnimationPlayers[i].Seek(0, update: true);
+					SetMethodCallTracksEnabledState(individualAnimation, true);
+
+					if (mainAnimation.TrackGetKeyTime(i, j) < time)
+					{
+						break;
+					}
 				}
 			}
 		}
-		_referenceAnimationPlayers[0].Pause();
+
+		foreach (var refPlayer in _referenceAnimationPlayers)
+		{
+			refPlayer.Pause();
+		}
 	}
 	private void SetMethodCallTracksEnabledState(Animation animation, bool enabled)
 	{
