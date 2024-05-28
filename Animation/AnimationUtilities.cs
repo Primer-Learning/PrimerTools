@@ -78,6 +78,24 @@ public static class AnimationUtilities
 
                 node.SetIndexed(propertyPath, vectorValue);
                 break;
+            case Color colorValue:
+                GD.PushWarning("Animating color with AnimateValue is untested. So you know. <3");
+                string[] colorPropertyNames = {"r", "g", "b", "a"};
+                
+                for (var i = 0; i < 3; i++)
+                {
+                    trackIndex = animation.AddTrack(Animation.TrackType.Bezier);
+                    animation.TrackSetPath(trackIndex, node.GetPath()+":" + propertyPath + ":" + colorPropertyNames[i]);
+                    // First key
+                    animation.BezierTrackInsertKey(trackIndex, 0.0f, node.GetIndexed(propertyPath).AsVector3()[i]);
+                    animation.BezierTrackSetKeyOutHandle(trackIndex, 0, outHandle);
+                    // Second key
+                    animation.BezierTrackInsertKey(trackIndex, duration, colorValue[i]);
+                    animation.BezierTrackSetKeyInHandle(trackIndex, 1, inHandle);
+                }
+
+                node.SetIndexed(propertyPath, colorValue);
+                break;
             case Quaternion quaternionValue:
                 trackIndex = animation.AddTrack(Animation.TrackType.Value);
                 animation.TrackSetPath(trackIndex, node.GetPath()+":" + propertyPath);
@@ -195,6 +213,16 @@ public static class AnimationUtilities
     public static Animation ScaleTo(this Node3D node, float finalScale, float duration = DefaultDuration)
     {
         return node.ScaleTo(Vector3.One * finalScale, duration);
+    }
+
+    public static Animation Pulse(this Node3D node, float scaleFactor = 1.2f, float attack = 0.5f, float hold = 0, float decay = 0.5f)
+    {
+        var originalScale = node.Scale; 
+        return Series(
+            node.ScaleTo(originalScale * 1.2f).WithDuration(attack),
+            new Animation().WithDuration(hold),
+            node.ScaleTo(originalScale).WithDuration(decay)
+        );
     }
     
     // Animating the parent of a node presents a challenge.
