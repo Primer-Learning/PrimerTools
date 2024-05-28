@@ -43,7 +43,7 @@ public abstract partial class AnimationSequence : AnimationPlayer
 				Define();
 				CreateTopLevelAnimation(makeSingleClip);
 				
-				Rewind(timeToRewindTo);
+				// Rewind(timeToRewindTo);
 				if (makeChildrenLocal)
 				{
 					this.MakeSelfAndChildrenLocal(GetTree().EditedSceneRoot);
@@ -212,63 +212,69 @@ public abstract partial class AnimationSequence : AnimationPlayer
 	private void CreateTopLevelAnimation(bool singleClip)
 	{
 		var library = MakeOrGetAnimationLibrary(this, MainLibraryName);
+		var topLevelAnimation = new Animation();
 	
-		// If the animation already exists, remove the playback track
+		// If the animation already exists, remove the playback tracks
 		// This is so the audio track will stay.
-		var animation = new Animation();
 		if (library.HasAnimation(MainAnimationName))
 		{
-			// TODO: Loop through reference players for deleting tracks
-			
-			animation = library.GetAnimation(MainAnimationName);
-			var playbackTrackIndex = animation.FindTrack($"{Name}/ReferenceAnimationPlayer{0}:animation",
-				Animation.TrackType.Animation);
-			if (playbackTrackIndex != -1) animation.RemoveTrack(playbackTrackIndex);
+			topLevelAnimation = library.GetAnimation(MainAnimationName);
+			for (var i = topLevelAnimation.GetTrackCount() - 1; i >= 0; i--)
+			{
+				if (topLevelAnimation.TrackGetType(i) == Animation.TrackType.Animation)
+				{
+					topLevelAnimation.RemoveTrack(i);
+					GD.Print("Removing track");
+				} 
+			}
 		}
-		
-		// With the playback track removed (if it ever existed), we can add the new one
-		var trackIndex = animation.AddTrack(Animation.TrackType.Animation);
-		animation.TrackSetPath(trackIndex, $"{Name}/ReferenceAnimationPlayer{0}:animation");
-		animation.TrackMoveTo(trackIndex, 0);
-		
-		if (singleClip) animation.TrackInsertKey(0, 0, $"{ReferenceLibraryBaseName}{0}/final_combined");
-		
-		var animationsWithDelays = new List<Animation>();
-		var time = 0.0f;
-		
-		// TODO: Loop through reference players
-		for  (var i = 0; i < _referenceAnimationPlayers[0].GetAnimationList().Length; i++)
-		{
-			var animationName = $"{ReferenceLibraryBaseName}{0}/anim{i}";
-			// Handle start time
-			if (_startTimes[0][i] >= time) // If next start time is after previous end time, use it
-			{
-				time = _startTimes[0][i];
-			}
-			else if (_startTimes[0][i] > 0) // Otherwise, use the previous end time. If it the time was set, warn that it's not used.
-			{
-				GD.PushWarning($"Animation {i} starts before the previous animation ends. Pushing it back.");
-			}
 
-			if (singleClip)
-			{
-				var nonDelayedAnimation = _referenceAnimationPlayers[0].GetAnimation($"{ReferenceLibraryBaseName}{0}/anim{i}");
-				animationsWithDelays.Add(nonDelayedAnimation.WithDelay(time));
-			}
-			else animation.TrackInsertKey(0, time, animationName);
+		var latestTime = 0f; // For determining the length of the combined animation that could have multiple tracks
+		for (var i = 0; i < _referenceAnimationPlayers.Count; i++)
+		{
+			// With the playback track removed (if it ever existed), we can add the new ones
+			var trackIndex = topLevelAnimation.AddTrack(Animation.TrackType.Animation);
+			topLevelAnimation.TrackSetPath(trackIndex, $"{Name}/ReferenceAnimationPlayer{i}:animation");
+			// animation.TrackMoveTo(trackIndex, i);
+			if (singleClip) topLevelAnimation.TrackInsertKey(trackIndex, 0, $"{ReferenceLibraryBaseName}{i}/final_combined");
 			
-			// End time for next iteration or final length
-			time += _referenceAnimationPlayers[0].GetAnimation(animationName).Length;
+			var animationsWithDelays = new List<Animation>();
+			var time = 0.0f;
+		
+			for (var j = 0; j < _referenceAnimationPlayers[i].GetAnimationList().Length; j++)
+			{
+				var animationName = $"{ReferenceLibraryBaseName}{i}/anim{j}";
+				// Handle start time
+				if (_startTimes[i][j] >= time) // If next start time is after previous end time, use it
+				{
+					time = _startTimes[i][j];
+				}
+				else if (_startTimes[i][j] > 0) // Otherwise, use the previous end time. If it the time was set, warn that it's not used.
+				{
+					GD.PushWarning($"Animation {j} in library {i} starts before the previous animation ends. Pushing it back.");
+				}
+
+				if (singleClip)
+				{
+					var nonDelayedAnimation = _referenceAnimationPlayers[i]
+						.GetAnimation($"{ReferenceLibraryBaseName}{i}/anim{j}");
+					animationsWithDelays.Add(nonDelayedAnimation.WithDelay(time));
+				}
+				else topLevelAnimation.TrackInsertKey(i, time, animationName);
+
+				// End time for next iteration or final length
+				time += _referenceAnimationPlayers[i].GetAnimation(animationName).Length;
+			}
+			if (singleClip) AddAnimationToLibrary(animationsWithDelays.RunInParallel(), "final_combined", _referenceAnimationLibraries[i]);
+
+			latestTime = Mathf.Max(latestTime, time);
 		}
 		
 		// Make the animation 100s longer than it actually is, so the editor leaves some room
-		animation.Length = time + 100;
+		topLevelAnimation.Length = latestTime + 100;
 		
-		if (singleClip) AddAnimationToLibrary(animationsWithDelays.RunInParallel(), "final_combined", _referenceAnimationLibraries[0]);
-		
-		AddAnimationToLibrary(animation, MainAnimationName, library);
+		AddAnimationToLibrary(topLevelAnimation, MainAnimationName, library);
 	}
-	
 	#endregion
 	
 	#region Animation Library Handling
