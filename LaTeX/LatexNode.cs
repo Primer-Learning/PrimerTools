@@ -72,6 +72,7 @@ public partial class LatexNode : Node3D
 		labelTextAnimation.TrackSetInterpolationType(trackCount, Animation.InterpolationType.Linear);
 		NumericalExpression = value;
 
+		labelTextAnimation.Length = duration;
 		return labelTextAnimation;
 	}
 	
