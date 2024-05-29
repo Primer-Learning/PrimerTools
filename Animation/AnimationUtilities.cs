@@ -429,16 +429,21 @@ public static class AnimationUtilities
     public static Animation WithDuration(this Animation animation, float duration)
     {
         if (duration == 0) duration = TimeEpsilon;
-        var newAnimation = new Animation();
         var lastKeyTime = 0.0;
         for (var i = 0; i < animation.GetTrackCount(); i++)
         {
             var time = animation.TrackGetKeyTime(i, animation.TrackGetKeyCount(i) - 1);
             lastKeyTime = Mathf.Max(lastKeyTime, time);
         }
-        
-        var timeScale = duration / lastKeyTime;
-        
+
+        return animation.WithSpeedFactor((float) lastKeyTime / duration);
+    }
+
+    public static Animation WithSpeedFactor(this Animation animation, float speedFactor)
+    {
+        if (speedFactor == 0) PrimerGD.PrintErrorWithStackTrace("Can't have an animation with speed factor zero. It would be infinity long lmao.");
+        var timeScale = 1 / speedFactor;
+        var newAnimation = new Animation();
         for (var i = 0; i < animation.GetTrackCount(); i++)
         {
             // Add a new track of the same type to newAnimation
@@ -454,10 +459,10 @@ public static class AnimationUtilities
             }
         }
 
-        newAnimation.Length = duration;
+        newAnimation.Length = animation.Length * timeScale;
         return newAnimation;
     }
-
+    
     #endregion
 
     #region Material animation
