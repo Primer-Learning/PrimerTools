@@ -142,9 +142,9 @@ public abstract partial class AnimationSequence : AnimationPlayer
 	/// </summary>
 	/// <param name="animation"></param> The animation to register.
 	/// <param name="time"></param> The time at which this animation should play.
-	/// <param name="playbackTrackIndex"></param> Specifies playback track the animation will be registered to.
+	/// <param name="indexOfPlaybackTrack"></param> Specifies playback track the animation will be registered to.
 	/// <param name="log"></param> Print extra information. Useful if the paths seem wrong. But it's been tested pretty thoroughly at this point.
-	protected void RegisterAnimation(Animation animation, float time = -1, int playbackTrackIndex = 0, bool log = false)
+	protected void RegisterAnimation(Animation animation, float time = -1, int indexOfPlaybackTrack = 0, bool log = false)
 	{
 		// Correct paths
 		for (var i = 0; i < animation.GetTrackCount(); i++)
@@ -160,7 +160,7 @@ public abstract partial class AnimationSequence : AnimationPlayer
 			animation.TrackSetPath(i, relativePath);
 		}
 		
-		for (var i = 0; i <= playbackTrackIndex; i++)
+		for (var i = 0; i <= indexOfPlaybackTrack; i++)
 		{
 			if (_referenceAnimationPlayers.Count > i) continue; // Don't remake ones that exist
 			
@@ -170,8 +170,8 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		}
 		
 		// Put the library in the animation player
-		AddAnimationToLibrary(animation, $"anim{_startTimes[playbackTrackIndex].Count}", _referenceAnimationLibraries[playbackTrackIndex]);
-		_startTimes[playbackTrackIndex].Add(time);
+		AddAnimationToLibrary(animation, $"anim{_startTimes[indexOfPlaybackTrack].Count}", _referenceAnimationLibraries[indexOfPlaybackTrack]);
+		_startTimes[indexOfPlaybackTrack].Add(time);
 	}
 	protected void RegisterAnimation(params Animation[] animations)
 	{
