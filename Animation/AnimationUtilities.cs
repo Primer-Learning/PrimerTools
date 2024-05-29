@@ -462,6 +462,11 @@ public static class AnimationUtilities
         newAnimation.Length = animation.Length * timeScale;
         return newAnimation;
     }
+
+    public static Animation WithClampedDuration(this Animation animation, float maxDuration)
+    {
+        return animation.WithDuration(Mathf.Min(animation.Length, maxDuration));
+    }
     
     #endregion
 
