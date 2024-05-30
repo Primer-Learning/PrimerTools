@@ -8,7 +8,7 @@ namespace PrimerTools;
 public static class AnimationUtilities
 {
     
-    public const float TimeEpsilon = 0.001f; // Smaller than this, and keyframes can merge when combining animations.
+    public const float TimeEpsilon = 0.005f; // Smaller than this, and keyframes can merge when combining animations.
                                              // I don't know where exactly.
     public const float LengthEpsilon = 0.000001f; // Tolerance is different for length.
     public const float DefaultDuration = 0.5f;
@@ -426,24 +426,19 @@ public static class AnimationUtilities
         newAnimation.Length = animation.Length + delay;
         return newAnimation;
     }
+    
     public static Animation WithDuration(this Animation animation, float duration)
     {
         if (duration == 0) duration = TimeEpsilon;
+        var newAnimation = new Animation();
         var lastKeyTime = 0.0;
         for (var i = 0; i < animation.GetTrackCount(); i++)
         {
             var time = animation.TrackGetKeyTime(i, animation.TrackGetKeyCount(i) - 1);
             lastKeyTime = Mathf.Max(lastKeyTime, time);
         }
-
-        return animation.WithSpeedFactor((float) lastKeyTime / duration);
-    }
-
-    public static Animation WithSpeedFactor(this Animation animation, float speedFactor)
-    {
-        if (speedFactor == 0) PrimerGD.PrintErrorWithStackTrace("Can't have an animation with speed factor zero. It would be infinity long lmao.");
-        var timeScale = 1 / speedFactor;
-        var newAnimation = new Animation();
+        var timeScale = duration / lastKeyTime;
+        
         for (var i = 0; i < animation.GetTrackCount(); i++)
         {
             // Add a new track of the same type to newAnimation
@@ -451,20 +446,36 @@ public static class AnimationUtilities
             newAnimation.TrackSetPath(i, animation.TrackGetPath(i));
             newAnimation.TrackSetInterpolationType(i, animation.TrackGetInterpolationType(i));
             
+            var prevTime = -TimeEpsilon; // Allows comparison between key times, preventing a space smaller than epsilon
+                                             // It's -TimeEpsilon so the first key will land on 0 if incremented by TimeEpsilon
+            
             for (var j = 0; j < animation.TrackGetKeyCount(i); j++)
             {
+                var time = (float) Mathf.Max(animation.TrackGetKeyTime(i, j) * timeScale, prevTime + TimeEpsilon);
                 // Set keys
-                newAnimation.TrackInsertKey(i, animation.TrackGetKeyTime(i, j) * timeScale,
-                    animation.TrackGetKeyValue(i, j));
+                newAnimation.TrackInsertKey(i, time, animation.TrackGetKeyValue(i, j));
+                prevTime = time;
             }
         }
 
-        newAnimation.Length = animation.Length * timeScale;
+        newAnimation.Length = duration;
         return newAnimation;
+    }
+
+    public static Animation WithSpeedFactor(this Animation animation, float speedFactor)
+    {
+        if (speedFactor == 0) PrimerGD.PrintErrorWithStackTrace("Can't have an animation with speed factor zero. It would be infinity long lmao.");
+        
+        return animation.WithDuration(animation.Length / speedFactor);
+    }
+    public static Animation WithDurationMultiplier(this Animation animation, float multiplier)
+    {
+        return animation.WithDuration(animation.Length * multiplier);
     }
 
     public static Animation WithClampedDuration(this Animation animation, float maxDuration)
     {
+        GD.Print($"Duration before clamp: {animation.Length}");
         return animation.WithDuration(Mathf.Min(animation.Length, maxDuration));
     }
     
@@ -522,6 +533,7 @@ public static class AnimationUtilities
         
         material.AlbedoColor = finalColor;
 
+        animation.Length = duration;
         return animation;
     }
     
@@ -592,6 +604,10 @@ public static class AnimationUtilities
         {
             if (memberAnimation == null)
             {
+                // TODO: Should I just allow nulls and replace them here?
+                // Might even be better because I can always have them with duration zero here
+                // and I might forget to use the correct duration elsewhere.
+                
                 GD.PrintErr("Can't combine a null animation. Use an empty animation instead.");
                 var stackTrace = new System.Diagnostics.StackTrace(true);
                 throw new Exception("Can't combine a null animation. Use an empty animation instead. \n" + stackTrace);
