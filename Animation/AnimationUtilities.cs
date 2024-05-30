@@ -8,10 +8,10 @@ namespace PrimerTools;
 public static class AnimationUtilities
 {
     
-    public const float TimeEpsilon = 0.005f; // Smaller than this, and keyframes can merge when combining animations.
+    public const double TimeEpsilon = 0.005; // Smaller than this, and keyframes can merge when combining animations.
                                              // I don't know where exactly.
     public const float LengthEpsilon = 0.000001f; // Tolerance is different for length.
-    public const double DefaultDuration = 0.5f;
+    public const double DefaultDuration = 0.5;
     
     #region Node animation extensions
     public static Animation AnimateValue<TNode, TValue>(this TNode node, TValue value, string propertyPath, double duration = DefaultDuration) where TNode : Node
@@ -53,7 +53,7 @@ public static class AnimationUtilities
                 animation.TrackSetPath(trackIndex, node.GetPath()+":" + propertyPath);
                 
                 // First key
-                animation.BezierTrackInsertKey(trackIndex, 0.0f, node.GetIndexed(propertyPath).AsSingle());
+                animation.BezierTrackInsertKey(trackIndex, 0.0, node.GetIndexed(propertyPath).AsSingle());
                 animation.BezierTrackSetKeyOutHandle(trackIndex, 0, outHandle);
                 // Second key
                 animation.BezierTrackInsertKey(trackIndex, duration, floatValue);
@@ -190,7 +190,7 @@ public static class AnimationUtilities
         
         return node.AnimateValue(destination, "quaternion", duration);
     }
-    public static Animation WalkTo(this Node3D node, Vector3 destination, float stopDistance = 0, double duration = DefaultDuration, float prepTurnDuration = 0.1f)
+    public static Animation WalkTo(this Node3D node, Vector3 destination, float stopDistance = 0, double duration = DefaultDuration, double prepTurnDuration = 0.1)
     {
         var difference = destination - node.Position;
         
@@ -215,7 +215,7 @@ public static class AnimationUtilities
         return node.ScaleTo(Vector3.One * finalScale, duration);
     }
 
-    public static Animation Pulse(this Node3D node, float scaleFactor = 1.2f, float attack = 0.5f, float hold = 0, float decay = 0.5f)
+    public static Animation Pulse(this Node3D node, float scaleFactor = 1.2f, double attack = 0.5, double hold = 0, double decay = 0.5)
     {
         var originalScale = node.Scale; 
         return Series(
@@ -451,7 +451,7 @@ public static class AnimationUtilities
             
             for (var j = 0; j < animation.TrackGetKeyCount(i); j++)
             {
-                var time = (float) Mathf.Max(animation.TrackGetKeyTime(i, j) * timeScale, prevTime + TimeEpsilon);
+                var time = Mathf.Max(animation.TrackGetKeyTime(i, j) * timeScale, prevTime + TimeEpsilon);
                 // Set keys
                 newAnimation.TrackInsertKey(i, time, animation.TrackGetKeyValue(i, j));
                 prevTime = time;
@@ -462,18 +462,18 @@ public static class AnimationUtilities
         return newAnimation;
     }
 
-    public static Animation WithSpeedFactor(this Animation animation, float speedFactor)
+    public static Animation WithSpeedFactor(this Animation animation, double speedFactor)
     {
         if (speedFactor == 0) PrimerGD.PrintErrorWithStackTrace("Can't have an animation with speed factor zero. It would be infinity long lmao.");
         
         return animation.WithDuration(animation.Length / speedFactor);
     }
-    public static Animation WithDurationMultiplier(this Animation animation, float multiplier)
+    public static Animation WithDurationMultiplier(this Animation animation, double multiplier)
     {
         return animation.WithDuration(animation.Length * multiplier);
     }
 
-    public static Animation WithClampedDuration(this Animation animation, float maxDuration)
+    public static Animation WithClampedDuration(this Animation animation, double maxDuration)
     {
         GD.Print($"Duration before clamp: {animation.Length}");
         return animation.WithDuration(Mathf.Min(animation.Length, maxDuration));
@@ -652,13 +652,20 @@ public static class AnimationUtilities
                     newAnimation.TrackSetPath(trackIndex, path);
                     trackPaths.Add((path, trackType));
                 }
-                
+
+                var prevKeyTime = -1.0;
                 // Loop through the keys in each track
                 for (var j = 0; j < memberAnimation.TrackGetKeyCount(i); j++)
                 {
                     var keyTime = memberAnimation.TrackGetKeyTime(i, j);
                     animLength = Mathf.Max(animLength, keyTime);
                     newAnimation.TrackInsertKey(trackIndex, keyTime + (parallel ? 0 : finalAnimationLength), memberAnimation.TrackGetKeyValue(i, j));
+
+                    if (keyTime - prevKeyTime < TimeEpsilon)
+                        PrimerGD.PrintErrorWithStackTrace(
+                            $"Keys {j - 1} and {j} are too close on track {memberAnimation.TrackGetPath(i)}." +
+                            $"\n Separation: {keyTime - prevKeyTime}"
+                        );
                 }
             }
 

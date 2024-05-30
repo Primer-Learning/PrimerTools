@@ -27,7 +27,7 @@ public abstract partial class AnimationSequence : AnimationPlayer
 	
 	// This also tracks how many animations have been made
 	// Now, per track!
-	private readonly List<List<float>> _startTimes = new();
+	private readonly List<List<double>> _startTimes = new();
 
 	protected bool TooBigAndHaveToUseSeparateAnimations;
 	
@@ -54,7 +54,7 @@ public abstract partial class AnimationSequence : AnimationPlayer
 	
 	[Export] private bool makeSingleClip;
 	[Export] private bool makeChildrenLocal;
-	[Export] private float timeToRewindTo = 0;
+	[Export] private double timeToRewindTo = 0;
 
 	private bool _shouldActuallyUpdatePath = false;
 	[ExportGroup("Recording options")] 
@@ -144,7 +144,7 @@ public abstract partial class AnimationSequence : AnimationPlayer
 	/// <param name="time"></param> The time at which this animation should play.
 	/// <param name="indexOfPlaybackTrack"></param> Specifies playback track the animation will be registered to.
 	/// <param name="log"></param> Print extra information. Useful if the paths seem wrong. But it's been tested pretty thoroughly at this point.
-	protected void RegisterAnimation(Animation animation, float time = -1, int indexOfPlaybackTrack = 0, bool log = false)
+	protected void RegisterAnimation(Animation animation, double time = -1, int indexOfPlaybackTrack = 0, bool log = false)
 	{
 		// Correct paths
 		for (var i = 0; i < animation.GetTrackCount(); i++)
@@ -166,7 +166,7 @@ public abstract partial class AnimationSequence : AnimationPlayer
 			
 			_referenceAnimationPlayers.Add(MakeReferenceAnimationPlayer(i));
 			_referenceAnimationLibraries.Add(MakeOrGetAnimationLibrary(_referenceAnimationPlayers[i], ReferenceLibraryBaseName + i));
-			_startTimes.Add(new List<float>());
+			_startTimes.Add(new List<double>());
 		}
 		
 		// Put the library in the animation player
@@ -224,7 +224,7 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		// This is so the audio track will stay.
 		var topLevelAnimation = TopLevelAnimationWithPlaybackTracksRemoved();
 
-		var latestTime = 0f; // For determining the length of the combined animation that could have multiple tracks
+		var latestTime = 0.0; // For determining the length of the combined animation that could have multiple tracks
 		for (var i = 0; i < _referenceAnimationPlayers.Count; i++)
 		{
 			// With the playback track removed (if it ever existed), we can add the new ones
@@ -234,7 +234,7 @@ public abstract partial class AnimationSequence : AnimationPlayer
 			if (singleClip) topLevelAnimation.TrackInsertKey(i, 0, $"{ReferenceLibraryBaseName}{i}/final_combined");
 			
 			var animationsWithDelays = new List<Animation>();
-			var time = 0.0f;
+			var time = 0.0;
 		
 			for (var j = 0; j < _referenceAnimationPlayers[i].GetAnimationList().Length; j++)
 			{
@@ -252,7 +252,7 @@ public abstract partial class AnimationSequence : AnimationPlayer
 				if (singleClip)
 				{
 					// In this case, we've already added the key before the loop.
-					// But we need add the current jth animation to the list of animations
+					// But we need to add the current jth animation to the list of animations
 					// to make the single clip out of.
 					var nonDelayedAnimation = _referenceAnimationPlayers[i]
 						.GetAnimation($"{ReferenceLibraryBaseName}{i}/anim{j}");
@@ -269,7 +269,7 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		}
 		
 		// Make the animation 100s longer than it actually is, so the editor leaves some room
-		topLevelAnimation.Length = latestTime + 100;
+		topLevelAnimation.Length = (float) latestTime + 100;
 		
 		AddAnimationToLibrary(topLevelAnimation, MainAnimationName, library);
 	}
@@ -346,7 +346,7 @@ public abstract partial class AnimationSequence : AnimationPlayer
 	#endregion
 	
 	#region Rewinding
-	private void Rewind(float time)
+	private void Rewind(double time)
 	{
 		// If single clip, this isn't needed, and the playhead overrides the state anyway
 		if (!makeSingleClip) 
