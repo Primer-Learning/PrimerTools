@@ -157,7 +157,7 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
     /// </summary>
     /// <param name="duration"></param>
     /// <returns></returns>
-    public Animation Transition(float duration = AnimationUtilities.DefaultDuration)
+    public Animation Transition(double duration = AnimationUtilities.DefaultDuration)
     {
         // If there's not a previous stage, add the first point of the data as the first stage
         if (pointsOfStages.Count == 0)

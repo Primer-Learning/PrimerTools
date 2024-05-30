@@ -11,10 +11,10 @@ public static class AnimationUtilities
     public const float TimeEpsilon = 0.005f; // Smaller than this, and keyframes can merge when combining animations.
                                              // I don't know where exactly.
     public const float LengthEpsilon = 0.000001f; // Tolerance is different for length.
-    public const float DefaultDuration = 0.5f;
+    public const double DefaultDuration = 0.5f;
     
     #region Node animation extensions
-    public static Animation AnimateValue<TNode, TValue>(this TNode node, TValue value, string propertyPath, float duration = DefaultDuration) where TNode : Node
+    public static Animation AnimateValue<TNode, TValue>(this TNode node, TValue value, string propertyPath, double duration = DefaultDuration) where TNode : Node
     {
         // One day, make an enum of the different interpolation types and use a switch statement to choose the handles.
         // For now, just use smooth step.
@@ -33,9 +33,9 @@ public static class AnimationUtilities
         // x values are in seconds
         // y values in the unit of the property being animated
         
-        return node.AnimateValue(value, propertyPath, new Vector2(duration / 3, 0), new Vector2(- duration / 3, 0), duration);
+        return node.AnimateValue(value, propertyPath, new Vector2((float)duration / 3, 0), new Vector2(- (float)duration / 3, 0), duration);
     }
-    public static Animation AnimateValue<TNode, TValue>(this TNode node, TValue value, string propertyPath, Vector2 outHandle, Vector2 inHandle, float duration = DefaultDuration) where TNode : Node
+    public static Animation AnimateValue<TNode, TValue>(this TNode node, TValue value, string propertyPath, Vector2 outHandle, Vector2 inHandle, double duration = DefaultDuration) where TNode : Node
     {
         if (duration == 0) duration = TimeEpsilon;
         var animation = new Animation();
@@ -112,10 +112,10 @@ public static class AnimationUtilities
                 break;
         }
 
-        animation.Length = duration;
+        animation.Length = (float) duration;
         return animation;
     }
-    public static Animation AnimateBool<TNode>(this TNode node, bool value, string propertyPath, bool resetAtEnd = false, float duration = DefaultDuration) where TNode : Node
+    public static Animation AnimateBool<TNode>(this TNode node, bool value, string propertyPath, bool resetAtEnd = false, double duration = DefaultDuration) where TNode : Node
     {
         var originalValue = node.Get(propertyPath);
         
@@ -139,10 +139,10 @@ public static class AnimationUtilities
         }
         
         node.Set(propertyPath, resetAtEnd ? originalValue : value);
-        animation.Length = duration;
+        animation.Length = (float)duration;
         return animation;
     }
-    public static Animation MoveTo(this Node3D node, Vector3 destination, float stopDistance = 0, float duration = DefaultDuration, bool global = false)
+    public static Animation MoveTo(this Node3D node, Vector3 destination, float stopDistance = 0, double duration = DefaultDuration, bool global = false)
     {
         var difference = global
             ? destination - node.GlobalPosition
@@ -154,11 +154,11 @@ public static class AnimationUtilities
         
         return node.AnimateValue(destination, propertyPath, duration);
     }
-    public static Animation RotateTo(this Node3D node, float xDeg, float yDeg, float zDeg, bool global = false, float duration = DefaultDuration)
+    public static Animation RotateTo(this Node3D node, float xDeg, float yDeg, float zDeg, bool global = false, double duration = DefaultDuration)
     {
         return node.RotateTo(new Vector3(xDeg, yDeg, zDeg), global: global, duration);
     }
-    public static Animation RotateTo(this Node3D node, Vector3 eulerAnglesInDegrees, bool global = false, float duration = DefaultDuration)
+    public static Animation RotateTo(this Node3D node, Vector3 eulerAnglesInDegrees, bool global = false, double duration = DefaultDuration)
     {
         var eulerAnglesInRadians = new Vector3(
             Mathf.DegToRad(eulerAnglesInDegrees.X),
@@ -167,7 +167,7 @@ public static class AnimationUtilities
         );
         return node.RotateTo(Quaternion.FromEuler(eulerAnglesInRadians), global: global, duration);
     }
-    public static Animation RotateTo(this Node3D node, Quaternion destination, bool global = false, float duration = DefaultDuration)
+    public static Animation RotateTo(this Node3D node, Quaternion destination, bool global = false, double duration = DefaultDuration)
     {
         if (duration == 0) duration = TimeEpsilon;
         // var animation = new Animation();
@@ -190,7 +190,7 @@ public static class AnimationUtilities
         
         return node.AnimateValue(destination, "quaternion", duration);
     }
-    public static Animation WalkTo(this Node3D node, Vector3 destination, float stopDistance = 0, float duration = DefaultDuration, float prepTurnDuration = 0.1f)
+    public static Animation WalkTo(this Node3D node, Vector3 destination, float stopDistance = 0, double duration = DefaultDuration, float prepTurnDuration = 0.1f)
     {
         var difference = destination - node.Position;
         
@@ -202,7 +202,7 @@ public static class AnimationUtilities
             move
         );
     }
-    public static Animation ScaleTo(this Node3D node, Vector3 finalScale, float duration = DefaultDuration)
+    public static Animation ScaleTo(this Node3D node, Vector3 finalScale, double duration = DefaultDuration)
     {
         // True zero scale causes the rotation to be set to identity. So we'll use a small value instead.
         if (finalScale == Vector3.Zero) finalScale = Vector3.One * LengthEpsilon;
@@ -210,7 +210,7 @@ public static class AnimationUtilities
         
         return node.AnimateValue(finalScale, "scale", duration);
     }
-    public static Animation ScaleTo(this Node3D node, float finalScale, float duration = DefaultDuration)
+    public static Animation ScaleTo(this Node3D node, float finalScale, double duration = DefaultDuration)
     {
         return node.ScaleTo(Vector3.One * finalScale, duration);
     }
@@ -273,7 +273,7 @@ public static class AnimationUtilities
         return meshes.First();
     }
     
-    public static Animation AnimateFreeze(this RigidBody3D rigidBody, bool value, bool resetAtEnd = false, float duration = DefaultDuration)
+    public static Animation AnimateFreeze(this RigidBody3D rigidBody, bool value, bool resetAtEnd = false, double duration = DefaultDuration)
     {
         return rigidBody.AnimateBool(value, "freeze", resetAtEnd, duration);
     }
@@ -281,7 +281,7 @@ public static class AnimationUtilities
     public static Animation MoveTo(this RigidBody3D rigidBody,
         Vector3 destination,
         float stopDistance = 0,
-        float duration = DefaultDuration,
+        double duration = DefaultDuration,
         bool global = false)
     {
         // When moving a rigid body, we need to keyframe the children instead of the  rigid body itself,
@@ -321,11 +321,11 @@ public static class AnimationUtilities
         );
     }
     
-    public static Animation RotateTo(this RigidBody3D rigidBody, float xDeg, float yDeg, float zDeg, float duration = DefaultDuration)
+    public static Animation RotateTo(this RigidBody3D rigidBody, float xDeg, float yDeg, float zDeg, double duration = DefaultDuration)
     {
         return rigidBody.RotateTo(new Vector3(xDeg, yDeg, zDeg), duration);
     }
-    public static Animation RotateTo(this RigidBody3D rigidBody, Vector3 eulerAnglesInDegrees, float duration = DefaultDuration)
+    public static Animation RotateTo(this RigidBody3D rigidBody, Vector3 eulerAnglesInDegrees, double duration = DefaultDuration)
     {
         var eulerAnglesInRadians = new Vector3(
             Mathf.DegToRad(eulerAnglesInDegrees.X),
@@ -337,7 +337,7 @@ public static class AnimationUtilities
     
     public static Animation RotateTo(this RigidBody3D rigidBody,
         Quaternion destination,
-        float duration = DefaultDuration,
+        double duration = DefaultDuration,
         bool global = false)
     {
         // When moving a rigid body, we need to keyframe the children instead of the  rigid body itself,
@@ -377,7 +377,7 @@ public static class AnimationUtilities
     }
     public static Animation ScaleTo(this RigidBody3D rigidBody,
         Vector3 destination,
-        float duration = DefaultDuration)
+        double duration = DefaultDuration)
     {
         // When moving a rigid body, we need to keyframe the children instead of the  rigid body itself,
         // since keyframes on the rigidbody will override the physics updates.
@@ -390,7 +390,7 @@ public static class AnimationUtilities
         );
     }
 
-    // public static Animation UnfreezeForDuration(this RigidBody3D rigidBody, float duration)
+    // public static Animation UnfreezeForDuration(this RigidBody3D rigidBody, double duration)
     // {
     //     var animation = new Animation();
     //     var trackIndex = animation.AddTrack(Animation.TrackType.Value);
@@ -405,7 +405,7 @@ public static class AnimationUtilities
     
     #region Animation modifiers
 
-    public static Animation WithDelay(this Animation animation, float delay = DefaultDuration)
+    public static Animation WithDelay(this Animation animation, double delay = DefaultDuration)
     {
         var newAnimation = new Animation();
         for (var i = 0; i < animation.GetTrackCount(); i++)
@@ -423,11 +423,11 @@ public static class AnimationUtilities
             }
         }
 
-        newAnimation.Length = animation.Length + delay;
+        newAnimation.Length = animation.Length + (float)delay;
         return newAnimation;
     }
     
-    public static Animation WithDuration(this Animation animation, float duration)
+    public static Animation WithDuration(this Animation animation, double duration)
     {
         if (duration == 0) duration = TimeEpsilon;
         var newAnimation = new Animation();
@@ -458,7 +458,7 @@ public static class AnimationUtilities
             }
         }
 
-        newAnimation.Length = duration;
+        newAnimation.Length = (float)duration;
         return newAnimation;
     }
 
@@ -482,7 +482,7 @@ public static class AnimationUtilities
     #endregion
 
     #region Material animation
-    public static Animation AnimateColorHsv(this MeshInstance3D meshInstance3D, Color finalColor, float duration = DefaultDuration)
+    public static Animation AnimateColorHsv(this MeshInstance3D meshInstance3D, Color finalColor, double duration = DefaultDuration)
     {
         var material = meshInstance3D.GetOrCreateOverrideMaterial();
         var animation = new Animation();
@@ -533,11 +533,11 @@ public static class AnimationUtilities
         
         material.AlbedoColor = finalColor;
 
-        animation.Length = duration;
+        animation.Length = (float)duration;
         return animation;
     }
     
-    public static Animation AnimateColorRgb(this MeshInstance3D meshInstance3D, Color finalColor, float duration = DefaultDuration)
+    public static Animation AnimateColorRgb(this MeshInstance3D meshInstance3D, Color finalColor, double duration = DefaultDuration)
     {
         var material = meshInstance3D.GetOrCreateOverrideMaterial();
         

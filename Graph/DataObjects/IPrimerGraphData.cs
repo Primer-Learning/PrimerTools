@@ -4,6 +4,6 @@ namespace PrimerTools.Graph;
 
 public interface IPrimerGraphData
 {
-    public Animation Transition(float duration);
+    public Animation Transition(double duration);
     public Animation Disappear();
 }

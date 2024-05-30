@@ -41,7 +41,7 @@ public partial class BarPlot : Node3D, IPrimerGraphData
     private float barWidth = 0.8f;
     private float barDepth = 0.01f;
 
-    public Animation Transition(float duration = AnimationUtilities.DefaultDuration)
+    public Animation Transition(double duration = AnimationUtilities.DefaultDuration)
     {
         var trackCount = 0;
 

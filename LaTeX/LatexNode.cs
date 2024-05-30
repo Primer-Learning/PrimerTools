@@ -62,7 +62,7 @@ public partial class LatexNode : Node3D
 		}
 	}
 
-	public Animation AnimateNumericalExpression(float value, float duration = AnimationUtilities.DefaultDuration)
+	public Animation AnimateNumericalExpression(float value, double duration = AnimationUtilities.DefaultDuration)
 	{
 		var labelTextAnimation = new Animation();
 		var trackCount = labelTextAnimation.AddTrack(Animation.TrackType.Value);
@@ -72,7 +72,7 @@ public partial class LatexNode : Node3D
 		labelTextAnimation.TrackSetInterpolationType(trackCount, Animation.InterpolationType.Linear);
 		NumericalExpression = value;
 
-		labelTextAnimation.Length = duration;
+		labelTextAnimation.Length = (float)duration;
 		return labelTextAnimation;
 	}
 	
