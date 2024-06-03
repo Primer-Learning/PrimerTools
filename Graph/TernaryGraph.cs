@@ -12,6 +12,7 @@ public partial class TernaryGraph : Node3D
     public string[] LabelStrings = {"A", "B", "C"};
     public LatexNode[] Labels = new LatexNode[3];
     public float LabelScale = 0.1f;
+    public MeshInstance3D[] BoundingObjects = new MeshInstance3D[6];
     
     public Color[] Colors = {new Color(1, 0, 0), new Color(0, 1, 0), new Color(0, 0, 1)}; 
     
@@ -53,6 +54,8 @@ public partial class TernaryGraph : Node3D
             
             cylinder.Position = (correctedCorners[i] + correctedCorners[(i + 1) % 3]) / 2;
             cylinder.RotationDegrees = new Vector3(0, 0, 90 + 120 * i);
+
+            BoundingObjects[2 * i] = cylinder;
             
             // Sphere
             var sphere = new MeshInstance3D();
@@ -70,6 +73,7 @@ public partial class TernaryGraph : Node3D
             sphere.Mesh = sMesh;
             
             sphere.Position = correctedCorners[i];
+            BoundingObjects[2 * i + 1] = sphere;
         }
         
         CreateLabels(chonk);
@@ -125,27 +129,37 @@ public partial class TernaryGraph : Node3D
 
     public Animation ScaleBoundingObjectsUpFromZero()
     {
-        var children = GetChildren().OfType<MeshInstance3D>().ToArray();
-        foreach (var node in children)
-        {
-            node.Scale = Vector3.Zero;
-        }
-        return children.Select(x => x.ScaleTo(1)).RunInParallel();
+        return AnimationUtilities.Series(
+            BoundingObjects.Select(x => x.ScaleTo(0)).RunInParallel().WithDuration(AnimationUtilities.TimeEpsilon),
+            BoundingObjects.Select(x => x.ScaleTo(1)).RunInParallel()
+        );
+    }
+    public Animation ScaleBoundingObjectsDownToZero()
+    {
+        return AnimationUtilities.Series(
+            BoundingObjects.Select(x => x.ScaleTo(1)).RunInParallel().WithDuration(AnimationUtilities.TimeEpsilon),
+            BoundingObjects.Select(x => x.ScaleTo(0)).RunInParallel()
+        );
     }
 
     public Animation ScaleLabelsUpFromZero()
     {
-        foreach (var node in Labels)
-        {
-            node.Scale = Vector3.Zero;
-        }
-        return Labels.Select(x => x.ScaleTo(LabelScale)).RunInParallel();
+        return AnimationUtilities.Series(
+            Labels.Select(x => x.ScaleTo(0)).RunInParallel().WithDuration(AnimationUtilities.TimeEpsilon),
+            Labels.Select(x => x.ScaleTo(LabelScale)).RunInParallel()
+        );
+    }
+    public Animation ScaleLabelsDownToZero()
+    {
+        return AnimationUtilities.Series(
+            Labels.Select(x => x.ScaleTo(LabelScale)).RunInParallel().WithDuration(AnimationUtilities.TimeEpsilon),
+            Labels.Select(x => x.ScaleTo(0)).RunInParallel()
+        );
     }
     
     public static Vector3 CoordinatesToPosition(float a, float b, float c)
     {
         ValidateCoordinates(a, b, c);
-
         return new Vector3(
             b + c / 2,
             c * Mathf.Sqrt(3) / 2,
