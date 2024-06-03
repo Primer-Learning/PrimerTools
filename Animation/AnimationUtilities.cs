@@ -154,6 +154,17 @@ public static class AnimationUtilities
         
         return node.AnimateValue(destination, propertyPath, duration);
     }
+
+    public static Animation MoveBy(this Node3D node, Vector3 displacement, double duration = DefaultDuration,
+        bool global = false)
+    {
+        var finalPos = global
+            ? node.GlobalPosition + displacement
+            : node.Position + displacement;
+
+        return node.MoveTo(finalPos, duration: duration, global: global);
+    } 
+    
     public static Animation RotateTo(this Node3D node, float xDeg, float yDeg, float zDeg, bool global = false, double duration = DefaultDuration)
     {
         return node.RotateTo(new Vector3(xDeg, yDeg, zDeg), global: global, duration);
