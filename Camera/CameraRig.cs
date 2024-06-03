@@ -8,8 +8,8 @@ public partial class CameraRig : Node3D
     private const float DefaultDistance = 10;
     private const float DefaultFov = 30;
     
-    Camera3D _camera;
-    Camera3D Camera
+    private Camera3D _camera;
+    public Camera3D Camera
     {
         get
         {
@@ -45,7 +45,7 @@ public partial class CameraRig : Node3D
     {
         return Camera.MoveTo(new Vector3(Camera.Position.X, Camera.Position.Y, distance));
     }
-        
+    
         
 //     public class CameraRig : MonoBehaviour
 //     {
