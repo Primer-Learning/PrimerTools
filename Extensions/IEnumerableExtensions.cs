@@ -8,7 +8,13 @@ namespace PrimerTools
     public static class IEnumerableExtensions
     {
         [Pure]
-        public static IEnumerable<(int index, T value)> WithIndex<T>(this IEnumerable<T> items)
+        public static IEnumerable<(T value, int index)> WithIndex<T>(this IEnumerable<T> items)
+        {
+            return items.Select((value, i) => (value, i));
+        }
+
+        [Pure]
+        public static IEnumerable<(int index, T value)> WithIndexBackwardDeprecated<T>(this IEnumerable<T> items)
         {
             return items.Select((value, i) => (i, value));
         }

@@ -12,6 +12,7 @@
 [ext_resource type="Script" path="res://addons/PrimerTools/Utilities/CameraRig.cs" id="10_inb6s"]
 
 
+
 [sub_resource type="Animation" id="Animation_gfh0s"]
 length = 102.004
 tracks/0/type = "animation"
