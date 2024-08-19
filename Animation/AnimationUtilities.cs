@@ -244,26 +244,25 @@ public static class AnimationUtilities
     // And every other custom class deriving from Node3D would need to be updated to use that class.
     // May have to make PrimerNode 
     
-    // public static Animation AnimateParentChange(this Node node, Node newParent)
-    // {
-    //     var animation = new Animation();
-    //     var trackIndex = animation.AddTrack(Animation.TrackType.Method);
-    //     
-    //     animation.TrackSetPath(trackIndex, node.GetPath());
-    //     animation.TrackInsertKey(trackIndex, 0, new Godot.Collections.Dictionary
-    //     {
-    //         {"method", "SetParent"},
-    //         {"args", new Godot.Collections.Array { node, node.GetParent()}}
-    //     });
-    //     animation.TrackInsertKey(trackIndex, 0.5f, new Godot.Collections.Dictionary
-    //     {
-    //         {"method", "SetParent"},
-    //         {"args", new Godot.Collections.Array {node, newParent}}
-    //     });
-    //     
-    //     // node.SetParent(newParent);
-    //     return animation;
-    // }
+    public static Animation AnimateParentChange(this Node node, Node newParent)
+    {
+        var animation = new Animation();
+        var trackIndex = animation.AddTrack(Animation.TrackType.Method);
+        
+        animation.TrackSetPath(trackIndex, node.GetPath());
+        animation.TrackInsertKey(trackIndex, 0, new Godot.Collections.Dictionary
+        {
+            {"method", "SetParent"},
+            {"args", new Godot.Collections.Array { node, node.GetParent()}}
+        });
+        animation.TrackInsertKey(trackIndex, 0.5f, new Godot.Collections.Dictionary
+        {
+            {"method", "SetParent"},
+            {"args", new Godot.Collections.Array {node, newParent}}
+        });
+        
+        return animation;
+    }
     #endregion
 
     #region RigidBody animation extensions
