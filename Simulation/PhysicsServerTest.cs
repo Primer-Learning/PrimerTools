@@ -1,5 +1,6 @@
 using Godot;
 using System.Collections.Generic;
+using System.Linq;
 using Godot.Collections;
 
 [Tool]
@@ -8,7 +9,12 @@ public partial class PhysicsServerTest : Node3D
 	[Export] private int _maxNumSteps = 6;
 	private int _stepsSoFar = 0;
 	
-	private readonly List<Rid> _rids = new();
+	private readonly List<Rid> _areaRIDs = new();
+	private readonly List<Rid> _shapeRIDs = new();
+	private readonly List<Rid> _meshRIDs = new();
+	private readonly List<Rid> _visInstanceIDs = new();
+	
+	private readonly System.Collections.Generic.Dictionary<Rid, Rid> _areaVisualInstancePairs = new (); 
 	
 	#region Running toggle
 	private bool _running;
@@ -59,6 +65,7 @@ public partial class PhysicsServerTest : Node3D
 	private void Initialize()
 	{
 		PhysicsServer3D.SetActive(true);
+		Engine.PhysicsTicksPerSecond = 2;
 		var space = GetWorld3D().Space;
 		
 		// Make two areas
@@ -69,14 +76,14 @@ public partial class PhysicsServerTest : Node3D
 	private void Step()
 	{
 		GD.Print("Step");
-		if (_rids.Count == 0)
+		if (_areaRIDs.Count == 0)
 		{
 			GD.Print("No RIDs found to act on. Stopping.");
 			Running = false;
 			return;
 		}
 		
-		var area = _rids[0];
+		var area = _areaRIDs[0];
 		
 		var intersectionData = DetectCollisionsWithArea(area);
 		GD.Print($"Intersections: {intersectionData.Count}");
@@ -90,30 +97,9 @@ public partial class PhysicsServerTest : Node3D
 			PhysicsServer3D.AreaGetTransform(area) == Transform3D.Identity
 				? Transform3D.Identity.Translated(Vector3.Right * 10)
 				: Transform3D.Identity);
-
-		// // Set up query to check intersections with first area
-		// // There should be one intersection (the second area)
-		// var queryParams = new PhysicsShapeQueryParameters3D();
-		// queryParams.CollideWithAreas = true;
-		// queryParams.ShapeRid = PhysicsServer3D.AreaGetShape(area, 0);
-		// queryParams.Transform = PhysicsServer3D.AreaGetTransform(area);
-
-		// Run query and print
 		
-		
-		//
-		// // PhysicsServer3D.AreaSetTransform(area, Transform3D.Identity.Translated(10 * Vector3.Right));
-		// queryParams = new PhysicsShapeQueryParameters3D();
-		// queryParams.CollideWithAreas = true;
-		// queryParams.ShapeRid = PhysicsServer3D.AreaGetShape(area2, 0);
-		// queryParams.Transform = PhysicsServer3D.AreaGetTransform(area2);
-		//
-		// intersectionData = PhysicsServer3D.SpaceGetDirectState(space).IntersectShape(queryParams);
-		// GD.Print($"Intersections: {intersectionData.Count}");
-		// intersectionData = PhysicsServer3D.SpaceGetDirectState(space).IntersectShape(queryParams);
-		// GD.Print($"Intersections: {intersectionData.Count}");
-		// intersectionData = PhysicsServer3D.SpaceGetDirectState(space).IntersectShape(queryParams);
-		// GD.Print($"Intersections: {intersectionData.Count}");
+		RenderingServer.InstanceSetTransform(_areaVisualInstancePairs[area],
+			PhysicsServer3D.AreaGetTransform(area));	
 	}
 	public override void _PhysicsProcess(double delta)
 	{
@@ -148,7 +134,7 @@ public partial class PhysicsServerTest : Node3D
 	{
 		// Create the area and put it in the physics space
 		var area = PhysicsServer3D.AreaCreate();
-		_rids.Add(area);
+		_areaRIDs.Add(area);
 		// PhysicsServer3D.AreaSetMonitorable(area, true);
 		PhysicsServer3D.AreaSetSpace(area, space);
 		
@@ -158,12 +144,19 @@ public partial class PhysicsServerTest : Node3D
 		
 		// Add a box collision shape to it
 		var shape = PhysicsServer3D.BoxShapeCreate();
-		_rids.Add(shape);
+		_shapeRIDs.Add(shape);
 		PhysicsServer3D.ShapeSetData(shape, boxSize);
-		var shapeData = PhysicsServer3D.ShapeGetData(shape);
+		// var shapeData = PhysicsServer3D.ShapeGetData(shape);
 		// Add the shape to the area and center it.
 		PhysicsServer3D.AreaAddShape(area, shape, Transform3D.Identity.Translated(-boxSize / 2));
 
+		var box = new BoxMesh().GetRid();
+		_meshRIDs.Add(box);
+		var visInstance = RenderingServer.InstanceCreate2(box, GetWorld3D().Scenario);
+		_visInstanceIDs.Add(visInstance);
+		_areaVisualInstancePairs.Add(area, visInstance);
+		RenderingServer.InstanceSetTransform(visInstance, Transform3D.Identity);
+		
 		GD.Print($"Made an area with RID {area} and shape RID {shape}");
 		return area;
 	}
@@ -171,12 +164,19 @@ public partial class PhysicsServerTest : Node3D
 	{
 		_stepsSoFar = 0;
 		
-		GD.Print($"Freeing {_rids.Count} RIDs.");
-		foreach (var rid in _rids)
+		GD.Print($"Freeing {_areaRIDs.Count} RIDs.");
+		foreach (var rid in _areaRIDs.Concat(_shapeRIDs))
 		{
 			PhysicsServer3D.FreeRid(rid);
 		}
-		_rids.Clear();
+		foreach (var rid in _meshRIDs.Concat(_visInstanceIDs))
+		{
+			RenderingServer.FreeRid(rid);
+		}
+		_areaRIDs.Clear();
+		_shapeRIDs.Clear();
+		_meshRIDs.Clear();
+		_visInstanceIDs.Clear();
 	}
 	private void HardCleanup()
 	{
@@ -205,7 +205,7 @@ public partial class PhysicsServerTest : Node3D
 		GD.Print($"Found and deleted {intersectionData.Count} area rids and their shapes.");
 		
 		PhysicsServer3D.FreeRid(area);
-		_rids.Clear();
+		_areaRIDs.Clear();
 	}
 	public override void _Ready()
 	{
