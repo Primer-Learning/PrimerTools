@@ -27,7 +27,6 @@ public partial class BlobAnimationTree : SelfBuildingAnimationTree
 		// Make the MOUTH state machine
 		var mouthStateMachine = CreateOmniconnectedStateMachine("MOUTH", false);
 		
-		// Unsure whether I need to clear the old state machine. Probably not?
 		topLevelBlendTree.AddNode("BODY", bodyStateMachine);
 		topLevelBlendTree.SetNodePosition("BODY", new Vector2(-400, -300));
 		topLevelBlendTree.AddNode("MOUTH", mouthStateMachine);

@@ -2,6 +2,7 @@ using Godot;
 using System.Collections.Generic;
 using System.Linq;
 using Godot.Collections;
+using PrimerTools;
 
 [Tool]
 public partial class PhysicsServerTest : Node3D
@@ -13,6 +14,7 @@ public partial class PhysicsServerTest : Node3D
 	private readonly List<Rid> _shapeRIDs = new();
 	private readonly List<Rid> _meshRIDs = new();
 	private readonly List<Rid> _visInstanceIDs = new();
+	private Rng _rng = new (0);
 	
 	private readonly System.Collections.Generic.Dictionary<Rid, Rid> _areaVisualInstancePairs = new (); 
 	
@@ -65,14 +67,15 @@ public partial class PhysicsServerTest : Node3D
 	private void Initialize()
 	{
 		PhysicsServer3D.SetActive(true);
-		Engine.PhysicsTicksPerSecond = 2;
+		Engine.PhysicsTicksPerSecond = 10;
 		var space = GetWorld3D().Space;
 		
 		// Make two areas
 		MakeBoxArea(space);
 		MakeBoxArea(space);
 	}
-	
+
+	#region Physics
 	private void Step()
 	{
 		GD.Print("Step");
@@ -93,10 +96,14 @@ public partial class PhysicsServerTest : Node3D
 		}
 		
 		// If identity transform, move it to x = 10. Otherwise, move it to the origin. 
-		PhysicsServer3D.AreaSetTransform(area,
-			PhysicsServer3D.AreaGetTransform(area) == Transform3D.Identity
-				? Transform3D.Identity.Translated(Vector3.Right * 10)
-				: Transform3D.Identity);
+		// PhysicsServer3D.AreaSetTransform(area,
+		// 	PhysicsServer3D.AreaGetTransform(area) == Transform3D.Identity
+		// 		? Transform3D.Identity.Translated(Vector3.Right * 10)
+		// 		: Transform3D.Identity);
+		
+		var displacement = new Vector3(_rng.RangeFloat(-1, 1), 0, _rng.RangeFloat(-1, 1));
+		
+		PhysicsServer3D.AreaSetTransform(area, PhysicsServer3D.AreaGetTransform(area).Translated(displacement));
 		
 		RenderingServer.InstanceSetTransform(_areaVisualInstancePairs[area],
 			PhysicsServer3D.AreaGetTransform(area));	
@@ -126,6 +133,9 @@ public partial class PhysicsServerTest : Node3D
 		// Run query and print
 		return PhysicsServer3D.SpaceGetDirectState(GetWorld3D().Space).IntersectShape(queryParams);
 	}
+	#endregion
+
+	#region Object creation
 	private Rid MakeBoxArea(Rid space)
 	{
 		return MakeBoxArea(space, Vector3.One);
@@ -160,6 +170,9 @@ public partial class PhysicsServerTest : Node3D
 		GD.Print($"Made an area with RID {area} and shape RID {shape}");
 		return area;
 	}
+	#endregion
+
+	#region Cleanup
 	private void Reset()
 	{
 		_stepsSoFar = 0;
@@ -207,9 +220,5 @@ public partial class PhysicsServerTest : Node3D
 		PhysicsServer3D.FreeRid(area);
 		_areaRIDs.Clear();
 	}
-	public override void _Ready()
-	{
-		PhysicsServer3D.SetActive(true);
-		// CreateAreasAndQueryIntersectionsTest();
-	}
+	#endregion
 }
