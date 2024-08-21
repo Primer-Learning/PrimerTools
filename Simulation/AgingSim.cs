@@ -49,18 +49,18 @@ public partial class AgingSim : Node3D
 			_running = value;
 		}
 	}
-	private bool _cleanUpButton = true;
+	private bool _resetUpButton = true;
 	[Export]
-	private bool CleanupButton
+	private bool ResetButton
 	{
-		get => _cleanUpButton;
+		get => _resetUpButton;
 		set
 		{
-			if (!value && _cleanUpButton && Engine.IsEditorHint())
+			if (!value && _resetUpButton && Engine.IsEditorHint())
 			{
 				Reset();
 			}
-			_cleanUpButton = true;
+			_resetUpButton = true;
 		}
 	}
 
@@ -75,8 +75,8 @@ public partial class AgingSim : Node3D
 	[Export] private int _seed = -1;
 	[Export] private int _initialBlobCount = 4;
 	[Export] private Vector2 _worldDimensions = Vector2.One * 10;
-	[Export] private int _reproductionRatePer10k;
-	[Export] private int _deathRatePer10k;
+	[Export] private int _reproductionRatePer10K;
+	[Export] private int _deathRatePer10K;
 	[Export] private int _maxNumSteps = 100;
 	[Export] private int _stepsPerSecond = 10;
 	private int _stepsSoFar = 0;
@@ -96,11 +96,12 @@ public partial class AgingSim : Node3D
 		private EntityID _nextId;
 
 		// Rids used for the entities in the physics and rendering systems
-		public readonly List<(Rid area, Rid visualInstance)> Entities = new();
+		public readonly List<(Rid area, Rid mesh, Rid extraMesh, float awarenessRange)> Entities = new();
 		// Rids not gettable from the main entity Rids. Only tracked for cleanup.
 		// So far, just meshes.
+		// ReSharper disable once InconsistentNaming
 		public readonly List<Rid> OtherRenderingRIDs = new();
-		public EntityID CreateBlob(Vector3 position, float radius, World3D world3D, bool render)
+		public EntityID CreateCreature(Vector3 position, float radius, World3D world3D, bool render)
 		{
 			var id = _nextId++;
 			
@@ -111,31 +112,95 @@ public partial class AgingSim : Node3D
 			var transform = Transform3D.Identity.Translated(position);
 			PhysicsServer3D.AreaSetTransform(area, transform);
 			// Add a sphere collision shape to it
+			
+			// Awareness physics object
 			var shape = PhysicsServer3D.SphereShapeCreate();
 			PhysicsServer3D.ShapeSetData(shape, radius);
-			PhysicsServer3D.AreaAddShape(area, shape); //, Transform3D.Identity.Translated(-boxSize / 2));
-
-			Rid visInstance;
-			// Mesh and visual instance 
+			PhysicsServer3D.AreaAddShape(area, shape);
+			
+			Rid bodyMesh = default;
+			Rid awarenessMesh = default;
+			// Mesh and visual instance
 			if (render)
 			{
-				var sphere = new SphereMesh();
-				sphere.Radius = radius;
-				sphere.Height = 2 * radius;
-				OtherRenderingRIDs.Add(sphere.GetRid());
+				// Body
+				var bodyCapsule = new CapsuleMesh();
+				bodyCapsule.Height = 1;
+				bodyCapsule.Radius = 0.25f;
+				OtherRenderingRIDs.Add(bodyCapsule.GetRid());
+
+				bodyMesh = RenderingServer.InstanceCreate2(bodyCapsule.GetRid(), world3D.Scenario);
+				RenderingServer.InstanceSetTransform(bodyMesh, transform);
 				
-				visInstance = RenderingServer.InstanceCreate2(sphere.GetRid(), world3D.Scenario);
-				RenderingServer.InstanceSetTransform(visInstance, Transform3D.Identity);
-			}
-			else
-			{
-				visInstance = default;
+				// Awareness
+				awarenessMesh = RenderingServer.InstanceCreate2(AwarenessBubbleMesh.GetRid(), world3D.Scenario);
+				transform.ScaledLocal(Vector3.One * radius);
+				RenderingServer.InstanceSetTransform(awarenessMesh, transform);
 			}
 			
-			
-			Entities.Add((area, visInstance));
+			Entities.Add((area, bodyMesh, awarenessMesh, radius));
 			return id;
 		}
+
+		// public EntityID CreateFood(Vector3 position, World3D world3D, bool render)
+		// {
+		// 	var id = _nextId++;
+		// 	var radius = 0.5f;
+		// 	
+		// 	// Create the area for the blob's awareness and put it in the physics space
+		// 	var area = PhysicsServer3D.AreaCreate();
+		// 	// PhysicsServer3D.AreaSetMonitorable(area, true);
+		// 	PhysicsServer3D.AreaSetSpace(area, world3D.Space);
+		// 	var transform = Transform3D.Identity.Translated(position);
+		// 	PhysicsServer3D.AreaSetTransform(area, transform);
+		// 	// Add a sphere collision shape to it
+		// 	var shape = PhysicsServer3D.SphereShapeCreate();
+		// 	PhysicsServer3D.ShapeSetData(shape, radius);
+		// 	PhysicsServer3D.AreaAddShape(area, shape); //, Transform3D.Identity.Translated(-boxSize / 2));
+		//
+		// 	Rid visInstance;
+		// 	// Mesh and visual instance 
+		// 	if (render)
+		// 	{
+		// 		var sphere = new SphereMesh();
+		// 		sphere.Radius = radius;
+		// 		sphere.Height = 2 * radius;
+		// 		OtherRenderingRIDs.Add(sphere.GetRid());
+		// 		
+		// 		visInstance = RenderingServer.InstanceCreate2(sphere.GetRid(), world3D.Scenario);
+		// 		RenderingServer.InstanceSetTransform(visInstance, Transform3D.Identity);
+		// 	}
+		// 	else
+		// 	{
+		// 		visInstance = default;
+		// 	}
+		// 	
+		// 	
+		// 	Entities.Add((area, visInstance));
+		// 	return id;
+		// }
+		
+		#region Object prep
+
+		private SphereMesh _cachedAwarenessBubbleMesh;
+		private SphereMesh AwarenessBubbleMesh {
+			get
+			{
+				if (_cachedAwarenessBubbleMesh != null) return _cachedAwarenessBubbleMesh;
+
+				_cachedAwarenessBubbleMesh = new SphereMesh();
+				
+				var mat = new StandardMaterial3D();
+				mat.Transparency = BaseMaterial3D.TransparencyEnum.Alpha;
+				mat.AlbedoColor = new Color(1, 1, 1, 0.25f);
+
+				_cachedAwarenessBubbleMesh.Material = mat;
+
+				return _cachedAwarenessBubbleMesh;
+			}
+		}
+
+		#endregion
 	}
 	#endregion
 
@@ -155,13 +220,13 @@ public partial class AgingSim : Node3D
 		for (var i = 0; i < _initialBlobCount; i++)
 		{
 			_livingEntityIDs.Add(
-				Registry.CreateBlob(
+				Registry.CreateCreature(
 					new Vector3(
 						_rng.RangeFloat(_worldDimensions.X),
 						0,
 						_rng.RangeFloat(_worldDimensions.Y)
 					),
-					0.5f,
+					2,
 					world,
 					_render
 				)
@@ -179,7 +244,6 @@ public partial class AgingSim : Node3D
 		}
 
 		// Do detections, then updates
-
 		var newBlobs = new List<EntityID>();
 		var dedBlobs = new List<EntityID>();
 
@@ -196,19 +260,19 @@ public partial class AgingSim : Node3D
 			PhysicsServer3D.AreaSetTransform(entity.area, transform);
 			
 			// Check for baybies
-			if (_rng.rand.NextDouble() < (double)_reproductionRatePer10k / 10000)
+			if (_rng.rand.NextDouble() < (double)_reproductionRatePer10K / 10000)
 			{
 				newBlobs.Add(
-					Registry.CreateBlob(
+					Registry.CreateCreature(
 						transform.Origin,
-						0.5f,
+						2,
 						GetWorld3D(),
 						_render
 					)
 				);
 			}
 			// Check for ded
-			if (_rng.rand.NextDouble() < (double)_deathRatePer10k / 10000)
+			if (_rng.rand.NextDouble() < (double)_deathRatePer10K / 10000)
 			{
 				dedBlobs.Add(entityID);
 			}
@@ -252,7 +316,8 @@ public partial class AgingSim : Node3D
 		{
 			var entity = Registry.Entities[entityID];
 			var transform = PhysicsServer3D.AreaGetTransform(entity.area);
-			RenderingServer.InstanceSetTransform(entity.visualInstance, transform);
+			RenderingServer.InstanceSetTransform(entity.mesh, transform);
+			RenderingServer.InstanceSetTransform(entity.extraMesh, transform.ScaledLocal(entity.awarenessRange * Vector3.One));
 		}
 	}
 
@@ -268,7 +333,7 @@ public partial class AgingSim : Node3D
 	}
 	#endregion
 
-	#region Cleanup
+	#region Reset
 	private void Reset()
 	{
 		_stepsSoFar = 0;
@@ -280,7 +345,8 @@ public partial class AgingSim : Node3D
 				PhysicsServer3D.FreeRid(PhysicsServer3D.AreaGetShape(entity.area, i));
 			}
 			PhysicsServer3D.FreeRid(entity.area);
-			RenderingServer.FreeRid(entity.visualInstance);
+			RenderingServer.FreeRid(entity.mesh);
+			RenderingServer.FreeRid(entity.extraMesh);
 		}
 		foreach (var rid in Registry.OtherRenderingRIDs)
 		{
