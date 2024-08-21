@@ -1,5 +1,7 @@
+using System;
 using Godot;
 using System.Collections.Generic;
+using System.Diagnostics;
 using SCG = System.Collections.Generic;
 using System.Linq;
 using Godot.Collections;
@@ -10,19 +12,8 @@ using EntityID = System.Int32;
 [Tool]
 public partial class AgingSim : Node3D
 {
-    [Export] private int _maxNumSteps = 6;
-	private int _stepsSoFar = 0;
-	[Export] private int _ticksPerSecond = 10;
-	[Export] private bool _render;
-	
-	#region Sim parameters
-	private Rng _rng;
-	[Export] private int _seed = -1;
-	[Export] private int _initialBlobCount = 4;
-	[Export] private Vector2 _worldDimensions = Vector2.One * 10;
-	#endregion
-	
 	#region Editor controls
+	// [ExportGroup("Controls")]
 	private bool _running;
 	[Export]
 	private bool Running
@@ -30,7 +21,6 @@ public partial class AgingSim : Node3D
 		get => _running;
 		set
 		{
-			_running = value;
 			if (value)
 			{
 				if (_stepsSoFar >= _maxNumSteps) Reset();
@@ -44,12 +34,19 @@ public partial class AgingSim : Node3D
 					GD.Print($"Continuing sim after step {_stepsSoFar}");
 				}
 			}
-			else
+			else if (_running) // This is here so we only do this when stopping a running sim. Not when this gets called on build.
 			{
 				GD.Print($"Stopping sim after step {_stepsSoFar}");
 				_stepsSoFar = 0;
+				if (_stopwatch != null)
+				{
+					_stopwatch.Stop();
+					GD.Print($"Elapsed time: {_stopwatch.Elapsed}");
+				}
 				Reset();
 			}
+			
+			_running = value;
 		}
 	}
 	private bool _cleanUpButton = true;
@@ -59,7 +56,6 @@ public partial class AgingSim : Node3D
 		get => _cleanUpButton;
 		set
 		{
-			GD.Print("running");
 			if (!value && _cleanUpButton && Engine.IsEditorHint())
 			{
 				Reset();
@@ -68,12 +64,27 @@ public partial class AgingSim : Node3D
 		}
 	}
 
+	[Export] private bool _render;
 	[Export] private bool _verbose;
+	private Stopwatch _stopwatch;
+	#endregion
+	
+	#region Sim parameters
+	// [ExportGroup("Parameters")]
+	private Rng _rng;
+	[Export] private int _seed = -1;
+	[Export] private int _initialBlobCount = 4;
+	[Export] private Vector2 _worldDimensions = Vector2.One * 10;
+	[Export] private int _reproductionRatePer10k;
+	[Export] private int _deathRatePer10k;
+	[Export] private int _maxNumSteps = 100;
+	[Export] private int _stepsPerSecond = 10;
+	private int _stepsSoFar = 0;
 	#endregion
 	
 	#region Entity Registry
 
-	public readonly EntityRegistry Registry = new();
+	public EntityRegistry Registry = new();
 	public class EntityRegistry
 	{
 		// Currently, this uses simple integers for EntityIDs.
@@ -83,23 +94,20 @@ public partial class AgingSim : Node3D
 		// But not currently sure whether that will make things faster or easier to understand.
 		
 		private EntityID _nextId;
+
 		// Rids used for the entities in the physics and rendering systems
-		// TODO: Separate these into their own lists. Rendering should be optional.
 		public readonly List<(Rid area, Rid visualInstance)> Entities = new();
 		// Rids not gettable from the main entity Rids. Only tracked for cleanup.
 		// So far, just meshes.
 		public readonly List<Rid> OtherRenderingRIDs = new();
-		public readonly List<Vector3> Positions = new();
 		public EntityID CreateBlob(Vector3 position, float radius, World3D world3D, bool render)
 		{
 			var id = _nextId++;
-			Positions.Add(position);
 			
 			// Create the area for the blob's awareness and put it in the physics space
 			var area = PhysicsServer3D.AreaCreate();
 			// PhysicsServer3D.AreaSetMonitorable(area, true);
 			PhysicsServer3D.AreaSetSpace(area, world3D.Space);
-			// Haven't looked at all the ways to declare a transform. Could be something better?
 			var transform = Transform3D.Identity.Translated(position);
 			PhysicsServer3D.AreaSetTransform(area, transform);
 			// Add a sphere collision shape to it
@@ -133,18 +141,20 @@ public partial class AgingSim : Node3D
 
 	#region Simulation
 
-	private List<EntityID> _livingEntities;
+	private List<EntityID> _livingEntityIDs = new();
 	private void Initialize()
 	{
+		_stopwatch = Stopwatch.StartNew();
+		
 		_rng = new Rng(_seed == -1 ? System.Environment.TickCount : _seed);
 		PhysicsServer3D.SetActive(true);
-		Engine.PhysicsTicksPerSecond = _ticksPerSecond;
+		Engine.PhysicsTicksPerSecond = _stepsPerSecond;
 		var world = GetWorld3D();
 
-		_livingEntities = new();
+		_livingEntityIDs.Clear();
 		for (var i = 0; i < _initialBlobCount; i++)
 		{
-			_livingEntities.Add(
+			_livingEntityIDs.Add(
 				Registry.CreateBlob(
 					new Vector3(
 						_rng.RangeFloat(_worldDimensions.X),
@@ -169,15 +179,44 @@ public partial class AgingSim : Node3D
 		}
 
 		// Do detections, then updates
-		// Because the physics system does not immediately update
 
-		for (var i = 0; i < _livingEntities.Count; i++)
+		var newBlobs = new List<EntityID>();
+		var dedBlobs = new List<EntityID>();
+
+		// Process them one at a time. Eventually it may make sense to go in stages.
+		foreach (var entityID in _livingEntityIDs)
 		{
-			var entity = Registry.Entities[i];
+			// GD.Print(entityID);
+			var entity = Registry.Entities[entityID];
+			// Move
 			var displacement = new Vector3(_rng.RangeFloat(-1, 1), 0, _rng.RangeFloat(-1, 1));
+			
+			// This gets the position from the physics server
 			var transform = PhysicsServer3D.AreaGetTransform(entity.area).Translated(displacement);
 			PhysicsServer3D.AreaSetTransform(entity.area, transform);
-			RenderingServer.InstanceSetTransform(entity.visualInstance, transform);	
+			
+			// Check for baybies
+			if (_rng.rand.NextDouble() < (double)_reproductionRatePer10k / 10000)
+			{
+				newBlobs.Add(
+					Registry.CreateBlob(
+						transform.Origin,
+						0.5f,
+						GetWorld3D(),
+						_render
+					)
+				);
+			}
+			// Check for ded
+			if (_rng.rand.NextDouble() < (double)_deathRatePer10k / 10000)
+			{
+				dedBlobs.Add(entityID);
+			}
+		}
+		_livingEntityIDs.AddRange(newBlobs);
+		foreach (var blob in dedBlobs)
+		{
+			_livingEntityIDs.Remove(blob);
 		}
 		
 		if (!_verbose) return;
@@ -203,6 +242,20 @@ public partial class AgingSim : Node3D
 		Step();
 		_stepsSoFar++;
 	}
+
+	public override void _Process(double delta)
+	{
+		// GD.Print("pros");
+		if (!_running || !_render) return;
+		// GD.Print("ess");
+		foreach (var entityID in _livingEntityIDs)
+		{
+			var entity = Registry.Entities[entityID];
+			var transform = PhysicsServer3D.AreaGetTransform(entity.area);
+			RenderingServer.InstanceSetTransform(entity.visualInstance, transform);
+		}
+	}
+
 	private Array<Dictionary> DetectCollisionsWithArea(Rid area)
 	{
 		var queryParams = new PhysicsShapeQueryParameters3D();
@@ -233,8 +286,10 @@ public partial class AgingSim : Node3D
 		{
 			RenderingServer.FreeRid(rid);
 		}
-		Registry.Entities.Clear();
-		Registry.OtherRenderingRIDs.Clear();
+
+		Registry = new();
+		// Registry.Entities.Clear();
+		// Registry.OtherRenderingRIDs.Clear();
 		
 		HardCleanup();
 	}
@@ -268,11 +323,8 @@ public partial class AgingSim : Node3D
 			}
 			PhysicsServer3D.FreeRid(areaRID);
 		}
-		GD.Print($"Found and deleted {intersectionData.Count} area rids and their shapes.");
-		
-		// May be redundant
-		// PhysicsServer3D.FreeRid(area);
-		// PhysicsServer3D.FreeRid(PhysicsServer3D.AreaGetShape(area, 0));
+		// The -1 is because it detects collisions with itself
+		GD.Print($"Found and deleted {intersectionData.Count - 1} area rids and their shapes.");
 	}
 	#endregion
 }
