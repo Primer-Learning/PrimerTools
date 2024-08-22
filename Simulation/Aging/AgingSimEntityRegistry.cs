@@ -27,11 +27,11 @@ public class AgingSimEntityRegistry
 		var area = PhysicsServer3D.AreaCreate();
 		// PhysicsServer3D.AreaSetMonitorable(area, true);
 		PhysicsServer3D.AreaSetSpace(area, world3D.Space);
-		var transform = Transform3D.Identity.Translated(position).ScaledLocal(radius * Vector3.One);
+		var transform = Transform3D.Identity.Translated(position);
 		PhysicsServer3D.AreaSetTransform(area, transform);
 		// Add a sphere collision shape to it
 		var shape = PhysicsServer3D.SphereShapeCreate();
-		PhysicsServer3D.ShapeSetData(shape, radius);
+		PhysicsServer3D.ShapeSetData(shape, radius); // Radius is 
 		PhysicsServer3D.AreaAddShape(area, shape);
 		// OtherRenderingRIDs.Add(shape);
 		
@@ -49,8 +49,16 @@ public class AgingSimEntityRegistry
 			RenderingServer.InstanceSetTransform(bodyMesh, transform);
 			
 			// Awareness
-			awarenessMesh = RenderingServer.InstanceCreate2(AwarenessBubbleMesh.GetRid(), world3D.Scenario);
-			transform.ScaledLocal(Vector3.One * radius);
+			// Just use the cached mesh if radius is one. Otherwise, duplicate and resize.
+			Resource thisMesh;
+			if (radius == 1) thisMesh = AwarenessBubbleMesh;
+			else
+			{
+				thisMesh = AwarenessBubbleMesh.Duplicate();
+				((SphereMesh)thisMesh).Radius = radius;
+				((SphereMesh)thisMesh).Height = 2 * radius;
+			}
+			awarenessMesh = RenderingServer.InstanceCreate2(thisMesh.GetRid(), world3D.Scenario);
 			RenderingServer.InstanceSetTransform(awarenessMesh, transform);
 		}
 		

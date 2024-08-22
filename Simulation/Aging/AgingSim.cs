@@ -99,7 +99,7 @@ public partial class AgingSim : Node3D
 		{
 			_livingCreatureIDs.Add(
 				Registry.CreateCreature(
-					Vector3.Right * 10,
+					Vector3.Right * 20,
 					// Random option
 					// new Vector3(
 					// 	_rng.RangeFloat(_worldDimensions.X),
@@ -140,6 +140,7 @@ public partial class AgingSim : Node3D
 			
 		    // Do detections, then updates
 		    var intersectionData = DetectCollisionsWithArea(entity.area);
+		    GD.Print(intersectionData.Count);
 		    foreach (var intersection in intersectionData)
 		    {
 			    
@@ -164,6 +165,7 @@ public partial class AgingSim : Node3D
 			// GD.Print(entityID);
 			// Move
 			// var displacement = new Vector3(_rng.RangeFloat(-1, 1), 0, _rng.RangeFloat(-1, 1));
+			// var displacement = Vector3.Zero;
 			var displacement = Vector3.Left;
 			
 			// This gets the position from the physics server
@@ -228,7 +230,7 @@ public partial class AgingSim : Node3D
 			var entity = Registry.Entities[entityID];
 			var transform = PhysicsServer3D.AreaGetTransform(entity.area);
 			RenderingServer.InstanceSetTransform(entity.mesh, transform);
-			RenderingServer.InstanceSetTransform(entity.extraMesh, transform.ScaledLocal(entity.awarenessRange * Vector3.One));
+			RenderingServer.InstanceSetTransform(entity.extraMesh, transform);
 		}
 	}
 
