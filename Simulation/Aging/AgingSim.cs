@@ -1,11 +1,8 @@
-using System;
 using Godot;
 using System.Collections.Generic;
 using System.Diagnostics;
-using SCG = System.Collections.Generic;
-using System.Linq;
+using Aging.addons.PrimerTools.Simulation.Aging;
 using Godot.Collections;
-using GC = Godot.Collections;
 using PrimerTools;
 using EntityID = System.Int32;
 
@@ -82,131 +79,12 @@ public partial class AgingSim : Node3D
 	private int _stepsSoFar = 0;
 	#endregion
 	
-	#region Entity Registry
-
-	public EntityRegistry Registry = new();
-	public class EntityRegistry
-	{
-		// Currently, this uses simple integers for EntityIDs.
-		// And all entity properties are stored in lists, where the index of the
-		// list item corresponds to the EntityID of the entity the property belongs to
-		// This could be refactored away, since the RIDs exist in godot's servers.
-		// But not currently sure whether that will make things faster or easier to understand.
-		
-		private EntityID _nextId;
-
-		// Rids used for the entities in the physics and rendering systems
-		public readonly List<(Rid area, Rid mesh, Rid extraMesh, float awarenessRange)> Entities = new();
-		// Rids not gettable from the main entity Rids. Only tracked for cleanup.
-		// So far, just meshes.
-		// ReSharper disable once InconsistentNaming
-		public readonly List<Rid> OtherRenderingRIDs = new();
-		public EntityID CreateCreature(Vector3 position, float radius, World3D world3D, bool render)
-		{
-			var id = _nextId++;
-			
-			// Create the area for the blob's awareness and put it in the physics space
-			var area = PhysicsServer3D.AreaCreate();
-			// PhysicsServer3D.AreaSetMonitorable(area, true);
-			PhysicsServer3D.AreaSetSpace(area, world3D.Space);
-			var transform = Transform3D.Identity.Translated(position);
-			PhysicsServer3D.AreaSetTransform(area, transform);
-			// Add a sphere collision shape to it
-			
-			// Awareness physics object
-			var shape = PhysicsServer3D.SphereShapeCreate();
-			PhysicsServer3D.ShapeSetData(shape, radius);
-			PhysicsServer3D.AreaAddShape(area, shape);
-			
-			Rid bodyMesh = default;
-			Rid awarenessMesh = default;
-			// Mesh and visual instance
-			if (render)
-			{
-				// Body
-				var bodyCapsule = new CapsuleMesh();
-				bodyCapsule.Height = 1;
-				bodyCapsule.Radius = 0.25f;
-				OtherRenderingRIDs.Add(bodyCapsule.GetRid());
-
-				bodyMesh = RenderingServer.InstanceCreate2(bodyCapsule.GetRid(), world3D.Scenario);
-				RenderingServer.InstanceSetTransform(bodyMesh, transform);
-				
-				// Awareness
-				awarenessMesh = RenderingServer.InstanceCreate2(AwarenessBubbleMesh.GetRid(), world3D.Scenario);
-				transform.ScaledLocal(Vector3.One * radius);
-				RenderingServer.InstanceSetTransform(awarenessMesh, transform);
-			}
-			
-			Entities.Add((area, bodyMesh, awarenessMesh, radius));
-			return id;
-		}
-
-		// public EntityID CreateFood(Vector3 position, World3D world3D, bool render)
-		// {
-		// 	var id = _nextId++;
-		// 	var radius = 0.5f;
-		// 	
-		// 	// Create the area for the blob's awareness and put it in the physics space
-		// 	var area = PhysicsServer3D.AreaCreate();
-		// 	// PhysicsServer3D.AreaSetMonitorable(area, true);
-		// 	PhysicsServer3D.AreaSetSpace(area, world3D.Space);
-		// 	var transform = Transform3D.Identity.Translated(position);
-		// 	PhysicsServer3D.AreaSetTransform(area, transform);
-		// 	// Add a sphere collision shape to it
-		// 	var shape = PhysicsServer3D.SphereShapeCreate();
-		// 	PhysicsServer3D.ShapeSetData(shape, radius);
-		// 	PhysicsServer3D.AreaAddShape(area, shape); //, Transform3D.Identity.Translated(-boxSize / 2));
-		//
-		// 	Rid visInstance;
-		// 	// Mesh and visual instance 
-		// 	if (render)
-		// 	{
-		// 		var sphere = new SphereMesh();
-		// 		sphere.Radius = radius;
-		// 		sphere.Height = 2 * radius;
-		// 		OtherRenderingRIDs.Add(sphere.GetRid());
-		// 		
-		// 		visInstance = RenderingServer.InstanceCreate2(sphere.GetRid(), world3D.Scenario);
-		// 		RenderingServer.InstanceSetTransform(visInstance, Transform3D.Identity);
-		// 	}
-		// 	else
-		// 	{
-		// 		visInstance = default;
-		// 	}
-		// 	
-		// 	
-		// 	Entities.Add((area, visInstance));
-		// 	return id;
-		// }
-		
-		#region Object prep
-
-		private SphereMesh _cachedAwarenessBubbleMesh;
-		private SphereMesh AwarenessBubbleMesh {
-			get
-			{
-				if (_cachedAwarenessBubbleMesh != null) return _cachedAwarenessBubbleMesh;
-
-				_cachedAwarenessBubbleMesh = new SphereMesh();
-				
-				var mat = new StandardMaterial3D();
-				mat.Transparency = BaseMaterial3D.TransparencyEnum.Alpha;
-				mat.AlbedoColor = new Color(1, 1, 1, 0.25f);
-
-				_cachedAwarenessBubbleMesh.Material = mat;
-
-				return _cachedAwarenessBubbleMesh;
-			}
-		}
-
-		#endregion
-	}
-	#endregion
+	public AgingSimEntityRegistry Registry = new();
 
 	#region Simulation
 
-	private List<EntityID> _livingEntityIDs = new();
+	private List<EntityID> _livingCreatureIDs = new();
+	private List<EntityID> _liveFoodIDs = new();
 	private void Initialize()
 	{
 		_stopwatch = Stopwatch.StartNew();
@@ -216,22 +94,31 @@ public partial class AgingSim : Node3D
 		Engine.PhysicsTicksPerSecond = _stepsPerSecond;
 		var world = GetWorld3D();
 
-		_livingEntityIDs.Clear();
+		_livingCreatureIDs.Clear();
 		for (var i = 0; i < _initialBlobCount; i++)
 		{
-			_livingEntityIDs.Add(
+			_livingCreatureIDs.Add(
 				Registry.CreateCreature(
-					new Vector3(
-						_rng.RangeFloat(_worldDimensions.X),
-						0,
-						_rng.RangeFloat(_worldDimensions.Y)
-					),
-					2,
+					Vector3.Right * 10,
+					// Random option
+					// new Vector3(
+					// 	_rng.RangeFloat(_worldDimensions.X),
+					// 	0,
+					// 	_rng.RangeFloat(_worldDimensions.Y)
+					// ),
+					3,
 					world,
 					_render
 				)
 			);
 		}
+		_liveFoodIDs.Add(
+			Registry.CreateFood(
+				Vector3.Zero,
+				world,
+				_render
+			)
+		);
 	}
 
 	private void Step()
@@ -243,17 +130,41 @@ public partial class AgingSim : Node3D
 			return;
 		}
 
-		// Do detections, then updates
 		var newBlobs = new List<EntityID>();
 		var dedBlobs = new List<EntityID>();
 
 		// Process them one at a time. Eventually it may make sense to go in stages.
-		foreach (var entityID in _livingEntityIDs)
+		foreach (var entityID in _livingCreatureIDs)
 		{
-			// GD.Print(entityID);
 			var entity = Registry.Entities[entityID];
+			
+		    // Do detections, then updates
+		    var intersectionData = DetectCollisionsWithArea(entity.area);
+		    foreach (var intersection in intersectionData)
+		    {
+			    
+			    // Find the EntityID of the intersecting object
+				var intersectionRID = (Rid) intersection["rid"];
+			    EntityID collisionEntityID = -1;
+			    for (var i = 0; i < Registry.Entities.Count; i++)
+			    {
+				    if (Registry.Entities[i].area != intersectionRID) continue;
+				    collisionEntityID = i;
+				    break;
+			    }
+			    
+			    if (collisionEntityID == -1) GD.PrintErr("Collided with something not in the entity registry");
+
+			    if (_liveFoodIDs.Contains(collisionEntityID))
+			    {
+				    GD.Print("FOOD");
+			    }
+		    }
+		    
+			// GD.Print(entityID);
 			// Move
-			var displacement = new Vector3(_rng.RangeFloat(-1, 1), 0, _rng.RangeFloat(-1, 1));
+			// var displacement = new Vector3(_rng.RangeFloat(-1, 1), 0, _rng.RangeFloat(-1, 1));
+			var displacement = Vector3.Left;
 			
 			// This gets the position from the physics server
 			var transform = PhysicsServer3D.AreaGetTransform(entity.area).Translated(displacement);
@@ -277,10 +188,10 @@ public partial class AgingSim : Node3D
 				dedBlobs.Add(entityID);
 			}
 		}
-		_livingEntityIDs.AddRange(newBlobs);
+		_livingCreatureIDs.AddRange(newBlobs);
 		foreach (var blob in dedBlobs)
 		{
-			_livingEntityIDs.Remove(blob);
+			_livingCreatureIDs.Remove(blob);
 		}
 		
 		if (!_verbose) return;
@@ -312,7 +223,7 @@ public partial class AgingSim : Node3D
 		// GD.Print("pros");
 		if (!_running || !_render) return;
 		// GD.Print("ess");
-		foreach (var entityID in _livingEntityIDs)
+		foreach (var entityID in _livingCreatureIDs)
 		{
 			var entity = Registry.Entities[entityID];
 			var transform = PhysicsServer3D.AreaGetTransform(entity.area);
