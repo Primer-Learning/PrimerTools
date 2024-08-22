@@ -5,93 +5,127 @@ namespace Aging.addons.PrimerTools.Simulation.Aging;
 
 public class AgingSimEntityRegistry
 {
-	// Currently, this uses simple integers for EntityIDs.
-	// And all entity properties are stored in lists, where the index of the
-	// list item corresponds to the EntityID of the entity the property belongs to
-	// This could be refactored away, since the RIDs exist in godot's servers.
-	// But not currently sure whether that will make things faster or easier to understand.
+	public World3D World3D;
 	
-	private EntityID _nextId;
-
-	// Rids used for the entities in the physics and rendering systems
-	public readonly List<(Rid area, Rid mesh, Rid extraMesh, float awarenessRange)> Entities = new();
-	// Rids not gettable from the main entity Rids. Only tracked for cleanup.
-	// So far, just meshes.
-	// ReSharper disable once InconsistentNaming
-	// public readonly List<Rid> OtherRenderingRIDs = new();
-	public EntityID CreateCreature(Vector3 position, float radius, World3D world3D, bool render)
+	public struct PhysicalCreature
 	{
-		var id = _nextId++;
-		
-		// Create the area for the blob's awareness and put it in the physics space
-		var area = PhysicsServer3D.AreaCreate();
-		// PhysicsServer3D.AreaSetMonitorable(area, true);
-		PhysicsServer3D.AreaSetSpace(area, world3D.Space);
-		var transform = Transform3D.Identity.Translated(position);
-		PhysicsServer3D.AreaSetTransform(area, transform);
-		// Add a sphere collision shape to it
-		var shape = PhysicsServer3D.SphereShapeCreate();
-		PhysicsServer3D.ShapeSetData(shape, radius); // Radius is 
-		PhysicsServer3D.AreaAddShape(area, shape);
-		// OtherRenderingRIDs.Add(shape);
-		
-		Rid bodyMesh = default;
-		Rid awarenessMesh = default;
-		// Mesh and visual instance
-		if (render)
-		{
-			// Body
-			var bodyCapsule = new CapsuleMesh();
-			bodyCapsule.Height = 1;
-			bodyCapsule.Radius = 0.25f;
+		public Rid Body;
+		public Rid Awareness;
+	}
+	public struct VisualCreature
+	{
+		public Rid BodyMesh;
+		public Rid AwarenessMesh;
+	}
+	public struct PhysicalFood
+	{
+		public Rid Body;
+	}
+	public struct VisualFood
+	{
+		public Rid BodyMesh;
+	}
+	
+	public readonly List<PhysicalCreature> PhysicalCreatures = new();
+	public readonly List<VisualCreature> VisualCreatures = new();
+	public readonly List<PhysicalFood> PhysicalFoods = new();
+	public readonly List<VisualFood> VisualFoods = new();
+	// public readonly List<(Rid area, Rid mesh, Rid extraMesh)> Entities = new();
 
-			bodyMesh = RenderingServer.InstanceCreate2(bodyCapsule.GetRid(), world3D.Scenario);
-			RenderingServer.InstanceSetTransform(bodyMesh, transform);
-			
-			// Awareness
-			// Just use the cached mesh if radius is one. Otherwise, duplicate and resize.
-			Resource thisMesh;
-			if (radius == 1) thisMesh = AwarenessBubbleMesh;
-			else
-			{
-				thisMesh = AwarenessBubbleMesh.Duplicate();
-				((SphereMesh)thisMesh).Radius = radius;
-				((SphereMesh)thisMesh).Height = 2 * radius;
-			}
-			awarenessMesh = RenderingServer.InstanceCreate2(thisMesh.GetRid(), world3D.Scenario);
-			RenderingServer.InstanceSetTransform(awarenessMesh, transform);
-		}
+	public readonly Dictionary<Rid, PhysicalFood> FoodLookup = new();
+	
+	public void CreateCreature(Vector3 position, float awarenessRadius, bool render)
+	{
+		var transform = Transform3D.Identity.Translated(position);
 		
-		Entities.Add((area, bodyMesh, awarenessMesh, radius));
-		return id;
+		// PhysicsServer3D stuff
+		var bodyArea = PhysicsServer3D.AreaCreate();
+		PhysicsServer3D.AreaSetSpace(bodyArea, World3D.Space);
+		PhysicsServer3D.AreaSetTransform(bodyArea, transform);
+		var bodyShape = new CapsuleShape3D();
+		bodyShape.Height = 1;
+		bodyShape.Radius = 0.25f;
+		PhysicsServer3D.AreaAddShape(bodyArea, bodyShape.GetRid());
+		
+		var awarenessArea = PhysicsServer3D.AreaCreate();
+		PhysicsServer3D.AreaSetSpace(awarenessArea, World3D.Space);
+		PhysicsServer3D.AreaSetTransform(awarenessArea, transform);
+		var awarenessShape = PhysicsServer3D.SphereShapeCreate();
+		PhysicsServer3D.ShapeSetData(awarenessShape, awarenessRadius);
+		PhysicsServer3D.AreaAddShape(awarenessArea, awarenessShape);
+		
+		PhysicalCreatures.Add(
+			new PhysicalCreature
+			{
+				Body = bodyArea,
+				Awareness = awarenessArea
+			}
+		);
+		
+		if (!render) return;
+		// RenderingServer stuff
+		// Body
+		var bodyCapsule = new CapsuleMesh();
+		bodyCapsule.Height = 1;
+		bodyCapsule.Radius = 0.25f;
+
+		var bodyMesh = RenderingServer.InstanceCreate2(bodyCapsule.GetRid(), World3D.Scenario);
+		RenderingServer.InstanceSetTransform(bodyMesh, transform);
+			
+		// Awareness
+		// Just use the cached mesh if radius is one. Otherwise, duplicate and resize.
+		Resource thisMesh;
+		if (awarenessRadius == 1) thisMesh = AwarenessBubbleMesh;
+		else
+		{
+			thisMesh = AwarenessBubbleMesh.Duplicate();
+			((SphereMesh)thisMesh).Radius = awarenessRadius;
+			((SphereMesh)thisMesh).Height = 2 * awarenessRadius;
+		}
+		var awarenessMesh = RenderingServer.InstanceCreate2(thisMesh.GetRid(), World3D.Scenario);
+		RenderingServer.InstanceSetTransform(awarenessMesh, transform);
+			
+		VisualCreatures.Add(
+			new VisualCreature
+			{
+				BodyMesh = bodyMesh,
+				AwarenessMesh = awarenessMesh
+			}
+		);
 	}
 
-	public EntityID CreateFood(Vector3 position, World3D world3D, bool render)
+	public void CreateFood(Vector3 position, bool render)
 	{
-		var id = _nextId++;
-		
 		// Create the area for the blob's awareness and put it in the physics space
-		var area = PhysicsServer3D.AreaCreate();
+		var body = PhysicsServer3D.AreaCreate();
 		// PhysicsServer3D.AreaSetMonitorable(area, true);
-		PhysicsServer3D.AreaSetSpace(area, world3D.Space);
+		PhysicsServer3D.AreaSetSpace(body, World3D.Space);
 		var transform = Transform3D.Identity.Translated(position);
-		PhysicsServer3D.AreaSetTransform(area, transform);
+		PhysicsServer3D.AreaSetTransform(body, transform);
 		// Add a sphere collision shape to it
 		var shape = PhysicsServer3D.SphereShapeCreate();
 		PhysicsServer3D.ShapeSetData(shape, 1);
 		// OtherRenderingRIDs.Add(shape);
-		PhysicsServer3D.AreaAddShape(area, shape);
-		
-		Rid renderMesh = default;
-		// Mesh and visual instance
-		if (render)
+		PhysicsServer3D.AreaAddShape(body, shape);
+
+		var newFood = new PhysicalFood
 		{
-			renderMesh = RenderingServer.InstanceCreate2(FoodMesh.GetRid(), world3D.Scenario);
-			RenderingServer.InstanceSetTransform(renderMesh, transform);
-		}
+			Body = body
+		};
+		PhysicalFoods.Add(newFood);
+		FoodLookup.Add(body, newFood);
 		
-		Entities.Add((area, renderMesh, default, 0));
-		return id;
+		// Mesh and visual instance
+		if (!render) return;
+		var mesh = RenderingServer.InstanceCreate2(FoodMesh.GetRid(), World3D.Scenario);
+		RenderingServer.InstanceSetTransform(mesh, transform);
+
+		VisualFoods.Add(
+			new VisualFood
+			{
+				BodyMesh = mesh
+			}
+		);
 	}
 	
 	#region Object prep
@@ -139,25 +173,43 @@ public class AgingSimEntityRegistry
 	#region Reset
 	public void Reset()
 	{
-		// May need to check for default once blobs die, if it's faster to free the rids
-		foreach (var entity in Entities)
+		// Creatures
+		foreach (var creature in PhysicalCreatures)
 		{
-			for (var i = 0; i < PhysicsServer3D.AreaGetShapeCount(entity.area); i++)
+			for (var i = 0; i < PhysicsServer3D.AreaGetShapeCount(creature.Body); i++)
 			{
-				PhysicsServer3D.FreeRid(PhysicsServer3D.AreaGetShape(entity.area, i));
+				PhysicsServer3D.FreeRid(PhysicsServer3D.AreaGetShape(creature.Body, i));
 			}
-			PhysicsServer3D.FreeRid(entity.area);
-			RenderingServer.FreeRid(entity.mesh);
-			RenderingServer.FreeRid(entity.extraMesh);
+			PhysicsServer3D.FreeRid(creature.Body);
+			
+			for (var i = 0; i < PhysicsServer3D.AreaGetShapeCount(creature.Awareness); i++)
+			{
+				PhysicsServer3D.FreeRid(PhysicsServer3D.AreaGetShape(creature.Awareness, i));
+			}
+			PhysicsServer3D.FreeRid(creature.Awareness);
 		}
-		// foreach (var rid in OtherRenderingRIDs)
-		// {
-		// 	RenderingServer.FreeRid(rid);
-		// }
-
-		Entities.Clear();
-		// OtherRenderingRIDs.Clear();
-		_nextId = 0;
+		foreach (var creature in VisualCreatures)
+		{
+			RenderingServer.FreeRid(creature.BodyMesh);	
+			RenderingServer.FreeRid(creature.AwarenessMesh);	
+		}
+		PhysicalCreatures.Clear();
+		VisualCreatures.Clear();
+		// Foods
+		foreach (var food in PhysicalFoods)
+		{
+			for (var i = 0; i < PhysicsServer3D.AreaGetShapeCount(food.Body); i++)
+			{
+				PhysicsServer3D.FreeRid(PhysicsServer3D.AreaGetShape(food.Body, i));
+			}
+			PhysicsServer3D.FreeRid(food.Body);
+		}
+		foreach (var creature in VisualFoods)
+		{
+			RenderingServer.FreeRid(creature.BodyMesh);
+		}
+		PhysicalFoods.Clear();
+		VisualFoods.Clear();
 	}
 	// private void HardCleanup()
 	// {

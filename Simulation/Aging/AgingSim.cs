@@ -83,117 +83,97 @@ public partial class AgingSim : Node3D
 
 	#region Simulation
 
-	private List<EntityID> _livingCreatureIDs = new();
-	private List<EntityID> _liveFoodIDs = new();
 	private void Initialize()
 	{
+		Registry.World3D = GetWorld3D();
 		_stopwatch = Stopwatch.StartNew();
 		
 		_rng = new Rng(_seed == -1 ? System.Environment.TickCount : _seed);
 		PhysicsServer3D.SetActive(true);
 		Engine.PhysicsTicksPerSecond = _stepsPerSecond;
-		var world = GetWorld3D();
 
-		_livingCreatureIDs.Clear();
 		for (var i = 0; i < _initialBlobCount; i++)
 		{
-			_livingCreatureIDs.Add(
-				Registry.CreateCreature(
-					Vector3.Right * 20,
-					// Random option
-					// new Vector3(
-					// 	_rng.RangeFloat(_worldDimensions.X),
-					// 	0,
-					// 	_rng.RangeFloat(_worldDimensions.Y)
-					// ),
-					3,
-					world,
-					_render
-				)
+			Registry.CreateCreature(
+				// Vector3.Right * 20,
+				// Random option
+				new Vector3(
+					_rng.RangeFloat(_worldDimensions.X),
+					0,
+					_rng.RangeFloat(_worldDimensions.Y)
+				),
+				3,
+				_render
 			);
 		}
-		_liveFoodIDs.Add(
-			Registry.CreateFood(
-				Vector3.Zero,
-				world,
-				_render
-			)
+
+		Registry.CreateFood(
+			Vector3.Zero,
+			_render
 		);
 	}
 
 	private void Step()
 	{
-		if (Registry.Entities.Count == 0)
+		if (Registry.PhysicalCreatures.Count == 0)
 		{
-			GD.Print("No RIDs found to act on. Stopping.");
+			GD.Print("No Creatures found. Stopping.");
 			Running = false;
 			return;
 		}
-
-		var newBlobs = new List<EntityID>();
-		var dedBlobs = new List<EntityID>();
-
+		
 		// Process them one at a time. Eventually it may make sense to go in stages.
-		foreach (var entityID in _livingCreatureIDs)
+		foreach (var creature in Registry.PhysicalCreatures)
 		{
-			var entity = Registry.Entities[entityID];
-			
 		    // Do detections, then updates
-		    var intersectionData = DetectCollisionsWithArea(entity.area);
-		    GD.Print(intersectionData.Count);
-		    foreach (var intersection in intersectionData)
+		    var objectsInAwareness = DetectCollisionsWithArea(creature.Awareness);
+		    // GD.Print(intersectionData.Count);
+		    foreach (var objectData in objectsInAwareness)
 		    {
-			    
 			    // Find the EntityID of the intersecting object
-				var intersectionRID = (Rid) intersection["rid"];
-			    EntityID collisionEntityID = -1;
-			    for (var i = 0; i < Registry.Entities.Count; i++)
-			    {
-				    if (Registry.Entities[i].area != intersectionRID) continue;
-				    collisionEntityID = i;
-				    break;
-			    }
-			    
-			    if (collisionEntityID == -1) GD.PrintErr("Collided with something not in the entity registry");
+				var intersectionRID = (Rid) objectData["rid"];
 
-			    if (_liveFoodIDs.Contains(collisionEntityID))
+				var foundFood = Registry.FoodLookup.TryGetValue(intersectionRID, out AgingSimEntityRegistry.PhysicalFood food);
+				
+			    if (foundFood)
 			    {
 				    GD.Print("FOOD");
 			    }
 		    }
 		    
-			// GD.Print(entityID);
 			// Move
-			// var displacement = new Vector3(_rng.RangeFloat(-1, 1), 0, _rng.RangeFloat(-1, 1));
+			var displacement = new Vector3(_rng.RangeFloat(-1, 1), 0, _rng.RangeFloat(-1, 1));
 			// var displacement = Vector3.Zero;
-			var displacement = Vector3.Left;
+			// var displacement = Vector3.Left;
 			
 			// This gets the position from the physics server
-			var transform = PhysicsServer3D.AreaGetTransform(entity.area).Translated(displacement);
-			PhysicsServer3D.AreaSetTransform(entity.area, transform);
+			var transform = PhysicsServer3D.AreaGetTransform(creature.Awareness).Translated(displacement);
+			PhysicsServer3D.AreaSetTransform(creature.Body, transform);
+			PhysicsServer3D.AreaSetTransform(creature.Awareness, transform);
 			
-			// Check for baybies
-			if (_rng.rand.NextDouble() < (double)_reproductionRatePer10K / 10000)
-			{
-				newBlobs.Add(
-					Registry.CreateCreature(
-						transform.Origin,
-						2,
-						GetWorld3D(),
-						_render
-					)
-				);
-			}
-			// Check for ded
-			if (_rng.rand.NextDouble() < (double)_deathRatePer10K / 10000)
-			{
-				dedBlobs.Add(entityID);
-			}
-		}
-		_livingCreatureIDs.AddRange(newBlobs);
-		foreach (var blob in dedBlobs)
-		{
-			_livingCreatureIDs.Remove(blob);
+		// 	// Check for baybies
+		// 	if (_rng.rand.NextDouble() < (double)_reproductionRatePer10K / 10000)
+		// 	{
+		// 		newBlobs.Add(
+		// 			Registry.CreateCreature(
+		// 				transform.Origin,
+		// 				((SphereShape3D)PhysicsServer3D.ShapeGetData(PhysicsServer3D.AreaGetShape(creature.Awareness, 0)))
+		// 				.Radius, //2,
+		// 				GetWorld3D(),
+		// 				_render
+		// 			)
+		// 		);
+		// 	}
+		// 	// Check for ded
+		// 	if (_rng.rand.NextDouble() < (double)_deathRatePer10K / 10000)
+		// 	{
+		// 		dedBlobs.Add(entityID);
+		// 	}
+		// }
+		// _livingCreatureIDs.AddRange(newBlobs);
+		// foreach (var blob in dedBlobs)
+		// {
+		// 	_livingCreatureIDs.Remove(blob);
 		}
 		
 		if (!_verbose) return;
@@ -225,12 +205,13 @@ public partial class AgingSim : Node3D
 		// GD.Print("pros");
 		if (!_running || !_render) return;
 		// GD.Print("ess");
-		foreach (var entityID in _livingCreatureIDs)
+
+		for (var i = 0; i < Registry.PhysicalCreatures.Count; i++)
 		{
-			var entity = Registry.Entities[entityID];
-			var transform = PhysicsServer3D.AreaGetTransform(entity.area);
-			RenderingServer.InstanceSetTransform(entity.mesh, transform);
-			RenderingServer.InstanceSetTransform(entity.extraMesh, transform);
+			var transform = PhysicsServer3D.AreaGetTransform(Registry.PhysicalCreatures[i].Body);
+			var visualCreature = Registry.VisualCreatures[i];
+			RenderingServer.InstanceSetTransform(visualCreature.BodyMesh, transform);
+			RenderingServer.InstanceSetTransform(visualCreature.AwarenessMesh, transform);
 		}
 	}
 
