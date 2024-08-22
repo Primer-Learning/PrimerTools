@@ -244,64 +244,9 @@ public partial class AgingSim : Node3D
 	}
 	#endregion
 
-	#region Reset
 	private void Reset()
 	{
 		_stepsSoFar = 0;
-		// May need to check for default once blobs die, if it's faster to free the rids
-		foreach (var entity in Registry.Entities)
-		{
-			for (var i = 0; i < PhysicsServer3D.AreaGetShapeCount(entity.area); i++)
-			{
-				PhysicsServer3D.FreeRid(PhysicsServer3D.AreaGetShape(entity.area, i));
-			}
-			PhysicsServer3D.FreeRid(entity.area);
-			RenderingServer.FreeRid(entity.mesh);
-			RenderingServer.FreeRid(entity.extraMesh);
-		}
-		foreach (var rid in Registry.OtherRenderingRIDs)
-		{
-			RenderingServer.FreeRid(rid);
-		}
-
-		Registry = new();
-		// Registry.Entities.Clear();
-		// Registry.OtherRenderingRIDs.Clear();
-		
-		HardCleanup();
+		Registry.Reset();
 	}
-	private void HardCleanup()
-	{
-		var space = GetWorld3D().Space;
-		var area = PhysicsServer3D.AreaCreate();
-		PhysicsServer3D.AreaSetSpace(area, space);
-		PhysicsServer3D.AreaSetTransform(area, Transform3D.Identity);
-		
-		// Add a box collision shape to it
-		var shape = PhysicsServer3D.BoxShapeCreate();
-		var boxSize = new Vector3(int.MaxValue, int.MaxValue, int.MaxValue);
-		PhysicsServer3D.ShapeSetData(shape, boxSize);
-		PhysicsServer3D.AreaAddShape(area, shape, Transform3D.Identity.Translated(-boxSize / 2));
-		
-		var queryParams = new PhysicsShapeQueryParameters3D();
-		queryParams.CollideWithAreas = true;
-		queryParams.ShapeRid = PhysicsServer3D.AreaGetShape(area, 0);
-		queryParams.Transform = PhysicsServer3D.AreaGetTransform(area);
-
-		// Check for intersections with other areas
-		var intersectionData = PhysicsServer3D.SpaceGetDirectState(space).IntersectShape(queryParams, maxResults: 256);
-		
-		foreach (var intersection in intersectionData)
-		{
-			var areaRID = (Rid)intersection["rid"];
-			for (var i = 0; i < PhysicsServer3D.AreaGetShapeCount(areaRID); i++)
-			{
-				PhysicsServer3D.FreeRid(PhysicsServer3D.AreaGetShape(areaRID, i));
-			}
-			PhysicsServer3D.FreeRid(areaRID);
-		}
-		// The -1 is because it detects collisions with itself
-		GD.Print($"Found and deleted {intersectionData.Count - 1} area rids and their shapes.");
-	}
-	#endregion
 }
