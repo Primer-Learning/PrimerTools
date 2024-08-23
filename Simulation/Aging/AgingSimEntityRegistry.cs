@@ -217,6 +217,7 @@ public class AgingSimEntityRegistry
 		}
 		PhysicalFoods.Clear();
 		VisualFoods.Clear();
+		FoodLookup.Clear();
 	}
 	// private void HardCleanup()
 	// {
