@@ -7,26 +7,32 @@ public class AgingSimEntityRegistry
 {
 	public World3D World3D;
 	
-	public struct PhysicalCreature
+	public class PhysicalCreature
 	{
 		public Rid Body;
 		public Rid Awareness;
 		public float AwarenessRadius;
 		public bool Alive;
+		public CapsuleShape3D BodyShape;
+		public SphereShape3D AwarenessShape;
 	}
-	public struct VisualCreature
+	public class VisualCreature
 	{
 		public Rid BodyMesh;
 		public Rid AwarenessMesh;
+		public CapsuleMesh BodyMeshResource;
+		public SphereMesh AwarenessMeshResource;
 	}
-	public struct PhysicalFood
+	public class PhysicalFood
 	{
 		public Rid Body;
 		public bool Uneaten;
+		public SphereShape3D Shape;
 	}
-	public struct VisualFood
+	public class VisualFood
 	{
 		public Rid BodyMesh;
+		public SphereMesh MeshResource;
 	}
 	
 	public readonly List<PhysicalCreature> PhysicalCreatures = new();
@@ -53,9 +59,9 @@ public class AgingSimEntityRegistry
 		var awarenessArea = PhysicsServer3D.AreaCreate();
 		PhysicsServer3D.AreaSetSpace(awarenessArea, World3D.Space);
 		PhysicsServer3D.AreaSetTransform(awarenessArea, transform);
-		var awarenessShape = PhysicsServer3D.SphereShapeCreate();
-		PhysicsServer3D.ShapeSetData(awarenessShape, awarenessRadius);
-		PhysicsServer3D.AreaAddShape(awarenessArea, awarenessShape);
+		var awarenessShape = new SphereShape3D();
+		awarenessShape.Radius = awarenessRadius;
+		PhysicsServer3D.AreaAddShape(awarenessArea, awarenessShape.GetRid());
 		
 		PhysicalCreatures.Add(
 			new PhysicalCreature
@@ -63,7 +69,9 @@ public class AgingSimEntityRegistry
 				Body = bodyArea,
 				Awareness = awarenessArea,
 				AwarenessRadius = awarenessRadius,
-				Alive = true
+				Alive = true,
+				BodyShape = bodyShape,
+				AwarenessShape = awarenessShape
 			}
 		);
 		
@@ -79,22 +87,24 @@ public class AgingSimEntityRegistry
 			
 		// Awareness
 		// Just use the cached mesh if radius is one. Otherwise, duplicate and resize.
-		Resource thisMesh;
-		if (awarenessRadius == 1) thisMesh = AwarenessBubbleMesh;
+		SphereMesh awarenessMeshResource;
+		if (awarenessRadius == 1) awarenessMeshResource = AwarenessBubbleMesh;
 		else
 		{
-			thisMesh = AwarenessBubbleMesh.Duplicate();
-			((SphereMesh)thisMesh).Radius = awarenessRadius;
-			((SphereMesh)thisMesh).Height = 2 * awarenessRadius;
+			awarenessMeshResource = (SphereMesh)AwarenessBubbleMesh.Duplicate();
+			awarenessMeshResource.Radius = awarenessRadius;
+			awarenessMeshResource.Height = 2 * awarenessRadius;
 		}
-		var awarenessMesh = RenderingServer.InstanceCreate2(thisMesh.GetRid(), World3D.Scenario);
+		var awarenessMesh = RenderingServer.InstanceCreate2(awarenessMeshResource.GetRid(), World3D.Scenario);
 		RenderingServer.InstanceSetTransform(awarenessMesh, transform);
 			
 		VisualCreatures.Add(
 			new VisualCreature
 			{
 				BodyMesh = bodyMesh,
-				AwarenessMesh = awarenessMesh
+				AwarenessMesh = awarenessMesh,
+				BodyMeshResource = bodyCapsule,
+				AwarenessMeshResource = awarenessMeshResource
 			}
 		);
 	}
@@ -108,28 +118,30 @@ public class AgingSimEntityRegistry
 		var transform = Transform3D.Identity.Translated(position);
 		PhysicsServer3D.AreaSetTransform(body, transform);
 		// Add a sphere collision shape to it
-		var shape = PhysicsServer3D.SphereShapeCreate();
-		PhysicsServer3D.ShapeSetData(shape, 1);
-		// OtherRenderingRIDs.Add(shape);
-		PhysicsServer3D.AreaAddShape(body, shape);
+		var shape = new SphereShape3D();
+		shape.Radius = 1;
+		PhysicsServer3D.AreaAddShape(body, shape.GetRid());
 
 		var newFood = new PhysicalFood
 		{
 			Body = body,
-			Uneaten = true
+			Uneaten = true,
+			Shape = shape
 		};
 		PhysicalFoods.Add(newFood);
 		FoodLookup.Add(body, newFood);
 		
 		// Mesh and visual instance
 		if (!render) return;
-		var mesh = RenderingServer.InstanceCreate2(FoodMesh.GetRid(), World3D.Scenario);
+		var meshResource = FoodMesh;
+		var mesh = RenderingServer.InstanceCreate2(meshResource.GetRid(), World3D.Scenario);
 		RenderingServer.InstanceSetTransform(mesh, transform);
 
 		VisualFoods.Add(
 			new VisualFood
 			{
-				BodyMesh = mesh
+				BodyMesh = mesh,
+				MeshResource = meshResource
 			}
 		);
 	}
@@ -183,37 +195,36 @@ public class AgingSimEntityRegistry
 		// Creatures
 		foreach (var creature in PhysicalCreatures)
 		{
-			for (var i = 0; i < PhysicsServer3D.AreaGetShapeCount(creature.Body); i++)
-			{
-				PhysicsServer3D.FreeRid(PhysicsServer3D.AreaGetShape(creature.Body, i));
-			}
 			PhysicsServer3D.FreeRid(creature.Body);
-			
-			for (var i = 0; i < PhysicsServer3D.AreaGetShapeCount(creature.Awareness); i++)
-			{
-				PhysicsServer3D.FreeRid(PhysicsServer3D.AreaGetShape(creature.Awareness, i));
-			}
 			PhysicsServer3D.FreeRid(creature.Awareness);
+			creature.BodyShape.Free();
+			creature.AwarenessShape.Free();
 		}
 		foreach (var creature in VisualCreatures)
 		{
 			RenderingServer.FreeRid(creature.BodyMesh);	
-			RenderingServer.FreeRid(creature.AwarenessMesh);	
+			RenderingServer.FreeRid(creature.AwarenessMesh);
+			creature.BodyMeshResource.Free();
+			if (creature.AwarenessMeshResource != AwarenessBubbleMesh)
+			{
+				creature.AwarenessMeshResource.Free();
+			}
 		}
 		PhysicalCreatures.Clear();
 		VisualCreatures.Clear();
 		// Foods
 		foreach (var food in PhysicalFoods)
 		{
-			for (var i = 0; i < PhysicsServer3D.AreaGetShapeCount(food.Body); i++)
-			{
-				PhysicsServer3D.FreeRid(PhysicsServer3D.AreaGetShape(food.Body, i));
-			}
 			PhysicsServer3D.FreeRid(food.Body);
+			food.Shape.Free();
 		}
-		foreach (var creature in VisualFoods)
+		foreach (var food in VisualFoods)
 		{
-			RenderingServer.FreeRid(creature.BodyMesh);
+			RenderingServer.FreeRid(food.BodyMesh);
+			if (food.MeshResource != FoodMesh)
+			{
+				food.MeshResource.Free();
+			}
 		}
 		PhysicalFoods.Clear();
 		VisualFoods.Clear();
