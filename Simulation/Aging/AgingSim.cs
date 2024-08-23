@@ -105,10 +105,10 @@ public partial class AgingSim : Node3D
 			);
 		}
 
-		Registry.CreateFood(
-			Vector3.Zero,
-			_render
-		);
+		// Registry.CreateFood(
+		// 	Vector3.Zero,
+		// 	_render
+		// );
 	}
 
 	private void Step()
@@ -123,19 +123,21 @@ public partial class AgingSim : Node3D
 		// Process them one at a time. Eventually it may make sense to go in stages.
 		for (var i = 0; i < Registry.PhysicalCreatures.Count; i++)
 		{
+			if (i > 3) GD.Print("Too many");
 			var creature = Registry.PhysicalCreatures[i];
 			if (!creature.Alive) continue;
 		    // Do detections, then updates
-		    var objectsInAwareness = DetectCollisionsWithArea(creature.Awareness);
-		    // GD.Print(intersectionData.Count);
-		    foreach (var objectData in objectsInAwareness)
-		    {
-				var foundFood = Registry.FoodLookup.TryGetValue((Rid) objectData["rid"], out var food);
-			    if (foundFood && food.Uneaten)
-			    {
-				    // GD.Print("FOOD");
-			    }
-		    }
+		    
+			var objectsInAwareness = DetectCollisionsWithArea(creature.Awareness);
+			// GD.Print(intersectionData.Count);	
+		    // foreach (var objectData in objectsInAwareness)
+		    // {
+				// var foundFood = Registry.FoodLookup.TryGetValue((Rid) objectData["rid"], out var food);
+			 //    if (foundFood && food.Uneaten)
+			 //    {
+				//     // GD.Print("FOOD");
+			 //    }
+		    // }
 		    
 			// Move
 			var displacement = new Vector3(_rng.RangeFloat(-1, 1), 0, _rng.RangeFloat(-1, 1));
@@ -184,32 +186,37 @@ public partial class AgingSim : Node3D
 		
 		Step();
 		_stepsSoFar++;
+		if (!_verbose) return;
+		if (_stepsSoFar % 100 == 0 ) GD.Print($"Finished step {_stepsSoFar}"); 
 	}
 
 	public override void _Process(double delta)
 	{
 		// GD.Print("pros");
-		if (!_running || !_render) return;
+		// if (!_running || !_render) return;
 		// GD.Print("ess");
 
-		for (var i = 0; i < Registry.PhysicalCreatures.Count; i++)
-		{
-			var transform = PhysicsServer3D.AreaGetTransform(Registry.PhysicalCreatures[i].Body);
-			var visualCreature = Registry.VisualCreatures[i];
-			RenderingServer.InstanceSetTransform(visualCreature.BodyMesh, transform);
-			RenderingServer.InstanceSetTransform(visualCreature.AwarenessMesh, transform);
-		}
+		// for (var i = 0; i < Registry.PhysicalCreatures.Count; i++)
+		// {
+		// 	var transform = PhysicsServer3D.AreaGetTransform(Registry.PhysicalCreatures[i].Body);
+		// 	// GD.Print(transform.Origin);
+		// 	var visualCreature = Registry.VisualCreatures[i];
+		// 	RenderingServer.InstanceSetTransform(visualCreature.BodyMesh, transform);
+		// 	RenderingServer.InstanceSetTransform(visualCreature.AwarenessMesh, transform);
+		// }
 	}
 
 	private Array<Dictionary> DetectCollisionsWithArea(Rid area)
 	{
-		var queryParams = new PhysicsShapeQueryParameters3D();
-		queryParams.CollideWithAreas = true;
-		queryParams.ShapeRid = PhysicsServer3D.AreaGetShape(area, 0);
-		queryParams.Transform = PhysicsServer3D.AreaGetTransform(area);
+		// var queryParams = new PhysicsShapeQueryParameters3D();
+		// queryParams.CollideWithAreas = true;
+		// queryParams.ShapeRid = PhysicsServer3D.AreaGetShape(area, 0);
+		// queryParams.Transform = PhysicsServer3D.AreaGetTransform(area);
+
+		return new Array<Dictionary>();
 
 		// Run query and print
-		return PhysicsServer3D.SpaceGetDirectState(GetWorld3D().Space).IntersectShape(queryParams);
+		// return PhysicsServer3D.SpaceGetDirectState(GetWorld3D().Space).IntersectShape(queryParams);
 	}
 	#endregion
 
