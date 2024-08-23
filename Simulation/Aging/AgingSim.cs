@@ -1,10 +1,8 @@
 using Godot;
-using System.Collections.Generic;
 using System.Diagnostics;
 using Aging.addons.PrimerTools.Simulation.Aging;
 using Godot.Collections;
 using PrimerTools;
-using EntityID = System.Int32;
 
 [Tool]
 public partial class AgingSim : Node3D
@@ -123,21 +121,19 @@ public partial class AgingSim : Node3D
 		}
 		
 		// Process them one at a time. Eventually it may make sense to go in stages.
-		foreach (var creature in Registry.PhysicalCreatures)
+		for (var i = 0; i < Registry.PhysicalCreatures.Count; i++)
 		{
+			var creature = Registry.PhysicalCreatures[i];
+			if (!creature.Alive) continue;
 		    // Do detections, then updates
 		    var objectsInAwareness = DetectCollisionsWithArea(creature.Awareness);
 		    // GD.Print(intersectionData.Count);
 		    foreach (var objectData in objectsInAwareness)
 		    {
-			    // Find the EntityID of the intersecting object
-				var intersectionRID = (Rid) objectData["rid"];
-
-				var foundFood = Registry.FoodLookup.TryGetValue(intersectionRID, out AgingSimEntityRegistry.PhysicalFood food);
-				
-			    if (foundFood)
+				var foundFood = Registry.FoodLookup.TryGetValue((Rid) objectData["rid"], out var food);
+			    if (foundFood && food.Uneaten)
 			    {
-				    GD.Print("FOOD");
+				    // GD.Print("FOOD");
 			    }
 		    }
 		    
@@ -146,34 +142,24 @@ public partial class AgingSim : Node3D
 			// var displacement = Vector3.Zero;
 			// var displacement = Vector3.Left;
 			
-			// This gets the position from the physics server
 			var transform = PhysicsServer3D.AreaGetTransform(creature.Awareness).Translated(displacement);
 			PhysicsServer3D.AreaSetTransform(creature.Body, transform);
 			PhysicsServer3D.AreaSetTransform(creature.Awareness, transform);
 			
-		// 	// Check for baybies
-		// 	if (_rng.rand.NextDouble() < (double)_reproductionRatePer10K / 10000)
-		// 	{
-		// 		newBlobs.Add(
-		// 			Registry.CreateCreature(
-		// 				transform.Origin,
-		// 				((SphereShape3D)PhysicsServer3D.ShapeGetData(PhysicsServer3D.AreaGetShape(creature.Awareness, 0)))
-		// 				.Radius, //2,
-		// 				GetWorld3D(),
-		// 				_render
-		// 			)
-		// 		);
-		// 	}
-		// 	// Check for ded
-		// 	if (_rng.rand.NextDouble() < (double)_deathRatePer10K / 10000)
-		// 	{
-		// 		dedBlobs.Add(entityID);
-		// 	}
-		// }
-		// _livingCreatureIDs.AddRange(newBlobs);
-		// foreach (var blob in dedBlobs)
-		// {
-		// 	_livingCreatureIDs.Remove(blob);
+			// // Check for baybies
+			// if (_rng.rand.NextDouble() < (double)_reproductionRatePer10K / 10000)
+			// {
+			// 	Registry.CreateCreature(
+			// 		transform.Origin,
+			// 		creature.AwarenessRadius,
+			// 		_render
+			// 	);
+			// }
+			// // Check for death
+			// if (_rng.rand.NextDouble() < (double)_deathRatePer10K / 10000)
+			// {
+			// 	creature.Alive = false;
+			// }
 		}
 		
 		if (!_verbose) return;

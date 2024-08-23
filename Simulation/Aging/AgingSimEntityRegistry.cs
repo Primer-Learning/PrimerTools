@@ -11,6 +11,8 @@ public class AgingSimEntityRegistry
 	{
 		public Rid Body;
 		public Rid Awareness;
+		public float AwarenessRadius;
+		public bool Alive;
 	}
 	public struct VisualCreature
 	{
@@ -20,6 +22,7 @@ public class AgingSimEntityRegistry
 	public struct PhysicalFood
 	{
 		public Rid Body;
+		public bool Uneaten;
 	}
 	public struct VisualFood
 	{
@@ -58,7 +61,9 @@ public class AgingSimEntityRegistry
 			new PhysicalCreature
 			{
 				Body = bodyArea,
-				Awareness = awarenessArea
+				Awareness = awarenessArea,
+				AwarenessRadius = awarenessRadius,
+				Alive = true
 			}
 		);
 		
@@ -110,7 +115,8 @@ public class AgingSimEntityRegistry
 
 		var newFood = new PhysicalFood
 		{
-			Body = body
+			Body = body,
+			Uneaten = true
 		};
 		PhysicalFoods.Add(newFood);
 		FoodLookup.Add(body, newFood);
@@ -173,6 +179,7 @@ public class AgingSimEntityRegistry
 	#region Reset
 	public void Reset()
 	{
+		GD.Print("Resetting");
 		// Creatures
 		foreach (var creature in PhysicalCreatures)
 		{
