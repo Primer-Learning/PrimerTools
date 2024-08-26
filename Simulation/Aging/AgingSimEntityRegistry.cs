@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using Godot;
-using EntityID = System.Int32;
 namespace Aging.addons.PrimerTools.Simulation.Aging;
 
 public class AgingSimEntityRegistry
@@ -67,7 +66,7 @@ public class AgingSimEntityRegistry
 	public readonly List<PhysicalFood> PhysicalFoods = new();
 	public readonly List<VisualFood> VisualFoods = new();
 
-	public readonly Dictionary<Rid, PhysicalFood> FoodLookup = new();
+	public readonly Dictionary<Rid, int> FoodLookup = new();
 	
 	public PhysicalCreature CreateCreature(Vector3 position, float awarenessRadius, bool render)
 	{
@@ -156,8 +155,8 @@ public class AgingSimEntityRegistry
 			Eaten = false,
 			BodyShapeResource = shape
 		};
+		FoodLookup.Add(body, PhysicalFoods.Count);
 		PhysicalFoods.Add(newFood);
-		FoodLookup.Add(body, newFood);
 		
 		// Mesh and visual instance
 		if (!render) return;
