@@ -75,9 +75,9 @@ public partial class AgingSim : Node3D
 	[Export] private int _reproductionRatePer10K;
 	[Export] private int _deathRatePer10K;
 	[Export] private int _maxNumSteps = 100;
-	// TODO: Make it so there is a constant number of steps per sim second, but the sim can run faster than real time
-	[Export] private int _stepsPerSecond = 10;
-	private float _creatureSpeed = 10f;
+	[Export] private int _physicsStepsPerRealSecond = 60;
+	private int _physicsStepsPerSimSecond = 60;
+	private float _creatureSpeed = 20f;
 	private float _creatureDestinationLength = 10f;
 	private float _creatureEatDistance = 0.5f;
 	private float _energyLossPerSecond = 0.1f;
@@ -96,7 +96,7 @@ public partial class AgingSim : Node3D
 		
 		_rng = new Rng(_seed == -1 ? System.Environment.TickCount : _seed);
 		PhysicsServer3D.SetActive(true);
-		Engine.PhysicsTicksPerSecond = _stepsPerSecond;
+		Engine.PhysicsTicksPerSecond = _physicsStepsPerRealSecond;
 
 		for (var i = 0; i < _initialBlobCount; i++)
 		{
@@ -192,7 +192,7 @@ public partial class AgingSim : Node3D
 			PhysicsServer3D.AreaSetTransform(creature.Awareness, transformNextFrame);
 			
 			// Decrease energy
-			creature.Energy -= _energyLossPerSecond / _stepsPerSecond;
+			creature.Energy -= _energyLossPerSecond / _physicsStepsPerSimSecond;
 			
 			// Check for reproduction
 			if (creature.Energy > 2f)
@@ -221,7 +221,7 @@ public partial class AgingSim : Node3D
 			var food = Registry.PhysicalFoods[j];
 			if (food.Eaten)
 			{
-				food.TimeLeftToRegenerate -= 1f / _stepsPerSecond;
+				food.TimeLeftToRegenerate -= 1f / _physicsStepsPerSimSecond;
 				if (food.TimeLeftToRegenerate <= 0)
 				{
 					food.Eaten = false;
@@ -323,14 +323,13 @@ public partial class AgingSim : Node3D
 		// return PhysicsServer3D.AreaGetTransform(creature.Awareness).Translated(displacement);
 		// Destination
 		var currentTransform = PhysicsServer3D.AreaGetTransform(creature.Body);
-		var stepSize = _creatureSpeed / _stepsPerSecond;
+		var stepSize = _creatureSpeed / _physicsStepsPerSimSecond;
 		if ((creature.CurrentDestination.Origin - currentTransform.Origin).LengthSquared() < stepSize * stepSize)
 		{
 			ChooseDestination(ref creature);
 		}
 		
-		var displacement = (creature.CurrentDestination.Origin - currentTransform.Origin).Normalized() *
-			_creatureSpeed / _stepsPerSecond;
+		var displacement = (creature.CurrentDestination.Origin - currentTransform.Origin).Normalized() * stepSize;
 		
 		return currentTransform.Translated(displacement);
 	}
@@ -339,7 +338,6 @@ public partial class AgingSim : Node3D
 	{
 		var currentTransform = PhysicsServer3D.AreaGetTransform(creature.Body);
 		Vector3 newDestination;
-		int attempts = 0;
 		do
 		{
 			var angle = _rng.RangeFloat(1) * 2 * Mathf.Pi;
@@ -349,7 +347,6 @@ public partial class AgingSim : Node3D
 				Mathf.Cos(angle)
 			);
 			newDestination = currentTransform.Origin + displacement;
-			attempts++;
 		} while (!IsWithinWorldBounds(newDestination));
 
 		creature.CurrentDestination = new Transform3D(Basis.Identity, newDestination);
