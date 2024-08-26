@@ -1,4 +1,4 @@
-using System;
+using System.Collections.Generic;
 using Godot;
 using System.Diagnostics;
 using Aging.addons.PrimerTools.Simulation.Aging;
@@ -70,6 +70,7 @@ public partial class AgingSim : Node3D
 	private Rng _rng;
 	[Export] private int _seed = -1;
 	[Export] private int _initialBlobCount = 4;
+	[Export] private int _initialFoodCount = 100;
 	[Export] private Vector2 _worldDimensions = Vector2.One * 10;
 	[Export] private int _reproductionRatePer10K;
 	[Export] private int _deathRatePer10K;
@@ -77,6 +78,7 @@ public partial class AgingSim : Node3D
 	[Export] private int _stepsPerSecond = 10;
 	private float _creatureSpeed = 10f;
 	private float _creatureDestinationLength = 10f;
+	private float _creatureEatDistance = 0.5f;
 	private int _stepsSoFar = 0;
 	#endregion
 	
@@ -108,10 +110,17 @@ public partial class AgingSim : Node3D
 			);
 		}
 
-		// Registry.CreateFood(
-		// 	Vector3.Zero,
-		// 	_render
-		// );
+		for (var i = 0; i < _initialFoodCount; i++)
+		{
+			Registry.CreateFood(
+				new Vector3(
+					_rng.RangeFloat(_worldDimensions.X),
+					0,
+					_rng.RangeFloat(_worldDimensions.Y)
+				),
+				_render
+			);
+		}
 	}
 
 	private void Step()
@@ -128,28 +137,49 @@ public partial class AgingSim : Node3D
 		{
 			var creature = Registry.PhysicalCreatures[i];
 			if (!creature.Alive) continue;
+			var transformThisFrame = PhysicsServer3D.AreaGetTransform(creature.Body); 
 			
 		    // Do detections, then updates
+		    
+			// Food detection and decision making
 			var objectsInAwareness = DetectCollisionsWithArea(creature.Awareness);
+			AgingSimEntityRegistry.PhysicalFood closestFood = default;
+			var canEat = false;
+			var closestFoodSqrDistance = float.MaxValue;
 		    foreach (var objectData in objectsInAwareness)
 		    {
-				var foundFood = Registry.FoodLookup.TryGetValue((Rid) objectData["rid"], out var food);
-			    if (foundFood && food.Uneaten)
+				var objectIsFood = Registry.FoodLookup.TryGetValue((Rid) objectData["rid"], out var food);
+			    if (objectIsFood && !food.Eaten)
 			    {
-				    GD.Print("FOOD");
+				    var sqrDistance = (transformThisFrame.Origin - PhysicsServer3D.AreaGetTransform(food.Body).Origin)
+					    .LengthSquared();
+				    if (!(sqrDistance < closestFoodSqrDistance)) continue;
+				    
+				    closestFoodSqrDistance = sqrDistance; 
+				    closestFood = food;
+				    if (closestFoodSqrDistance < _creatureEatDistance * _creatureEatDistance)
+				    {
+					    canEat = true;
+				    }
 			    }
 		    }
+
+		    if (canEat)
+		    {
+			    closestFood.Eaten = true;
+		    }
+		    else if (closestFood != default) { ChooseDestination(creature, closestFood); }
 		    
 			// Move
-			var transformThisFrame = GetNextTransform(creature);
-			PhysicsServer3D.AreaSetTransform(creature.Body, transformThisFrame);
-			PhysicsServer3D.AreaSetTransform(creature.Awareness, transformThisFrame);
+			var transformNextFrame = GetNextTransform(creature);
+			PhysicsServer3D.AreaSetTransform(creature.Body, transformNextFrame);
+			PhysicsServer3D.AreaSetTransform(creature.Awareness, transformNextFrame);
 			
 			// Check for baybies
 			if (_rng.rand.NextDouble() < (double)_reproductionRatePer10K / 10000)
 			{
 				var physicalCreature = Registry.CreateCreature(
-					transformThisFrame.Origin,
+					transformNextFrame.Origin,
 					creature.AwarenessRadius,
 					_render
 				);
@@ -190,18 +220,64 @@ public partial class AgingSim : Node3D
 
 	public override void _Process(double delta)
 	{
-		// GD.Print("pros");
-		if (!_running || !_render) return;
-		// GD.Print("ess");
+		if (!_running) return;
 		
-		// GD.Print("Update visual objects");
+		// Clean up the creature lists every process frame.
+		// This is an intuitive choice for a frequency that isn't too high for sims with a fast physics loop
+		// But high enough where things won't build up.
+		// Could be a better choice, though.
+		var deadIndices = new List<int>();
 		for (var i = 0; i < Registry.PhysicalCreatures.Count; i++)
 		{
-			var transform = PhysicsServer3D.AreaGetTransform(Registry.PhysicalCreatures[i].Body);
-			// GD.Print(transform.Origin);
+			var physicalCreature = Registry.PhysicalCreatures[i];
+			if (!physicalCreature.Alive)
+			{
+				deadIndices.Add(i);
+				continue;
+			}
+			
+			if (!_render) continue;
 			var visualCreature = Registry.VisualCreatures[i];
+			
+			var transform = PhysicsServer3D.AreaGetTransform(physicalCreature.Body);
+			// GD.Print(transform.Origin);
 			RenderingServer.InstanceSetTransform(visualCreature.BodyMesh, transform);
 			RenderingServer.InstanceSetTransform(visualCreature.AwarenessMesh, transform);
+		}
+
+		for (var i = deadIndices.Count - 1; i >= 0; i--)
+		{
+			var deadIndex = deadIndices[i];
+			Registry.PhysicalCreatures[deadIndex].FreeRids();
+			Registry.PhysicalCreatures.RemoveAt(deadIndex);
+			
+			if (!_render) continue;
+			Registry.VisualCreatures[deadIndex].FreeRids();
+			Registry.VisualCreatures.RemoveAt(deadIndex);
+		}
+		
+		// Food
+		var eatenIndices = new List<int>();
+		for (var i = 0; i < Registry.PhysicalFoods.Count; i++)
+		{
+			var physicalFood = Registry.PhysicalFoods[i];
+			if (physicalFood.Eaten)
+			{
+				eatenIndices.Add(i);
+			}
+			
+			// Food currently just sits there until eaten, so no render code here.
+		}
+		
+		for (var i = eatenIndices.Count - 1; i >= 0; i--)
+		{
+			var eatenIndex = eatenIndices[i];
+			Registry.PhysicalFoods[eatenIndex].FreeRids();
+			Registry.PhysicalFoods.RemoveAt(eatenIndex);
+			
+			if (!_render) continue;
+			Registry.VisualFoods[eatenIndex].FreeRids();
+			Registry.VisualFoods.RemoveAt(eatenIndex);
 		}
 	}
 
@@ -250,6 +326,12 @@ public partial class AgingSim : Node3D
 			Mathf.Cos(angle)
 		);
 		creature.CurrentDestination = currentTransform.Translated(displacement);
+	}
+
+	private void ChooseDestination(AgingSimEntityRegistry.PhysicalCreature creature,
+		AgingSimEntityRegistry.PhysicalFood food)
+	{
+		creature.CurrentDestination = PhysicsServer3D.AreaGetTransform(food.Body);
 	}
 
 	#endregion

@@ -13,11 +13,19 @@ public class AgingSimEntityRegistry
 	{
 		public Rid Body;
 		public Rid Awareness;
+		
 		public float AwarenessRadius;
 		public bool Alive;
 		public Transform3D CurrentDestination;
+		
 		public CapsuleShape3D BodyShapeResource;
 		public SphereShape3D AwarenessShapeResource;
+
+		public void FreeRids()
+		{
+			PhysicsServer3D.FreeRid(Body);
+			PhysicsServer3D.FreeRid(Awareness);
+		}
 	}
 	public class VisualCreature
 	{
@@ -25,17 +33,33 @@ public class AgingSimEntityRegistry
 		public Rid AwarenessMesh;
 		public CapsuleMesh BodyMeshResource;
 		public SphereMesh AwarenessMeshResource;
+		
+		public void FreeRids()
+		{
+			RenderingServer.FreeRid(BodyMesh);
+			RenderingServer.FreeRid(AwarenessMesh);
+		}
 	}
 	public class PhysicalFood
 	{
 		public Rid Body;
-		public bool Uneaten;
+		public bool Eaten;
 		public SphereShape3D BodyShapeResource;
+
+		public void FreeRids()
+		{
+			PhysicsServer3D.FreeRid(Body);
+		}
 	}
 	public class VisualFood
 	{
 		public Rid BodyMesh;
 		public SphereMesh MeshResource;
+		
+		public void FreeRids()
+		{
+			RenderingServer.FreeRid(BodyMesh);
+		}
 	}
 	
 	public readonly List<PhysicalCreature> PhysicalCreatures = new();
@@ -129,7 +153,7 @@ public class AgingSimEntityRegistry
 		var newFood = new PhysicalFood
 		{
 			Body = body,
-			Uneaten = true,
+			Eaten = false,
 			BodyShapeResource = shape
 		};
 		PhysicalFoods.Add(newFood);
