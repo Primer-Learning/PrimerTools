@@ -82,6 +82,7 @@ public partial class AgingSim : Node3D
 	private float _creatureEatDistance = 0.5f;
 	private float _energyLossPerSecond = 0.1f;
 	private int _stepsSoFar = 0;
+	private float _foodRegenerationTime = 1f;
 	#endregion
 	
 	public AgingSimEntityRegistry Registry = new();
@@ -171,8 +172,14 @@ public partial class AgingSim : Node3D
 		    {
 			    var registryPhysicalFood = Registry.PhysicalFoods[closestFoodIndex];
 			    registryPhysicalFood.Eaten = true;
+			    registryPhysicalFood.TimeLeftToRegenerate = _foodRegenerationTime;
 			    Registry.PhysicalFoods[closestFoodIndex] = registryPhysicalFood;
 			    var foodBody = Registry.VisualFoods[closestFoodIndex];
+			    
+			    if (_render)
+			    {
+				    RenderingServer.InstanceSetVisible(foodBody.BodyMesh, false);
+			    }
 			    
 			    // Increase creature's energy when eating
 			    creature.Energy += 1f;
@@ -206,6 +213,32 @@ public partial class AgingSim : Node3D
 			}
 
 			Registry.PhysicalCreatures[i] = creature;
+		}
+		
+		// Food regeneration
+		for (var j = 0; j < Registry.PhysicalFoods.Count; j++)
+		{
+			var food = Registry.PhysicalFoods[j];
+			if (food.Eaten)
+			{
+				food.TimeLeftToRegenerate -= 1f / _stepsPerSecond;
+				if (food.TimeLeftToRegenerate <= 0)
+				{
+					food.Eaten = false;
+					food.TimeLeftToRegenerate = 0;
+					Registry.PhysicalFoods[j] = food;
+						
+					if (_render)
+					{
+						var visualFood = Registry.VisualFoods[j];
+						RenderingServer.InstanceSetVisible(visualFood.BodyMesh, true);
+					}
+				}
+				else
+				{
+					Registry.PhysicalFoods[j] = food;
+				}
+			}
 		}
 		
 		if (!_verbose) return true;
@@ -265,30 +298,6 @@ public partial class AgingSim : Node3D
 			Registry.VisualCreatures[deadIndex].FreeRids();
 			Registry.VisualCreatures.RemoveAt(deadIndex);
 		}
-		
-		// Food
-		// var eatenIndices = new List<int>();
-		// for (var i = 0; i < Registry.PhysicalFoods.Count; i++)
-		// {
-		// 	var physicalFood = Registry.PhysicalFoods[i];
-		// 	if (physicalFood.Eaten)
-		// 	{
-		// 		eatenIndices.Add(i);
-		// 	}
-		// 	
-		// 	// Food currently just sits there until eaten, so no render code here.
-		// }
-		//
-		// for (var i = eatenIndices.Count - 1; i >= 0; i--)
-		// {
-		// 	var eatenIndex = eatenIndices[i];
-		// 	Registry.PhysicalFoods[eatenIndex].FreeRids();
-		// 	Registry.PhysicalFoods.RemoveAt(eatenIndex);
-		// 	
-		// 	if (!_render) continue;
-		// 	Registry.VisualFoods[eatenIndex].FreeRids();
-		// 	Registry.VisualFoods.RemoveAt(eatenIndex);
-		// }
 	}
 
 	private Array<Dictionary> DetectCollisionsWithArea(Rid area)

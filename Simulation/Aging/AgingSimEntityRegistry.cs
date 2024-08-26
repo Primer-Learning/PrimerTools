@@ -46,6 +46,7 @@ public class AgingSimEntityRegistry
 		public Rid Body;
 		public bool Eaten;
 		public SphereShape3D BodyShapeResource;
+		public float TimeLeftToRegenerate;
 
 		public void FreeRids()
 		{
