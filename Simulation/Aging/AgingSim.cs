@@ -1,3 +1,4 @@
+using System;
 using Godot;
 using System.Diagnostics;
 using Aging.addons.PrimerTools.Simulation.Aging;
@@ -123,21 +124,20 @@ public partial class AgingSim : Node3D
 		// Process them one at a time. Eventually it may make sense to go in stages.
 		for (var i = 0; i < Registry.PhysicalCreatures.Count; i++)
 		{
-			if (i > 3) GD.Print("Too many");
 			var creature = Registry.PhysicalCreatures[i];
 			if (!creature.Alive) continue;
 		    // Do detections, then updates
 		    
 			var objectsInAwareness = DetectCollisionsWithArea(creature.Awareness);
 			// GD.Print(intersectionData.Count);	
-		    // foreach (var objectData in objectsInAwareness)
-		    // {
-				// var foundFood = Registry.FoodLookup.TryGetValue((Rid) objectData["rid"], out var food);
-			 //    if (foundFood && food.Uneaten)
-			 //    {
-				//     // GD.Print("FOOD");
-			 //    }
-		    // }
+		    foreach (var objectData in objectsInAwareness)
+		    {
+				var foundFood = Registry.FoodLookup.TryGetValue((Rid) objectData["rid"], out var food);
+			    if (foundFood && food.Uneaten)
+			    {
+				    GD.Print("FOOD");
+			    }
+		    }
 		    
 			// Move
 			var displacement = new Vector3(_rng.RangeFloat(-1, 1), 0, _rng.RangeFloat(-1, 1));
@@ -148,20 +148,20 @@ public partial class AgingSim : Node3D
 			PhysicsServer3D.AreaSetTransform(creature.Body, transform);
 			PhysicsServer3D.AreaSetTransform(creature.Awareness, transform);
 			
-			// // Check for baybies
-			// if (_rng.rand.NextDouble() < (double)_reproductionRatePer10K / 10000)
-			// {
-			// 	Registry.CreateCreature(
-			// 		transform.Origin,
-			// 		creature.AwarenessRadius,
-			// 		_render
-			// 	);
-			// }
-			// // Check for death
-			// if (_rng.rand.NextDouble() < (double)_deathRatePer10K / 10000)
-			// {
-			// 	creature.Alive = false;
-			// }
+			// Check for baybies
+			if (_rng.rand.NextDouble() < (double)_reproductionRatePer10K / 10000)
+			{
+				Registry.CreateCreature(
+					transform.Origin,
+					creature.AwarenessRadius,
+					_render
+				);
+			}
+			// Check for death
+			if (_rng.rand.NextDouble() < (double)_deathRatePer10K / 10000)
+			{
+				creature.Alive = false;
+			}
 		}
 		
 		if (!_verbose) return;
@@ -193,30 +193,29 @@ public partial class AgingSim : Node3D
 	public override void _Process(double delta)
 	{
 		// GD.Print("pros");
-		// if (!_running || !_render) return;
+		if (!_running || !_render) return;
 		// GD.Print("ess");
-
-		// for (var i = 0; i < Registry.PhysicalCreatures.Count; i++)
-		// {
-		// 	var transform = PhysicsServer3D.AreaGetTransform(Registry.PhysicalCreatures[i].Body);
-		// 	// GD.Print(transform.Origin);
-		// 	var visualCreature = Registry.VisualCreatures[i];
-		// 	RenderingServer.InstanceSetTransform(visualCreature.BodyMesh, transform);
-		// 	RenderingServer.InstanceSetTransform(visualCreature.AwarenessMesh, transform);
-		// }
+		
+		// GD.Print("Update visual objects");
+		for (var i = 0; i < Registry.PhysicalCreatures.Count; i++)
+		{
+			var transform = PhysicsServer3D.AreaGetTransform(Registry.PhysicalCreatures[i].Body);
+			// GD.Print(transform.Origin);
+			var visualCreature = Registry.VisualCreatures[i];
+			RenderingServer.InstanceSetTransform(visualCreature.BodyMesh, transform);
+			RenderingServer.InstanceSetTransform(visualCreature.AwarenessMesh, transform);
+		}
 	}
 
 	private Array<Dictionary> DetectCollisionsWithArea(Rid area)
 	{
-		// var queryParams = new PhysicsShapeQueryParameters3D();
-		// queryParams.CollideWithAreas = true;
-		// queryParams.ShapeRid = PhysicsServer3D.AreaGetShape(area, 0);
-		// queryParams.Transform = PhysicsServer3D.AreaGetTransform(area);
-
-		return new Array<Dictionary>();
+		var queryParams = new PhysicsShapeQueryParameters3D();
+		queryParams.CollideWithAreas = true;
+		queryParams.ShapeRid = PhysicsServer3D.AreaGetShape(area, 0);
+		queryParams.Transform = PhysicsServer3D.AreaGetTransform(area);
 
 		// Run query and print
-		// return PhysicsServer3D.SpaceGetDirectState(GetWorld3D().Space).IntersectShape(queryParams);
+		return PhysicsServer3D.SpaceGetDirectState(GetWorld3D().Space).IntersectShape(queryParams);
 	}
 	#endregion
 

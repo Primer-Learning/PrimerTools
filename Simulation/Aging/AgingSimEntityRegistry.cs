@@ -7,14 +7,16 @@ public class AgingSimEntityRegistry
 {
 	public World3D World3D;
 	
+	// TODO: Make all objects with the server apis so we don't have to track C# wrappers.
+	// Currently, we need to track them to stop the garbage collector from destroying them.
 	public class PhysicalCreature
 	{
 		public Rid Body;
 		public Rid Awareness;
 		public float AwarenessRadius;
 		public bool Alive;
-		public CapsuleShape3D BodyShape;
-		public SphereShape3D AwarenessShape;
+		public CapsuleShape3D BodyShapeResource;
+		public SphereShape3D AwarenessShapeResource;
 	}
 	public class VisualCreature
 	{
@@ -27,7 +29,7 @@ public class AgingSimEntityRegistry
 	{
 		public Rid Body;
 		public bool Uneaten;
-		public SphereShape3D Shape;
+		public SphereShape3D BodyShapeResource;
 	}
 	public class VisualFood
 	{
@@ -39,7 +41,6 @@ public class AgingSimEntityRegistry
 	public readonly List<VisualCreature> VisualCreatures = new();
 	public readonly List<PhysicalFood> PhysicalFoods = new();
 	public readonly List<VisualFood> VisualFoods = new();
-	// public readonly List<(Rid area, Rid mesh, Rid extraMesh)> Entities = new();
 
 	public readonly Dictionary<Rid, PhysicalFood> FoodLookup = new();
 	
@@ -70,8 +71,8 @@ public class AgingSimEntityRegistry
 				Awareness = awarenessArea,
 				AwarenessRadius = awarenessRadius,
 				Alive = true,
-				BodyShape = bodyShape,
-				AwarenessShape = awarenessShape
+				BodyShapeResource = bodyShape,
+				AwarenessShapeResource = awarenessShape
 			}
 		);
 		
@@ -86,15 +87,15 @@ public class AgingSimEntityRegistry
 		RenderingServer.InstanceSetTransform(bodyMesh, transform);
 			
 		// Awareness
-		// Just use the cached mesh if radius is one. Otherwise, duplicate and resize.
 		SphereMesh awarenessMeshResource;
-		if (awarenessRadius == 1) awarenessMeshResource = AwarenessBubbleMesh;
+		if (awarenessRadius == 1) awarenessMeshResource = DefaultAwarenessBubbleMesh;
 		else
 		{
-			awarenessMeshResource = (SphereMesh)AwarenessBubbleMesh.Duplicate();
+			awarenessMeshResource = (SphereMesh)DefaultAwarenessBubbleMesh.Duplicate();
 			awarenessMeshResource.Radius = awarenessRadius;
 			awarenessMeshResource.Height = 2 * awarenessRadius;
 		}
+		
 		var awarenessMesh = RenderingServer.InstanceCreate2(awarenessMeshResource.GetRid(), World3D.Scenario);
 		RenderingServer.InstanceSetTransform(awarenessMesh, transform);
 			
@@ -126,7 +127,7 @@ public class AgingSimEntityRegistry
 		{
 			Body = body,
 			Uneaten = true,
-			Shape = shape
+			BodyShapeResource = shape
 		};
 		PhysicalFoods.Add(newFood);
 		FoodLookup.Add(body, newFood);
@@ -149,7 +150,7 @@ public class AgingSimEntityRegistry
 	#region Object prep
 
 	private SphereMesh _cachedAwarenessBubbleMesh;
-	private SphereMesh AwarenessBubbleMesh {
+	private SphereMesh DefaultAwarenessBubbleMesh {
 		get
 		{
 			if (_cachedAwarenessBubbleMesh != null) return _cachedAwarenessBubbleMesh;
@@ -197,18 +198,11 @@ public class AgingSimEntityRegistry
 		{
 			PhysicsServer3D.FreeRid(creature.Body);
 			PhysicsServer3D.FreeRid(creature.Awareness);
-			creature.BodyShape.Free();
-			creature.AwarenessShape.Free();
 		}
 		foreach (var creature in VisualCreatures)
 		{
 			RenderingServer.FreeRid(creature.BodyMesh);	
 			RenderingServer.FreeRid(creature.AwarenessMesh);
-			creature.BodyMeshResource.Free();
-			if (creature.AwarenessMeshResource != AwarenessBubbleMesh)
-			{
-				creature.AwarenessMeshResource.Free();
-			}
 		}
 		PhysicalCreatures.Clear();
 		VisualCreatures.Clear();
@@ -216,15 +210,10 @@ public class AgingSimEntityRegistry
 		foreach (var food in PhysicalFoods)
 		{
 			PhysicsServer3D.FreeRid(food.Body);
-			food.Shape.Free();
 		}
 		foreach (var food in VisualFoods)
 		{
 			RenderingServer.FreeRid(food.BodyMesh);
-			if (food.MeshResource != FoodMesh)
-			{
-				food.MeshResource.Free();
-			}
 		}
 		PhysicalFoods.Clear();
 		VisualFoods.Clear();
