@@ -338,13 +338,27 @@ public partial class AgingSim : Node3D
 	private void ChooseDestination(ref AgingSimEntityRegistry.PhysicalCreature creature)
 	{
 		var currentTransform = PhysicsServer3D.AreaGetTransform(creature.Body);
-		var angle = _rng.RangeFloat(1) * 2 * Mathf.Pi;
-		var displacement = _creatureDestinationLength * new Vector3(
-			Mathf.Sin(angle),
-			0,
-			Mathf.Cos(angle)
-		);
-		creature.CurrentDestination = currentTransform.Translated(displacement);
+		Vector3 newDestination;
+		int attempts = 0;
+		do
+		{
+			var angle = _rng.RangeFloat(1) * 2 * Mathf.Pi;
+			var displacement = _creatureDestinationLength * new Vector3(
+				Mathf.Sin(angle),
+				0,
+				Mathf.Cos(angle)
+			);
+			newDestination = currentTransform.Origin + displacement;
+			attempts++;
+		} while (!IsWithinWorldBounds(newDestination));
+
+		creature.CurrentDestination = new Transform3D(Basis.Identity, newDestination);
+	}
+
+	private bool IsWithinWorldBounds(Vector3 position)
+	{
+		return position.X >= 0 && position.X <= _worldDimensions.X &&
+			   position.Z >= 0 && position.Z <= _worldDimensions.Y;
 	}
 
 	private void ChooseDestination(ref AgingSimEntityRegistry.PhysicalCreature creature,
