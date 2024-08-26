@@ -15,6 +15,7 @@ public class AgingSimEntityRegistry
 		public Rid Awareness;
 		public float AwarenessRadius;
 		public bool Alive;
+		public Transform3D CurrentDestination;
 		public CapsuleShape3D BodyShapeResource;
 		public SphereShape3D AwarenessShapeResource;
 	}
@@ -44,7 +45,7 @@ public class AgingSimEntityRegistry
 
 	public readonly Dictionary<Rid, PhysicalFood> FoodLookup = new();
 	
-	public void CreateCreature(Vector3 position, float awarenessRadius, bool render)
+	public PhysicalCreature CreateCreature(Vector3 position, float awarenessRadius, bool render)
 	{
 		var transform = Transform3D.Identity.Translated(position);
 		
@@ -63,20 +64,20 @@ public class AgingSimEntityRegistry
 		var awarenessShape = new SphereShape3D();
 		awarenessShape.Radius = awarenessRadius;
 		PhysicsServer3D.AreaAddShape(awarenessArea, awarenessShape.GetRid());
+
+		var physicalCreature = new PhysicalCreature
+		{
+			Body = bodyArea,
+			Awareness = awarenessArea,
+			AwarenessRadius = awarenessRadius,
+			Alive = true,
+			BodyShapeResource = bodyShape,
+			AwarenessShapeResource = awarenessShape,
+			CurrentDestination = transform // Should be changed immediately
+		};
+		PhysicalCreatures.Add(physicalCreature);
 		
-		PhysicalCreatures.Add(
-			new PhysicalCreature
-			{
-				Body = bodyArea,
-				Awareness = awarenessArea,
-				AwarenessRadius = awarenessRadius,
-				Alive = true,
-				BodyShapeResource = bodyShape,
-				AwarenessShapeResource = awarenessShape
-			}
-		);
-		
-		if (!render) return;
+		if (!render) return physicalCreature;
 		// RenderingServer stuff
 		// Body
 		var bodyCapsule = new CapsuleMesh();
@@ -108,6 +109,8 @@ public class AgingSimEntityRegistry
 				AwarenessMeshResource = awarenessMeshResource
 			}
 		);
+
+		return physicalCreature;
 	}
 
 	public void CreateFood(Vector3 position, bool render)

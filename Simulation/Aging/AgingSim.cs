@@ -75,6 +75,8 @@ public partial class AgingSim : Node3D
 	[Export] private int _deathRatePer10K;
 	[Export] private int _maxNumSteps = 100;
 	[Export] private int _stepsPerSecond = 10;
+	private float _creatureSpeed = 10f;
+	private float _creatureDestinationLength = 10f;
 	private int _stepsSoFar = 0;
 	#endregion
 	
@@ -93,7 +95,7 @@ public partial class AgingSim : Node3D
 
 		for (var i = 0; i < _initialBlobCount; i++)
 		{
-			Registry.CreateCreature(
+			var physicalCreature = Registry.CreateCreature(
 				// Vector3.Right * 20,
 				// Random option
 				new Vector3(
@@ -126,10 +128,9 @@ public partial class AgingSim : Node3D
 		{
 			var creature = Registry.PhysicalCreatures[i];
 			if (!creature.Alive) continue;
+			
 		    // Do detections, then updates
-		    
 			var objectsInAwareness = DetectCollisionsWithArea(creature.Awareness);
-			// GD.Print(intersectionData.Count);	
 		    foreach (var objectData in objectsInAwareness)
 		    {
 				var foundFood = Registry.FoodLookup.TryGetValue((Rid) objectData["rid"], out var food);
@@ -140,22 +141,19 @@ public partial class AgingSim : Node3D
 		    }
 		    
 			// Move
-			var displacement = new Vector3(_rng.RangeFloat(-1, 1), 0, _rng.RangeFloat(-1, 1));
-			// var displacement = Vector3.Zero;
-			// var displacement = Vector3.Left;
-			
-			var transform = PhysicsServer3D.AreaGetTransform(creature.Awareness).Translated(displacement);
-			PhysicsServer3D.AreaSetTransform(creature.Body, transform);
-			PhysicsServer3D.AreaSetTransform(creature.Awareness, transform);
+			var transformThisFrame = GetNextTransform(creature);
+			PhysicsServer3D.AreaSetTransform(creature.Body, transformThisFrame);
+			PhysicsServer3D.AreaSetTransform(creature.Awareness, transformThisFrame);
 			
 			// Check for baybies
 			if (_rng.rand.NextDouble() < (double)_reproductionRatePer10K / 10000)
 			{
-				Registry.CreateCreature(
-					transform.Origin,
+				var physicalCreature = Registry.CreateCreature(
+					transformThisFrame.Origin,
 					creature.AwarenessRadius,
 					_render
 				);
+				ChooseDestination(physicalCreature);
 			}
 			// Check for death
 			if (_rng.rand.NextDouble() < (double)_deathRatePer10K / 10000)
@@ -217,6 +215,43 @@ public partial class AgingSim : Node3D
 		// Run query and print
 		return PhysicsServer3D.SpaceGetDirectState(GetWorld3D().Space).IntersectShape(queryParams);
 	}
+	#endregion
+
+	#region Behaviors
+
+	private Transform3D GetNextTransform(AgingSimEntityRegistry.PhysicalCreature creature)
+	{
+		// Simple displacements. Old but keeping in case they are useful for testing.
+		// var displacement = new Vector3(_rng.RangeFloat(-1, 1), 0, _rng.RangeFloat(-1, 1));
+		// var displacement = Vector3.Zero;
+		// var displacement = Vector3.Left;
+		// return PhysicsServer3D.AreaGetTransform(creature.Awareness).Translated(displacement);
+		// Destination
+		var currentTransform = PhysicsServer3D.AreaGetTransform(creature.Body);
+		var stepSize = _creatureSpeed / _stepsPerSecond;
+		if ((creature.CurrentDestination.Origin - currentTransform.Origin).LengthSquared() < stepSize * stepSize)
+		{
+			ChooseDestination(creature);
+		}
+		
+		var displacement = (creature.CurrentDestination.Origin - currentTransform.Origin).Normalized() *
+			_creatureSpeed / _stepsPerSecond;
+		
+		return currentTransform.Translated(displacement);
+	}
+
+	private void ChooseDestination(AgingSimEntityRegistry.PhysicalCreature creature)
+	{
+		var currentTransform = PhysicsServer3D.AreaGetTransform(creature.Body);
+		var angle = _rng.RangeFloat(1) * 2 * Mathf.Pi;
+		var displacement = _creatureDestinationLength * new Vector3(
+			Mathf.Sin(angle),
+			0,
+			Mathf.Cos(angle)
+		);
+		creature.CurrentDestination = currentTransform.Translated(displacement);
+	}
+
 	#endregion
 
 	private void Reset()
