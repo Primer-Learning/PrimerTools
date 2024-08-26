@@ -75,10 +75,12 @@ public partial class AgingSim : Node3D
 	[Export] private int _reproductionRatePer10K;
 	[Export] private int _deathRatePer10K;
 	[Export] private int _maxNumSteps = 100;
+	// TODO: Make it so there is a constant number of steps per sim second, but the sim can run faster than real time
 	[Export] private int _stepsPerSecond = 10;
 	private float _creatureSpeed = 10f;
 	private float _creatureDestinationLength = 10f;
 	private float _creatureEatDistance = 0.5f;
+	private float _energyLossPerSecond = 0.1f;
 	private int _stepsSoFar = 0;
 	#endregion
 	
@@ -123,13 +125,13 @@ public partial class AgingSim : Node3D
 		}
 	}
 
-	private void Step()
+	private bool Step()
 	{
 		if (Registry.PhysicalCreatures.Count == 0)
 		{
 			GD.Print("No Creatures found. Stopping.");
 			Running = false;
-			return;
+			return false;
 		}
 		
 		// Process them one at a time. Eventually it may make sense to go in stages.
@@ -171,6 +173,9 @@ public partial class AgingSim : Node3D
 			    registryPhysicalFood.Eaten = true;
 			    Registry.PhysicalFoods[closestFoodIndex] = registryPhysicalFood;
 			    var foodBody = Registry.VisualFoods[closestFoodIndex];
+			    
+			    // Increase creature's energy when eating
+			    creature.Energy += 1f;
 		    }
 		    else if (closestFoodIndex > -1) { ChooseDestination(ref creature, Registry.PhysicalFoods[closestFoodIndex]); }
 		    
@@ -179,8 +184,11 @@ public partial class AgingSim : Node3D
 			PhysicsServer3D.AreaSetTransform(creature.Body, transformNextFrame);
 			PhysicsServer3D.AreaSetTransform(creature.Awareness, transformNextFrame);
 			
-			// Check for baybies
-			if (_rng.rand.NextDouble() < (double)_reproductionRatePer10K / 10000)
+			// Decrease energy
+			creature.Energy -= _energyLossPerSecond / _stepsPerSecond;
+			
+			// Check for reproduction
+			if (creature.Energy > 2f)
 			{
 				var physicalCreature = Registry.CreateCreature(
 					transformNextFrame.Origin,
@@ -188,9 +196,11 @@ public partial class AgingSim : Node3D
 					_render
 				);
 				ChooseDestination(ref physicalCreature);
+				creature.Energy -= 1f; // Parent loses energy when reproducing
 			}
+			
 			// Check for death
-			if (_rng.rand.NextDouble() < (double)_deathRatePer10K / 10000)
+			if (creature.Energy <= 0)
 			{
 				creature.Alive = false;
 			}
@@ -198,14 +208,9 @@ public partial class AgingSim : Node3D
 			Registry.PhysicalCreatures[i] = creature;
 		}
 		
-		if (!_verbose) return;
-		// Old intersection detection testing, but can put other debug stuff here. 
-		
-		// GD.Print($"Intersections: {intersectionData.Count}");
-		// foreach (var intersection in intersectionData)
-		// {
-		// 	GD.Print($"    {intersection["rid"]}, {intersection["shape"]}, {intersection["collider"]}, {intersection["collider_id"]}");
-		// }
+		if (!_verbose) return true;
+		// Put debug stuff here. 
+		return true;
 	}
 	public override void _PhysicsProcess(double delta)
 	{
@@ -218,8 +223,7 @@ public partial class AgingSim : Node3D
 			return;
 		}
 		
-		Step();
-		_stepsSoFar++;
+		if (Step()) _stepsSoFar++;
 		if (!_verbose) return;
 		if (_stepsSoFar % 100 == 0 ) GD.Print($"Finished step {_stepsSoFar}"); 
 	}

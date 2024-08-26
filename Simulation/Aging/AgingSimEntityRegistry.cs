@@ -20,6 +20,8 @@ public class AgingSimEntityRegistry
 		public CapsuleShape3D BodyShapeResource;
 		public SphereShape3D AwarenessShapeResource;
 
+		public float Energy;
+
 		public void FreeRids()
 		{
 			PhysicsServer3D.FreeRid(Body);
@@ -96,7 +98,8 @@ public class AgingSimEntityRegistry
 			Alive = true,
 			BodyShapeResource = bodyShape,
 			AwarenessShapeResource = awarenessShape,
-			CurrentDestination = transform // Should be changed immediately
+			CurrentDestination = transform, // Should be changed immediately
+			Energy = 1f
 		};
 		PhysicalCreatures.Add(physicalCreature);
 		
