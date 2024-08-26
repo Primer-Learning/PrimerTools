@@ -163,15 +163,15 @@ public partial class AgingSim : Node3D
 				    }
 			    }
 		    }
-
+		 
 		    if (canEat)
 		    {
 			    closestFood.Eaten = true;
 		    }
-		    else if (closestFood != default) { ChooseDestination(creature, closestFood); }
+		    else if (closestFoodSqrDistance < float.MaxValue) { ChooseDestination(ref creature, closestFood); }
 		    
 			// Move
-			var transformNextFrame = GetNextTransform(creature);
+			var transformNextFrame = GetNextTransform(ref creature);
 			PhysicsServer3D.AreaSetTransform(creature.Body, transformNextFrame);
 			PhysicsServer3D.AreaSetTransform(creature.Awareness, transformNextFrame);
 			
@@ -183,13 +183,15 @@ public partial class AgingSim : Node3D
 					creature.AwarenessRadius,
 					_render
 				);
-				ChooseDestination(physicalCreature);
+				ChooseDestination(ref physicalCreature);
 			}
 			// Check for death
 			if (_rng.rand.NextDouble() < (double)_deathRatePer10K / 10000)
 			{
 				creature.Alive = false;
 			}
+
+			Registry.PhysicalCreatures[i] = creature;
 		}
 		
 		if (!_verbose) return;
@@ -295,7 +297,7 @@ public partial class AgingSim : Node3D
 
 	#region Behaviors
 
-	private Transform3D GetNextTransform(AgingSimEntityRegistry.PhysicalCreature creature)
+	private Transform3D GetNextTransform(ref AgingSimEntityRegistry.PhysicalCreature creature)
 	{
 		// Simple displacements. Old but keeping in case they are useful for testing.
 		// var displacement = new Vector3(_rng.RangeFloat(-1, 1), 0, _rng.RangeFloat(-1, 1));
@@ -307,7 +309,7 @@ public partial class AgingSim : Node3D
 		var stepSize = _creatureSpeed / _stepsPerSecond;
 		if ((creature.CurrentDestination.Origin - currentTransform.Origin).LengthSquared() < stepSize * stepSize)
 		{
-			ChooseDestination(creature);
+			ChooseDestination(ref creature);
 		}
 		
 		var displacement = (creature.CurrentDestination.Origin - currentTransform.Origin).Normalized() *
@@ -316,7 +318,7 @@ public partial class AgingSim : Node3D
 		return currentTransform.Translated(displacement);
 	}
 
-	private void ChooseDestination(AgingSimEntityRegistry.PhysicalCreature creature)
+	private void ChooseDestination(ref AgingSimEntityRegistry.PhysicalCreature creature)
 	{
 		var currentTransform = PhysicsServer3D.AreaGetTransform(creature.Body);
 		var angle = _rng.RangeFloat(1) * 2 * Mathf.Pi;
@@ -328,7 +330,7 @@ public partial class AgingSim : Node3D
 		creature.CurrentDestination = currentTransform.Translated(displacement);
 	}
 
-	private void ChooseDestination(AgingSimEntityRegistry.PhysicalCreature creature,
+	private void ChooseDestination(ref AgingSimEntityRegistry.PhysicalCreature creature,
 		AgingSimEntityRegistry.PhysicalFood food)
 	{
 		creature.CurrentDestination = PhysicsServer3D.AreaGetTransform(food.Body);

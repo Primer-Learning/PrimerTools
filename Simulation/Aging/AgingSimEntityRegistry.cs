@@ -9,7 +9,7 @@ public class AgingSimEntityRegistry
 	
 	// TODO: Make all objects with the server apis so we don't have to track C# wrappers.
 	// Currently, we need to track them to stop the garbage collector from destroying them.
-	public class PhysicalCreature
+	public struct PhysicalCreature
 	{
 		public Rid Body;
 		public Rid Awareness;
@@ -27,7 +27,7 @@ public class AgingSimEntityRegistry
 			PhysicsServer3D.FreeRid(Awareness);
 		}
 	}
-	public class VisualCreature
+	public struct VisualCreature
 	{
 		public Rid BodyMesh;
 		public Rid AwarenessMesh;
@@ -40,7 +40,7 @@ public class AgingSimEntityRegistry
 			RenderingServer.FreeRid(AwarenessMesh);
 		}
 	}
-	public class PhysicalFood
+	public struct PhysicalFood
 	{
 		public Rid Body;
 		public bool Eaten;
@@ -51,7 +51,7 @@ public class AgingSimEntityRegistry
 			PhysicsServer3D.FreeRid(Body);
 		}
 	}
-	public class VisualFood
+	public struct VisualFood
 	{
 		public Rid BodyMesh;
 		public SphereMesh MeshResource;
