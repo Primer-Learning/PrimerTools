@@ -69,7 +69,7 @@ public partial class AgingSim : Node3D
 	// [ExportGroup("Parameters")]
 	private Rng _rng;
 	[Export] private int _seed = -1;
-	[Export] private int _initialBlobCount = 4;
+	[Export] private int _initialCreatureCount = 4;
 	[Export] private int _initialFoodCount = 100;
 	[Export] private Vector2 _worldDimensions = Vector2.One * 10;
 	[Export] private int _reproductionRatePer10K;
@@ -77,14 +77,17 @@ public partial class AgingSim : Node3D
 	[Export] private int _maxNumSteps = 100;
 	[Export] private int _physicsStepsPerRealSecond = 60;
 	private const int PhysicsStepsPerSimSecond = 60;
-	private const float CreatureSpeed = 20f;
 	private const float CreatureDestinationLength = 10f;
 	private const float CreatureEatDistance = 0.5f;
-	private const float EnergyLossPerSecond = 0.2f;
 	private const float FoodRegenerationTime = 1f;
 	private const float EnergyGainFromFood = 1f;
 	private const float ReproductionEnergyThreshold = 2f;
 	private const float ReproductionEnergyCost = 1f;
+	private const float MutationProbability = 0.1f;
+	private const float MutationIncrement = 1f;
+	private const float InitialCreatureSpeed = 20f;
+	private const float InitialAwarenessRadius = 3f;
+	private const float GlobalEnergySpendAdjustmentFactor = 0.2f;
 	private int _stepsSoFar = 0;
 	#endregion
 	
@@ -101,7 +104,7 @@ public partial class AgingSim : Node3D
 		PhysicsServer3D.SetActive(true);
 		Engine.PhysicsTicksPerSecond = _physicsStepsPerRealSecond;
 
-		for (var i = 0; i < _initialBlobCount; i++)
+		for (var i = 0; i < _initialCreatureCount; i++)
 		{
 			var physicalCreature = Registry.CreateCreature(
 				new Vector3(
@@ -109,7 +112,8 @@ public partial class AgingSim : Node3D
 					0,
 					_rng.RangeFloat(_worldDimensions.Y)
 				),
-				3,
+				InitialAwarenessRadius,
+				InitialCreatureSpeed,
 				_render
 			);
 		}
@@ -160,7 +164,7 @@ public partial class AgingSim : Node3D
 			PhysicsServer3D.AreaSetTransform(creature.Awareness, transformNextFrame);
 			
 			// Reproduction and death
-			creature.Energy -= EnergyLossPerSecond / PhysicsStepsPerSimSecond;
+			SpendEnergy(ref creature);
 			if (creature.Energy > ReproductionEnergyThreshold) Reproduce(ref creature);
 			if (creature.Energy <= 0)
 			{
@@ -252,7 +256,7 @@ public partial class AgingSim : Node3D
 		// return PhysicsServer3D.AreaGetTransform(creature.Awareness).Translated(displacement);
 		// Destination
 		var currentTransform = PhysicsServer3D.AreaGetTransform(creature.Body);
-		var stepSize = CreatureSpeed / PhysicsStepsPerSimSecond;
+		var stepSize = creature.Speed / PhysicsStepsPerSimSecond;
 		if ((creature.CurrentDestination.Origin - currentTransform.Origin).LengthSquared() < stepSize * stepSize)
 		{
 			ChooseDestination(ref creature);
@@ -322,6 +326,14 @@ public partial class AgingSim : Node3D
 		return (closestFoodIndex, canEat);
 	}
 
+	private void SpendEnergy(ref AgingSimEntityRegistry.PhysicalCreature creature)
+	{
+		var normalizedSpeed = creature.Speed / InitialCreatureSpeed;
+		var normalizedAwarenessRadius = creature.AwarenessRadius / InitialAwarenessRadius;
+		
+		creature.Energy -= GlobalEnergySpendAdjustmentFactor * ( normalizedSpeed * normalizedSpeed + normalizedAwarenessRadius) / PhysicsStepsPerSimSecond;
+	}
+
 	private void EatFood(ref AgingSimEntityRegistry.PhysicalCreature creature, int foodIndex)
 	{
 		var registryPhysicalFood = Registry.PhysicalFoods[foodIndex];
@@ -341,9 +353,26 @@ public partial class AgingSim : Node3D
 	private void Reproduce(ref AgingSimEntityRegistry.PhysicalCreature creature)
 	{
 		var transformNextFrame = PhysicsServer3D.AreaGetTransform(creature.Body);
+		
+		float newAwarenessRadius = creature.AwarenessRadius;
+		float newSpeed = creature.Speed;
+
+		if (_rng.RangeFloat(0, 1) < MutationProbability)
+		{
+			newAwarenessRadius += _rng.RangeFloat(0, 1) < 0.5f ? MutationIncrement : -MutationIncrement;
+			newAwarenessRadius = Mathf.Max(0, newAwarenessRadius);
+		}
+
+		if (_rng.RangeFloat(0, 1) < MutationProbability)
+		{
+			newSpeed += _rng.RangeFloat(0, 1) < 0.5f ? MutationIncrement : -MutationIncrement;
+			newSpeed = Mathf.Max(0, newSpeed);
+		}
+
 		var physicalCreature = Registry.CreateCreature(
 			transformNextFrame.Origin,
-			creature.AwarenessRadius,
+			newAwarenessRadius,
+			newSpeed,
 			_render
 		);
 		ChooseDestination(ref physicalCreature);

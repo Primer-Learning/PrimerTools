@@ -14,14 +14,14 @@ public class AgingSimEntityRegistry
 		public Rid Awareness;
 		
 		public float AwarenessRadius;
+		public float Speed;
 		public bool Alive;
+		public float Energy;
 		public Transform3D CurrentDestination;
 		
 		public CapsuleShape3D BodyShapeResource;
 		public SphereShape3D AwarenessShapeResource;
-
-		public float Energy;
-
+		
 		public void FreeRids()
 		{
 			PhysicsServer3D.FreeRid(Body);
@@ -71,7 +71,7 @@ public class AgingSimEntityRegistry
 
 	public readonly Dictionary<Rid, int> FoodLookup = new();
 	
-	public PhysicalCreature CreateCreature(Vector3 position, float awarenessRadius, bool render)
+	public PhysicalCreature CreateCreature(Vector3 position, float awarenessRadius, float speed, bool render)
 	{
 		var transform = Transform3D.Identity.Translated(position);
 		
@@ -96,6 +96,7 @@ public class AgingSimEntityRegistry
 			Body = bodyArea,
 			Awareness = awarenessArea,
 			AwarenessRadius = awarenessRadius,
+			Speed = speed,
 			Alive = true,
 			BodyShapeResource = bodyShape,
 			AwarenessShapeResource = awarenessShape,
