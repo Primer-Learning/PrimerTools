@@ -76,13 +76,16 @@ public partial class AgingSim : Node3D
 	[Export] private int _deathRatePer10K;
 	[Export] private int _maxNumSteps = 100;
 	[Export] private int _physicsStepsPerRealSecond = 60;
-	private int _physicsStepsPerSimSecond = 60;
-	private float _creatureSpeed = 20f;
-	private float _creatureDestinationLength = 10f;
-	private float _creatureEatDistance = 0.5f;
-	private float _energyLossPerSecond = 0.1f;
+	private const int PhysicsStepsPerSimSecond = 60;
+	private const float CreatureSpeed = 20f;
+	private const float CreatureDestinationLength = 10f;
+	private const float CreatureEatDistance = 0.5f;
+	private const float EnergyLossPerSecond = 0.2f;
+	private const float FoodRegenerationTime = 1f;
+	private const float EnergyGainFromFood = 1f;
+	private const float ReproductionEnergyThreshold = 2f;
+	private const float ReproductionEnergyCost = 1f;
 	private int _stepsSoFar = 0;
-	private float _foodRegenerationTime = 1f;
 	#endregion
 	
 	public AgingSimEntityRegistry Registry = new();
@@ -101,8 +104,6 @@ public partial class AgingSim : Node3D
 		for (var i = 0; i < _initialBlobCount; i++)
 		{
 			var physicalCreature = Registry.CreateCreature(
-				// Vector3.Right * 20,
-				// Random option
 				new Vector3(
 					_rng.RangeFloat(_worldDimensions.X),
 					0,
@@ -125,7 +126,6 @@ public partial class AgingSim : Node3D
 			);
 		}
 	}
-
 	private bool Step()
 	{
 		if (Registry.PhysicalCreatures.Count == 0)
@@ -135,78 +135,33 @@ public partial class AgingSim : Node3D
 			return false;
 		}
 		
-		// Process them one at a time. Eventually it may make sense to go in stages.
+		
+		// Process creatures
 		for (var i = 0; i < Registry.PhysicalCreatures.Count; i++)
 		{
 			var creature = Registry.PhysicalCreatures[i];
 			if (!creature.Alive) continue;
-			var transformThisFrame = PhysicsServer3D.AreaGetTransform(creature.Body); 
+			var transformThisFrame = PhysicsServer3D.AreaGetTransform(creature.Body);
 			
-		    // Do detections, then updates
-		    
-			// Food detection and decision making
-			var objectsInAwareness = DetectCollisionsWithArea(creature.Awareness);
-			int closestFoodIndex = -1;
-			var canEat = false;
-			var closestFoodSqrDistance = float.MaxValue;
-		    foreach (var objectData in objectsInAwareness)
-		    {
-				var objectIsFood = Registry.FoodLookup.TryGetValue((Rid) objectData["rid"], out var index);
-				var food = Registry.PhysicalFoods[index];
-			    if (objectIsFood && !food.Eaten)
-			    {
-				    var sqrDistance = (transformThisFrame.Origin - PhysicsServer3D.AreaGetTransform(food.Body).Origin)
-					    .LengthSquared();
-				    if (!(sqrDistance < closestFoodSqrDistance)) continue;
-				    
-				    closestFoodSqrDistance = sqrDistance; 
-				    closestFoodIndex = index;
-				    if (closestFoodSqrDistance < _creatureEatDistance * _creatureEatDistance)
-				    {
-					    canEat = true;
-				    }
-			    }
-		    }
-		    
-		    if (canEat)
-		    {
-			    var registryPhysicalFood = Registry.PhysicalFoods[closestFoodIndex];
-			    registryPhysicalFood.Eaten = true;
-			    registryPhysicalFood.TimeLeftToRegenerate = _foodRegenerationTime;
-			    Registry.PhysicalFoods[closestFoodIndex] = registryPhysicalFood;
-			    var foodBody = Registry.VisualFoods[closestFoodIndex];
-			    
-			    if (_render)
-			    {
-				    RenderingServer.InstanceSetVisible(foodBody.BodyMesh, false);
-			    }
-			    
-			    // Increase creature's energy when eating
-			    creature.Energy += 1f;
-		    }
-		    else if (closestFoodIndex > -1) { ChooseDestination(ref creature, Registry.PhysicalFoods[closestFoodIndex]); }
-		    
+			// Food detection
+			var (closestFoodIndex, canEat) = FindClosestFood(creature, transformThisFrame);
+			if (canEat)
+			{
+				EatFood(ref creature, closestFoodIndex);
+			}
+			else if (closestFoodIndex > -1)
+			{
+				ChooseDestination(ref creature, Registry.PhysicalFoods[closestFoodIndex]);
+			}
+
 			// Move
 			var transformNextFrame = GetNextTransform(ref creature);
 			PhysicsServer3D.AreaSetTransform(creature.Body, transformNextFrame);
 			PhysicsServer3D.AreaSetTransform(creature.Awareness, transformNextFrame);
 			
-			// Decrease energy
-			creature.Energy -= _energyLossPerSecond / _physicsStepsPerSimSecond;
-			
-			// Check for reproduction
-			if (creature.Energy > 2f)
-			{
-				var physicalCreature = Registry.CreateCreature(
-					transformNextFrame.Origin,
-					creature.AwarenessRadius,
-					_render
-				);
-				ChooseDestination(ref physicalCreature);
-				creature.Energy -= 1f; // Parent loses energy when reproducing
-			}
-			
-			// Check for death
+			// Reproduction and death
+			creature.Energy -= EnergyLossPerSecond / PhysicsStepsPerSimSecond;
+			if (creature.Energy > ReproductionEnergyThreshold) Reproduce(ref creature);
 			if (creature.Energy <= 0)
 			{
 				creature.Alive = false;
@@ -214,32 +169,7 @@ public partial class AgingSim : Node3D
 
 			Registry.PhysicalCreatures[i] = creature;
 		}
-		
-		// Food regeneration
-		for (var j = 0; j < Registry.PhysicalFoods.Count; j++)
-		{
-			var food = Registry.PhysicalFoods[j];
-			if (food.Eaten)
-			{
-				food.TimeLeftToRegenerate -= 1f / _physicsStepsPerSimSecond;
-				if (food.TimeLeftToRegenerate <= 0)
-				{
-					food.Eaten = false;
-					food.TimeLeftToRegenerate = 0;
-					Registry.PhysicalFoods[j] = food;
-						
-					if (_render)
-					{
-						var visualFood = Registry.VisualFoods[j];
-						RenderingServer.InstanceSetVisible(visualFood.BodyMesh, true);
-					}
-				}
-				else
-				{
-					Registry.PhysicalFoods[j] = food;
-				}
-			}
-		}
+		RegenerateFood();
 		
 		if (!_verbose) return true;
 		// Put debug stuff here. 
@@ -260,7 +190,6 @@ public partial class AgingSim : Node3D
 		if (!_verbose) return;
 		if (_stepsSoFar % 100 == 0 ) GD.Print($"Finished step {_stepsSoFar}"); 
 	}
-
 	public override void _Process(double delta)
 	{
 		if (!_running) return;
@@ -312,7 +241,7 @@ public partial class AgingSim : Node3D
 	}
 	#endregion
 
-	#region Behaviors
+	#region Helpers
 
 	private Transform3D GetNextTransform(ref AgingSimEntityRegistry.PhysicalCreature creature)
 	{
@@ -323,7 +252,7 @@ public partial class AgingSim : Node3D
 		// return PhysicsServer3D.AreaGetTransform(creature.Awareness).Translated(displacement);
 		// Destination
 		var currentTransform = PhysicsServer3D.AreaGetTransform(creature.Body);
-		var stepSize = _creatureSpeed / _physicsStepsPerSimSecond;
+		var stepSize = CreatureSpeed / PhysicsStepsPerSimSecond;
 		if ((creature.CurrentDestination.Origin - currentTransform.Origin).LengthSquared() < stepSize * stepSize)
 		{
 			ChooseDestination(ref creature);
@@ -341,7 +270,7 @@ public partial class AgingSim : Node3D
 		do
 		{
 			var angle = _rng.RangeFloat(1) * 2 * Mathf.Pi;
-			var displacement = _creatureDestinationLength * new Vector3(
+			var displacement = CreatureDestinationLength * new Vector3(
 				Mathf.Sin(angle),
 				0,
 				Mathf.Cos(angle)
@@ -351,17 +280,107 @@ public partial class AgingSim : Node3D
 
 		creature.CurrentDestination = new Transform3D(Basis.Identity, newDestination);
 	}
-
-	private bool IsWithinWorldBounds(Vector3 position)
-	{
-		return position.X >= 0 && position.X <= _worldDimensions.X &&
-			   position.Z >= 0 && position.Z <= _worldDimensions.Y;
-	}
-
+	
 	private void ChooseDestination(ref AgingSimEntityRegistry.PhysicalCreature creature,
 		AgingSimEntityRegistry.PhysicalFood food)
 	{
 		creature.CurrentDestination = PhysicsServer3D.AreaGetTransform(food.Body);
+	}
+
+	private bool IsWithinWorldBounds(Vector3 position)
+	{
+		return position.X >= 0 && position.X <= _worldDimensions.X &&
+		       position.Z >= 0 && position.Z <= _worldDimensions.Y;
+	}
+	
+	private (int, bool) FindClosestFood(AgingSimEntityRegistry.PhysicalCreature creature, Transform3D transformThisFrame)
+	{
+		var objectsInAwareness = DetectCollisionsWithArea(creature.Awareness);
+		int closestFoodIndex = -1;
+		var canEat = false;
+		var closestFoodSqrDistance = float.MaxValue;
+
+		foreach (var objectData in objectsInAwareness)
+		{
+			var objectIsFood = Registry.FoodLookup.TryGetValue((Rid)objectData["rid"], out var index);
+			var food = Registry.PhysicalFoods[index];
+			if (objectIsFood && !food.Eaten)
+			{
+				var sqrDistance = (transformThisFrame.Origin - PhysicsServer3D.AreaGetTransform(food.Body).Origin)
+					.LengthSquared();
+				if (!(sqrDistance < closestFoodSqrDistance)) continue;
+
+				closestFoodSqrDistance = sqrDistance;
+				closestFoodIndex = index;
+				if (closestFoodSqrDistance < CreatureEatDistance * CreatureEatDistance)
+				{
+					canEat = true;
+				}
+			}
+		}
+
+		return (closestFoodIndex, canEat);
+	}
+
+	private void EatFood(ref AgingSimEntityRegistry.PhysicalCreature creature, int foodIndex)
+	{
+		var registryPhysicalFood = Registry.PhysicalFoods[foodIndex];
+		registryPhysicalFood.Eaten = true;
+		registryPhysicalFood.TimeLeftToRegenerate = FoodRegenerationTime;
+		Registry.PhysicalFoods[foodIndex] = registryPhysicalFood;
+
+		if (_render)
+		{
+			var foodBody = Registry.VisualFoods[foodIndex];
+			RenderingServer.InstanceSetVisible(foodBody.BodyMesh, false);
+		}
+
+		creature.Energy += EnergyGainFromFood;
+	}
+
+	private void Reproduce(ref AgingSimEntityRegistry.PhysicalCreature creature)
+	{
+		var transformNextFrame = PhysicsServer3D.AreaGetTransform(creature.Body);
+		var physicalCreature = Registry.CreateCreature(
+			transformNextFrame.Origin,
+			creature.AwarenessRadius,
+			_render
+		);
+		ChooseDestination(ref physicalCreature);
+		creature.Energy -= ReproductionEnergyCost;
+	}
+
+	private void RegenerateFood()
+	{
+		for (var j = 0; j < Registry.PhysicalFoods.Count; j++)
+		{
+			var food = Registry.PhysicalFoods[j];
+			if (food.Eaten)
+			{
+				food.TimeLeftToRegenerate -= 1f / PhysicsStepsPerSimSecond;
+				if (food.TimeLeftToRegenerate <= 0)
+				{
+					RegenerateFood(ref food, j);
+				}
+				else
+				{
+					Registry.PhysicalFoods[j] = food;
+				}
+			}
+		}
+	}
+
+	private void RegenerateFood(ref AgingSimEntityRegistry.PhysicalFood food, int index)
+	{
+		food.Eaten = false;
+		food.TimeLeftToRegenerate = 0;
+		Registry.PhysicalFoods[index] = food;
+
+		if (_render)
+		{
+			var visualFood = Registry.VisualFoods[index];
+			RenderingServer.InstanceSetVisible(visualFood.BodyMesh, true);
+		}
 	}
 
 	#endregion
