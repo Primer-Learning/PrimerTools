@@ -31,13 +31,11 @@ public partial class TreeSim : Node3D
             else if (_running)
             {
                 GD.Print($"Stopping tree sim after step {_stepsSoFar}");
-                _stepsSoFar = 0;
                 if (_stopwatch != null)
                 {
                     _stopwatch.Stop();
                     GD.Print($"Elapsed time: {_stopwatch.Elapsed}");
                 }
-                Reset();
             }
             
             _running = value;

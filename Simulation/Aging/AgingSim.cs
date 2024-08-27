@@ -33,15 +33,12 @@ public partial class AgingSim : Node3D
 			else if (_running) // This is here so we only do this when stopping a running sim. Not when this gets called on build.
 			{
 				GD.Print($"Stopping sim after step {_stepsSoFar}");
-				_stepsSoFar = 0;
 				if (_stopwatch != null)
 				{
 					_stopwatch.Stop();
 					GD.Print($"Elapsed time: {_stopwatch.Elapsed}");
 				}
-				Reset();
 			}
-			
 			_running = value;
 		}
 	}
