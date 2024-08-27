@@ -70,7 +70,7 @@ public partial class TreeSim : Node3D
     [Export] private Vector2 _worldDimensions = Vector2.One * 50;
     [Export] private int _maxNumSteps = 1000;
     [Export] private int _physicsStepsPerRealSecond = 60;
-    [Export] private float _deadTreeClearInterval = 1.0f; // Clear dead trees every 1 second
+    [Export] private float _deadTreeClearInterval = 1f;
     private float _timeSinceLastClear = 0f;
     private const int PhysicsStepsPerSimSecond = 60;
     private const float TreeMaturationTime = 1f;
@@ -82,7 +82,7 @@ public partial class TreeSim : Node3D
     private const float SaplingDeathProbabilityBase = 0.001f;
     private const float SaplingDeathProbabilityPerNeighbor = 0.01f;
     private const float MatureTreeDeathProbabilityBase = 0.0001f;
-    private const float MatureTreeDeathProbabilityPerNeighbor = 0.0002f;
+    private const float MatureTreeDeathProbabilityPerNeighbor = 0.0001f;
     private int _stepsSoFar = 0;
     #endregion
     
@@ -137,7 +137,7 @@ public partial class TreeSim : Node3D
                 if (IsTooCloseToMatureTree(tree) || _rng.rand.NextDouble() < deathProbability)
                 {
                     tree.IsDead = true;
-                    RenderingServer.InstanceSetVisible(tree.Body, false);
+                    RenderingServer.InstanceSetVisible(Registry.VisualTrees[i].BodyMesh, false);
                 }
                 
                 // Check for maturation
@@ -163,7 +163,7 @@ public partial class TreeSim : Node3D
                 if (_rng.rand.NextDouble() < deathProbability)
                 {
                     tree.IsDead = true;
-                    RenderingServer.InstanceSetVisible(tree.Body, false);
+                    RenderingServer.InstanceSetVisible(Registry.VisualTrees[i].BodyMesh, false);
                 }
             }
 
