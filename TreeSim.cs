@@ -76,7 +76,7 @@ public partial class TreeSim : Node3D
     private const float MaxTreeSpawnRadius = 5f;
     private const float MinTreeSpawnRadius = 1f;
     private const float TreeCompetitionRadius = 3f;
-    private const float MinimumTreeDistance = 2f; // New constant for minimum distance between trees
+    private const float MinimumTreeDistance = 0.5f;
     private const float SaplingDeathProbabilityBase = 0.001f;
     private const float SaplingDeathProbabilityPerNeighbor = 0.01f;
     private const float MatureTreeDeathProbabilityBase = 0.0001f;
