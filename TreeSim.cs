@@ -132,13 +132,10 @@ public partial class TreeSim : Node3D
                 var deathProbability = SaplingDeathProbabilityBase + neighborCount * SaplingDeathProbabilityPerNeighbor;
 
                 // Check if sapling is too close to a mature tree
-                if (IsTooCloseToMatureTree(tree))
+                if (IsTooCloseToMatureTree(tree) || _rng.rand.NextDouble() < deathProbability)
                 {
                     tree.IsDead = true;
-                }
-                else if (_rng.rand.NextDouble() < deathProbability)
-                {
-                    tree.IsDead = true;
+                    RenderingServer.InstanceSetVisible(tree.Body, false);
                 }
                 
                 // Check for maturation
@@ -164,6 +161,7 @@ public partial class TreeSim : Node3D
                 if (_rng.rand.NextDouble() < deathProbability)
                 {
                     tree.IsDead = true;
+                    RenderingServer.InstanceSetVisible(tree.Body, false);
                 }
             }
 
@@ -190,14 +188,7 @@ public partial class TreeSim : Node3D
             if (physicalTree.IsDead)
             {
                 deadIndices.Add(i);
-                continue;
             }
-            
-            if (!_render) continue;
-            var visualTree = Registry.VisualTrees[i];
-            
-            var transform = PhysicsServer3D.AreaGetTransform(physicalTree.Body);
-            RenderingServer.InstanceSetTransform(visualTree.BodyMesh, transform);
         }
 
         for (var i = deadIndices.Count - 1; i >= 0; i--)
@@ -260,7 +251,7 @@ public partial class TreeSim : Node3D
         foreach (var intersection in intersections)
         {
             var intersectedBody = (Rid)intersection["rid"];
-            if (intersectedBody != sapling.Body && Registry.TreeLookup.TryGetValue(intersectedBody, out int index))
+            if (Registry.TreeLookup.TryGetValue(intersectedBody, out int index))
             {
                 if (Registry.PhysicalTrees[index].IsMature)
                 {
