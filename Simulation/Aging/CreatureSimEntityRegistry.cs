@@ -2,7 +2,7 @@
 using Godot;
 namespace Aging.addons.PrimerTools.Simulation.Aging;
 
-public class AgingSimEntityRegistry
+public class CreatureSimEntityRegistry
 {
 	public World3D World3D;
 	

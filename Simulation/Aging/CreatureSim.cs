@@ -6,7 +6,7 @@ using Godot.Collections;
 using PrimerTools;
 
 [Tool]
-public partial class AgingSim : Node3D
+public partial class CreatureSim : Node3D
 {
 	#region Editor controls
 	// [ExportGroup("Controls")]
@@ -88,7 +88,7 @@ public partial class AgingSim : Node3D
 	private int _stepsSoFar = 0;
 	#endregion
 	
-	public AgingSimEntityRegistry Registry = new();
+	public CreatureSimEntityRegistry Registry = new();
 
 	#region Simulation
 
@@ -229,7 +229,7 @@ public partial class AgingSim : Node3D
 		}
 	}
 
-	private Array<Dictionary> DetectCollisionsWithCreature(AgingSimEntityRegistry.PhysicalCreature creature)
+	private Array<Dictionary> DetectCollisionsWithCreature(CreatureSimEntityRegistry.PhysicalCreature creature)
 	{
 		var queryParams = new PhysicsShapeQueryParameters3D();
 		queryParams.CollideWithAreas = true;
@@ -243,7 +243,7 @@ public partial class AgingSim : Node3D
 
 	#region Helpers
 
-	private void GetNextPosition(ref AgingSimEntityRegistry.PhysicalCreature creature)
+	private void GetNextPosition(ref CreatureSimEntityRegistry.PhysicalCreature creature)
 	{
 		var stepSize = creature.Speed / PhysicsStepsPerSimSecond;
 		if ((creature.CurrentDestination - creature.Position).LengthSquared() < stepSize * stepSize)
@@ -255,7 +255,7 @@ public partial class AgingSim : Node3D
 		creature.Position += displacement;
 	}
 
-	private void ChooseDestination(ref AgingSimEntityRegistry.PhysicalCreature creature)
+	private void ChooseDestination(ref CreatureSimEntityRegistry.PhysicalCreature creature)
 	{
 		Vector3 newDestination;
 		do
@@ -272,8 +272,8 @@ public partial class AgingSim : Node3D
 		creature.CurrentDestination = newDestination;
 	}
 	
-	private void ChooseDestination(ref AgingSimEntityRegistry.PhysicalCreature creature,
-		AgingSimEntityRegistry.PhysicalFood food)
+	private void ChooseDestination(ref CreatureSimEntityRegistry.PhysicalCreature creature,
+		CreatureSimEntityRegistry.PhysicalFood food)
 	{
 		creature.CurrentDestination = food.Position;
 	}
@@ -284,7 +284,7 @@ public partial class AgingSim : Node3D
 		       position.Z >= 0 && position.Z <= _worldDimensions.Y;
 	}
 	
-	private (int, bool) FindClosestFood(AgingSimEntityRegistry.PhysicalCreature creature)
+	private (int, bool) FindClosestFood(CreatureSimEntityRegistry.PhysicalCreature creature)
 	{
 		var objectsInAwareness = DetectCollisionsWithCreature(creature);
 		int closestFoodIndex = -1;
@@ -312,7 +312,7 @@ public partial class AgingSim : Node3D
 		return (closestFoodIndex, canEat);
 	}
 
-	private void SpendEnergy(ref AgingSimEntityRegistry.PhysicalCreature creature)
+	private void SpendEnergy(ref CreatureSimEntityRegistry.PhysicalCreature creature)
 	{
 		var normalizedSpeed = creature.Speed / InitialCreatureSpeed;
 		var normalizedAwarenessRadius = creature.AwarenessRadius / InitialAwarenessRadius;
@@ -320,7 +320,7 @@ public partial class AgingSim : Node3D
 		creature.Energy -= GlobalEnergySpendAdjustmentFactor * ( normalizedSpeed * normalizedSpeed + normalizedAwarenessRadius) / PhysicsStepsPerSimSecond;
 	}
 
-	private void EatFood(ref AgingSimEntityRegistry.PhysicalCreature creature, int foodIndex)
+	private void EatFood(ref CreatureSimEntityRegistry.PhysicalCreature creature, int foodIndex)
 	{
 		var registryPhysicalFood = Registry.PhysicalFoods[foodIndex];
 		registryPhysicalFood.Eaten = true;
@@ -336,7 +336,7 @@ public partial class AgingSim : Node3D
 		creature.Energy += EnergyGainFromFood;
 	}
 
-	private void Reproduce(ref AgingSimEntityRegistry.PhysicalCreature creature)
+	private void Reproduce(ref CreatureSimEntityRegistry.PhysicalCreature creature)
 	{
 		var transformNextFrame = new Transform3D(Basis.Identity, creature.Position);
 		
@@ -385,7 +385,7 @@ public partial class AgingSim : Node3D
 		}
 	}
 
-	private void RegenerateFood(ref AgingSimEntityRegistry.PhysicalFood food, int index)
+	private void RegenerateFood(ref CreatureSimEntityRegistry.PhysicalFood food, int index)
 	{
 		food.Eaten = false;
 		food.TimeLeftToRegenerate = 0;
