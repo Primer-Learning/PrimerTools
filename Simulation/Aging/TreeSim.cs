@@ -9,8 +9,8 @@ public partial class TreeSim : Node3D
 {
     public enum SimMode
     {
-        FruitGrowth,
-        TreeGrowth
+        TreeGrowth,
+        FruitGrowth
     }
     [Export] private SimMode _mode = SimMode.TreeGrowth; 
     
@@ -290,6 +290,7 @@ public partial class TreeSim : Node3D
 
     public override void _PhysicsProcess(double delta)
     {
+        // GD.Print("physics!!!");
         if (!_running) return;
         if (_stepsSoFar >= _maxNumSteps)
         {

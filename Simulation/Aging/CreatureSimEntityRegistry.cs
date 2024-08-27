@@ -42,34 +42,34 @@ public class CreatureSimEntityRegistry
 			RenderingServer.FreeRid(AwarenessMesh);
 		}
 	}
-	public struct PhysicalFood
-	{
-		public Rid Body;
-		public Vector3 Position;
-		public bool Eaten;
-		public SphereShape3D BodyShapeResource;
-		public float TimeLeftToRegenerate;
-
-		public void FreeRids()
-		{
-			PhysicsServer3D.FreeRid(Body);
-		}
-	}
-	public struct VisualFood
-	{
-		public Rid BodyMesh;
-		public SphereMesh MeshResource;
-		
-		public void FreeRids()
-		{
-			RenderingServer.FreeRid(BodyMesh);
-		}
-	}
+	// public struct PhysicalFood
+	// {
+	// 	public Rid Body;
+	// 	public Vector3 Position;
+	// 	public bool Eaten;
+	// 	public SphereShape3D BodyShapeResource;
+	// 	public float TimeLeftToRegenerate;
+	//
+	// 	public void FreeRids()
+	// 	{
+	// 		PhysicsServer3D.FreeRid(Body);
+	// 	}
+	// }
+	// public struct VisualFood
+	// {
+	// 	public Rid BodyMesh;
+	// 	public SphereMesh MeshResource;
+	// 	
+	// 	public void FreeRids()
+	// 	{
+	// 		RenderingServer.FreeRid(BodyMesh);
+	// 	}
+	// }
 	
 	public readonly List<PhysicalCreature> PhysicalCreatures = new();
 	public readonly List<VisualCreature> VisualCreatures = new();
-	public readonly List<PhysicalFood> PhysicalFoods = new();
-	public readonly List<VisualFood> VisualFoods = new();
+	// public readonly List<PhysicalFood> PhysicalFoods = new();
+	// public readonly List<VisualFood> VisualFoods = new();
 
 	public readonly Dictionary<Rid, int> FoodLookup = new();
 	
@@ -145,43 +145,43 @@ public class CreatureSimEntityRegistry
 		return physicalCreature;
 	}
 
-	public void CreateFood(Vector3 position, bool render)
-	{
-		// Create the area for the blob's awareness and put it in the physics space
-		var body = PhysicsServer3D.AreaCreate();
-		// PhysicsServer3D.AreaSetMonitorable(area, true);
-		PhysicsServer3D.AreaSetSpace(body, World3D.Space);
-		var transform = Transform3D.Identity.Translated(position);
-		PhysicsServer3D.AreaSetTransform(body, transform);
-		// Add a sphere collision shape to it
-		var shape = new SphereShape3D();
-		shape.Radius = 1;
-		PhysicsServer3D.AreaAddShape(body, shape.GetRid());
-
-		var newFood = new PhysicalFood
-		{
-			Body = body,
-			Position = position,
-			Eaten = false,
-			BodyShapeResource = shape
-		};
-		FoodLookup.Add(body, PhysicalFoods.Count);
-		PhysicalFoods.Add(newFood);
-		
-		// Mesh and visual instance
-		if (!render) return;
-		var meshResource = FoodMesh;
-		var mesh = RenderingServer.InstanceCreate2(meshResource.GetRid(), World3D.Scenario);
-		RenderingServer.InstanceSetTransform(mesh, transform);
-
-		VisualFoods.Add(
-			new VisualFood
-			{
-				BodyMesh = mesh,
-				MeshResource = meshResource
-			}
-		);
-	}
+	// public void CreateFood(Vector3 position, bool render)
+	// {
+	// 	// Create the area for the blob's awareness and put it in the physics space
+	// 	var body = PhysicsServer3D.AreaCreate();
+	// 	// PhysicsServer3D.AreaSetMonitorable(area, true);
+	// 	PhysicsServer3D.AreaSetSpace(body, World3D.Space);
+	// 	var transform = Transform3D.Identity.Translated(position);
+	// 	PhysicsServer3D.AreaSetTransform(body, transform);
+	// 	// Add a sphere collision shape to it
+	// 	var shape = new SphereShape3D();
+	// 	shape.Radius = 1;
+	// 	PhysicsServer3D.AreaAddShape(body, shape.GetRid());
+	//
+	// 	var newFood = new PhysicalFood
+	// 	{
+	// 		Body = body,
+	// 		Position = position,
+	// 		Eaten = false,
+	// 		BodyShapeResource = shape
+	// 	};
+	// 	FoodLookup.Add(body, PhysicalFoods.Count);
+	// 	PhysicalFoods.Add(newFood);
+	// 	
+	// 	// Mesh and visual instance
+	// 	if (!render) return;
+	// 	var meshResource = FoodMesh;
+	// 	var mesh = RenderingServer.InstanceCreate2(meshResource.GetRid(), World3D.Scenario);
+	// 	RenderingServer.InstanceSetTransform(mesh, transform);
+	//
+	// 	VisualFoods.Add(
+	// 		new VisualFood
+	// 		{
+	// 			BodyMesh = mesh,
+	// 			MeshResource = meshResource
+	// 		}
+	// 	);
+	// }
 	
 	#region Object prep
 
@@ -242,18 +242,18 @@ public class CreatureSimEntityRegistry
 		}
 		PhysicalCreatures.Clear();
 		VisualCreatures.Clear();
-		// Foods
-		foreach (var food in PhysicalFoods)
-		{
-			PhysicsServer3D.FreeRid(food.Body);
-		}
-		foreach (var food in VisualFoods)
-		{
-			RenderingServer.FreeRid(food.BodyMesh);
-		}
-		PhysicalFoods.Clear();
-		VisualFoods.Clear();
-		FoodLookup.Clear();
+		// // Foods
+		// foreach (var food in PhysicalFoods)
+		// {
+		// 	PhysicsServer3D.FreeRid(food.Body);
+		// }
+		// foreach (var food in VisualFoods)
+		// {
+		// 	RenderingServer.FreeRid(food.BodyMesh);
+		// }
+		// PhysicalFoods.Clear();
+		// VisualFoods.Clear();
+		// FoodLookup.Clear();
 	}
 	// private void HardCleanup()
 	// {

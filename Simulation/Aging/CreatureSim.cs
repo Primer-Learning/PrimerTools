@@ -8,6 +8,7 @@ using PrimerTools;
 [Tool]
 public partial class CreatureSim : Node3D
 {
+    [Export] private TreeSim _treeSim;
 	#region Editor controls
 	// [ExportGroup("Controls")]
 	private bool _running;
@@ -22,8 +23,8 @@ public partial class CreatureSim : Node3D
 				if (_stepsSoFar >= _maxNumSteps) Reset();
 				if (_stepsSoFar == 0)
 				{
-					Initialize();
 					GD.Print("Starting sim.");
+					Initialize();
 				}
 				else
 				{
@@ -71,12 +72,11 @@ public partial class CreatureSim : Node3D
 	[Export] private Vector2 _worldDimensions = Vector2.One * 10;
 	[Export] private int _reproductionRatePer10K;
 	[Export] private int _deathRatePer10K;
-	[Export] private int _maxNumSteps = 100;
+	[Export] private int _maxNumSteps = 100000;
 	[Export] private int _physicsStepsPerRealSecond = 60;
 	private const int PhysicsStepsPerSimSecond = 60;
 	private const float CreatureDestinationLength = 10f;
 	private const float CreatureEatDistance = 0.5f;
-	private const float FoodRegenerationTime = 1f;
 	private const float EnergyGainFromFood = 1f;
 	private const float ReproductionEnergyThreshold = 2f;
 	private const float ReproductionEnergyCost = 1f;
@@ -100,7 +100,13 @@ public partial class CreatureSim : Node3D
 		_rng = new Rng(_seed == -1 ? System.Environment.TickCount : _seed);
 		PhysicsServer3D.SetActive(true);
 		Engine.PhysicsTicksPerSecond = _physicsStepsPerRealSecond;
-
+		
+		if (_treeSim == null)
+		{
+			GD.PrintErr("TreeSim not found.");
+			return;
+		}
+		
 		for (var i = 0; i < _initialCreatureCount; i++)
 		{
 			var physicalCreature = Registry.CreateCreature(
@@ -114,18 +120,6 @@ public partial class CreatureSim : Node3D
 				_render
 			);
 		}
-
-		for (var i = 0; i < _initialFoodCount; i++)
-		{
-			Registry.CreateFood(
-				new Vector3(
-					_rng.RangeFloat(_worldDimensions.X),
-					0,
-					_rng.RangeFloat(_worldDimensions.Y)
-				),
-				_render
-			);
-		}
 	}
 	private bool Step()
 	{
@@ -135,7 +129,6 @@ public partial class CreatureSim : Node3D
 			Running = false;
 			return false;
 		}
-		
 		
 		// Process creatures
 		for (var i = 0; i < Registry.PhysicalCreatures.Count; i++)
@@ -150,7 +143,7 @@ public partial class CreatureSim : Node3D
 			}
 			else if (closestFoodIndex > -1)
 			{
-				ChooseDestination(ref creature, Registry.PhysicalFoods[closestFoodIndex]);
+				ChooseDestination(ref creature, closestFoodIndex);
 			}
 
 			// Move
@@ -169,7 +162,7 @@ public partial class CreatureSim : Node3D
 
 			Registry.PhysicalCreatures[i] = creature;
 		}
-		RegenerateFood();
+		// RegenerateFood();
 		
 		if (!_verbose) return true;
 		// Put debug stuff here. 
@@ -258,6 +251,9 @@ public partial class CreatureSim : Node3D
 	private void ChooseDestination(ref CreatureSimEntityRegistry.PhysicalCreature creature)
 	{
 		Vector3 newDestination;
+		int attempts = 0;
+		const int maxAttempts = 100;
+
 		do
 		{
 			var angle = _rng.RangeFloat(1) * 2 * Mathf.Pi;
@@ -267,15 +263,23 @@ public partial class CreatureSim : Node3D
 				Mathf.Cos(angle)
 			);
 			newDestination = creature.Position + displacement;
+			attempts++;
+
+			if (attempts >= maxAttempts)
+			{
+				GD.PrintErr($"Failed to find a valid destination after {maxAttempts} attempts. Using current position.");
+				newDestination = creature.Position;
+				break;
+			}
 		} while (!IsWithinWorldBounds(newDestination));
 
 		creature.CurrentDestination = newDestination;
 	}
 	
-	private void ChooseDestination(ref CreatureSimEntityRegistry.PhysicalCreature creature,
-		CreatureSimEntityRegistry.PhysicalFood food)
+	private void ChooseDestination(ref CreatureSimEntityRegistry.PhysicalCreature creature, int treeIndex)
 	{
-		creature.CurrentDestination = food.Position;
+		var tree = _treeSim.Registry.PhysicalTrees[treeIndex];
+		creature.CurrentDestination = tree.Position;
 	}
 
 	private bool IsWithinWorldBounds(Vector3 position)
@@ -293,18 +297,22 @@ public partial class CreatureSim : Node3D
 
 		foreach (var objectData in objectsInAwareness)
 		{
-			var objectIsFood = Registry.FoodLookup.TryGetValue((Rid)objectData["rid"], out var index);
-			var food = Registry.PhysicalFoods[index];
-			if (objectIsFood && !food.Eaten)
+			var objectRid = (Rid)objectData["rid"];
+			if (_treeSim.Registry.TreeLookup.TryGetValue(objectRid, out var treeIndex))
 			{
-				var sqrDistance = (creature.Position - food.Position).LengthSquared();
-				if (!(sqrDistance < closestFoodSqrDistance)) continue;
-
-				closestFoodSqrDistance = sqrDistance;
-				closestFoodIndex = index;
-				if (closestFoodSqrDistance < CreatureEatDistance * CreatureEatDistance)
+				var tree = _treeSim.Registry.PhysicalTrees[treeIndex];
+				if (tree.HasFruit)
 				{
-					canEat = true;
+					var sqrDistance = (creature.Position - tree.Position).LengthSquared();
+					if (sqrDistance < closestFoodSqrDistance)
+					{
+						closestFoodSqrDistance = sqrDistance;
+						closestFoodIndex = treeIndex;
+						if (closestFoodSqrDistance < CreatureEatDistance * CreatureEatDistance)
+						{
+							canEat = true;
+						}
+					}
 				}
 			}
 		}
@@ -320,20 +328,23 @@ public partial class CreatureSim : Node3D
 		creature.Energy -= GlobalEnergySpendAdjustmentFactor * ( normalizedSpeed * normalizedSpeed + normalizedAwarenessRadius) / PhysicsStepsPerSimSecond;
 	}
 
-	private void EatFood(ref CreatureSimEntityRegistry.PhysicalCreature creature, int foodIndex)
+	private void EatFood(ref CreatureSimEntityRegistry.PhysicalCreature creature, int treeIndex)
 	{
-		var registryPhysicalFood = Registry.PhysicalFoods[foodIndex];
-		registryPhysicalFood.Eaten = true;
-		registryPhysicalFood.TimeLeftToRegenerate = FoodRegenerationTime;
-		Registry.PhysicalFoods[foodIndex] = registryPhysicalFood;
-
-		if (_render)
+		var tree = _treeSim.Registry.PhysicalTrees[treeIndex];
+		if (tree.HasFruit)
 		{
-			var foodBody = Registry.VisualFoods[foodIndex];
-			RenderingServer.InstanceSetVisible(foodBody.BodyMesh, false);
-		}
+			tree.HasFruit = false;
+			tree.FruitGrowthProgress = 0;
+			_treeSim.Registry.PhysicalTrees[treeIndex] = tree;
 
-		creature.Energy += EnergyGainFromFood;
+			if (_render)
+			{
+				var visualTree = _treeSim.Registry.VisualTrees[treeIndex];
+				RenderingServer.InstanceSetVisible(visualTree.FruitMesh, false);
+			}
+
+			creature.Energy += EnergyGainFromFood;
+		}
 	}
 
 	private void Reproduce(ref CreatureSimEntityRegistry.PhysicalCreature creature)
@@ -365,38 +376,38 @@ public partial class CreatureSim : Node3D
 		creature.Energy -= ReproductionEnergyCost;
 	}
 
-	private void RegenerateFood()
-	{
-		for (var j = 0; j < Registry.PhysicalFoods.Count; j++)
-		{
-			var food = Registry.PhysicalFoods[j];
-			if (food.Eaten)
-			{
-				food.TimeLeftToRegenerate -= 1f / PhysicsStepsPerSimSecond;
-				if (food.TimeLeftToRegenerate <= 0)
-				{
-					RegenerateFood(ref food, j);
-				}
-				else
-				{
-					Registry.PhysicalFoods[j] = food;
-				}
-			}
-		}
-	}
+	// private void RegenerateFood()
+	// {
+	// 	for (var j = 0; j < Registry.PhysicalFoods.Count; j++)
+	// 	{
+	// 		var food = Registry.PhysicalFoods[j];
+	// 		if (food.Eaten)
+	// 		{
+	// 			food.TimeLeftToRegenerate -= 1f / PhysicsStepsPerSimSecond;
+	// 			if (food.TimeLeftToRegenerate <= 0)
+	// 			{
+	// 				RegenerateFood(ref food, j);
+	// 			}
+	// 			else
+	// 			{
+	// 				Registry.PhysicalFoods[j] = food;
+	// 			}
+	// 		}
+	// 	}
+	// }
 
-	private void RegenerateFood(ref CreatureSimEntityRegistry.PhysicalFood food, int index)
-	{
-		food.Eaten = false;
-		food.TimeLeftToRegenerate = 0;
-		Registry.PhysicalFoods[index] = food;
-
-		if (_render)
-		{
-			var visualFood = Registry.VisualFoods[index];
-			RenderingServer.InstanceSetVisible(visualFood.BodyMesh, true);
-		}
-	}
+	// private void RegenerateFood(ref CreatureSimEntityRegistry.PhysicalFood food, int index)
+	// {
+	// 	food.Eaten = false;
+	// 	food.TimeLeftToRegenerate = 0;
+	// 	Registry.PhysicalFoods[index] = food;
+	//
+	// 	if (_render)
+	// 	{
+	// 		var visualFood = Registry.VisualFoods[index];
+	// 		RenderingServer.InstanceSetVisible(visualFood.BodyMesh, true);
+	// 	}
+	// }
 
 	#endregion
 
