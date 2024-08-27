@@ -222,17 +222,28 @@ public partial class TreeSim : Node3D
 
     private bool IsTooCloseToMatureTree(TreeSimEntityRegistry.PhysicalTree sapling)
     {
-        foreach (var tree in Registry.PhysicalTrees)
+        var queryParams = new PhysicsShapeQueryParameters3D();
+        queryParams.CollideWithAreas = true;
+        queryParams.ShapeRid = PhysicsServer3D.AreaGetShape(sapling.Body, 0);
+        var transform = Transform3D.Identity.Translated(sapling.Position);
+        transform = transform.ScaledLocal(Vector3.One * MinimumTreeDistance);
+        queryParams.Transform = transform;
+
+        var intersections = PhysicsServer3D.SpaceGetDirectState(GetWorld3D().Space).IntersectShape(queryParams);
+        
+        foreach (var intersection in intersections)
         {
-            if (tree.IsMature && tree.Body != sapling.Body)
+            var intersectedBody = (Rid)intersection["rid"];
+            if (intersectedBody != sapling.Body)
             {
-                var distance = (tree.Position - sapling.Position).Length();
-                if (distance < MinimumTreeDistance)
+                var index = Registry.PhysicalTrees.FindIndex(tree => tree.Body == intersectedBody);
+                if (index != -1 && Registry.PhysicalTrees[index].IsMature)
                 {
                     return true;
                 }
             }
         }
+        
         return false;
     }
 
