@@ -70,6 +70,8 @@ public partial class TreeSim : Node3D
     [Export] private Vector2 _worldDimensions = Vector2.One * 50;
     [Export] private int _maxNumSteps = 1000;
     [Export] private int _physicsStepsPerRealSecond = 60;
+    [Export] private float _deadTreeClearInterval = 1.0f; // Clear dead trees every 1 second
+    private float _timeSinceLastClear = 0f;
     private const int PhysicsStepsPerSimSecond = 60;
     private const float TreeMaturationTime = 1f;
     private const float TreeSpawnInterval = 0.4f;
@@ -181,33 +183,11 @@ public partial class TreeSim : Node3D
     {
         if (!_running) return;
 
-        var deadIndices = new List<int>();
-        for (var i = 0; i < Registry.PhysicalTrees.Count; i++)
+        _timeSinceLastClear += (float)delta;
+        if (_timeSinceLastClear >= _deadTreeClearInterval)
         {
-            var physicalTree = Registry.PhysicalTrees[i];
-            if (physicalTree.IsDead)
-            {
-                deadIndices.Add(i);
-            }
-        }
-
-        for (var i = deadIndices.Count - 1; i >= 0; i--)
-        {
-            var deadIndex = deadIndices[i];
-            Registry.PhysicalTrees[deadIndex].FreeRids();
-            Registry.TreeLookup.Remove(Registry.PhysicalTrees[deadIndex].Body);
-            Registry.PhysicalTrees.RemoveAt(deadIndex);
-            
-            if (!_render) continue;
-            Registry.VisualTrees[deadIndex].FreeRids();
-            Registry.VisualTrees.RemoveAt(deadIndex);
-        }
-
-        // Update TreeLookup indices
-        Registry.TreeLookup.Clear();
-        for (int i = 0; i < Registry.PhysicalTrees.Count; i++)
-        {
-            Registry.TreeLookup[Registry.PhysicalTrees[i].Body] = i;
+            Registry.ClearDeadTrees(_render);
+            _timeSinceLastClear = 0f;
         }
     }
 

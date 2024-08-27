@@ -98,4 +98,37 @@ public class TreeSimEntityRegistry
         VisualTrees.Clear();
         TreeLookup.Clear();
     }
+
+    public void ClearDeadTrees(bool render)
+    {
+        var deadIndices = new List<int>();
+        for (var i = 0; i < PhysicalTrees.Count; i++)
+        {
+            if (PhysicalTrees[i].IsDead)
+            {
+                deadIndices.Add(i);
+            }
+        }
+
+        for (var i = deadIndices.Count - 1; i >= 0; i--)
+        {
+            var deadIndex = deadIndices[i];
+            PhysicalTrees[deadIndex].FreeRids();
+            TreeLookup.Remove(PhysicalTrees[deadIndex].Body);
+            PhysicalTrees.RemoveAt(deadIndex);
+            
+            if (render)
+            {
+                VisualTrees[deadIndex].FreeRids();
+                VisualTrees.RemoveAt(deadIndex);
+            }
+        }
+
+        // Rebuild TreeLookup
+        TreeLookup.Clear();
+        for (int i = 0; i < PhysicalTrees.Count; i++)
+        {
+            TreeLookup[PhysicalTrees[i].Body] = i;
+        }
+    }
 }
