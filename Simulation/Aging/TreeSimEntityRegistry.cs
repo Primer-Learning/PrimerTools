@@ -16,6 +16,8 @@ public class TreeSimEntityRegistry
         public float TimeSinceLastSpawn;
         public SphereShape3D BodyShapeResource;
         public bool IsDead;
+        public bool HasFruit;
+        public float FruitGrowthProgress;
 
         public void FreeRids()
         {
@@ -26,11 +28,17 @@ public class TreeSimEntityRegistry
     public struct VisualTree
     {
         public Rid BodyMesh;
+        public Rid FruitMesh;
         public CylinderMesh MeshResource;
+        public SphereMesh FruitMeshResource;
 
         public void FreeRids()
         {
             RenderingServer.FreeRid(BodyMesh);
+            if (FruitMesh != default)
+            {
+                RenderingServer.FreeRid(FruitMesh);
+            }
         }
     }
 
