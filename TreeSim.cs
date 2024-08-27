@@ -260,10 +260,9 @@ public partial class TreeSim : Node3D
         foreach (var intersection in intersections)
         {
             var intersectedBody = (Rid)intersection["rid"];
-            if (intersectedBody != sapling.Body)
+            if (intersectedBody != sapling.Body && Registry.TreeLookup.TryGetValue(intersectedBody, out int index))
             {
-                var index = Registry.PhysicalTrees.FindIndex(tree => tree.Body == intersectedBody);
-                if (index != -1 && Registry.PhysicalTrees[index].IsMature)
+                if (Registry.PhysicalTrees[index].IsMature)
                 {
                     return true;
                 }
