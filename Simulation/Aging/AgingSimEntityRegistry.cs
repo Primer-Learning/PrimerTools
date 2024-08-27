@@ -17,7 +17,8 @@ public class AgingSimEntityRegistry
 		public float Speed;
 		public bool Alive;
 		public float Energy;
-		public Transform3D CurrentDestination;
+		public Vector3 Position;
+		public Vector3 CurrentDestination;
 		
 		public CapsuleShape3D BodyShapeResource;
 		public SphereShape3D AwarenessShapeResource;
@@ -44,6 +45,7 @@ public class AgingSimEntityRegistry
 	public struct PhysicalFood
 	{
 		public Rid Body;
+		public Vector3 Position;
 		public bool Eaten;
 		public SphereShape3D BodyShapeResource;
 		public float TimeLeftToRegenerate;
@@ -79,6 +81,7 @@ public class AgingSimEntityRegistry
 		var bodyArea = PhysicsServer3D.AreaCreate();
 		PhysicsServer3D.AreaSetSpace(bodyArea, World3D.Space);
 		PhysicsServer3D.AreaSetTransform(bodyArea, transform);
+		// var position = transform.Origin;
 		var bodyShape = new CapsuleShape3D();
 		bodyShape.Height = 1;
 		bodyShape.Radius = 0.25f;
@@ -100,7 +103,8 @@ public class AgingSimEntityRegistry
 			Alive = true,
 			BodyShapeResource = bodyShape,
 			AwarenessShapeResource = awarenessShape,
-			CurrentDestination = transform, // Should be changed immediately
+			Position = position,
+			CurrentDestination = position, // Will be changed immediately
 			Energy = 1f
 		};
 		PhysicalCreatures.Add(physicalCreature);
@@ -157,6 +161,7 @@ public class AgingSimEntityRegistry
 		var newFood = new PhysicalFood
 		{
 			Body = body,
+			Position = position,
 			Eaten = false,
 			BodyShapeResource = shape
 		};

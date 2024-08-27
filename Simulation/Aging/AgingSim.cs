@@ -145,10 +145,8 @@ public partial class AgingSim : Node3D
 		{
 			var creature = Registry.PhysicalCreatures[i];
 			if (!creature.Alive) continue;
-			var transformThisFrame = PhysicsServer3D.AreaGetTransform(creature.Body);
-			
 			// Food detection
-			var (closestFoodIndex, canEat) = FindClosestFood(creature, transformThisFrame);
+			var (closestFoodIndex, canEat) = FindClosestFood(creature);
 			if (canEat)
 			{
 				EatFood(ref creature, closestFoodIndex);
@@ -159,7 +157,8 @@ public partial class AgingSim : Node3D
 			}
 
 			// Move
-			var transformNextFrame = GetNextTransform(ref creature);
+			GetNextPosition(ref creature);
+			var transformNextFrame = new Transform3D(Basis.Identity, creature.Position);
 			PhysicsServer3D.AreaSetTransform(creature.Body, transformNextFrame);
 			PhysicsServer3D.AreaSetTransform(creature.Awareness, transformNextFrame);
 			
@@ -233,12 +232,12 @@ public partial class AgingSim : Node3D
 		}
 	}
 
-	private Array<Dictionary> DetectCollisionsWithArea(Rid area)
+	private Array<Dictionary> DetectCollisionsWithCreature(AgingSimEntityRegistry.PhysicalCreature creature)
 	{
 		var queryParams = new PhysicsShapeQueryParameters3D();
 		queryParams.CollideWithAreas = true;
-		queryParams.ShapeRid = PhysicsServer3D.AreaGetShape(area, 0);
-		queryParams.Transform = PhysicsServer3D.AreaGetTransform(area);
+		queryParams.ShapeRid = PhysicsServer3D.AreaGetShape(creature.Awareness, 0);
+		queryParams.Transform = Transform3D.Identity.Translated(creature.Position);
 
 		// Run query and print
 		return PhysicsServer3D.SpaceGetDirectState(GetWorld3D().Space).IntersectShape(queryParams);
@@ -247,29 +246,20 @@ public partial class AgingSim : Node3D
 
 	#region Helpers
 
-	private Transform3D GetNextTransform(ref AgingSimEntityRegistry.PhysicalCreature creature)
+	private void GetNextPosition(ref AgingSimEntityRegistry.PhysicalCreature creature)
 	{
-		// Simple displacements. Old but keeping in case they are useful for testing.
-		// var displacement = new Vector3(_rng.RangeFloat(-1, 1), 0, _rng.RangeFloat(-1, 1));
-		// var displacement = Vector3.Zero;
-		// var displacement = Vector3.Left;
-		// return PhysicsServer3D.AreaGetTransform(creature.Awareness).Translated(displacement);
-		// Destination
-		var currentTransform = PhysicsServer3D.AreaGetTransform(creature.Body);
 		var stepSize = creature.Speed / PhysicsStepsPerSimSecond;
-		if ((creature.CurrentDestination.Origin - currentTransform.Origin).LengthSquared() < stepSize * stepSize)
+		if ((creature.CurrentDestination - creature.Position).LengthSquared() < stepSize * stepSize)
 		{
 			ChooseDestination(ref creature);
 		}
 		
-		var displacement = (creature.CurrentDestination.Origin - currentTransform.Origin).Normalized() * stepSize;
-		
-		return currentTransform.Translated(displacement);
+		var displacement = (creature.CurrentDestination - creature.Position).Normalized() * stepSize;
+		creature.Position += displacement;
 	}
 
 	private void ChooseDestination(ref AgingSimEntityRegistry.PhysicalCreature creature)
 	{
-		var currentTransform = PhysicsServer3D.AreaGetTransform(creature.Body);
 		Vector3 newDestination;
 		do
 		{
@@ -279,16 +269,16 @@ public partial class AgingSim : Node3D
 				0,
 				Mathf.Cos(angle)
 			);
-			newDestination = currentTransform.Origin + displacement;
+			newDestination = creature.Position + displacement;
 		} while (!IsWithinWorldBounds(newDestination));
 
-		creature.CurrentDestination = new Transform3D(Basis.Identity, newDestination);
+		creature.CurrentDestination = newDestination;
 	}
 	
 	private void ChooseDestination(ref AgingSimEntityRegistry.PhysicalCreature creature,
 		AgingSimEntityRegistry.PhysicalFood food)
 	{
-		creature.CurrentDestination = PhysicsServer3D.AreaGetTransform(food.Body);
+		creature.CurrentDestination = food.Position;
 	}
 
 	private bool IsWithinWorldBounds(Vector3 position)
@@ -297,9 +287,9 @@ public partial class AgingSim : Node3D
 		       position.Z >= 0 && position.Z <= _worldDimensions.Y;
 	}
 	
-	private (int, bool) FindClosestFood(AgingSimEntityRegistry.PhysicalCreature creature, Transform3D transformThisFrame)
+	private (int, bool) FindClosestFood(AgingSimEntityRegistry.PhysicalCreature creature)
 	{
-		var objectsInAwareness = DetectCollisionsWithArea(creature.Awareness);
+		var objectsInAwareness = DetectCollisionsWithCreature(creature);
 		int closestFoodIndex = -1;
 		var canEat = false;
 		var closestFoodSqrDistance = float.MaxValue;
@@ -310,8 +300,7 @@ public partial class AgingSim : Node3D
 			var food = Registry.PhysicalFoods[index];
 			if (objectIsFood && !food.Eaten)
 			{
-				var sqrDistance = (transformThisFrame.Origin - PhysicsServer3D.AreaGetTransform(food.Body).Origin)
-					.LengthSquared();
+				var sqrDistance = (creature.Position - food.Position).LengthSquared();
 				if (!(sqrDistance < closestFoodSqrDistance)) continue;
 
 				closestFoodSqrDistance = sqrDistance;
@@ -352,7 +341,7 @@ public partial class AgingSim : Node3D
 
 	private void Reproduce(ref AgingSimEntityRegistry.PhysicalCreature creature)
 	{
-		var transformNextFrame = PhysicsServer3D.AreaGetTransform(creature.Body);
+		var transformNextFrame = new Transform3D(Basis.Identity, creature.Position);
 		
 		float newAwarenessRadius = creature.AwarenessRadius;
 		float newSpeed = creature.Speed;
