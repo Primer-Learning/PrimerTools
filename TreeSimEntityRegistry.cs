@@ -67,8 +67,9 @@ public class TreeSimEntityRegistry
         treeMesh.BottomRadius = 0.5f;
         treeMesh.Height = 2.0f;
 
+        var visualTransform = transform.ScaledLocal(0.5f * Vector3.One); // Smol because the original tree is not mature
         var bodyMesh = RenderingServer.InstanceCreate2(treeMesh.GetRid(), World3D.Scenario);
-        RenderingServer.InstanceSetTransform(bodyMesh, transform);
+        RenderingServer.InstanceSetTransform(bodyMesh, visualTransform);
 
         VisualTrees.Add(new VisualTree
         {

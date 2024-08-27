@@ -1,6 +1,7 @@
 using Godot;
 using System.Collections.Generic;
 using System.Diagnostics;
+using PrimerTools;
 using PrimerTools.Simulation.Tree;
 
 [Tool]
@@ -70,12 +71,15 @@ public partial class TreeSim : Node3D
     [Export] private int _maxNumSteps = 1000;
     [Export] private int _physicsStepsPerRealSecond = 60;
     private const int PhysicsStepsPerSimSecond = 60;
-    private const float TreeMaturationTime = 5f;
-    private const float TreeSpawnInterval = 2f;
-    private const float TreeSpawnRadius = 5f;
+    private const float TreeMaturationTime = 1f;
+    private const float TreeSpawnInterval = 0.4f;
+    private const float MaxTreeSpawnRadius = 5f;
+    private const float MinTreeSpawnRadius = 1f;
     private const float TreeCompetitionRadius = 3f;
-    private const float TreeDeathProbabilityBase = 0.001f;
-    private const float TreeDeathProbabilityPerNeighbor = 0.0005f;
+    private const float SaplingDeathProbabilityBase = 0.001f;
+    private const float SaplingDeathProbabilityPerNeighbor = 0.01f;
+    private const float MatureTreeDeathProbabilityBase = 0.0001f;
+    private const float MatureTreeDeathProbabilityPerNeighbor = 0.0002f;
     private int _stepsSoFar = 0;
     #endregion
     
@@ -113,30 +117,45 @@ public partial class TreeSim : Node3D
         }
 
         var treesToRemove = new List<int>();
-        var newTrees = new List<TreeSimEntityRegistry.PhysicalTree>();
+        var newTreePositions = new List<Vector3>();
 
         for (var i = 0; i < Registry.PhysicalTrees.Count; i++)
         {
             var tree = Registry.PhysicalTrees[i];
             tree.Age += 1f / PhysicsStepsPerSimSecond;
-
-            if (!tree.IsMature && tree.Age >= TreeMaturationTime)
-            {
-                tree.IsMature = true;
+            
+            if (!tree.IsMature)
+            { 
+                var neighborCount = CountNeighbors(tree);
+                var deathProbability = SaplingDeathProbabilityBase + neighborCount * SaplingDeathProbabilityPerNeighbor;
+                var dead = false;
+                if (_rng.rand.NextDouble() < deathProbability)
+                {
+                    treesToRemove.Add(i);
+                    dead = true;
+                }
+                
+                // Check for maturation
+                if (!dead && tree.Age >= TreeMaturationTime)
+                {
+                    tree.IsMature = true;
+                    var transform = Transform3D.Identity.Translated(tree.Position);
+                    transform = transform.ScaledLocal(Vector3.One * 1.0f);
+                    RenderingServer.InstanceSetTransform(Registry.VisualTrees[i].BodyMesh, transform);
+                }
             }
-
-            if (tree.IsMature)
+            else
             {
                 tree.TimeSinceLastSpawn += 1f / PhysicsStepsPerSimSecond;
                 if (tree.TimeSinceLastSpawn >= TreeSpawnInterval)
                 {
                     tree.TimeSinceLastSpawn = 0;
-                    TrySpawnNewTree(tree, newTrees);
+                    TryGenerateNewTreePosition(tree, newTreePositions);
                 }
 
                 var neighborCount = CountNeighbors(tree);
-                var deathProbability = TreeDeathProbabilityBase + neighborCount * TreeDeathProbabilityPerNeighbor;
-                if (_rng.RangeFloat(0, 1) < deathProbability)
+                var deathProbability = MatureTreeDeathProbabilityBase + neighborCount * MatureTreeDeathProbabilityPerNeighbor;
+                if (_rng.rand.NextDouble() < deathProbability)
                 {
                     treesToRemove.Add(i);
                 }
@@ -159,30 +178,24 @@ public partial class TreeSim : Node3D
         }
 
         // Add new trees
-        foreach (var newTree in newTrees)
+        foreach (var newTreePosition in newTreePositions)
         {
-            Registry.CreateTree(newTree.Position, _render);
+            Registry.CreateTree(newTreePosition, _render);
         }
 
         return true;
     }
 
-    private void TrySpawnNewTree(TreeSimEntityRegistry.PhysicalTree parent, List<TreeSimEntityRegistry.PhysicalTree> newTrees)
+    private void TryGenerateNewTreePosition(TreeSimEntityRegistry.PhysicalTree parent, List<Vector3> newTrees)
     {
         var angle = _rng.RangeFloat(0, Mathf.Tau);
-        var distance = _rng.RangeFloat(0, TreeSpawnRadius);
+        var distance = _rng.RangeFloat(MinTreeSpawnRadius, MaxTreeSpawnRadius);
         var offset = new Vector3(Mathf.Cos(angle) * distance, 0, Mathf.Sin(angle) * distance);
         var newPosition = parent.Position + offset;
 
         if (IsWithinWorldBounds(newPosition))
         {
-            newTrees.Add(new TreeSimEntityRegistry.PhysicalTree
-            {
-                Position = newPosition,
-                Age = 0,
-                IsMature = false,
-                TimeSinceLastSpawn = 0
-            });
+            newTrees.Add(newPosition);
         }
     }
 
@@ -192,7 +205,7 @@ public partial class TreeSim : Node3D
         queryParams.CollideWithAreas = true;
         queryParams.ShapeRid = PhysicsServer3D.AreaGetShape(tree.Body, 0);
         var transform = Transform3D.Identity.Translated(tree.Position);
-        transform = transform.Scaled(Vector3.One * TreeCompetitionRadius);
+        transform = transform.ScaledLocal(Vector3.One * TreeCompetitionRadius);
         queryParams.Transform = transform;
 
         var intersections = PhysicsServer3D.SpaceGetDirectState(GetWorld3D().Space).IntersectShape(queryParams);
@@ -217,21 +230,6 @@ public partial class TreeSim : Node3D
         
         if (Step()) _stepsSoFar++;
         if (_verbose && _stepsSoFar % 100 == 0) GD.Print($"Finished step {_stepsSoFar}");
-    }
-
-    public override void _Process(double delta)
-    {
-        if (!_running || !_render) return;
-
-        for (var i = 0; i < Registry.PhysicalTrees.Count; i++)
-        {
-            var physicalTree = Registry.PhysicalTrees[i];
-            var visualTree = Registry.VisualTrees[i];
-
-            var transform = Transform3D.Identity.Translated(physicalTree.Position);
-            transform = transform.Scaled(Vector3.One * (physicalTree.IsMature ? 1.0f : 0.5f));
-            RenderingServer.InstanceSetTransform(visualTree.BodyMesh, transform);
-        }
     }
 
     private void Reset()
