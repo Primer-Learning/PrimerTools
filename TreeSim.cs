@@ -76,6 +76,7 @@ public partial class TreeSim : Node3D
     private const float MaxTreeSpawnRadius = 5f;
     private const float MinTreeSpawnRadius = 1f;
     private const float TreeCompetitionRadius = 3f;
+    private const float MinimumTreeDistance = 2f; // New constant for minimum distance between trees
     private const float SaplingDeathProbabilityBase = 0.001f;
     private const float SaplingDeathProbabilityPerNeighbor = 0.01f;
     private const float MatureTreeDeathProbabilityBase = 0.0001f;
@@ -129,7 +130,14 @@ public partial class TreeSim : Node3D
                 var neighborCount = CountNeighbors(tree);
                 var deathProbability = SaplingDeathProbabilityBase + neighborCount * SaplingDeathProbabilityPerNeighbor;
                 var dead = false;
-                if (_rng.rand.NextDouble() < deathProbability)
+
+                // Check if sapling is too close to a mature tree
+                if (IsTooCloseToMatureTree(tree))
+                {
+                    treesToRemove.Add(i);
+                    dead = true;
+                }
+                else if (_rng.rand.NextDouble() < deathProbability)
                 {
                     treesToRemove.Add(i);
                     dead = true;
@@ -210,6 +218,22 @@ public partial class TreeSim : Node3D
 
         var intersections = PhysicsServer3D.SpaceGetDirectState(GetWorld3D().Space).IntersectShape(queryParams);
         return intersections.Count - 1; // Subtract 1 to exclude self
+    }
+
+    private bool IsTooCloseToMatureTree(TreeSimEntityRegistry.PhysicalTree sapling)
+    {
+        foreach (var tree in Registry.PhysicalTrees)
+        {
+            if (tree.IsMature && tree.Body != sapling.Body)
+            {
+                var distance = (tree.Position - sapling.Position).Length();
+                if (distance < MinimumTreeDistance)
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private bool IsWithinWorldBounds(Vector3 position)
