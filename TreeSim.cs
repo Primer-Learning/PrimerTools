@@ -214,7 +214,21 @@ public partial class TreeSim : Node3D
         queryParams.Transform = transform;
 
         var intersections = PhysicsServer3D.SpaceGetDirectState(GetWorld3D().Space).IntersectShape(queryParams);
-        return intersections.Count - 1; // Subtract 1 to exclude self
+        int livingNeighbors = 0;
+
+        foreach (var intersection in intersections)
+        {
+            var intersectedBody = (Rid)intersection["rid"];
+            if (Registry.TreeLookup.TryGetValue(intersectedBody, out int index))
+            {
+                if (!Registry.PhysicalTrees[index].IsDead && intersectedBody != tree.Body)
+                {
+                    livingNeighbors++;
+                }
+            }
+        }
+
+        return livingNeighbors;
     }
 
     private bool IsTooCloseToMatureTree(TreeSimEntityRegistry.PhysicalTree sapling)
