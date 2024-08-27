@@ -117,34 +117,32 @@ public partial class TreeSim : Node3D
             return false;
         }
 
-        var treesToRemove = new List<int>();
         var newTreePositions = new List<Vector3>();
 
         for (var i = 0; i < Registry.PhysicalTrees.Count; i++)
         {
             var tree = Registry.PhysicalTrees[i];
+            if (tree.IsDead) continue;
+
             tree.Age += 1f / PhysicsStepsPerSimSecond;
             
             if (!tree.IsMature)
             { 
                 var neighborCount = CountNeighbors(tree);
                 var deathProbability = SaplingDeathProbabilityBase + neighborCount * SaplingDeathProbabilityPerNeighbor;
-                var dead = false;
 
                 // Check if sapling is too close to a mature tree
                 if (IsTooCloseToMatureTree(tree))
                 {
-                    treesToRemove.Add(i);
-                    dead = true;
+                    tree.IsDead = true;
                 }
                 else if (_rng.rand.NextDouble() < deathProbability)
                 {
-                    treesToRemove.Add(i);
-                    dead = true;
+                    tree.IsDead = true;
                 }
                 
                 // Check for maturation
-                if (!dead && tree.Age >= TreeMaturationTime)
+                if (!tree.IsDead && tree.Age >= TreeMaturationTime)
                 {
                     tree.IsMature = true;
                     var transform = Transform3D.Identity.Translated(tree.Position);
@@ -165,24 +163,11 @@ public partial class TreeSim : Node3D
                 var deathProbability = MatureTreeDeathProbabilityBase + neighborCount * MatureTreeDeathProbabilityPerNeighbor;
                 if (_rng.rand.NextDouble() < deathProbability)
                 {
-                    treesToRemove.Add(i);
+                    tree.IsDead = true;
                 }
             }
 
             Registry.PhysicalTrees[i] = tree;
-        }
-
-        // Remove dead trees
-        for (int i = treesToRemove.Count - 1; i >= 0; i--)
-        {
-            int index = treesToRemove[i];
-            Registry.PhysicalTrees[index].FreeRids();
-            if (_render)
-            {
-                Registry.VisualTrees[index].FreeRids();
-                Registry.VisualTrees.RemoveAt(index);
-            }
-            Registry.PhysicalTrees.RemoveAt(index);
         }
 
         // Add new trees
@@ -192,6 +177,47 @@ public partial class TreeSim : Node3D
         }
 
         return true;
+    }
+
+    public override void _Process(double delta)
+    {
+        if (!_running) return;
+
+        var deadIndices = new List<int>();
+        for (var i = 0; i < Registry.PhysicalTrees.Count; i++)
+        {
+            var physicalTree = Registry.PhysicalTrees[i];
+            if (physicalTree.IsDead)
+            {
+                deadIndices.Add(i);
+                continue;
+            }
+            
+            if (!_render) continue;
+            var visualTree = Registry.VisualTrees[i];
+            
+            var transform = PhysicsServer3D.AreaGetTransform(physicalTree.Body);
+            RenderingServer.InstanceSetTransform(visualTree.BodyMesh, transform);
+        }
+
+        for (var i = deadIndices.Count - 1; i >= 0; i--)
+        {
+            var deadIndex = deadIndices[i];
+            Registry.PhysicalTrees[deadIndex].FreeRids();
+            Registry.TreeLookup.Remove(Registry.PhysicalTrees[deadIndex].Body);
+            Registry.PhysicalTrees.RemoveAt(deadIndex);
+            
+            if (!_render) continue;
+            Registry.VisualTrees[deadIndex].FreeRids();
+            Registry.VisualTrees.RemoveAt(deadIndex);
+        }
+
+        // Update TreeLookup indices
+        Registry.TreeLookup.Clear();
+        for (int i = 0; i < Registry.PhysicalTrees.Count; i++)
+        {
+            Registry.TreeLookup[Registry.PhysicalTrees[i].Body] = i;
+        }
     }
 
     private void TryGenerateNewTreePosition(TreeSimEntityRegistry.PhysicalTree parent, List<Vector3> newTrees)

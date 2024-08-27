@@ -15,6 +15,7 @@ public class TreeSimEntityRegistry
         public bool IsMature;
         public float TimeSinceLastSpawn;
         public SphereShape3D BodyShapeResource;
+        public bool IsDead;
 
         public void FreeRids()
         {
@@ -35,6 +36,7 @@ public class TreeSimEntityRegistry
 
     public readonly List<PhysicalTree> PhysicalTrees = new();
     public readonly List<VisualTree> VisualTrees = new();
+    public readonly Dictionary<Rid, int> TreeLookup = new();
 
     public PhysicalTree CreateTree(Vector3 position, bool render)
     {
@@ -55,8 +57,10 @@ public class TreeSimEntityRegistry
             Age = 0,
             IsMature = false,
             TimeSinceLastSpawn = 0,
-            BodyShapeResource = bodyShape
+            BodyShapeResource = bodyShape,
+            IsDead = false
         };
+        TreeLookup.Add(bodyArea, PhysicalTrees.Count);
         PhysicalTrees.Add(physicalTree);
 
         if (!render) return physicalTree;
@@ -92,5 +96,6 @@ public class TreeSimEntityRegistry
         }
         PhysicalTrees.Clear();
         VisualTrees.Clear();
+        TreeLookup.Clear();
     }
 }
