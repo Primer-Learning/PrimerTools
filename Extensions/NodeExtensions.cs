@@ -22,7 +22,6 @@ public static class NodeExtensions
         }
         foreach (var child in parent.GetChildren())
         {
-            GD.Print("Child");
             child.MakeSelfAndChildrenLocal(ancestorWhoNodesAreLocalWithRespectTo, depth: depth + 1);
         }
     }

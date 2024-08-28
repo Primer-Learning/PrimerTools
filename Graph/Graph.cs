@@ -28,10 +28,10 @@ public partial class Graph : Node3D
         return graph;
     }
 
-    // public override void _Ready()
-    // {
-    //     if (Engine.IsEditorHint()) InstantiateAxes();
-    // }
+    public override void _Ready()
+    {
+        if (Engine.IsEditorHint()) InstantiateAxes();
+    }
     
     private void InstantiateAxes()
     {

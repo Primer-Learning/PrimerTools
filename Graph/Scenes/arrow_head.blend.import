@@ -4,12 +4,11 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://csldocd4lfo40"
-path="res://.godot/imported/arrow_head.blend-7f2ec83d078b316a3950eb8f9b445b8b.scn"
+valid=false
 
 [deps]
 
 source_file="res://addons/PrimerTools/Graph/Scenes/arrow_head.blend"
-dest_files=["res://.godot/imported/arrow_head.blend-7f2ec83d078b316a3950eb8f9b445b8b.scn"]
 
 [params]
 
@@ -17,16 +16,19 @@ nodes/root_type="Node3D"
 nodes/root_name="Root Scene"
 nodes/apply_root_scale=true
 nodes/root_scale=1.0
+nodes/import_as_skeleton_bones=false
 meshes/ensure_tangents=1
 meshes/generate_lods=true
 meshes/create_shadow_meshes=false
 meshes/light_baking=1
 meshes/lightmap_texel_size=0.2
+meshes/force_disable_compression=false
 skins/use_named_skins=true
 animation/import=true
 animation/fps=30
 animation/trimming=false
 animation/remove_immutable_tracks=false
+animation/import_rest_as_RESET=false
 import_script/path=""
 _subresources={
 "animations": {},
@@ -56,8 +58,8 @@ _subresources={
 }
 }
 }
-gltf/embedded_image_handling=1
 blender/nodes/visible=0
+blender/nodes/active_collection_only=false
 blender/nodes/punctual_lights=true
 blender/nodes/cameras=true
 blender/nodes/custom_properties=true

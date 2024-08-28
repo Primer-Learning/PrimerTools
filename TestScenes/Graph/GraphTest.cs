@@ -12,6 +12,7 @@ public partial class GraphTest : AnimationSequence
 		#region MyRegion
 
 		var graph = Graph.CreateInstance();
+		AddChild(graph);
 		
 		graph.Position = Vector3.Left;
 		graph.XAxis.length = 5;
