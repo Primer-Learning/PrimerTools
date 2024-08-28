@@ -2,11 +2,12 @@ using Godot;
 using System.Collections.Generic;
 using System.Diagnostics;
 using PrimerTools;
+using PrimerTools.Simulation;
 using PrimerTools.Simulation.Tree;
 using PrimerTools.Simulation.Aging;
 
 [Tool]
-public partial class TreeSim : Node3D
+public partial class TreeSim : Node3D, ISimulation
 {
     public enum SimMode
     {
@@ -15,7 +16,6 @@ public partial class TreeSim : Node3D
     }
     [Export] private SimMode _mode = SimMode.TreeGrowth; 
     
-    // [Export] private SimulationWorld SimulationWorld;
     private SimulationWorld SimulationWorld => GetParent<SimulationWorld>();
     
     #region Editor controls
@@ -52,23 +52,9 @@ public partial class TreeSim : Node3D
             _running = value;
         }
     }
-    private bool _resetUpButton = true;
-    [Export]
-    private bool ResetButton
-    {
-        get => _resetUpButton;
-        set
-        {
-            if (!value && _resetUpButton && Engine.IsEditorHint())
-            {
-                Reset();
-            }
-            _resetUpButton = true;
-        }
-    }
 
-    [Export] private bool _render = true;
     [Export] private bool _verbose;
+    public bool Render { get; set; } = true;
     private Stopwatch _stopwatch;
     #endregion
     
@@ -106,7 +92,7 @@ public partial class TreeSim : Node3D
                     0,
                     SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.Y)
                 ),
-                _render
+                Render
             );
         }
     }
@@ -118,7 +104,7 @@ public partial class TreeSim : Node3D
         _timeSinceLastClear += (float)delta;
         if (_timeSinceLastClear >= _deadTreeClearInterval)
         {
-            Registry.ClearDeadTrees(_render);
+            Registry.ClearDeadTrees(Render);
             _timeSinceLastClear = 0f;
         }
     }
@@ -226,7 +212,7 @@ public partial class TreeSim : Node3D
                         if (tree.FruitGrowthProgress >= FruitGrowthTime)
                         {
                             tree.HasFruit = true;
-                            if (_render)
+                            if (Render)
                             {
                                 CreateFruitMesh(i, tree.Position);
                             }
@@ -277,7 +263,7 @@ public partial class TreeSim : Node3D
                     }
                     foreach (var newTreePosition in newTreePositions)
                     {
-                        Registry.CreateTree(newTreePosition, _render);
+                        Registry.CreateTree(newTreePosition, Render);
                     }
                     break;
             }

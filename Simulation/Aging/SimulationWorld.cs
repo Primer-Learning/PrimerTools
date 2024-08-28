@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Diagnostics;
 using Godot;
 using PrimerTools;
@@ -36,14 +37,24 @@ public partial class SimulationWorld : Node3D
     	{
     		if (!value && _resetButton && Engine.IsEditorHint())
     		{
-    			_creatureSim.Reset();
-			    _treeSim.Reset();
+    			ResetSimulations();
 		    }
     		_resetButton = true;
     	}
     }
 
-    [Export] private bool _render;
+    [Export]
+    private bool _render
+    {
+        get => _simulations.Count > 0 ? _simulations[0].Render : false;
+        set
+        {
+            foreach (var simulation in _simulations)
+            {
+                simulation.Render = value;
+            }
+        }
+    }
     [Export] private bool _verbose;
     private Stopwatch _stopwatch;
     #endregion
@@ -60,23 +71,39 @@ public partial class SimulationWorld : Node3D
 
     public World3D World3D { get; private set; }
 
-    private CreatureSim _creatureSim;
-    private TreeSim _treeSim;
+    private List<ISimulation> _simulations = new List<ISimulation>();
+
     private void Initialize()
     {
         World3D = GetWorld3D();
         PhysicsServer3D.SetActive(true);
         Engine.PhysicsTicksPerSecond = PhysicsStepsPerRealSecond;
 
-        _creatureSim = GetNode<CreatureSim>("Creature Sim");
-        _treeSim = GetNode<TreeSim>("Forest Sim");
+        _simulations.Clear();
+        foreach (var child in GetChildren())
+        {
+            if (child is ISimulation simulation)
+            {
+                _simulations.Add(simulation);
+            }
+        }
     }
 
     public override void _PhysicsProcess(double delta)
     {
         if (!_running) return;
-        _treeSim.Step();
-        _creatureSim.Step();
+        foreach (var simulation in _simulations)
+        {
+            simulation.Step();
+        }
+    }
+
+    private void ResetSimulations()
+    {
+        foreach (var simulation in _simulations)
+        {
+            simulation.Reset();
+        }
     }
 
     public bool IsWithinWorldBounds(Vector3 position)
@@ -85,3 +112,4 @@ public partial class SimulationWorld : Node3D
                position.Z >= 0 && position.Z <= WorldDimensions.Y;
     }
 }
+

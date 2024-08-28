@@ -4,10 +4,11 @@ using System.Diagnostics;
 using Aging.addons.PrimerTools.Simulation.Aging;
 using Godot.Collections;
 using PrimerTools;
+using PrimerTools.Simulation;
 using PrimerTools.Simulation.Aging;
 
 [Tool]
-public partial class CreatureSim : Node3D
+public partial class CreatureSim : Node3D, ISimulation
 {
     [Export] private TreeSim _treeSim;
     private SimulationWorld SimulationWorld => GetParent<SimulationWorld>();
@@ -26,7 +27,6 @@ public partial class CreatureSim : Node3D
 				if (_stepsSoFar == 0)
 				{
 					GD.Print("Starting sim.");
-					_running = true; // Initialize 
 					Initialize();
 				}
 				else
@@ -46,22 +46,8 @@ public partial class CreatureSim : Node3D
 			_running = value;
 		}
 	}
-	private bool _resetUpButton = true;
-	[Export]
-	private bool ResetButton
-	{
-		get => _resetUpButton;
-		set
-		{
-			if (!value && _resetUpButton && Engine.IsEditorHint())
-			{
-				Reset();
-			}
-			_resetUpButton = true;
-		}
-	}
 
-	[Export] private bool _render;
+	public bool Render { get; set; }
 	[Export] private bool _verbose;
 	private Stopwatch _stopwatch;
 	#endregion
@@ -69,7 +55,7 @@ public partial class CreatureSim : Node3D
 	#region Sim parameters
 	[Export] private int _initialCreatureCount = 4;
 	[Export] private int _maxNumSteps = 100000;
-	private const float CreatureDestinationLength = 10f;
+	private const float CreatureStepMaxLength = 10f;
 	private const float CreatureEatDistance = 0.5f;
 	private const float EnergyGainFromFood = 1f;
 	private const float ReproductionEnergyThreshold = 2f;
@@ -107,7 +93,7 @@ public partial class CreatureSim : Node3D
 				),
 				InitialAwarenessRadius,
 				InitialCreatureSpeed,
-				_render
+				Render
 			);
 		}
 	}
@@ -182,7 +168,7 @@ public partial class CreatureSim : Node3D
 				continue;
 			}
 			
-			if (!_render) continue;
+			if (!Render) continue;
 			var visualCreature = Registry.VisualCreatures[i];
 			
 			var transform = PhysicsServer3D.AreaGetTransform(physicalCreature.Body);
@@ -197,7 +183,7 @@ public partial class CreatureSim : Node3D
 			Registry.PhysicalCreatures[deadIndex].FreeRids();
 			Registry.PhysicalCreatures.RemoveAt(deadIndex);
 			
-			if (!_render) continue;
+			if (!Render) continue;
 			Registry.VisualCreatures[deadIndex].FreeRids();
 			Registry.VisualCreatures.RemoveAt(deadIndex);
 		}
@@ -238,11 +224,10 @@ public partial class CreatureSim : Node3D
 		do
 		{
 			var angle = SimulationWorld.Rng.RangeFloat(1) * 2 * Mathf.Pi;
-			var magnitude = Rng.RangeFloat(1);
-			var displacement = CreatureDestinationLength * new Vector3(
-				magnitude * Mathf.Sin(angle),
+			var displacement = Rng.RangeFloat(1) * CreatureStepMaxLength * new Vector3(
+				Mathf.Sin(angle),
 				0,
-				magnitude * Mathf.Cos(angle)
+				Mathf.Cos(angle)
 			);
 			newDestination = creature.Position + displacement;
 			attempts++;
@@ -313,7 +298,7 @@ public partial class CreatureSim : Node3D
 			tree.FruitGrowthProgress = 0;
 			_treeSim.Registry.PhysicalTrees[treeIndex] = tree;
 
-			if (_render)
+			if (Render)
 			{
 				var visualTree = _treeSim.Registry.VisualTrees[treeIndex];
 				RenderingServer.InstanceSetVisible(visualTree.FruitMesh, false);
@@ -346,7 +331,7 @@ public partial class CreatureSim : Node3D
 			transformNextFrame.Origin,
 			newAwarenessRadius,
 			newSpeed,
-			_render
+			Render
 		);
 		ChooseDestination(ref physicalCreature);
 		creature.Energy -= ReproductionEnergyCost;
