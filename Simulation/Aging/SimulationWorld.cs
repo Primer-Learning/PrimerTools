@@ -43,16 +43,19 @@ public partial class SimulationWorld : Node3D
     	}
     }
 
+    private bool _render = true; 
     [Export]
-    private bool _render
+    private bool Render
     {
-        get => _simulations.Count > 0 ? _simulations[0].Render : false;
+        get => _render;
         set
         {
             foreach (var simulation in _simulations)
             {
                 simulation.Render = value;
             }
+
+            _render = value;
         }
     }
     [Export] private bool _verbose;
@@ -69,13 +72,12 @@ public partial class SimulationWorld : Node3D
     private Rng _rng;
     public Rng Rng => _rng ??= new Rng(_seed == -1 ? System.Environment.TickCount : _seed);
 
-    public World3D World3D { get; private set; }
+    public World3D World3D => GetWorld3D();
 
     private List<ISimulation> _simulations = new List<ISimulation>();
 
     private void Initialize()
     {
-        World3D = GetWorld3D();
         PhysicsServer3D.SetActive(true);
         Engine.PhysicsTicksPerSecond = PhysicsStepsPerRealSecond;
 

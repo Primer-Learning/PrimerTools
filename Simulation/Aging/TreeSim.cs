@@ -81,6 +81,7 @@ public partial class TreeSim : Node3D, ISimulation
 
     private void Initialize()
     {
+        
         Registry.World3D = SimulationWorld.World3D;
         _stopwatch = Stopwatch.StartNew();
 
