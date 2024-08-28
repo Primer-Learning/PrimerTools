@@ -4,13 +4,15 @@ using System.Diagnostics;
 using Aging.addons.PrimerTools.Simulation.Aging;
 using Godot.Collections;
 using PrimerTools;
+using PrimerTools.Simulation.Aging;
 
 [Tool]
 public partial class CreatureSim : Node3D
 {
     [Export] private TreeSim _treeSim;
+    private SimulationWorld SimulationWorld => GetParent<SimulationWorld>();
+
 	#region Editor controls
-	// [ExportGroup("Controls")]
 	private bool _running;
 	[Export]
 	private bool Running
@@ -64,17 +66,11 @@ public partial class CreatureSim : Node3D
 	#endregion
 	
 	#region Sim parameters
-	// [ExportGroup("Parameters")]
-	private Rng _rng;
-	[Export] private int _seed = -1;
 	[Export] private int _initialCreatureCount = 4;
 	[Export] private int _initialFoodCount = 100;
-	[Export] private Vector2 _worldDimensions = Vector2.One * 10;
 	[Export] private int _reproductionRatePer10K;
 	[Export] private int _deathRatePer10K;
 	[Export] private int _maxNumSteps = 100000;
-	[Export] private int _physicsStepsPerRealSecond = 60;
-	private const int PhysicsStepsPerSimSecond = 60;
 	private const float CreatureDestinationLength = 10f;
 	private const float CreatureEatDistance = 0.5f;
 	private const float EnergyGainFromFood = 1f;
@@ -94,12 +90,8 @@ public partial class CreatureSim : Node3D
 
 	private void Initialize()
 	{
-		Registry.World3D = GetWorld3D();
+		Registry.World3D = SimulationWorld.World3D;
 		_stopwatch = Stopwatch.StartNew();
-		
-		_rng = new Rng(_seed == -1 ? System.Environment.TickCount : _seed);
-		PhysicsServer3D.SetActive(true);
-		Engine.PhysicsTicksPerSecond = _physicsStepsPerRealSecond;
 		
 		if (_treeSim == null)
 		{
@@ -111,9 +103,9 @@ public partial class CreatureSim : Node3D
 		{
 			var physicalCreature = Registry.CreateCreature(
 				new Vector3(
-					_rng.RangeFloat(_worldDimensions.X),
+					SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.X),
 					0,
-					_rng.RangeFloat(_worldDimensions.Y)
+					SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.Y)
 				),
 				InitialAwarenessRadius,
 				InitialCreatureSpeed,
@@ -238,7 +230,7 @@ public partial class CreatureSim : Node3D
 
 	private void GetNextPosition(ref CreatureSimEntityRegistry.PhysicalCreature creature)
 	{
-		var stepSize = creature.Speed / PhysicsStepsPerSimSecond;
+		var stepSize = creature.Speed / SimulationWorld.PhysicsStepsPerSimSecond;
 		if ((creature.CurrentDestination - creature.Position).LengthSquared() < stepSize * stepSize)
 		{
 			ChooseDestination(ref creature);
@@ -256,7 +248,7 @@ public partial class CreatureSim : Node3D
 
 		do
 		{
-			var angle = _rng.RangeFloat(1) * 2 * Mathf.Pi;
+			var angle = SimulationWorld.Rng.RangeFloat(1) * 2 * Mathf.Pi;
 			var displacement = CreatureDestinationLength * new Vector3(
 				Mathf.Sin(angle),
 				0,
@@ -271,7 +263,7 @@ public partial class CreatureSim : Node3D
 				newDestination = creature.Position;
 				break;
 			}
-		} while (!IsWithinWorldBounds(newDestination));
+		} while (!SimulationWorld.IsWithinWorldBounds(newDestination));
 
 		creature.CurrentDestination = newDestination;
 	}
@@ -280,12 +272,6 @@ public partial class CreatureSim : Node3D
 	{
 		var tree = _treeSim.Registry.PhysicalTrees[treeIndex];
 		creature.CurrentDestination = tree.Position;
-	}
-
-	private bool IsWithinWorldBounds(Vector3 position)
-	{
-		return position.X >= 0 && position.X <= _worldDimensions.X &&
-		       position.Z >= 0 && position.Z <= _worldDimensions.Y;
 	}
 	
 	private (int, bool) FindClosestFood(CreatureSimEntityRegistry.PhysicalCreature creature)
@@ -325,7 +311,7 @@ public partial class CreatureSim : Node3D
 		var normalizedSpeed = creature.Speed / InitialCreatureSpeed;
 		var normalizedAwarenessRadius = creature.AwarenessRadius / InitialAwarenessRadius;
 		
-		creature.Energy -= GlobalEnergySpendAdjustmentFactor * ( normalizedSpeed * normalizedSpeed + normalizedAwarenessRadius) / PhysicsStepsPerSimSecond;
+		creature.Energy -= GlobalEnergySpendAdjustmentFactor * ( normalizedSpeed * normalizedSpeed + normalizedAwarenessRadius) / SimulationWorld.PhysicsStepsPerSimSecond;
 	}
 
 	private void EatFood(ref CreatureSimEntityRegistry.PhysicalCreature creature, int treeIndex)
@@ -354,15 +340,15 @@ public partial class CreatureSim : Node3D
 		float newAwarenessRadius = creature.AwarenessRadius;
 		float newSpeed = creature.Speed;
 
-		if (_rng.RangeFloat(0, 1) < MutationProbability)
+		if (SimulationWorld.Rng.RangeFloat(0, 1) < MutationProbability)
 		{
-			newAwarenessRadius += _rng.RangeFloat(0, 1) < 0.5f ? MutationIncrement : -MutationIncrement;
+			newAwarenessRadius += SimulationWorld.Rng.RangeFloat(0, 1) < 0.5f ? MutationIncrement : -MutationIncrement;
 			newAwarenessRadius = Mathf.Max(0, newAwarenessRadius);
 		}
 
-		if (_rng.RangeFloat(0, 1) < MutationProbability)
+		if (SimulationWorld.Rng.RangeFloat(0, 1) < MutationProbability)
 		{
-			newSpeed += _rng.RangeFloat(0, 1) < 0.5f ? MutationIncrement : -MutationIncrement;
+			newSpeed += SimulationWorld.Rng.RangeFloat(0, 1) < 0.5f ? MutationIncrement : -MutationIncrement;
 			newSpeed = Mathf.Max(0, newSpeed);
 		}
 
@@ -375,39 +361,6 @@ public partial class CreatureSim : Node3D
 		ChooseDestination(ref physicalCreature);
 		creature.Energy -= ReproductionEnergyCost;
 	}
-
-	// private void RegenerateFood()
-	// {
-	// 	for (var j = 0; j < Registry.PhysicalFoods.Count; j++)
-	// 	{
-	// 		var food = Registry.PhysicalFoods[j];
-	// 		if (food.Eaten)
-	// 		{
-	// 			food.TimeLeftToRegenerate -= 1f / PhysicsStepsPerSimSecond;
-	// 			if (food.TimeLeftToRegenerate <= 0)
-	// 			{
-	// 				RegenerateFood(ref food, j);
-	// 			}
-	// 			else
-	// 			{
-	// 				Registry.PhysicalFoods[j] = food;
-	// 			}
-	// 		}
-	// 	}
-	// }
-
-	// private void RegenerateFood(ref CreatureSimEntityRegistry.PhysicalFood food, int index)
-	// {
-	// 	food.Eaten = false;
-	// 	food.TimeLeftToRegenerate = 0;
-	// 	Registry.PhysicalFoods[index] = food;
-	//
-	// 	if (_render)
-	// 	{
-	// 		var visualFood = Registry.VisualFoods[index];
-	// 		RenderingServer.InstanceSetVisible(visualFood.BodyMesh, true);
-	// 	}
-	// }
 
 	#endregion
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using PrimerTools;
 using PrimerTools.Simulation.Tree;
+using PrimerTools.Simulation.Aging;
 
 [Tool]
 public partial class TreeSim : Node3D
@@ -13,6 +14,9 @@ public partial class TreeSim : Node3D
         FruitGrowth
     }
     [Export] private SimMode _mode = SimMode.TreeGrowth; 
+    
+    // [Export] private SimulationWorld SimulationWorld;
+    private SimulationWorld SimulationWorld => GetParent<SimulationWorld>();
     
     #region Editor controls
     private bool _running;
@@ -69,15 +73,10 @@ public partial class TreeSim : Node3D
     #endregion
     
     #region Sim parameters
-    private Rng _rng;
-    [Export] private int _seed = -1;
     [Export] private int _initialTreeCount = 5;
-    [Export] private Vector2 _worldDimensions = Vector2.One * 50;
     [Export] private int _maxNumSteps = 1000;
-    [Export] private int _physicsStepsPerRealSecond = 60;
     [Export] private float _deadTreeClearInterval = 1f;
     private float _timeSinceLastClear = 0f;
-    private const int PhysicsStepsPerSimSecond = 60;
     private const float TreeMaturationTime = 1f;
     private const float TreeSpawnInterval = 0.4f;
     private const float MaxTreeSpawnRadius = 5f;
@@ -96,20 +95,16 @@ public partial class TreeSim : Node3D
 
     private void Initialize()
     {
-        Registry.World3D = GetWorld3D();
+        Registry.World3D = SimulationWorld.World3D;
         _stopwatch = Stopwatch.StartNew();
-        
-        _rng = new Rng(_seed == -1 ? System.Environment.TickCount : _seed);
-        PhysicsServer3D.SetActive(true);
-        Engine.PhysicsTicksPerSecond = _physicsStepsPerRealSecond;
 
         for (var i = 0; i < _initialTreeCount; i++)
         {
             Registry.CreateTree(
                 new Vector3(
-                    _rng.RangeFloat(_worldDimensions.X),
+                    SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.X),
                     0,
-                    _rng.RangeFloat(_worldDimensions.Y)
+                    SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.Y)
                 ),
                 _render
             );
@@ -131,14 +126,14 @@ public partial class TreeSim : Node3D
             var tree = Registry.PhysicalTrees[i];
             if (tree.IsDead) continue;
 
-            tree.Age += 1f / PhysicsStepsPerSimSecond;
+            tree.Age += 1f / SimulationWorld.PhysicsStepsPerSimSecond;
 
             switch (_mode)
             {
                 case SimMode.FruitGrowth:
                     if (tree.IsMature && !tree.HasFruit)
                     {
-                        tree.FruitGrowthProgress += 1f / PhysicsStepsPerSimSecond;
+                        tree.FruitGrowthProgress += 1f / SimulationWorld.PhysicsStepsPerSimSecond;
                         if (tree.FruitGrowthProgress >= FruitGrowthTime)
                         {
                             tree.HasFruit = true;
@@ -158,7 +153,7 @@ public partial class TreeSim : Node3D
                                                neighborCount * SaplingDeathProbabilityPerNeighbor;
 
                         // Check if sapling is too close to a mature tree
-                        if (IsTooCloseToMatureTree(tree) || _rng.rand.NextDouble() < deathProbability)
+                        if (IsTooCloseToMatureTree(tree) || SimulationWorld.Rng.rand.NextDouble() < deathProbability)
                         {
                             tree.IsDead = true;
                             RenderingServer.InstanceSetVisible(Registry.VisualTrees[i].BodyMesh, false);
@@ -175,7 +170,7 @@ public partial class TreeSim : Node3D
                     }
                     else
                     {
-                        tree.TimeSinceLastSpawn += 1f / PhysicsStepsPerSimSecond;
+                        tree.TimeSinceLastSpawn += 1f / SimulationWorld.PhysicsStepsPerSimSecond;
                         if (tree.TimeSinceLastSpawn >= TreeSpawnInterval)
                         {
                             tree.TimeSinceLastSpawn = 0;
@@ -185,7 +180,7 @@ public partial class TreeSim : Node3D
                         var neighborCount = CountNeighbors(tree);
                         var deathProbability = MatureTreeDeathProbabilityBase +
                                                neighborCount * MatureTreeDeathProbabilityPerNeighbor;
-                        if (_rng.rand.NextDouble() < deathProbability)
+                        if (SimulationWorld.Rng.rand.NextDouble() < deathProbability)
                         {
                             tree.IsDead = true;
                             RenderingServer.InstanceSetVisible(Registry.VisualTrees[i].BodyMesh, false);
@@ -218,8 +213,8 @@ public partial class TreeSim : Node3D
 
     private void TryGenerateNewTreePosition(TreeSimEntityRegistry.PhysicalTree parent, List<Vector3> newTrees)
     {
-        var angle = _rng.RangeFloat(0, Mathf.Tau);
-        var distance = _rng.RangeFloat(MinTreeSpawnRadius, MaxTreeSpawnRadius);
+        var angle = SimulationWorld.Rng.RangeFloat(0, Mathf.Tau);
+        var distance = SimulationWorld.Rng.RangeFloat(MinTreeSpawnRadius, MaxTreeSpawnRadius);
         var offset = new Vector3(Mathf.Cos(angle) * distance, 0, Mathf.Sin(angle) * distance);
         var newPosition = parent.Position + offset;
 
@@ -284,13 +279,11 @@ public partial class TreeSim : Node3D
 
     private bool IsWithinWorldBounds(Vector3 position)
     {
-        return position.X >= 0 && position.X <= _worldDimensions.X &&
-               position.Z >= 0 && position.Z <= _worldDimensions.Y;
+        return SimulationWorld.IsWithinWorldBounds(position);
     }
 
     public override void _PhysicsProcess(double delta)
     {
-        // GD.Print("physics!!!");
         if (!_running) return;
         if (_stepsSoFar >= _maxNumSteps)
         {
