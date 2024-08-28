@@ -111,94 +111,6 @@ public partial class TreeSim : Node3D
         }
     }
 
-    private bool Step()
-    {
-        if (Registry.PhysicalTrees.Count == 0)
-        {
-            GD.Print("No Trees found. Stopping.");
-            Running = false;
-            return false;
-        }
-
-
-        for (var i = 0; i < Registry.PhysicalTrees.Count; i++)
-        {
-            var tree = Registry.PhysicalTrees[i];
-            if (tree.IsDead) continue;
-
-            tree.Age += 1f / SimulationWorld.PhysicsStepsPerSimSecond;
-
-            switch (_mode)
-            {
-                case SimMode.FruitGrowth:
-                    if (tree.IsMature && !tree.HasFruit)
-                    {
-                        tree.FruitGrowthProgress += 1f / SimulationWorld.PhysicsStepsPerSimSecond;
-                        if (tree.FruitGrowthProgress >= FruitGrowthTime)
-                        {
-                            tree.HasFruit = true;
-                            if (_render)
-                            {
-                                CreateFruitMesh(i, tree.Position);
-                            }
-                        }
-                    }
-                    break;
-                case SimMode.TreeGrowth: 
-                    var newTreePositions = new List<Vector3>();
-                    if (!tree.IsMature)
-                    {
-                        var neighborCount = CountNeighbors(tree);
-                        var deathProbability = SaplingDeathProbabilityBase +
-                                               neighborCount * SaplingDeathProbabilityPerNeighbor;
-
-                        // Check if sapling is too close to a mature tree
-                        if (IsTooCloseToMatureTree(tree) || SimulationWorld.Rng.rand.NextDouble() < deathProbability)
-                        {
-                            tree.IsDead = true;
-                            RenderingServer.InstanceSetVisible(Registry.VisualTrees[i].BodyMesh, false);
-                        }
-
-                        // Check for maturation
-                        if (!tree.IsDead && tree.Age >= TreeMaturationTime)
-                        {
-                            tree.IsMature = true;
-                            var transform = Transform3D.Identity.Translated(tree.Position);
-                            transform = transform.ScaledLocal(Vector3.One * 1.0f);
-                            RenderingServer.InstanceSetTransform(Registry.VisualTrees[i].BodyMesh, transform);
-                        }
-                    }
-                    else
-                    {
-                        tree.TimeSinceLastSpawn += 1f / SimulationWorld.PhysicsStepsPerSimSecond;
-                        if (tree.TimeSinceLastSpawn >= TreeSpawnInterval)
-                        {
-                            tree.TimeSinceLastSpawn = 0;
-                            TryGenerateNewTreePosition(tree, newTreePositions);
-                        }
-
-                        var neighborCount = CountNeighbors(tree);
-                        var deathProbability = MatureTreeDeathProbabilityBase +
-                                               neighborCount * MatureTreeDeathProbabilityPerNeighbor;
-                        if (SimulationWorld.Rng.rand.NextDouble() < deathProbability)
-                        {
-                            tree.IsDead = true;
-                            RenderingServer.InstanceSetVisible(Registry.VisualTrees[i].BodyMesh, false);
-                        }
-                    }
-                    foreach (var newTreePosition in newTreePositions)
-                    {
-                        Registry.CreateTree(newTreePosition, _render);
-                    }
-                    break;
-            }
-
-            Registry.PhysicalTrees[i] = tree;
-        }
-        
-        return true;
-    }
-
     public override void _Process(double delta)
     {
         if (!_running) return;
@@ -282,7 +194,7 @@ public partial class TreeSim : Node3D
         return SimulationWorld.IsWithinWorldBounds(position);
     }
 
-    public override void _PhysicsProcess(double delta)
+    public void Step()
     {
         if (!_running) return;
         if (_stepsSoFar >= _maxNumSteps)
@@ -291,12 +203,92 @@ public partial class TreeSim : Node3D
             Running = false;
             return;
         }
-        
-        if (Step()) _stepsSoFar++;
-        if (_verbose && _stepsSoFar % 100 == 0) GD.Print($"Finished step {_stepsSoFar}");
+        if (Registry.PhysicalTrees.Count == 0)
+        {
+            GD.Print("No Trees found. Stopping.");
+            Running = false;
+            return;
+        }
+
+        for (var i = 0; i < Registry.PhysicalTrees.Count; i++)
+        {
+            var tree = Registry.PhysicalTrees[i];
+            if (tree.IsDead) continue;
+
+            tree.Age += 1f / SimulationWorld.PhysicsStepsPerSimSecond;
+
+            switch (_mode)
+            {
+                case SimMode.FruitGrowth:
+                    if (tree.IsMature && !tree.HasFruit)
+                    {
+                        tree.FruitGrowthProgress += 1f / SimulationWorld.PhysicsStepsPerSimSecond;
+                        if (tree.FruitGrowthProgress >= FruitGrowthTime)
+                        {
+                            tree.HasFruit = true;
+                            if (_render)
+                            {
+                                CreateFruitMesh(i, tree.Position);
+                            }
+                        }
+                    }
+                    break;
+                case SimMode.TreeGrowth:
+                    var newTreePositions = new List<Vector3>();
+                    if (!tree.IsMature)
+                    {
+                        var neighborCount = CountNeighbors(tree);
+                        var deathProbability = SaplingDeathProbabilityBase +
+                                               neighborCount * SaplingDeathProbabilityPerNeighbor;
+
+                        // Check if sapling is too close to a mature tree
+                        if (IsTooCloseToMatureTree(tree) || SimulationWorld.Rng.rand.NextDouble() < deathProbability)
+                        {
+                            tree.IsDead = true;
+                            RenderingServer.InstanceSetVisible(Registry.VisualTrees[i].BodyMesh, false);
+                        }
+
+                        // Check for maturation
+                        if (!tree.IsDead && tree.Age >= TreeMaturationTime)
+                        {
+                            tree.IsMature = true;
+                            var transform = Transform3D.Identity.Translated(tree.Position);
+                            transform = transform.ScaledLocal(Vector3.One * 1.0f);
+                            RenderingServer.InstanceSetTransform(Registry.VisualTrees[i].BodyMesh, transform);
+                        }
+                    }
+                    else
+                    {
+                        tree.TimeSinceLastSpawn += 1f / SimulationWorld.PhysicsStepsPerSimSecond;
+                        if (tree.TimeSinceLastSpawn >= TreeSpawnInterval)
+                        {
+                            tree.TimeSinceLastSpawn = 0;
+                            TryGenerateNewTreePosition(tree, newTreePositions);
+                        }
+
+                        var neighborCount = CountNeighbors(tree);
+                        var deathProbability = MatureTreeDeathProbabilityBase +
+                                               neighborCount * MatureTreeDeathProbabilityPerNeighbor;
+                        if (SimulationWorld.Rng.rand.NextDouble() < deathProbability)
+                        {
+                            tree.IsDead = true;
+                            RenderingServer.InstanceSetVisible(Registry.VisualTrees[i].BodyMesh, false);
+                        }
+                    }
+                    foreach (var newTreePosition in newTreePositions)
+                    {
+                        Registry.CreateTree(newTreePosition, _render);
+                    }
+                    break;
+            }
+
+            Registry.PhysicalTrees[i] = tree;
+        }
+
+        _stepsSoFar++;
     }
 
-    private void Reset()
+    public void Reset()
     {
         _stepsSoFar = 0;
         Registry.Reset();

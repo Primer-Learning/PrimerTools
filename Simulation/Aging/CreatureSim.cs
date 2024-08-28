@@ -26,6 +26,7 @@ public partial class CreatureSim : Node3D
 				if (_stepsSoFar == 0)
 				{
 					GD.Print("Starting sim.");
+					_running = true; // Initialize 
 					Initialize();
 				}
 				else
@@ -67,9 +68,6 @@ public partial class CreatureSim : Node3D
 	
 	#region Sim parameters
 	[Export] private int _initialCreatureCount = 4;
-	[Export] private int _initialFoodCount = 100;
-	[Export] private int _reproductionRatePer10K;
-	[Export] private int _deathRatePer10K;
 	[Export] private int _maxNumSteps = 100000;
 	private const float CreatureDestinationLength = 10f;
 	private const float CreatureEatDistance = 0.5f;
@@ -101,7 +99,7 @@ public partial class CreatureSim : Node3D
 		
 		for (var i = 0; i < _initialCreatureCount; i++)
 		{
-			var physicalCreature = Registry.CreateCreature(
+			Registry.CreateCreature(
 				new Vector3(
 					SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.X),
 					0,
@@ -113,13 +111,21 @@ public partial class CreatureSim : Node3D
 			);
 		}
 	}
-	private bool Step()
+	
+	public void Step()
 	{
+		if (!_running) return;
+		if (_stepsSoFar >= _maxNumSteps)
+		{
+			GD.Print($"Reached maximum step count of {_maxNumSteps}");
+			Running = false;
+			return;
+		}
 		if (Registry.PhysicalCreatures.Count == 0)
 		{
 			GD.Print("No Creatures found. Stopping.");
 			Running = false;
-			return false;
+			return;
 		}
 		
 		// Process creatures
@@ -154,33 +160,16 @@ public partial class CreatureSim : Node3D
 
 			Registry.PhysicalCreatures[i] = creature;
 		}
-		// RegenerateFood();
 		
-		if (!_verbose) return true;
-		// Put debug stuff here. 
-		return true;
-	}
-	public override void _PhysicsProcess(double delta)
-	{
-		// GD.Print("physics??");
-		if (!_running) return;
-		if (_stepsSoFar >= _maxNumSteps)
-		{
-			GD.Print("Done");
-			Running = false;
-			return;
-		}
-		
-		if (Step()) _stepsSoFar++;
-		if (!_verbose) return;
-		if (_stepsSoFar % 100 == 0 ) GD.Print($"Finished step {_stepsSoFar}"); 
+		_stepsSoFar++;
 	}
 	public override void _Process(double delta)
 	{
 		if (!_running) return;
 		
-		// Clean up the creature lists every process frame.
-		// This is an intuitive choice for a frequency that isn't too high for sims with a fast physics loop
+		// Update visuals and clean up dead creatures.
+		// This happens every process frame, which is an intuitive choice
+		// for a frequency that isn't too high for sims with a fast physics loop.
 		// But high enough where things won't build up.
 		// Could be a better choice, though.
 		var deadIndices = new List<int>();
@@ -201,7 +190,7 @@ public partial class CreatureSim : Node3D
 			RenderingServer.InstanceSetTransform(visualCreature.BodyMesh, transform);
 			RenderingServer.InstanceSetTransform(visualCreature.AwarenessMesh, transform);
 		}
-
+		
 		for (var i = deadIndices.Count - 1; i >= 0; i--)
 		{
 			var deadIndex = deadIndices[i];
@@ -214,6 +203,9 @@ public partial class CreatureSim : Node3D
 		}
 	}
 
+	#endregion
+
+	#region Helpers
 	private Array<Dictionary> DetectCollisionsWithCreature(CreatureSimEntityRegistry.PhysicalCreature creature)
 	{
 		var queryParams = new PhysicsShapeQueryParameters3D();
@@ -224,9 +216,6 @@ public partial class CreatureSim : Node3D
 		// Run query and print
 		return PhysicsServer3D.SpaceGetDirectState(GetWorld3D().Space).IntersectShape(queryParams);
 	}
-	#endregion
-
-	#region Helpers
 
 	private void GetNextPosition(ref CreatureSimEntityRegistry.PhysicalCreature creature)
 	{
@@ -249,10 +238,11 @@ public partial class CreatureSim : Node3D
 		do
 		{
 			var angle = SimulationWorld.Rng.RangeFloat(1) * 2 * Mathf.Pi;
+			var magnitude = Rng.RangeFloat(1);
 			var displacement = CreatureDestinationLength * new Vector3(
-				Mathf.Sin(angle),
+				magnitude * Mathf.Sin(angle),
 				0,
-				Mathf.Cos(angle)
+				magnitude * Mathf.Cos(angle)
 			);
 			newDestination = creature.Position + displacement;
 			attempts++;
@@ -364,7 +354,7 @@ public partial class CreatureSim : Node3D
 
 	#endregion
 
-	private void Reset()
+	public void Reset()
 	{
 		_stepsSoFar = 0;
 		Registry.Reset();
