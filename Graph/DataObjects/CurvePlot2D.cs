@@ -40,7 +40,7 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
     #endregion
 
     #region Data
-    private List<Vector3> dataPoints;
+    private List<Vector3> _dataPoints = new();
     public delegate List<Vector3> DataFetch();
 
     public DataFetch DataFetchMethod = () =>
@@ -51,7 +51,7 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
 
     public void FetchData()
     {
-        dataPoints = DataFetchMethod();
+        _dataPoints = DataFetchMethod();
     }
     
     /// <summary>
@@ -60,7 +60,7 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
     /// <param name="data"></param>
     public void SetData(params Vector3[] data)
     {
-        dataPoints = data.ToList();
+        _dataPoints = data.ToList();
     }
     /// <summary>
     /// Sets the data which will be the target of the next transition.
@@ -69,7 +69,7 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
     /// <param name="data"></param>
     public void SetData(params float[] data)
     {
-        dataPoints = data.Select((x, i) => new Vector3(i, x, 0)).ToList();
+        _dataPoints = data.Select((x, i) => new Vector3(i, x, 0)).ToList();
     }
     
     /// <summary>
@@ -78,11 +78,11 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
     /// <returns></returns>
     public Vector3[] GetData()
     {
-        return dataPoints.ToArray();
+        return _dataPoints.ToArray();
     }
     public void AddDataPoint(Vector3 newDataPoint)
     {
-        dataPoints.Add(newDataPoint);
+        _dataPoints.Add(newDataPoint);
     }
 
     #endregion
@@ -202,8 +202,8 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
     {
         // If there's not a previous stage, add the first point of the data as the first stage
         if (pointsOfStages.Count == 0)
-            pointsOfStages.Add(new[] { TransformPointFromDataSpaceToPositionSpace(dataPoints[0]) });
-        pointsOfStages.Add(dataPoints.Select(x => TransformPointFromDataSpaceToPositionSpace(x)).ToArray());
+            pointsOfStages.Add(new[] { TransformPointFromDataSpaceToPositionSpace(_dataPoints[0]) });
+        pointsOfStages.Add(_dataPoints.Select(x => TransformPointFromDataSpaceToPositionSpace(x)).ToArray());
         return this.AnimateValue(RenderExtent + 1, "RenderExtent");
     }
 
@@ -216,8 +216,8 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
     public Tween TweenTransition(double duration = AnimationUtilities.DefaultDuration)
     {
         if (pointsOfStages.Count == 0)
-            pointsOfStages.Add(new[] { TransformPointFromDataSpaceToPositionSpace(dataPoints[0]) });
-        pointsOfStages.Add(dataPoints.Select(x => TransformPointFromDataSpaceToPositionSpace(x)).ToArray());
+            pointsOfStages.Add(new[] { TransformPointFromDataSpaceToPositionSpace(_dataPoints[0]) });
+        pointsOfStages.Add(_dataPoints.Select(x => TransformPointFromDataSpaceToPositionSpace(x)).ToArray());
         
         var tween = CreateTween();
         tween.TweenProperty(
