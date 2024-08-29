@@ -1,5 +1,6 @@
 using Godot;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Aging.addons.PrimerTools.Simulation.Aging;
@@ -14,23 +15,31 @@ public partial class SimulationTestScene : Node3D
 	private TreeSim TreeSim => SimulationWorld.GetNode<TreeSim>("Tree Sim");
 	
 	private CancellationTokenSource _cts;
-	
+	private bool _newSim = true;
 	private bool _run;
 	[Export] private bool Run {
 		get => _run;
 		set {
 			if (value)
 			{
-				CreatePlot();
-				_cts = new();
-				RunSimSequence(_cts.Token);
+				if (_newSim)
+				{
+					CreatePlot();
+					_cts = new();
+					RunSimSequence(_cts.Token);
+					_newSim = false;
+				}
+				else
+				{
+					SimulationWorld.Running = true;
+					_periodicPlotter.Plotting = true;
+				}
 			}
 			else if (_run)
 			{
-				GD.Print("Stopping");
+				GD.Print("Pausing");
 				_cts.Cancel();
-				SimulationWorld.Running = false;
-				CreatureSim.Running = false;
+				SimulationWorld.TimeScale = 1;
 				SimulationWorld.Running = false;
 				_periodicPlotter.Plotting = false;
 			}
@@ -46,17 +55,21 @@ public partial class SimulationTestScene : Node3D
 			{
 				GD.Print("Resetting");
 				SimulationWorld.ResetSimulations();
+				SimulationWorld.Running = false;
+				CreatureSim.Running = false;
+				TreeSim.Running = false;
+				
 				foreach (var child in GraphParent.GetChildren())
 				{
 					if (IsInstanceValid(child)) child.Free();
 				}
+
+				_newSim = true;
 			}
 			_reset = false;
 		}
 	}
 	
-	// private CreatureSimEntityRegistry Registry => GetParent<Node3D>().GetNode<CreatureSim>("Creature Sim").Registry;
-	private CurvePlot2D _curve;
 	private Node3D GraphParent => GetNode<Node3D>("GraphParent");
 	private PeriodicPlotter _periodicPlotter;
 	
@@ -81,12 +94,12 @@ public partial class SimulationTestScene : Node3D
 		thisGraph.ZAxis.Chonk = thisChonk;
 		thisGraph.Transition();
 
-		_curve = thisGraph.AddCurvePlot2D();
-		_curve.Width = 200;
+		var curve = thisGraph.AddCurvePlot2D();
+		curve.Width = 200;
 
-		_curve.DataFetchMethod = () =>
+		curve.DataFetchMethod = () =>
 		{
-			var dataList = _curve.GetData().ToList();
+			var dataList = curve.GetData().ToList();
 			dataList.Add( new Vector3(dataList.Count, CreatureSim.Registry.PhysicalCreatures.Count(x => x.Alive), 0) );
 			return dataList;
 		};
@@ -95,7 +108,7 @@ public partial class SimulationTestScene : Node3D
 		GraphParent.AddChild(_periodicPlotter);
 		_periodicPlotter.Owner = GetTree().EditedSceneRoot;
 		_periodicPlotter.Name = "Periodic plotter";
-		_periodicPlotter.Curve = _curve;
+		_periodicPlotter.Curve = curve;
 	}
 
 	private async Task RunSimSequence(CancellationToken ct = default)
@@ -109,7 +122,7 @@ public partial class SimulationTestScene : Node3D
 			TreeSim.Mode = TreeSim.SimMode.TreeGrowth;
 			TreeSim.Running = true;
 
-			await Task.Delay(5000, ct);
+			await Task.Delay(2000, ct);
 			ct.ThrowIfCancellationRequested();
 			SimulationWorld.TimeScale = 1;
 
