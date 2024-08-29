@@ -9,61 +9,12 @@ namespace PrimerTools.Simulation.Aging;
 public partial class SimulationWorld : Node3D
 {
     #region Editor controls
-    private bool _running;
-    [Export]
-    private bool Running
-    {
-    	get => _running;
-    	set
-    	{
-    		if (value)
-    		{
-			    GD.Print("Sim world is running.");
-			    Initialize();
-			    GetNode<PeriodicPlotter>("Sim grapher/Periodic plotter").Plotting = true;
-		    }
-    		else if (_running) // This is here so we only do this when stopping a running sim. Not when this gets called on build.
-		    {
-			    GetNode<PeriodicPlotter>("Sim grapher/Periodic plotter").Plotting = false;
-			    GD.Print("Sim world is paused");
-		    }
-		    _running = value;
-	    }
-    }
-    private bool _resetButton = true;
-    [Export]
-    private bool ResetButton
-    {
-    	get => _resetButton;
-    	set
-    	{
-    		if (!value && _resetButton && Engine.IsEditorHint())
-    		{
-    			ResetSimulations();
-		    }
-    		_resetButton = true;
-    	}
-    }
+    // private bool _running;
+    // [Export]
+    public bool Running;
 
-    private bool _render = true; 
-    [Export]
-    private bool Render
-    {
-        get => _render;
-        set
-        {
-            foreach (var simulation in _simulations)
-            {
-                simulation.Render = value;
-            }
-
-            _render = value;
-        }
-    }
-    [Export] private bool _verbose;
-    private Stopwatch _stopwatch;
+    [Export] public bool Render;
     #endregion
-    
     
     [Export] public Vector2 WorldDimensions = Vector2.One * 50;
     [Export] public int PhysicsStepsPerRealSecond = 60;
@@ -78,7 +29,14 @@ public partial class SimulationWorld : Node3D
 
     private List<ISimulation> _simulations = new List<ISimulation>();
 
-    private void Initialize()
+    public void ResetSimulations()
+    {
+	    foreach (var simulation in _simulations)
+	    {
+		    simulation.Reset();
+	    }
+    }
+    public void Initialize()
     {
         PhysicsServer3D.SetActive(true);
         Engine.PhysicsTicksPerSecond = PhysicsStepsPerRealSecond;
@@ -95,18 +53,10 @@ public partial class SimulationWorld : Node3D
 
     public override void _PhysicsProcess(double delta)
     {
-        if (!_running) return;
+        if (!Running) return;
         foreach (var simulation in _simulations)
         {
             simulation.Step();
-        }
-    }
-
-    private void ResetSimulations()
-    {
-        foreach (var simulation in _simulations)
-        {
-            simulation.Reset();
         }
     }
 

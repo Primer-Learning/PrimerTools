@@ -13,7 +13,7 @@ public partial class PeriodicPlotter : Node
         _timeSinceLastPlot += delta;
         if (_timeSinceLastPlot < 1) return;
         PlotData();
-        _timeSinceLastPlot = 0;
+        _timeSinceLastPlot -= 1;
     }
     
     private void PlotData()

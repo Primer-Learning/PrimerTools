@@ -1,3 +1,4 @@
+using System;
 using Godot;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -14,53 +15,34 @@ public partial class TreeSim : Node3D, ISimulation
         TreeGrowth,
         FruitGrowth
     }
-    [Export] private SimMode _mode = SimMode.TreeGrowth; 
+    [Export] public SimMode Mode = SimMode.TreeGrowth; 
     
     private SimulationWorld SimulationWorld => GetParent<SimulationWorld>();
     
     #region Editor controls
     private bool _running;
     [Export]
-    private bool Running
+    public bool Running
     {
         get => _running;
         set
         {
-            if (value)
+            if (value && _stepsSoFar == 0)
             {
-                if (_stepsSoFar >= _maxNumSteps) Reset();
-                if (_stepsSoFar == 0)
-                {
-                    Initialize();
-                    GD.Print("Starting tree sim.");
-                }
-                else
-                {
-                    GD.Print($"Continuing tree sim after step {_stepsSoFar}");
-                }
+                Initialize();
+                GD.Print("Starting tree sim.");
             }
-            else if (_running)
-            {
-                GD.Print($"Stopping tree sim after step {_stepsSoFar}");
-                if (_stopwatch != null)
-                {
-                    _stopwatch.Stop();
-                    GD.Print($"Elapsed time: {_stopwatch.Elapsed}");
-                }
-            }
-            
             _running = value;
         }
     }
 
     [Export] private bool _verbose;
-    public bool Render { get; set; } = true;
+    private bool Render => SimulationWorld.Render;
     private Stopwatch _stopwatch;
     #endregion
     
     #region Sim parameters
-    [Export] private int _initialTreeCount = 5;
-    [Export] private int _maxNumSteps = 1000;
+    [Export] private int _initialTreeCount = 20;
     [Export] private float _deadTreeClearInterval = 1f;
     private float _timeSinceLastClear = 0f;
     private const float TreeMaturationTime = 1f;
@@ -77,7 +59,7 @@ public partial class TreeSim : Node3D, ISimulation
     private int _stepsSoFar = 0;
     #endregion
     
-    public TreeSimEntityRegistry Registry = new();
+    public readonly TreeSimEntityRegistry Registry = new();
 
     private void Initialize()
     {
@@ -101,13 +83,13 @@ public partial class TreeSim : Node3D, ISimulation
     public override void _Process(double delta)
     {
         if (!_running) return;
-
-        _timeSinceLastClear += (float)delta;
-        if (_timeSinceLastClear >= _deadTreeClearInterval)
-        {
-            Registry.ClearDeadTrees(Render);
-            _timeSinceLastClear = 0f;
-        }
+        //
+        // _timeSinceLastClear += (float)delta;
+        // if (_timeSinceLastClear >= _deadTreeClearInterval)
+        // {
+        //     Registry.ClearDeadTrees(Render);
+        //     _timeSinceLastClear = 0f;
+        // }
     }
 
     private void TryGenerateNewTreePosition(TreeSimEntityRegistry.PhysicalTree parent, List<Vector3> newTrees)
@@ -184,12 +166,6 @@ public partial class TreeSim : Node3D, ISimulation
     public void Step()
     {
         if (!_running) return;
-        if (_stepsSoFar >= _maxNumSteps)
-        {
-            GD.Print("Done");
-            Running = false;
-            return;
-        }
         if (Registry.PhysicalTrees.Count == 0)
         {
             GD.Print("No Trees found. Stopping.");
@@ -197,14 +173,15 @@ public partial class TreeSim : Node3D, ISimulation
             return;
         }
 
+        var newTreePositions = new List<Vector3>();
         for (var i = 0; i < Registry.PhysicalTrees.Count; i++)
         {
             var tree = Registry.PhysicalTrees[i];
             if (tree.IsDead) continue;
 
             tree.Age += 1f / SimulationWorld.PhysicsStepsPerSimSecond;
-
-            switch (_mode)
+            
+            switch (Mode)
             {
                 case SimMode.FruitGrowth:
                     if (tree.IsMature && !tree.HasFruit)
@@ -221,7 +198,6 @@ public partial class TreeSim : Node3D, ISimulation
                     }
                     break;
                 case SimMode.TreeGrowth:
-                    var newTreePositions = new List<Vector3>();
                     if (!tree.IsMature)
                     {
                         var neighborCount = CountNeighbors(tree);
@@ -239,9 +215,12 @@ public partial class TreeSim : Node3D, ISimulation
                         if (!tree.IsDead && tree.Age >= TreeMaturationTime)
                         {
                             tree.IsMature = true;
-                            var transform = Transform3D.Identity.Translated(tree.Position);
-                            transform = transform.ScaledLocal(Vector3.One * 1.0f);
-                            RenderingServer.InstanceSetTransform(Registry.VisualTrees[i].BodyMesh, transform);
+                            if (Render)
+                            {
+                                var transform = Transform3D.Identity.Translated(tree.Position);
+                                transform = transform.ScaledLocal(Vector3.One * 1.0f);
+                                RenderingServer.InstanceSetTransform(Registry.VisualTrees[i].BodyMesh, transform);
+                            }
                         }
                     }
                     else
@@ -262,14 +241,17 @@ public partial class TreeSim : Node3D, ISimulation
                             RenderingServer.InstanceSetVisible(Registry.VisualTrees[i].BodyMesh, false);
                         }
                     }
-                    foreach (var newTreePosition in newTreePositions)
-                    {
-                        Registry.CreateTree(newTreePosition, Render);
-                    }
                     break;
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
 
             Registry.PhysicalTrees[i] = tree;
+        }
+        
+        foreach (var newTreePosition in newTreePositions)
+        {
+            Registry.CreateTree(newTreePosition, Render);
         }
 
         _stepsSoFar++;

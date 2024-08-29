@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using Godot;
-using System.Diagnostics;
 using Aging.addons.PrimerTools.Simulation.Aging;
 using Godot.Collections;
 using PrimerTools;
@@ -16,45 +15,25 @@ public partial class CreatureSim : Node3D, ISimulation
 	#region Editor controls
 	private bool _running;
 	[Export]
-	private bool Running
+	public bool Running
 	{
 		get => _running;
 		set
 		{
-			if (value)
+			if (value && (_stepsSoFar == 0))
 			{
-				if (_stepsSoFar >= _maxNumSteps) Reset();
-				if (_stepsSoFar == 0)
-				{
-					GD.Print("Starting sim.");
-					Initialize();
-				}
-				else
-				{
-					GD.Print($"Continuing sim after step {_stepsSoFar}");
-				}
-			}
-			else if (_running) // This is here so we only do this when stopping a running sim. Not when this gets called on build.
-			{
-				GD.Print($"Stopping sim after step {_stepsSoFar}");
-				if (_stopwatch != null)
-				{
-					_stopwatch.Stop();
-					GD.Print($"Elapsed time: {_stopwatch.Elapsed}");
-				}
+				GD.Print("Starting sim creature sim");
+				Initialize();
 			}
 			_running = value;
 		}
 	}
 
-	public bool Render { get; set; }
-	[Export] private bool _verbose;
-	private Stopwatch _stopwatch;
+	private bool Render => SimulationWorld.Render;
 	#endregion
 	
 	#region Sim parameters
 	[Export] private int _initialCreatureCount = 4;
-	[Export] private int _maxNumSteps = 100000;
 	private const float CreatureStepMaxLength = 10f;
 	private const float CreatureEatDistance = 0.5f;
 	private const float EnergyGainFromFood = 1f;
@@ -68,18 +47,17 @@ public partial class CreatureSim : Node3D, ISimulation
 	private int _stepsSoFar = 0;
 	#endregion
 	
-	public CreatureSimEntityRegistry Registry = new();
+	public readonly CreatureSimEntityRegistry Registry = new();
 
 	#region Simulation
 
 	private void Initialize()
 	{
 		Registry.World3D = SimulationWorld.World3D;
-		_stopwatch = Stopwatch.StartNew();
 		
 		if (_treeSim == null)
 		{
-			GD.PrintErr("TreeSim not found.");
+			GD.PrintErr("TreeSim not found. Not initializing creature sim because they will all starve to death immediately. You monster.");
 			return;
 		}
 		
@@ -101,12 +79,6 @@ public partial class CreatureSim : Node3D, ISimulation
 	public void Step()
 	{
 		if (!_running) return;
-		if (_stepsSoFar >= _maxNumSteps)
-		{
-			GD.Print($"Reached maximum step count of {_maxNumSteps}");
-			Running = false;
-			return;
-		}
 		if (Registry.PhysicalCreatures.Count == 0)
 		{
 			GD.Print("No Creatures found. Stopping.");
@@ -259,22 +231,19 @@ public partial class CreatureSim : Node3D, ISimulation
 		foreach (var objectData in objectsInAwareness)
 		{
 			var objectRid = (Rid)objectData["rid"];
-			if (_treeSim.Registry.TreeLookup.TryGetValue(objectRid, out var treeIndex))
+			if (!_treeSim.Registry.TreeLookup.TryGetValue(objectRid, out var treeIndex)) continue;
+			
+			var tree = _treeSim.Registry.PhysicalTrees[treeIndex];
+			if (!tree.HasFruit) continue;
+			
+			var sqrDistance = (creature.Position - tree.Position).LengthSquared();
+			if (!(sqrDistance < closestFoodSqrDistance)) continue;
+			
+			closestFoodSqrDistance = sqrDistance;
+			closestFoodIndex = treeIndex;
+			if (closestFoodSqrDistance < CreatureEatDistance * CreatureEatDistance)
 			{
-				var tree = _treeSim.Registry.PhysicalTrees[treeIndex];
-				if (tree.HasFruit)
-				{
-					var sqrDistance = (creature.Position - tree.Position).LengthSquared();
-					if (sqrDistance < closestFoodSqrDistance)
-					{
-						closestFoodSqrDistance = sqrDistance;
-						closestFoodIndex = treeIndex;
-						if (closestFoodSqrDistance < CreatureEatDistance * CreatureEatDistance)
-						{
-							canEat = true;
-						}
-					}
-				}
+				canEat = true;
 			}
 		}
 
@@ -292,28 +261,24 @@ public partial class CreatureSim : Node3D, ISimulation
 	private void EatFood(ref CreatureSimEntityRegistry.PhysicalCreature creature, int treeIndex)
 	{
 		var tree = _treeSim.Registry.PhysicalTrees[treeIndex];
-		if (tree.HasFruit)
-		{
-			tree.HasFruit = false;
-			tree.FruitGrowthProgress = 0;
-			_treeSim.Registry.PhysicalTrees[treeIndex] = tree;
+		if (!tree.HasFruit) return;
+		
+		tree.HasFruit = false;
+		tree.FruitGrowthProgress = 0;
+		_treeSim.Registry.PhysicalTrees[treeIndex] = tree;
+		creature.Energy += EnergyGainFromFood;
 
-			if (Render)
-			{
-				var visualTree = _treeSim.Registry.VisualTrees[treeIndex];
-				RenderingServer.InstanceSetVisible(visualTree.FruitMesh, false);
-			}
-
-			creature.Energy += EnergyGainFromFood;
-		}
+		if (!Render) return;
+		var visualTree = _treeSim.Registry.VisualTrees[treeIndex];
+		RenderingServer.InstanceSetVisible(visualTree.FruitMesh, false);
 	}
 
 	private void Reproduce(ref CreatureSimEntityRegistry.PhysicalCreature creature)
 	{
 		var transformNextFrame = new Transform3D(Basis.Identity, creature.Position);
 		
-		float newAwarenessRadius = creature.AwarenessRadius;
-		float newSpeed = creature.Speed;
+		var newAwarenessRadius = creature.AwarenessRadius;
+		var newSpeed = creature.Speed;
 
 		if (SimulationWorld.Rng.RangeFloat(0, 1) < MutationProbability)
 		{
