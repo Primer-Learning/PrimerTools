@@ -23,7 +23,7 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
 
     private float renderExtent;
 
-    public float RenderExtent
+    [Export] public float RenderExtent
     {
         get => renderExtent;
         set
@@ -32,7 +32,7 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
             // - There are multiple ways to do this, which will have different visual effects.
             // - The approach implemented below identifies the line with a smaller number of points as "shorterLine".
             // Points with index less than the length of the shorter line are blended between the two lines.
-            // Points with indext greater are added one after another with timing based on the total length of 
+            // Points with index greater are added one after another with timing based on the total length of 
             // segments to be added. It's usually not the case that we want to both move existing points and add new ones.
             // So this approach handles the case of adjusting points in a line, and also adding length to a line at a
             // constant rate. But it is perhaps a bit weird when it does both.
@@ -45,6 +45,8 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
             // In any case, just wanted to record the thought that this is just one choice for how to do this, which
             // works well for the case of adding data to a line. So if a new context arises, adding interpolation
             // options would be possible.
+            
+            if (_width == 0) GD.PushWarning("Line width is zero. Just so you know. :)");
 
             // if (value != renderExtent) GD.Print("RenderExtent: " + value);
             renderExtent = value;
@@ -125,9 +127,9 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
     }
 
     private Vector3[] dataPoints;
-    private readonly List<Vector3[]> pointsOfStages = new();
+    public readonly List<Vector3[]> pointsOfStages = new();
 
-    private float _width;
+    private float _width = 1;
 
     public float Width
     {
@@ -163,18 +165,17 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
         if (pointsOfStages.Count == 0)
             pointsOfStages.Add(new[] { TransformPointFromDataSpaceToPositionSpace(dataPoints[0]) });
         pointsOfStages.Add(dataPoints.Select(x => TransformPointFromDataSpaceToPositionSpace(x)).ToArray());
-
         return this.AnimateValue(RenderExtent + 1, "RenderExtent");
 
         // var animation = new Animation();
-        // animation.Length = duration;
+        // animation.Length = (float)duration;
         //
         // var trackIndex = animation.AddTrack(Animation.TrackType.Value);
         // animation.TrackInsertKey(trackIndex, 0.0f, RenderExtent);
         // animation.TrackInsertKey(trackIndex, duration, RenderExtent + 1);
         // animation.TrackSetPath(trackIndex, $"{GetPath()}:RenderExtent");
         // RenderExtent++;
-        //
+        
         // return animation;
     }
 

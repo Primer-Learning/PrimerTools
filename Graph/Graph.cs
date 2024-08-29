@@ -27,11 +27,6 @@ public partial class Graph : Node3D
         
         return graph;
     }
-
-    public override void _Ready()
-    {
-        if (Engine.IsEditorHint()) InstantiateAxes();
-    }
     
     private void InstantiateAxes()
     {
@@ -161,7 +156,6 @@ public partial class Graph : Node3D
             );
         }
         
-        
         return AnimationUtilities.Series(
             removeTransitions.RunInParallel(),
             updateTransitions.RunInParallel(),
@@ -178,7 +172,7 @@ public partial class Graph : Node3D
     // public Tween Appear() => Axes.Select(x => x.Appear()).RunInParallel();
     // public Tween Disappear() => Axes.Select(x => x.Disappear()).RunInParallel();
     
-    public CurvePlot2D AddLine(string name = "Curve")
+    public CurvePlot2D AddCurvePlot2D(string name = "Curve")
     {
         var line = new CurvePlot2D();
         line.TransformPointFromDataSpaceToPositionSpace = DataSpaceToPositionSpace;

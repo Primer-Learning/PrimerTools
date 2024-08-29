@@ -20,9 +20,11 @@ public partial class SimulationWorld : Node3D
     		{
 			    GD.Print("Sim world is running.");
 			    Initialize();
+			    GetNode<SimulationGraph>("Sim grapher").Plotting = true;
 		    }
     		else if (_running) // This is here so we only do this when stopping a running sim. Not when this gets called on build.
 		    {
+			    GetNode<SimulationGraph>("Sim grapher").Plotting = false;
 			    GD.Print("Sim world is paused");
 		    }
 		    _running = value;

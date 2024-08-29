@@ -39,7 +39,7 @@ _data = {
 "CombinedAnimation": SubResource("Animation_gfh0s")
 }
 
-[sub_resource type="Animation" id="Animation_y6mhn"]
+[sub_resource type="Animation" id="Animation_jrobh"]
 length = 0.502
 tracks/0/type = "bezier"
 tracks/0/imported = false
@@ -1497,7 +1497,7 @@ tracks/131/keys = {
 "values": [0.0, 30.0]
 }
 
-[sub_resource type="Animation" id="Animation_wcova"]
+[sub_resource type="Animation" id="Animation_ysrlk"]
 length = 0.502
 tracks/0/type = "bezier"
 tracks/0/imported = false
@@ -2955,10 +2955,10 @@ tracks/131/keys = {
 "values": [30.0, 10.0]
 }
 
-[sub_resource type="AnimationLibrary" id="AnimationLibrary_weejt"]
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_mhpja"]
 _data = {
-"anim0": SubResource("Animation_y6mhn"),
-"anim1": SubResource("Animation_wcova")
+"anim0": SubResource("Animation_jrobh"),
+"anim1": SubResource("Animation_ysrlk")
 }
 
 [sub_resource type="Environment" id="Environment_14y1i"]
@@ -2977,7 +2977,7 @@ RunButton = true
 
 [node name="ReferenceAnimationPlayer0" type="AnimationPlayer" parent="AnimationPlayer"]
 libraries = {
-"ref0": SubResource("AnimationLibrary_weejt")
+"ref0": SubResource("AnimationLibrary_mhpja")
 }
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
