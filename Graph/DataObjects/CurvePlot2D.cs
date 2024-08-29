@@ -10,22 +10,89 @@ namespace PrimerTools.Graph;
 [Tool]
 public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
 {
+    #region Data space transform
     public delegate Vector3 Transformation(Vector3 inputPoint);
     public Transformation TransformPointFromDataSpaceToPositionSpace = point => point;
-    
-    private StandardMaterial3D materialCache;
+    #endregion
 
+    #region Appearance
+    private float _width = 1;
+
+    public float Width
+    {
+        set => _width = value / 1000;
+        get => _width * 1000;
+    }
+    private int _jointVertices = 3;
+    private int _endCapVertices = 5;
+    
+    private StandardMaterial3D _materialCache;
     private StandardMaterial3D Material
     {
-        get => materialCache ??= new StandardMaterial3D();
-        set => materialCache = value;
+        get => _materialCache ??= new StandardMaterial3D();
+        set => _materialCache = value;
+    }
+    
+    public void SetColor(Color color)
+    {
+        Material.AlbedoColor = color;
+    }
+    #endregion
+
+    #region Data
+    private List<Vector3> dataPoints;
+    public delegate List<Vector3> DataFetch();
+
+    public DataFetch DataFetchMethod = () =>
+    {
+        PrimerGD.PrintWithStackTrace("Data fetch method not assigned. Returning empty list.");
+        return new List<Vector3>();
+    };
+
+    public void FetchData()
+    {
+        dataPoints = DataFetchMethod();
+    }
+    
+    /// <summary>
+    /// Sets the data that will be the target of the next transition.
+    /// </summary>
+    /// <param name="data"></param>
+    public void SetData(params Vector3[] data)
+    {
+        dataPoints = data.ToList();
+    }
+    /// <summary>
+    /// Sets the data which will be the target of the next transition.
+    /// This overload takes just a float, and the x value will be inferred by value index. 
+    /// </summary>
+    /// <param name="data"></param>
+    public void SetData(params float[] data)
+    {
+        dataPoints = data.Select((x, i) => new Vector3(i, x, 0)).ToList();
+    }
+    
+    /// <summary>
+    /// Gets the current data that will be the target of the next transition.
+    /// </summary>
+    /// <returns></returns>
+    public Vector3[] GetData()
+    {
+        return dataPoints.ToArray();
+    }
+    public void AddDataPoint(Vector3 newDataPoint)
+    {
+        dataPoints.Add(newDataPoint);
     }
 
-    private float renderExtent;
-
+    #endregion
+    
+    #region Transitions
+    public readonly List<Vector3[]> pointsOfStages = new();
+    private float _renderExtent;
     [Export] public float RenderExtent
     {
-        get => renderExtent;
+        get => _renderExtent;
         set
         {
             // Comments on line interpolation method
@@ -49,7 +116,7 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
             if (_width == 0) GD.PushWarning("Line width is zero. Just so you know. :)");
 
             // if (value != renderExtent) GD.Print("RenderExtent: " + value);
-            renderExtent = value;
+            _renderExtent = value;
             if (value > pointsOfStages.Count - 1) return;
             var stepProgress = value % 1;
             Vector3[] targetPoints;
@@ -125,35 +192,7 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
             Mesh.SurfaceSetMaterial(0, Material);
         }
     }
-
-    private Vector3[] dataPoints;
-    public readonly List<Vector3[]> pointsOfStages = new();
-
-    private float _width = 1;
-
-    public float Width
-    {
-        set => _width = value / 1000;
-        get => _width * 1000;
-    }
-    public int jointVertices = 3;
-    public int endCapVertices = 5;
     
-    /// <summary>
-    /// Sets the data which will be the target of the next transition
-    /// </summary>
-    /// <param name="data"></param>
-    public void SetData(params Vector3[] data)
-    {
-        dataPoints = data;
-    }
-    public Vector3[] GetData()
-    {
-        return dataPoints;
-    }
-
-    
-
     /// <summary>
     /// Creates an animation that transitions to the current data, set by SetData.
     /// </summary>
@@ -166,24 +205,37 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
             pointsOfStages.Add(new[] { TransformPointFromDataSpaceToPositionSpace(dataPoints[0]) });
         pointsOfStages.Add(dataPoints.Select(x => TransformPointFromDataSpaceToPositionSpace(x)).ToArray());
         return this.AnimateValue(RenderExtent + 1, "RenderExtent");
+    }
 
-        // var animation = new Animation();
-        // animation.Length = (float)duration;
-        //
-        // var trackIndex = animation.AddTrack(Animation.TrackType.Value);
-        // animation.TrackInsertKey(trackIndex, 0.0f, RenderExtent);
-        // animation.TrackInsertKey(trackIndex, duration, RenderExtent + 1);
-        // animation.TrackSetPath(trackIndex, $"{GetPath()}:RenderExtent");
-        // RenderExtent++;
+    /// <summary>
+    /// Creates a tween that will transition the curve to the latest data. The returned tween will usually not be needed,
+    /// but it's there if you want to chain things or whatever.
+    /// </summary>
+    /// <param name="duration"></param>
+    /// <returns></returns>
+    public Tween TweenTransition(double duration = AnimationUtilities.DefaultDuration)
+    {
+        if (pointsOfStages.Count == 0)
+            pointsOfStages.Add(new[] { TransformPointFromDataSpaceToPositionSpace(dataPoints[0]) });
+        pointsOfStages.Add(dataPoints.Select(x => TransformPointFromDataSpaceToPositionSpace(x)).ToArray());
         
-        // return animation;
+        var tween = CreateTween();
+        tween.TweenProperty(
+            this,
+            "RenderExtent",
+            RenderExtent + 1,
+            duration
+        );
+        return tween;
     }
 
     public Animation Disappear()
     {
         throw new NotImplementedException();
     }
+    #endregion
 
+    #region Mesh construction
     private Array MakeMeshData(Vector3[] points)
     {
         var vertices = new List<Vector3>();
@@ -214,7 +266,6 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
 
         return surfaceArray;
     }
-
     private void CreateSegments(Vector3[] points, List<Vector3> vertices, List<int> indices)
     {
         for (var i = 0; i < points.Length - 1; i++)
@@ -236,7 +287,6 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
             indices.AddTriangle(index + 1, index + 2, index + 3);
         }
     }
-
     private void AddJoints(Vector3[] points, List<Vector3> vertices, List<int> triangles)
     {
         // TODO: The segments overlap on one side of the joint. On the other side, there is a gap.
@@ -280,48 +330,25 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
             var left = vertices[leftIndex];
             var right = vertices[rightIndex];
 
-            if (jointVertices <= 0)
+            if (_jointVertices <= 0)
             {
                 triangles.AddTriangle(center, rightIndex, leftIndex, flip);
                 continue;
             }
 
-            for (var j = 0; j < jointVertices; j++)
+            for (var j = 0; j < _jointVertices; j++)
             {
-                var t = (j + 1) / (float)(jointVertices + 1);
+                var t = (j + 1) / (float)(_jointVertices + 1);
                 
-                vertices.Add(MySlerp(left - b, right - b, t) + b);
-                
-                // var totalAngle = (left - b).AngleTo(right - b);
-                // vertices.Add((left - b).Rotated(Vector3.Back, totalAngle * t) + b);
+                vertices.Add(PrimerMathUtils.SlerpThatWorks(left - b, right - b, t) + b);
 
                 var corner = j == 0 ? leftIndex : center + j;
                 triangles.AddTriangle(corner, center, center + j + 1, flip);
             }
 
-            triangles.AddTriangle(center + jointVertices, center, rightIndex, flip);
+            triangles.AddTriangle(center + _jointVertices, center, rightIndex, flip);
         }
     }
-    
-    public Vector3 MySlerp(Vector3 from, Vector3 to, float weight)
-    {
-        float s1 = from.Length();
-        float s2 = to.Length();
-        if (s1 == 0.0 || s2 == 0.0)
-            return from.Lerp(to, weight);
-        float num1 = Mathf.Lerp(s1, s2, weight);
-        float angle = from.AngleTo(to);
-        if (angle == 0.0)
-            return from.Lerp(to, weight);
-        Vector3 axis = from.Cross(to).Normalized();
-        if (axis.Length() == 0)
-        {
-            GD.Print($"Vectors that cross to zero: {from}, {to}");
-            return from.Lerp(to, weight);
-        }
-        return from.Rotated(axis, angle * weight) * (num1 / s1);
-    }
-
     private void AddEndCap(List<Vector3> vertices, List<int> triangles, Vector3[] points, bool end = true)
     {
         Vector3 point;
@@ -355,7 +382,7 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
 
         var perpendicular = new Vector3(direction.Y, -direction.X, 0);
         var center = vertices.Count;
-        var totalVertices = (float)endCapVertices + 2;
+        var totalVertices = (float)_endCapVertices + 2;
 
         vertices.Add(point);
         vertices.Add(point - perpendicular);
@@ -371,12 +398,9 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
             triangles.AddTriangle(center, center + i, center + i + 1);
         }
     }
+    #endregion
 
-    public void SetColor(Color color)
-    {
-        Material.AlbedoColor = color;
-    }
-
+    #region Old Unity code for reference
     // public class PrimerLine : MonoBehaviour, IMeshController, IDisposable, IPrimerGraphData
 //     {
 //         private ILine renderedLine = new DiscreteLine(1);
@@ -777,4 +801,5 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
 //         }
 //         #endregion
 //     }
+    #endregion
 }
