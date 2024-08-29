@@ -57,7 +57,7 @@ public partial class SimulationTestGraph : Node3D
 		_curve.DataFetchMethod = () =>
 		{
 			var dataList = _curve.GetData().ToList();
-			dataList.Add( new Vector3(dataList.Count, Registry.PhysicalCreatures.Count, 0) );
+			dataList.Add( new Vector3(dataList.Count, Registry.PhysicalCreatures.Count(x => x.Alive), 0) );
 			return dataList;
 		};
 
