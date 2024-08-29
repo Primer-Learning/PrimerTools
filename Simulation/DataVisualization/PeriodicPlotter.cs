@@ -5,7 +5,7 @@ public partial class PeriodicPlotter : Node
 {
     public CurvePlot2D Curve;
 
-    [Export] public bool Plotting = true;
+    [Export] public bool Plotting;
     private double _timeSinceLastPlot;
     public override void _Process(double delta)
     {

@@ -30,6 +30,8 @@ public partial class SimulationTestScene : Node3D
 				GD.Print("Stopping");
 				_cts.Cancel();
 				SimulationWorld.Running = false;
+				CreatureSim.Running = false;
+				SimulationWorld.Running = false;
 				_periodicPlotter.Plotting = false;
 			}
 			_run = value;
@@ -46,7 +48,7 @@ public partial class SimulationTestScene : Node3D
 				SimulationWorld.ResetSimulations();
 				foreach (var child in GraphParent.GetChildren())
 				{
-					child.Free();
+					if (IsInstanceValid(child)) child.Free();
 				}
 			}
 			_reset = false;
@@ -100,9 +102,7 @@ public partial class SimulationTestScene : Node3D
 	{
 		try
 		{
-			TreeSim.Running = false;
-			CreatureSim.Running = false;
-
+			SimulationWorld.TimeScale = 99999;
 			SimulationWorld.Initialize();
 			SimulationWorld.Running = true;
 
@@ -111,6 +111,7 @@ public partial class SimulationTestScene : Node3D
 
 			await Task.Delay(5000, ct);
 			ct.ThrowIfCancellationRequested();
+			SimulationWorld.TimeScale = 1;
 
 			TreeSim.Mode = TreeSim.SimMode.FruitGrowth;
 

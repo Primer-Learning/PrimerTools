@@ -27,7 +27,7 @@ public partial class TreeSim : Node3D, ISimulation
         get => _running;
         set
         {
-            if (value && _stepsSoFar == 0)
+            if (value && !_running && _stepsSoFar == 0)
             {
                 Initialize();
                 GD.Print("Starting tree sim.");
@@ -83,13 +83,13 @@ public partial class TreeSim : Node3D, ISimulation
     public override void _Process(double delta)
     {
         if (!_running) return;
-        //
-        // _timeSinceLastClear += (float)delta;
-        // if (_timeSinceLastClear >= _deadTreeClearInterval)
-        // {
-        //     Registry.ClearDeadTrees(Render);
-        //     _timeSinceLastClear = 0f;
-        // }
+        
+        _timeSinceLastClear += (float)delta;
+        if (_timeSinceLastClear >= _deadTreeClearInterval)
+        {
+            Registry.ClearDeadTrees(Render);
+            _timeSinceLastClear = 0f;
+        }
     }
 
     private void TryGenerateNewTreePosition(TreeSimEntityRegistry.PhysicalTree parent, List<Vector3> newTrees)

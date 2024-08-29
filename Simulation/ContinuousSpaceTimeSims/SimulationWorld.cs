@@ -17,7 +17,18 @@ public partial class SimulationWorld : Node3D
     #endregion
     
     [Export] public Vector2 WorldDimensions = Vector2.One * 50;
-    [Export] public int PhysicsStepsPerRealSecond = 60;
+
+    private float _timeScale = 1;
+    [Export]
+    public float TimeScale
+    {
+        get => _timeScale;
+        set
+        {
+            _timeScale = value;
+            Engine.PhysicsTicksPerSecond = (int) value * 60;
+        }
+    }
     [Export] private int _seed = -1;
 
     public const int PhysicsStepsPerSimSecond = 60;
@@ -39,7 +50,6 @@ public partial class SimulationWorld : Node3D
     public void Initialize()
     {
         PhysicsServer3D.SetActive(true);
-        Engine.PhysicsTicksPerSecond = PhysicsStepsPerRealSecond;
 
         _simulations.Clear();
         foreach (var child in GetChildren())
