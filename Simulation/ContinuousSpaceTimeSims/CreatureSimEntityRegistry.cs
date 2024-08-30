@@ -42,34 +42,9 @@ public class CreatureSimEntityRegistry
 			RenderingServer.FreeRid(AwarenessMesh);
 		}
 	}
-	// public struct PhysicalFood
-	// {
-	// 	public Rid Body;
-	// 	public Vector3 Position;
-	// 	public bool Eaten;
-	// 	public SphereShape3D BodyShapeResource;
-	// 	public float TimeLeftToRegenerate;
-	//
-	// 	public void FreeRids()
-	// 	{
-	// 		PhysicsServer3D.FreeRid(Body);
-	// 	}
-	// }
-	// public struct VisualFood
-	// {
-	// 	public Rid BodyMesh;
-	// 	public SphereMesh MeshResource;
-	// 	
-	// 	public void FreeRids()
-	// 	{
-	// 		RenderingServer.FreeRid(BodyMesh);
-	// 	}
-	// }
 	
 	public readonly List<PhysicalCreature> PhysicalCreatures = new();
 	public readonly List<VisualCreature> VisualCreatures = new();
-	// public readonly List<PhysicalFood> PhysicalFoods = new();
-	// public readonly List<VisualFood> VisualFoods = new();
 
 	public readonly Dictionary<Rid, int> FoodLookup = new();
 	
@@ -144,44 +119,6 @@ public class CreatureSimEntityRegistry
 
 		return physicalCreature;
 	}
-
-	// public void CreateFood(Vector3 position, bool render)
-	// {
-	// 	// Create the area for the blob's awareness and put it in the physics space
-	// 	var body = PhysicsServer3D.AreaCreate();
-	// 	// PhysicsServer3D.AreaSetMonitorable(area, true);
-	// 	PhysicsServer3D.AreaSetSpace(body, World3D.Space);
-	// 	var transform = Transform3D.Identity.Translated(position);
-	// 	PhysicsServer3D.AreaSetTransform(body, transform);
-	// 	// Add a sphere collision shape to it
-	// 	var shape = new SphereShape3D();
-	// 	shape.Radius = 1;
-	// 	PhysicsServer3D.AreaAddShape(body, shape.GetRid());
-	//
-	// 	var newFood = new PhysicalFood
-	// 	{
-	// 		Body = body,
-	// 		Position = position,
-	// 		Eaten = false,
-	// 		BodyShapeResource = shape
-	// 	};
-	// 	FoodLookup.Add(body, PhysicalFoods.Count);
-	// 	PhysicalFoods.Add(newFood);
-	// 	
-	// 	// Mesh and visual instance
-	// 	if (!render) return;
-	// 	var meshResource = FoodMesh;
-	// 	var mesh = RenderingServer.InstanceCreate2(meshResource.GetRid(), World3D.Scenario);
-	// 	RenderingServer.InstanceSetTransform(mesh, transform);
-	//
-	// 	VisualFoods.Add(
-	// 		new VisualFood
-	// 		{
-	// 			BodyMesh = mesh,
-	// 			MeshResource = meshResource
-	// 		}
-	// 	);
-	// }
 	
 	#region Object prep
 
@@ -242,51 +179,7 @@ public class CreatureSimEntityRegistry
 		}
 		PhysicalCreatures.Clear();
 		VisualCreatures.Clear();
-		// // Foods
-		// foreach (var food in PhysicalFoods)
-		// {
-		// 	PhysicsServer3D.FreeRid(food.Body);
-		// }
-		// foreach (var food in VisualFoods)
-		// {
-		// 	RenderingServer.FreeRid(food.BodyMesh);
-		// }
-		// PhysicalFoods.Clear();
-		// VisualFoods.Clear();
-		// FoodLookup.Clear();
 	}
-	// private void HardCleanup()
-	// {
-	// 	var space = GetWorld3D().Space;
-	// 	var area = PhysicsServer3D.AreaCreate();
-	// 	PhysicsServer3D.AreaSetSpace(area, space);
-	// 	PhysicsServer3D.AreaSetTransform(area, Transform3D.Identity);
-	// 	
-	// 	// Add a box collision shape to it
-	// 	var shape = PhysicsServer3D.BoxShapeCreate();
-	// 	var boxSize = new Vector3(int.MaxValue, int.MaxValue, int.MaxValue);
-	// 	PhysicsServer3D.ShapeSetData(shape, boxSize);
-	// 	PhysicsServer3D.AreaAddShape(area, shape, Transform3D.Identity.Translated(-boxSize / 2));
-	// 	
-	// 	var queryParams = new PhysicsShapeQueryParameters3D();
-	// 	queryParams.CollideWithAreas = true;
-	// 	queryParams.ShapeRid = PhysicsServer3D.AreaGetShape(area, 0);
-	// 	queryParams.Transform = PhysicsServer3D.AreaGetTransform(area);
-	//
-	// 	// Check for intersections with other areas
-	// 	var intersectionData = PhysicsServer3D.SpaceGetDirectState(space).IntersectShape(queryParams, maxResults: 256);
-	// 	
-	// 	foreach (var intersection in intersectionData)
-	// 	{
-	// 		var areaRID = (Rid)intersection["rid"];
-	// 		for (var i = 0; i < PhysicsServer3D.AreaGetShapeCount(areaRID); i++)
-	// 		{
-	// 			PhysicsServer3D.FreeRid(PhysicsServer3D.AreaGetShape(areaRID, i));
-	// 		}
-	// 		PhysicsServer3D.FreeRid(areaRID);
-	// 	}
-	// 	// The -1 is because it detects collisions with itself
-	// 	GD.Print($"Found and deleted {intersectionData.Count - 1} area rids and their shapes.");
-	// }
+	
 	#endregion
 }
