@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Godot;
+using PrimerTools.Simulation.Aging;
 
 namespace PrimerTools.Simulation.Tree;
 
@@ -46,7 +47,7 @@ public class TreeSimEntityRegistry
     public readonly List<VisualTree> VisualTrees = new();
     public readonly Dictionary<Rid, int> TreeLookup = new();
 
-    public PhysicalTree CreateTree(Vector3 position, bool render)
+    public PhysicalTree CreateTree(Vector3 position, VisualizationMode visualizationMode)
     {
         var transform = Transform3D.Identity.Translated(position);
 
@@ -71,43 +72,57 @@ public class TreeSimEntityRegistry
         TreeLookup.Add(bodyArea, PhysicalTrees.Count);
         PhysicalTrees.Add(physicalTree);
 
-        if (!render) return physicalTree;
-
-        // RenderingServer setup
-        var treeMesh = new CylinderMesh();
-        treeMesh.TopRadius = 0.5f;
-        treeMesh.BottomRadius = 0.5f;
-        treeMesh.Height = 2.0f;
-
-        var visualTransform = transform.ScaledLocal(0.5f * Vector3.One); // Smol because the original tree is not mature
-        var bodyMesh = RenderingServer.InstanceCreate2(treeMesh.GetRid(), World3D.Scenario);
-        RenderingServer.InstanceSetTransform(bodyMesh, visualTransform);
-
-        VisualTrees.Add(new VisualTree
+        switch (visualizationMode)
         {
-            BodyMesh = bodyMesh,
-            MeshResource = treeMesh
-        });
+            case VisualizationMode.None:
+                break;
+            case VisualizationMode.Debug:
+                var treeMesh = new CylinderMesh();
+                treeMesh.TopRadius = 0.5f;
+                treeMesh.BottomRadius = 0.5f;
+                treeMesh.Height = 2.0f;
+
+                var visualTransform = transform.ScaledLocal(0.5f * Vector3.One); // Smol because the original tree is not mature
+                var bodyMesh = RenderingServer.InstanceCreate2(treeMesh.GetRid(), World3D.Scenario);
+                RenderingServer.InstanceSetTransform(bodyMesh, visualTransform);
+
+                VisualTrees.Add(new VisualTree
+                {
+                    BodyMesh = bodyMesh,
+                    MeshResource = treeMesh
+                });
+                break;
+            case VisualizationMode.NodeCreatures:
+                break;
+        }
 
         return physicalTree;
     }
 
-    public void Reset()
+    public void Reset(VisualizationMode visualizationMode)
     {
         foreach (var tree in PhysicalTrees)
         {
             tree.FreeRids();
         }
-        foreach (var tree in VisualTrees)
+        
+        switch (visualizationMode)
         {
-            tree.FreeRids();
+            case VisualizationMode.Debug:
+                foreach (var tree in VisualTrees)
+                {
+                    tree.FreeRids();
+                }
+                break;
+            case VisualizationMode.NodeCreatures:
+                break;
         }
         PhysicalTrees.Clear();
         VisualTrees.Clear();
         TreeLookup.Clear();
     }
 
-    public void ClearDeadTrees(bool render)
+    public void ClearDeadTrees(VisualizationMode visualizationMode)
     {
         var deadIndices = new List<int>();
         for (var i = 0; i < PhysicalTrees.Count; i++)
@@ -125,10 +140,14 @@ public class TreeSimEntityRegistry
             TreeLookup.Remove(PhysicalTrees[deadIndex].Body);
             PhysicalTrees.RemoveAt(deadIndex);
             
-            if (render)
+            switch (visualizationMode)
             {
-                VisualTrees[deadIndex].FreeRids();
-                VisualTrees.RemoveAt(deadIndex);
+                case VisualizationMode.Debug:
+                    VisualTrees[deadIndex].FreeRids();
+                    VisualTrees.RemoveAt(deadIndex);
+                    break;
+                case VisualizationMode.NodeCreatures:
+                    break;
             }
         }
 

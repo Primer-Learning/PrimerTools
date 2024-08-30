@@ -32,16 +32,16 @@ public partial class SimulationTestScene : Node3D
 				else
 				{
 					SimulationWorld.Running = true;
-					_periodicPlotter.Plotting = true;
+					PeriodicPlotter.Plotting = true;
 				}
 			}
 			else if (_run)
 			{
 				GD.Print("Pausing");
-				_cts.Cancel();
+				_cts?.Cancel();
 				SimulationWorld.TimeScale = 1;
 				SimulationWorld.Running = false;
-				_periodicPlotter.Plotting = false;
+				PeriodicPlotter.Plotting = false;
 			}
 			_run = value;
 		}
@@ -71,8 +71,19 @@ public partial class SimulationTestScene : Node3D
 	}
 	
 	private Node3D GraphParent => GetNode<Node3D>("GraphParent");
+
 	private PeriodicPlotter _periodicPlotter;
-	
+	private PeriodicPlotter PeriodicPlotter
+	{
+		get
+		{
+			if (IsInstanceValid(_periodicPlotter)) return _periodicPlotter;
+			_periodicPlotter = new PeriodicPlotter();
+			GraphParent.AddChild(_periodicPlotter);
+			return _periodicPlotter;
+		}
+		set => _periodicPlotter = value;
+	}
 	private void CreatePlot()
 	{
 		var thisGraph = Graph.CreateInstance();
@@ -103,12 +114,10 @@ public partial class SimulationTestScene : Node3D
 			dataList.Add( new Vector3(dataList.Count, CreatureSim.Registry.PhysicalCreatures.Count(x => x.Alive), 0) );
 			return dataList;
 		};
-
-		_periodicPlotter = new PeriodicPlotter();
-		GraphParent.AddChild(_periodicPlotter);
-		_periodicPlotter.Owner = GetTree().EditedSceneRoot;
-		_periodicPlotter.Name = "Periodic plotter";
-		_periodicPlotter.Curve = curve;
+		
+		PeriodicPlotter.Owner = GetTree().EditedSceneRoot;
+		PeriodicPlotter.Name = "Periodic plotter";
+		PeriodicPlotter.Curve = curve;
 	}
 
 	private async Task RunSimSequence(CancellationToken ct = default)
@@ -128,11 +137,11 @@ public partial class SimulationTestScene : Node3D
 
 			TreeSim.Mode = TreeSim.SimMode.FruitGrowth;
 
-			await Task.Delay(5000, ct);
+			await Task.Delay(3000, ct);
 			ct.ThrowIfCancellationRequested();
 
 			CreatureSim.Running = true;
-			_periodicPlotter.Plotting = true;
+			if (IsInstanceValid(PeriodicPlotter)) PeriodicPlotter.Plotting = true;
 		}
 		catch
 		{

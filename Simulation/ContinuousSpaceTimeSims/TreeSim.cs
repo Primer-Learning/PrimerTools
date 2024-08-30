@@ -37,7 +37,7 @@ public partial class TreeSim : Node3D, ISimulation
     }
 
     [Export] private bool _verbose;
-    private bool Render => SimulationWorld.Render;
+    private VisualizationMode VisualizationMode => SimulationWorld.VisualizationMode;
     private Stopwatch _stopwatch;
     #endregion
     
@@ -55,7 +55,7 @@ public partial class TreeSim : Node3D, ISimulation
     private const float SaplingDeathProbabilityPerNeighbor = 0.01f;
     private const float MatureTreeDeathProbabilityBase = 0.0001f;
     private const float MatureTreeDeathProbabilityPerNeighbor = 0.0001f;
-    private const float FruitGrowthTime = 5f;
+    private const float FruitGrowthTime = 2f;
     private int _stepsSoFar = 0;
     #endregion
     
@@ -75,7 +75,7 @@ public partial class TreeSim : Node3D, ISimulation
                     0,
                     SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.Y)
                 ),
-                Render
+                VisualizationMode
             );
         }
     }
@@ -87,7 +87,7 @@ public partial class TreeSim : Node3D, ISimulation
         _timeSinceLastClear += (float)delta;
         if (_timeSinceLastClear >= _deadTreeClearInterval)
         {
-            Registry.ClearDeadTrees(Render);
+            Registry.ClearDeadTrees(VisualizationMode);
             _timeSinceLastClear = 0f;
         }
     }
@@ -190,9 +190,14 @@ public partial class TreeSim : Node3D, ISimulation
                         if (tree.FruitGrowthProgress >= FruitGrowthTime)
                         {
                             tree.HasFruit = true;
-                            if (Render)
+                            switch (VisualizationMode)
                             {
-                                CreateFruitMesh(i, tree.Position);
+                                case VisualizationMode.Debug:
+                                    CreateFruitMesh(i, tree.Position);
+                                    break;
+                                case VisualizationMode.NodeCreatures:
+                                    // Add NodeCreatures fruit visualization logic here if needed
+                                    break;
                             }
                         }
                     }
@@ -215,11 +220,16 @@ public partial class TreeSim : Node3D, ISimulation
                         if (!tree.IsDead && tree.Age >= TreeMaturationTime)
                         {
                             tree.IsMature = true;
-                            if (Render)
+                            switch (VisualizationMode)
                             {
-                                var transform = Transform3D.Identity.Translated(tree.Position);
-                                transform = transform.ScaledLocal(Vector3.One * 1.0f);
-                                RenderingServer.InstanceSetTransform(Registry.VisualTrees[i].BodyMesh, transform);
+                                case VisualizationMode.Debug:
+                                    var transform = Transform3D.Identity.Translated(tree.Position);
+                                    transform = transform.ScaledLocal(Vector3.One * 1.0f);
+                                    RenderingServer.InstanceSetTransform(Registry.VisualTrees[i].BodyMesh, transform);
+                                    break;
+                                case VisualizationMode.NodeCreatures:
+                                    // Add NodeCreatures tree maturation visualization logic here if needed
+                                    break;
                             }
                         }
                     }
@@ -251,7 +261,7 @@ public partial class TreeSim : Node3D, ISimulation
         
         foreach (var newTreePosition in newTreePositions)
         {
-            Registry.CreateTree(newTreePosition, Render);
+            Registry.CreateTree(newTreePosition, VisualizationMode);
         }
 
         _stepsSoFar++;
@@ -260,7 +270,7 @@ public partial class TreeSim : Node3D, ISimulation
     public void Reset()
     {
         _stepsSoFar = 0;
-        Registry.Reset();
+        Registry.Reset(VisualizationMode);
     }
 
     private void CreateFruitMesh(int treeIndex, Vector3 treePosition)

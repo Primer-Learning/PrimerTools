@@ -9,6 +9,7 @@ using PrimerTools.Simulation.Aging;
 [Tool]
 public partial class CreatureSim : Node3D, ISimulation
 {
+    [Signal] public delegate void SimulationInitializedEventHandler();
     [Export] private TreeSim _treeSim;
     private SimulationWorld SimulationWorld => GetParent<SimulationWorld>();
 
@@ -29,7 +30,7 @@ public partial class CreatureSim : Node3D, ISimulation
 		}
 	}
 
-	private bool Render => SimulationWorld.Render;
+	private VisualizationMode VisualizationMode => SimulationWorld.VisualizationMode;
 	#endregion
 	
 	#region Sim parameters
@@ -43,7 +44,7 @@ public partial class CreatureSim : Node3D, ISimulation
 	private const float MutationIncrement = 1f;
 	private const float InitialCreatureSpeed = 20f;
 	private const float InitialAwarenessRadius = 3f;
-	private const float GlobalEnergySpendAdjustmentFactor = 0.2f;
+	private const float GlobalEnergySpendAdjustmentFactor = 0.5f;
 	private int _stepsSoFar = 0;
 	#endregion
 	
@@ -71,9 +72,11 @@ public partial class CreatureSim : Node3D, ISimulation
 				),
 				InitialAwarenessRadius,
 				InitialCreatureSpeed,
-				Render
+				VisualizationMode
 			);
 		}
+
+		EmitSignal(SignalName.SimulationInitialized);
 	}
 	
 	public void Step()
@@ -125,40 +128,29 @@ public partial class CreatureSim : Node3D, ISimulation
 	{
 		if (!_running) return;
 		
-		// Update visuals and clean up dead creatures.
-		// This happens every process frame, which is an intuitive choice
-		// for a frequency that isn't too high for sims with a fast physics loop.
-		// But high enough where things won't build up.
-		// Could be a better choice, though.
-		var deadIndices = new List<int>();
+		// Update visuals
 		for (var i = 0; i < Registry.PhysicalCreatures.Count; i++)
 		{
 			var physicalCreature = Registry.PhysicalCreatures[i];
-			if (!physicalCreature.Alive)
+			switch (VisualizationMode)
 			{
-				deadIndices.Add(i);
-				continue;
+				case VisualizationMode.None:
+					break;
+				case VisualizationMode.NodeCreatures:
+				case VisualizationMode.Debug:
+					var visualCreature = Registry.VisualCreatures[i];
+					var transform = PhysicsServer3D.AreaGetTransform(physicalCreature.Body);
+					RenderingServer.InstanceSetTransform(visualCreature.BodyMesh, transform);
+					RenderingServer.InstanceSetTransform(visualCreature.AwarenessMesh, transform);
+					break;
 			}
-			
-			if (!Render) continue;
-			var visualCreature = Registry.VisualCreatures[i];
-			
-			var transform = PhysicsServer3D.AreaGetTransform(physicalCreature.Body);
-			// GD.Print(transform.Origin);
-			RenderingServer.InstanceSetTransform(visualCreature.BodyMesh, transform);
-			RenderingServer.InstanceSetTransform(visualCreature.AwarenessMesh, transform);
 		}
 		
-		for (var i = deadIndices.Count - 1; i >= 0; i--)
-		{
-			var deadIndex = deadIndices[i];
-			Registry.PhysicalCreatures[deadIndex].FreeRids();
-			Registry.PhysicalCreatures.RemoveAt(deadIndex);
-			
-			if (!Render) continue;
-			Registry.VisualCreatures[deadIndex].FreeRids();
-			Registry.VisualCreatures.RemoveAt(deadIndex);
-		}
+		// This happens every process frame, which is an intuitive choice
+		// for a frequency that isn't too high for sims with a fast physics loop.
+		// But high enough where things won't build up.
+		// Could be a better choice, though. Probably less often if anything.
+		Registry.ClearDeadCreatures();
 	}
 
 	#endregion
@@ -268,9 +260,16 @@ public partial class CreatureSim : Node3D, ISimulation
 		_treeSim.Registry.PhysicalTrees[treeIndex] = tree;
 		creature.Energy += EnergyGainFromFood;
 
-		if (!Render) return;
-		var visualTree = _treeSim.Registry.VisualTrees[treeIndex];
-		RenderingServer.InstanceSetVisible(visualTree.FruitMesh, false);
+		switch (VisualizationMode)
+		{
+			case VisualizationMode.Debug:
+			case VisualizationMode.NodeCreatures:
+				var visualTree = _treeSim.Registry.VisualTrees[treeIndex];
+				RenderingServer.InstanceSetVisible(visualTree.FruitMesh, false);
+				break;
+			case VisualizationMode.None:
+				break;
+		}
 	}
 
 	private void Reproduce(ref CreatureSimEntityRegistry.PhysicalCreature creature)
@@ -296,7 +295,7 @@ public partial class CreatureSim : Node3D, ISimulation
 			transformNextFrame.Origin,
 			newAwarenessRadius,
 			newSpeed,
-			Render
+			VisualizationMode
 		);
 		ChooseDestination(ref physicalCreature);
 		creature.Energy -= ReproductionEnergyCost;

@@ -5,6 +5,13 @@ using PrimerTools;
 
 namespace PrimerTools.Simulation.Aging;
 
+public enum VisualizationMode
+{
+    None,
+    Debug,
+    NodeCreatures
+}
+
 [Tool]
 public partial class SimulationWorld : Node3D
 {
@@ -13,7 +20,7 @@ public partial class SimulationWorld : Node3D
     // [Export]
     public bool Running;
 
-    [Export] public bool Render;
+    [Export] public VisualizationMode VisualizationMode = VisualizationMode.None;
     #endregion
     
     [Export] public Vector2 WorldDimensions = Vector2.One * 50;
@@ -76,4 +83,5 @@ public partial class SimulationWorld : Node3D
                position.Z >= 0 && position.Z <= WorldDimensions.Y;
     }
 }
+
 

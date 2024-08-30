@@ -1,12 +1,14 @@
 ﻿using System.Collections.Generic;
 using Godot;
+using PrimerTools.Simulation.Aging;
+
 namespace Aging.addons.PrimerTools.Simulation.Aging;
 
 public class CreatureSimEntityRegistry
 {
 	public World3D World3D;
 	
-	// TODO: Make all objects with the server apis so we don't have to track C# wrappers.
+	// TODO: Make all physics and Debug visual objects with the server apis so we don't have to track C# wrappers.
 	// Currently, we need to track them to stop the garbage collector from destroying them.
 	public struct PhysicalCreature
 	{
@@ -29,7 +31,7 @@ public class CreatureSimEntityRegistry
 			PhysicsServer3D.FreeRid(Awareness);
 		}
 	}
-	public struct VisualCreature
+	public struct VisualDebugCreature
 	{
 		public Rid BodyMesh;
 		public Rid AwarenessMesh;
@@ -44,11 +46,9 @@ public class CreatureSimEntityRegistry
 	}
 	
 	public readonly List<PhysicalCreature> PhysicalCreatures = new();
-	public readonly List<VisualCreature> VisualCreatures = new();
-
-	public readonly Dictionary<Rid, int> FoodLookup = new();
+	public readonly List<VisualDebugCreature> VisualCreatures = new();
 	
-	public PhysicalCreature CreateCreature(Vector3 position, float awarenessRadius, float speed, bool render)
+	public PhysicalCreature CreateCreature(Vector3 position, float awarenessRadius, float speed, VisualizationMode visualizationMode)
 	{
 		var transform = Transform3D.Identity.Translated(position);
 		
@@ -56,7 +56,6 @@ public class CreatureSimEntityRegistry
 		var bodyArea = PhysicsServer3D.AreaCreate();
 		PhysicsServer3D.AreaSetSpace(bodyArea, World3D.Space);
 		PhysicsServer3D.AreaSetTransform(bodyArea, transform);
-		// var position = transform.Origin;
 		var bodyShape = new CapsuleShape3D();
 		bodyShape.Height = 1;
 		bodyShape.Radius = 0.25f;
@@ -84,38 +83,46 @@ public class CreatureSimEntityRegistry
 		};
 		PhysicalCreatures.Add(physicalCreature);
 		
-		if (!render) return physicalCreature;
-		// RenderingServer stuff
-		// Body
-		var bodyCapsule = new CapsuleMesh();
-		bodyCapsule.Height = 1;
-		bodyCapsule.Radius = 0.25f;
-
-		var bodyMesh = RenderingServer.InstanceCreate2(bodyCapsule.GetRid(), World3D.Scenario);
-		RenderingServer.InstanceSetTransform(bodyMesh, transform);
-			
-		// Awareness
-		SphereMesh awarenessMeshResource;
-		if (awarenessRadius == 1) awarenessMeshResource = DefaultAwarenessBubbleMesh;
-		else
+		switch (visualizationMode)
 		{
-			awarenessMeshResource = (SphereMesh)DefaultAwarenessBubbleMesh.Duplicate();
-			awarenessMeshResource.Radius = awarenessRadius;
-			awarenessMeshResource.Height = 2 * awarenessRadius;
+			case VisualizationMode.None:
+				break;
+			case VisualizationMode.Debug:
+				// RenderingServer stuff
+				// Body
+				var bodyCapsule = new CapsuleMesh();
+				bodyCapsule.Height = 1;
+				bodyCapsule.Radius = 0.25f;
+
+				var bodyMesh = RenderingServer.InstanceCreate2(bodyCapsule.GetRid(), World3D.Scenario);
+				RenderingServer.InstanceSetTransform(bodyMesh, transform);
+					
+				// Awareness
+				SphereMesh awarenessMeshResource;
+				if (awarenessRadius == 1) awarenessMeshResource = DefaultAwarenessBubbleMesh;
+				else
+				{
+					awarenessMeshResource = (SphereMesh)DefaultAwarenessBubbleMesh.Duplicate();
+					awarenessMeshResource.Radius = awarenessRadius;
+					awarenessMeshResource.Height = 2 * awarenessRadius;
+				}
+				
+				var awarenessMesh = RenderingServer.InstanceCreate2(awarenessMeshResource.GetRid(), World3D.Scenario);
+				RenderingServer.InstanceSetTransform(awarenessMesh, transform);
+				
+				VisualCreatures.Add(
+					new VisualDebugCreature
+					{
+						BodyMesh = bodyMesh,
+						AwarenessMesh = awarenessMesh,
+						BodyMeshResource = bodyCapsule,
+						AwarenessMeshResource = awarenessMeshResource
+					}
+				);
+				break;
+			case VisualizationMode.NodeCreatures:
+				break;
 		}
-		
-		var awarenessMesh = RenderingServer.InstanceCreate2(awarenessMeshResource.GetRid(), World3D.Scenario);
-		RenderingServer.InstanceSetTransform(awarenessMesh, transform);
-			
-		VisualCreatures.Add(
-			new VisualCreature
-			{
-				BodyMesh = bodyMesh,
-				AwarenessMesh = awarenessMesh,
-				BodyMeshResource = bodyCapsule,
-				AwarenessMeshResource = awarenessMeshResource
-			}
-		);
 
 		return physicalCreature;
 	}
@@ -139,34 +146,12 @@ public class CreatureSimEntityRegistry
 			return _cachedAwarenessBubbleMesh;
 		}
 	}
-	
-	private SphereMesh _cachedFoodMesh;
-	private SphereMesh FoodMesh {
-		get
-		{
-			if (_cachedFoodMesh != null) return _cachedFoodMesh;
-
-			_cachedFoodMesh = new SphereMesh();
-			var mat = new StandardMaterial3D();
-			mat.AlbedoColor = new Color(0, 1, 0);
-
-			_cachedFoodMesh.Material = mat;
-
-			return _cachedFoodMesh;
-			
-			// These both also work, at least for getting a material to show up on a simple mesh.
-			// RenderingServer.InstanceGeometrySetMaterialOverride(renderMesh, mat.GetRid());
-			// RenderingServer.InstanceSetSurfaceOverrideMaterial(renderMesh, 0, mat.GetRid());
-		}
-	}
 
 	#endregion
 
-	#region Reset
+	#region Cleanup
 	public void Reset()
 	{
-		GD.Print("Resetting");
-		// Creatures
 		foreach (var creature in PhysicalCreatures)
 		{
 			PhysicsServer3D.FreeRid(creature.Body);
@@ -179,6 +164,23 @@ public class CreatureSimEntityRegistry
 		}
 		PhysicalCreatures.Clear();
 		VisualCreatures.Clear();
+	}
+
+	public void ClearDeadCreatures()
+	{
+		for (var i = PhysicalCreatures.Count - 1; i >= 0; i--)
+		{
+			if (PhysicalCreatures[i].Alive) continue;
+			
+			PhysicalCreatures[i].FreeRids();
+			PhysicalCreatures.RemoveAt(i);
+
+			if (VisualCreatures.Count > 0) // This condition is a proxy for Render = true in the simulator
+			{
+				VisualCreatures[i].FreeRids();
+				VisualCreatures.RemoveAt(i);
+			}
+		}
 	}
 	
 	#endregion
