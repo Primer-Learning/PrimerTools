@@ -55,6 +55,7 @@ public partial class CreatureSim : Node3D, ISimulation
 	private void Initialize()
 	{
 		Registry.World3D = SimulationWorld.World3D;
+		Registry.CreatureSim = this;
 		
 		if (_treeSim == null)
 		{
@@ -137,9 +138,12 @@ public partial class CreatureSim : Node3D, ISimulation
 				case VisualizationMode.None:
 					break;
 				case VisualizationMode.NodeCreatures:
+					var nodeCreature = Registry.NodeCreatures[i];
+					nodeCreature.Position = Registry.PhysicalCreatures[i].Position;
+					break;
 				case VisualizationMode.Debug:
 					var visualCreature = Registry.VisualCreatures[i];
-					var transform = PhysicsServer3D.AreaGetTransform(physicalCreature.Body);
+					var transform = Transform3D.Identity.Translated(Registry.PhysicalCreatures[i].Position);
 					RenderingServer.InstanceSetTransform(visualCreature.BodyMesh, transform);
 					RenderingServer.InstanceSetTransform(visualCreature.AwarenessMesh, transform);
 					break;
@@ -262,8 +266,8 @@ public partial class CreatureSim : Node3D, ISimulation
 
 		switch (VisualizationMode)
 		{
-			case VisualizationMode.Debug:
 			case VisualizationMode.NodeCreatures:
+			case VisualizationMode.Debug:
 				var visualTree = _treeSim.Registry.VisualTrees[treeIndex];
 				RenderingServer.InstanceSetVisible(visualTree.FruitMesh, false);
 				break;
@@ -307,5 +311,10 @@ public partial class CreatureSim : Node3D, ISimulation
 	{
 		_stepsSoFar = 0;
 		Registry.Reset();
+		
+		foreach (var child in GetChildren())
+		{
+			child.QueueFree();
+		}
 	}
 }

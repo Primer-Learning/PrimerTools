@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Godot;
 using PrimerTools.Simulation.Aging;
@@ -76,6 +77,7 @@ public class TreeSimEntityRegistry
         {
             case VisualizationMode.None:
                 break;
+            case VisualizationMode.NodeCreatures:
             case VisualizationMode.Debug:
                 var treeMesh = new CylinderMesh();
                 treeMesh.TopRadius = 0.5f;
@@ -92,8 +94,6 @@ public class TreeSimEntityRegistry
                     MeshResource = treeMesh
                 });
                 break;
-            case VisualizationMode.NodeCreatures:
-                break;
         }
 
         return physicalTree;
@@ -108,14 +108,17 @@ public class TreeSimEntityRegistry
         
         switch (visualizationMode)
         {
+            case VisualizationMode.NodeCreatures:
             case VisualizationMode.Debug:
                 foreach (var tree in VisualTrees)
                 {
                     tree.FreeRids();
                 }
                 break;
-            case VisualizationMode.NodeCreatures:
+            case VisualizationMode.None:
                 break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(visualizationMode), visualizationMode, null);
         }
         PhysicalTrees.Clear();
         VisualTrees.Clear();
@@ -142,12 +145,15 @@ public class TreeSimEntityRegistry
             
             switch (visualizationMode)
             {
+                case VisualizationMode.NodeCreatures:
                 case VisualizationMode.Debug:
                     VisualTrees[deadIndex].FreeRids();
                     VisualTrees.RemoveAt(deadIndex);
                     break;
-                case VisualizationMode.NodeCreatures:
+                case VisualizationMode.None:
                     break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(visualizationMode), visualizationMode, null);
             }
         }
 

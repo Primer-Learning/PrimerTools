@@ -7,6 +7,7 @@ namespace Aging.addons.PrimerTools.Simulation.Aging;
 public class CreatureSimEntityRegistry
 {
 	public World3D World3D;
+	public CreatureSim CreatureSim;
 	
 	// TODO: Make all physics and Debug visual objects with the server apis so we don't have to track C# wrappers.
 	// Currently, we need to track them to stop the garbage collector from destroying them.
@@ -47,6 +48,7 @@ public class CreatureSimEntityRegistry
 	
 	public readonly List<PhysicalCreature> PhysicalCreatures = new();
 	public readonly List<VisualDebugCreature> VisualCreatures = new();
+	public readonly List<Creature> NodeCreatures = new();
 	
 	public PhysicalCreature CreateCreature(Vector3 position, float awarenessRadius, float speed, VisualizationMode visualizationMode)
 	{
@@ -87,6 +89,13 @@ public class CreatureSimEntityRegistry
 		{
 			case VisualizationMode.None:
 				break;
+			case VisualizationMode.NodeCreatures:
+				var creature = new Creature();
+				CreatureSim.AddChild(creature);
+				creature.Name = "Creature"; 
+				NodeCreatures.Add(creature);
+				creature.Owner = CreatureSim.GetTree().EditedSceneRoot;
+				break;
 			case VisualizationMode.Debug:
 				// RenderingServer stuff
 				// Body
@@ -119,8 +128,6 @@ public class CreatureSimEntityRegistry
 						AwarenessMeshResource = awarenessMeshResource
 					}
 				);
-				break;
-			case VisualizationMode.NodeCreatures:
 				break;
 		}
 
@@ -164,6 +171,7 @@ public class CreatureSimEntityRegistry
 		}
 		PhysicalCreatures.Clear();
 		VisualCreatures.Clear();
+		NodeCreatures.Clear();
 	}
 
 	public void ClearDeadCreatures()
@@ -179,6 +187,11 @@ public class CreatureSimEntityRegistry
 			{
 				VisualCreatures[i].FreeRids();
 				VisualCreatures.RemoveAt(i);
+			}
+			if (NodeCreatures.Count > 0) // This condition is a proxy for Render = true in the simulator
+			{
+				NodeCreatures[i].QueueFree();
+				NodeCreatures.RemoveAt(i);
 			}
 		}
 	}

@@ -38,7 +38,6 @@ public partial class TreeSim : Node3D, ISimulation
 
     [Export] private bool _verbose;
     private VisualizationMode VisualizationMode => SimulationWorld.VisualizationMode;
-    private Stopwatch _stopwatch;
     #endregion
     
     #region Sim parameters
@@ -65,7 +64,6 @@ public partial class TreeSim : Node3D, ISimulation
     {
         
         Registry.World3D = SimulationWorld.World3D;
-        _stopwatch = Stopwatch.StartNew();
 
         for (var i = 0; i < _initialTreeCount; i++)
         {
@@ -192,12 +190,14 @@ public partial class TreeSim : Node3D, ISimulation
                             tree.HasFruit = true;
                             switch (VisualizationMode)
                             {
+                                case VisualizationMode.None:
+                                    break;
+                                case VisualizationMode.NodeCreatures:
                                 case VisualizationMode.Debug:
                                     CreateFruitMesh(i, tree.Position);
                                     break;
-                                case VisualizationMode.NodeCreatures:
-                                    // Add NodeCreatures fruit visualization logic here if needed
-                                    break;
+                                default:
+                                    throw new ArgumentOutOfRangeException();
                             }
                         }
                     }
@@ -222,14 +222,16 @@ public partial class TreeSim : Node3D, ISimulation
                             tree.IsMature = true;
                             switch (VisualizationMode)
                             {
+                                case VisualizationMode.None:
+                                    break;
+                                case VisualizationMode.NodeCreatures:
                                 case VisualizationMode.Debug:
                                     var transform = Transform3D.Identity.Translated(tree.Position);
                                     transform = transform.ScaledLocal(Vector3.One * 1.0f);
                                     RenderingServer.InstanceSetTransform(Registry.VisualTrees[i].BodyMesh, transform);
                                     break;
-                                case VisualizationMode.NodeCreatures:
-                                    // Add NodeCreatures tree maturation visualization logic here if needed
-                                    break;
+                                default:
+                                    throw new ArgumentOutOfRangeException();
                             }
                         }
                     }
