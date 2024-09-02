@@ -1,11 +1,8 @@
 using System;
 using Godot;
 using System.Collections.Generic;
-using System.Diagnostics;
 using PrimerTools;
 using PrimerTools.Simulation;
-using PrimerTools.Simulation.Tree;
-using PrimerTools.Simulation.Aging;
 
 [Tool]
 public partial class TreeSim : Node3D, ISimulation

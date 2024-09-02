@@ -1,11 +1,9 @@
 using Godot;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
-using Aging.addons.PrimerTools.Simulation.Aging;
 using PrimerTools.Graph;
-using PrimerTools.Simulation.Aging;
+using PrimerTools.Simulation;
 
 [Tool]
 public partial class SimulationTestScene : Node3D
@@ -39,7 +37,6 @@ public partial class SimulationTestScene : Node3D
 			{
 				GD.Print("Pausing");
 				_cts?.Cancel();
-				SimulationWorld.TimeScale = 1;
 				SimulationWorld.Running = false;
 				PeriodicPlotter.Plotting = false;
 			}
@@ -124,6 +121,7 @@ public partial class SimulationTestScene : Node3D
 	{
 		try
 		{
+			var originalTimeScale = SimulationWorld.TimeScale;
 			SimulationWorld.TimeScale = 99999;
 			SimulationWorld.Initialize();
 			SimulationWorld.Running = true;
@@ -133,7 +131,7 @@ public partial class SimulationTestScene : Node3D
 
 			await Task.Delay(2000, ct);
 			ct.ThrowIfCancellationRequested();
-			SimulationWorld.TimeScale = 1;
+			SimulationWorld.TimeScale = originalTimeScale;
 
 			TreeSim.Mode = TreeSim.SimMode.FruitGrowth;
 

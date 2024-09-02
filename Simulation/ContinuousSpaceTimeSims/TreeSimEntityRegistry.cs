@@ -1,9 +1,8 @@
 using System;
 using System.Collections.Generic;
 using Godot;
-using PrimerTools.Simulation.Aging;
 
-namespace PrimerTools.Simulation.Tree;
+namespace PrimerTools.Simulation;
 
 public class TreeSimEntityRegistry
 {

@@ -1,9 +1,8 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using Godot;
-using PrimerTools;
 
-namespace PrimerTools.Simulation.Aging;
+namespace PrimerTools.Simulation;
 
 public enum VisualizationMode
 {
@@ -33,19 +32,19 @@ public partial class SimulationWorld : Node3D
         set
         {
             _timeScale = value;
-            Engine.PhysicsTicksPerSecond = (int) value * 60;
+            Engine.PhysicsTicksPerSecond = (int)(value * 60);
         }
     }
     [Export] private int _seed = -1;
 
     public const int PhysicsStepsPerSimSecond = 60;
+    private int _stepsSoFar = 0;
+    private Stopwatch _stopwatch;
 
     private Rng _rng;
     public Rng Rng => _rng ??= new Rng(_seed == -1 ? System.Environment.TickCount : _seed);
-
     public World3D World3D => GetWorld3D();
-
-    private List<ISimulation> _simulations = new List<ISimulation>();
+    private List<ISimulation> _simulations = new();
 
     public void ResetSimulations()
     {
@@ -57,6 +56,7 @@ public partial class SimulationWorld : Node3D
     public void Initialize()
     {
         PhysicsServer3D.SetActive(true);
+        Engine.PhysicsTicksPerSecond = (int) (_timeScale * 60);
 
         _simulations.Clear();
         foreach (var child in GetChildren())
@@ -66,6 +66,9 @@ public partial class SimulationWorld : Node3D
                 _simulations.Add(simulation);
             }
         }
+
+        // _stepsSoFar = 0;
+        // _stopwatch = Stopwatch.StartNew();
     }
 
     public override void _PhysicsProcess(double delta)
@@ -75,6 +78,14 @@ public partial class SimulationWorld : Node3D
         {
             simulation.Step();
         }
+        _stepsSoFar++;
+        
+        // For speed tests
+        // if (_stepsSoFar >= 10000)
+        // {
+        //     Running = false;
+        //     GD.Print($"Elapsed time = {_stopwatch.ElapsedMilliseconds} milliseconds");
+        // }
     }
 
     public bool IsWithinWorldBounds(Vector3 position)

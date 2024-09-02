@@ -1,9 +1,7 @@
 using Godot;
-using Aging.addons.PrimerTools.Simulation.Aging;
 using Godot.Collections;
 using PrimerTools;
 using PrimerTools.Simulation;
-using PrimerTools.Simulation.Aging;
 
 [Tool]
 public partial class CreatureSim : Node3D, ISimulation
@@ -34,6 +32,7 @@ public partial class CreatureSim : Node3D, ISimulation
 	
 	#region Sim parameters
 	[Export] private int _initialCreatureCount = 4;
+	[Export] private float _initialCreatureSpeed = 5f;
 	private const float CreatureStepMaxLength = 10f;
 	private const float CreatureEatDistance = 0.5f;
 	private const float EnergyGainFromFood = 1f;
@@ -41,9 +40,9 @@ public partial class CreatureSim : Node3D, ISimulation
 	private const float ReproductionEnergyCost = 1f;
 	private const float MutationProbability = 0.1f;
 	private const float MutationIncrement = 1f;
-	private const float InitialCreatureSpeed = 20f;
 	private const float InitialAwarenessRadius = 3f;
-	private const float GlobalEnergySpendAdjustmentFactor = 0.5f;
+	private const float GlobalEnergySpendAdjustmentFactor = 0.2f;
+	private const float MaxAccelerationFactor = 0.1f;
 	private int _stepsSoFar;
 	#endregion
 	
@@ -70,7 +69,7 @@ public partial class CreatureSim : Node3D, ISimulation
 					SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.Y)
 				),
 				InitialAwarenessRadius,
-				InitialCreatureSpeed,
+				_initialCreatureSpeed,
 				this
 			);
 		}
@@ -105,7 +104,7 @@ public partial class CreatureSim : Node3D, ISimulation
 			}
 
 			// Move
-			GetNextPosition(ref creature);
+			UpdatePositionAndVelocity(ref creature);
 			var transformNextFrame = new Transform3D(Basis.Identity, creature.Position);
 			PhysicsServer3D.AreaSetTransform(creature.Body, transformNextFrame);
 			PhysicsServer3D.AreaSetTransform(creature.Awareness, transformNextFrame);
@@ -136,7 +135,16 @@ public partial class CreatureSim : Node3D, ISimulation
 					break;
 				case VisualizationMode.NodeCreatures:
 					var nodeCreature = Registry.NodeCreatures[i];
-					nodeCreature.Position = Registry.PhysicalCreatures[i].Position;
+					var physicalCreature = Registry.PhysicalCreatures[i];
+					nodeCreature.Position = physicalCreature.Position;
+					
+					// Calculate and apply rotation
+					var direction = physicalCreature.Velocity;
+					if (direction != Vector3.Zero)
+					{
+						var lookAt = direction.Normalized();
+						nodeCreature.LookAt(nodeCreature.GlobalPosition - lookAt, Vector3.Up);
+					}
 					break;
 				case VisualizationMode.Debug:
 					var visualCreature = Registry.VisualCreatures[i];
@@ -167,17 +175,52 @@ public partial class CreatureSim : Node3D, ISimulation
 		// Run query and print
 		return PhysicsServer3D.SpaceGetDirectState(GetWorld3D().Space).IntersectShape(queryParams);
 	}
-
-	private void GetNextPosition(ref CreatureSimEntityRegistry.PhysicalCreature creature)
+	
+	private void UpdatePositionAndVelocity(ref CreatureSimEntityRegistry.PhysicalCreature creature)
 	{
-		var stepSize = creature.Speed / SimulationWorld.PhysicsStepsPerSimSecond;
-		if ((creature.CurrentDestination - creature.Position).LengthSquared() < stepSize * stepSize)
+		var desiredDisplacement = creature.CurrentDestination - creature.Position;
+		var desiredDisplacementLengthSquared = desiredDisplacement.LengthSquared();
+		
+		// If we're basically there, choose a new destination
+		if (desiredDisplacementLengthSquared < CreatureEatDistance * CreatureEatDistance)
 		{
 			ChooseDestination(ref creature);
+			desiredDisplacement = creature.CurrentDestination - creature.Position;
+			desiredDisplacementLengthSquared = desiredDisplacement.LengthSquared();
 		}
 		
-		var displacement = (creature.CurrentDestination - creature.Position).Normalized() * stepSize;
-		creature.Position += displacement;
+		// Calculate desired velocity
+		var desiredVelocity = desiredDisplacement * creature.MaxSpeed / Mathf.Sqrt(desiredDisplacementLengthSquared);
+		
+		// Calculate velocity change
+		var velocityChange = desiredVelocity - creature.Velocity;
+		var velocityChangeLengthSquared = velocityChange.LengthSquared();
+
+		// Calculate acceleration vector with a maximum magnitude
+		var maxAccelerationMagnitudeSquared = creature.MaxSpeed * creature.MaxSpeed * MaxAccelerationFactor * MaxAccelerationFactor;
+		Vector3 accelerationVector;
+		if (velocityChangeLengthSquared > maxAccelerationMagnitudeSquared)
+		{
+			accelerationVector =  Mathf.Sqrt(maxAccelerationMagnitudeSquared / velocityChangeLengthSquared) * velocityChange;
+		}
+		else
+		{
+			accelerationVector = velocityChange;
+		}
+
+		// Update velocity
+		creature.Velocity += accelerationVector;
+
+		// Limit velocity to max speed
+		var velocityLengthSquared = creature.Velocity.LengthSquared();
+		var maxSpeedSquared = creature.MaxSpeed * creature.MaxSpeed;
+		if (velocityLengthSquared > maxSpeedSquared)
+		{
+			creature.Velocity = creature.MaxSpeed / Mathf.Sqrt(velocityLengthSquared) * creature.Velocity;
+		}
+		
+		// Update position
+		creature.Position += creature.Velocity / SimulationWorld.PhysicsStepsPerSimSecond;
 	}
 
 	private void ChooseDestination(ref CreatureSimEntityRegistry.PhysicalCreature creature)
@@ -245,7 +288,7 @@ public partial class CreatureSim : Node3D, ISimulation
 
 	private void SpendEnergy(ref CreatureSimEntityRegistry.PhysicalCreature creature)
 	{
-		var normalizedSpeed = creature.Speed / InitialCreatureSpeed;
+		var normalizedSpeed = creature.MaxSpeed / _initialCreatureSpeed;
 		var normalizedAwarenessRadius = creature.AwarenessRadius / InitialAwarenessRadius;
 		
 		creature.Energy -= GlobalEnergySpendAdjustmentFactor * ( normalizedSpeed * normalizedSpeed + normalizedAwarenessRadius) / SimulationWorld.PhysicsStepsPerSimSecond;
@@ -278,7 +321,7 @@ public partial class CreatureSim : Node3D, ISimulation
 		var transformNextFrame = new Transform3D(Basis.Identity, creature.Position);
 		
 		var newAwarenessRadius = creature.AwarenessRadius;
-		var newSpeed = creature.Speed;
+		var newSpeed = creature.MaxSpeed;
 
 		if (SimulationWorld.Rng.RangeFloat(0, 1) < MutationProbability)
 		{

@@ -1,18 +1,15 @@
-using System.Reflection.Metadata;
 using Godot;
 using Blob = PrimerAssets.Blob;
 
 public partial class Creature : Node3D
 {
+	private Blob _blob;
+
 	public override void _Ready()
 	{
 		base._Ready();
 
-		var blob = Blob.CreateInstance();
-		AddChild(blob);
-
-		// var body = new MeshInstance3D();
-		// body.Mesh = new BoxMesh();
-		// AddChild(body);
+		_blob = Blob.CreateInstance();
+		AddChild(_blob);
 	}
 }

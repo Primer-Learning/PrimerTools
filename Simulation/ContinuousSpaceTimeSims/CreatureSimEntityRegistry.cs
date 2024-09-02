@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using Godot;
-using PrimerTools.Simulation.Aging;
 
-namespace Aging.addons.PrimerTools.Simulation.Aging;
+namespace PrimerTools.Simulation;
 
 public class CreatureSimEntityRegistry
 {
@@ -17,10 +16,11 @@ public class CreatureSimEntityRegistry
 		public Rid Awareness;
 		
 		public float AwarenessRadius;
-		public float Speed;
+		public float MaxSpeed;
 		public bool Alive;
 		public float Energy;
 		public Vector3 Position;
+		public Vector3 Velocity;
 		public Vector3 CurrentDestination;
 		
 		public CapsuleShape3D BodyShapeResource;
@@ -78,11 +78,12 @@ public class CreatureSimEntityRegistry
 			Body = bodyArea,
 			Awareness = awarenessArea,
 			AwarenessRadius = awarenessRadius,
-			Speed = speed,
+			MaxSpeed = speed,
 			Alive = true,
 			BodyShapeResource = bodyShape,
 			AwarenessShapeResource = awarenessShape,
 			Position = position,
+			Velocity = Vector3.Zero,
 			CurrentDestination = position, // Will be changed immediately
 			Energy = 1f
 		};
