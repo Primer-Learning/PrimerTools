@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Godot;
 using PrimerTools.Simulation.Aging;
 
@@ -7,7 +8,6 @@ namespace Aging.addons.PrimerTools.Simulation.Aging;
 public class CreatureSimEntityRegistry
 {
 	public World3D World3D;
-	public CreatureSim CreatureSim;
 	
 	// TODO: Make all physics and Debug visual objects with the server apis so we don't have to track C# wrappers.
 	// Currently, we need to track them to stop the garbage collector from destroying them.
@@ -50,7 +50,10 @@ public class CreatureSimEntityRegistry
 	public readonly List<VisualDebugCreature> VisualCreatures = new();
 	public readonly List<Creature> NodeCreatures = new();
 	
-	public PhysicalCreature CreateCreature(Vector3 position, float awarenessRadius, float speed, VisualizationMode visualizationMode)
+	// TODO: Maybe instead of passing visualization mode, we could pass the CreatureSim here, which would carry the 
+	// visualization mode information and also provide a parent, preventing the need for this class to reference the 
+	// CreatureSim.
+	public PhysicalCreature CreateCreature(Vector3 position, float awarenessRadius, float speed, CreatureSim creatureSim)
 	{
 		var transform = Transform3D.Identity.Translated(position);
 		
@@ -85,16 +88,16 @@ public class CreatureSimEntityRegistry
 		};
 		PhysicalCreatures.Add(physicalCreature);
 		
-		switch (visualizationMode)
+		switch (creatureSim.VisualizationMode)
 		{
 			case VisualizationMode.None:
 				break;
 			case VisualizationMode.NodeCreatures:
 				var creature = new Creature();
-				CreatureSim.AddChild(creature);
+				creatureSim.AddChild(creature);
 				creature.Name = "Creature"; 
 				NodeCreatures.Add(creature);
-				creature.Owner = CreatureSim.GetTree().EditedSceneRoot;
+				creature.Owner = creatureSim.GetTree().EditedSceneRoot;
 				break;
 			case VisualizationMode.Debug:
 				// RenderingServer stuff
@@ -129,6 +132,8 @@ public class CreatureSimEntityRegistry
 					}
 				);
 				break;
+			default:
+				throw new ArgumentOutOfRangeException();
 		}
 
 		return physicalCreature;
@@ -182,13 +187,13 @@ public class CreatureSimEntityRegistry
 			
 			PhysicalCreatures[i].FreeRids();
 			PhysicalCreatures.RemoveAt(i);
-
-			if (VisualCreatures.Count > 0) // This condition is a proxy for Render = true in the simulator
+			
+			if (VisualCreatures.Count > 0)
 			{
 				VisualCreatures[i].FreeRids();
 				VisualCreatures.RemoveAt(i);
 			}
-			if (NodeCreatures.Count > 0) // This condition is a proxy for Render = true in the simulator
+			if (NodeCreatures.Count > 0)
 			{
 				NodeCreatures[i].QueueFree();
 				NodeCreatures.RemoveAt(i);

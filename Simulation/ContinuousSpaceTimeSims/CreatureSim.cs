@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Godot;
 using Aging.addons.PrimerTools.Simulation.Aging;
 using Godot.Collections;
@@ -30,7 +29,7 @@ public partial class CreatureSim : Node3D, ISimulation
 		}
 	}
 
-	private VisualizationMode VisualizationMode => SimulationWorld.VisualizationMode;
+	public VisualizationMode VisualizationMode => SimulationWorld.VisualizationMode;
 	#endregion
 	
 	#region Sim parameters
@@ -45,7 +44,7 @@ public partial class CreatureSim : Node3D, ISimulation
 	private const float InitialCreatureSpeed = 20f;
 	private const float InitialAwarenessRadius = 3f;
 	private const float GlobalEnergySpendAdjustmentFactor = 0.5f;
-	private int _stepsSoFar = 0;
+	private int _stepsSoFar;
 	#endregion
 	
 	public readonly CreatureSimEntityRegistry Registry = new();
@@ -55,7 +54,6 @@ public partial class CreatureSim : Node3D, ISimulation
 	private void Initialize()
 	{
 		Registry.World3D = SimulationWorld.World3D;
-		Registry.CreatureSim = this;
 		
 		if (_treeSim == null)
 		{
@@ -73,7 +71,7 @@ public partial class CreatureSim : Node3D, ISimulation
 				),
 				InitialAwarenessRadius,
 				InitialCreatureSpeed,
-				VisualizationMode
+				this
 			);
 		}
 
@@ -132,7 +130,6 @@ public partial class CreatureSim : Node3D, ISimulation
 		// Update visuals
 		for (var i = 0; i < Registry.PhysicalCreatures.Count; i++)
 		{
-			var physicalCreature = Registry.PhysicalCreatures[i];
 			switch (VisualizationMode)
 			{
 				case VisualizationMode.None:
@@ -299,7 +296,7 @@ public partial class CreatureSim : Node3D, ISimulation
 			transformNextFrame.Origin,
 			newAwarenessRadius,
 			newSpeed,
-			VisualizationMode
+			this
 		);
 		ChooseDestination(ref physicalCreature);
 		creature.Energy -= ReproductionEnergyCost;
