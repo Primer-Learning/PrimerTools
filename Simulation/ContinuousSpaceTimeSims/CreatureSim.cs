@@ -43,6 +43,7 @@ public partial class CreatureSim : Node3D, ISimulation
 	private const float InitialAwarenessRadius = 3f;
 	private const float GlobalEnergySpendAdjustmentFactor = 0.2f;
 	private const float MaxAccelerationFactor = 0.1f;
+	private const float EatDuration = 0.5f;
 	private int _stepsSoFar;
 	#endregion
 	
@@ -87,11 +88,21 @@ public partial class CreatureSim : Node3D, ISimulation
 			return;
 		}
 		
-		// Process creatures
+		// Process creatures. Doing one creature at a time for now with one big struct.
+		// But eventually, it might make sense to do several loops which each work with narrower sets of data
+		// For cache locality.
 		for (var i = 0; i < Registry.PhysicalCreatures.Count; i++)
 		{
 			var creature = Registry.PhysicalCreatures[i];
 			if (!creature.Alive) continue;
+
+			if (creature.EatingTimeLeft > 0)
+			{
+				creature.EatingTimeLeft -= 1f / SimulationWorld.PhysicsStepsPerSimSecond;
+				Registry.PhysicalCreatures[i] = creature;
+				continue;
+			}
+
 			// Food detection
 			var (closestFoodIndex, canEat) = FindClosestFood(creature);
 			if (canEat)
@@ -303,6 +314,7 @@ public partial class CreatureSim : Node3D, ISimulation
 		tree.FruitGrowthProgress = 0;
 		_treeSim.Registry.PhysicalTrees[treeIndex] = tree;
 		creature.Energy += EnergyGainFromFood;
+		creature.EatingTimeLeft = EatDuration;
 
 		switch (VisualizationMode)
 		{

@@ -22,6 +22,7 @@ public class CreatureSimEntityRegistry
 		public Vector3 Position;
 		public Vector3 Velocity;
 		public Vector3 CurrentDestination;
+		public float EatingTimeLeft;
 		
 		public CapsuleShape3D BodyShapeResource;
 		public SphereShape3D AwarenessShapeResource;
