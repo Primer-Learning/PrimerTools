@@ -166,16 +166,8 @@ public class CreatureSimEntityRegistry
 	#region Cleanup
 	public void Reset()
 	{
-		foreach (var creature in PhysicalCreatures)
-		{
-			PhysicsServer3D.FreeRid(creature.Body);
-			PhysicsServer3D.FreeRid(creature.Awareness);
-		}
-		foreach (var creature in VisualCreatures)
-		{
-			RenderingServer.FreeRid(creature.BodyMesh);	
-			RenderingServer.FreeRid(creature.AwarenessMesh);
-		}
+		foreach (var creature in PhysicalCreatures) creature.FreeRids();
+		foreach (var creature in VisualCreatures) creature.FreeRids();
 		PhysicalCreatures.Clear();
 		VisualCreatures.Clear();
 		NodeCreatures.Clear();

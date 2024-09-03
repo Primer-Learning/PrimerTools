@@ -35,11 +35,14 @@ public partial class SimulationWorld : Node3D
             Engine.PhysicsTicksPerSecond = (int)(value * 60);
         }
     }
-    [Export] private int _seed = -1;
-
+    [Export] public int _seed = -1;
+    
     public const int PhysicsStepsPerSimSecond = 60;
+
+    public bool Testing;
     private int _stepsSoFar = 0;
     private Stopwatch _stopwatch;
+    private int _maxSteps = 3000;
 
     private Rng _rng;
     public Rng Rng => _rng ??= new Rng(_seed == -1 ? System.Environment.TickCount : _seed);
@@ -67,8 +70,8 @@ public partial class SimulationWorld : Node3D
             }
         }
 
-        // _stepsSoFar = 0;
-        // _stopwatch = Stopwatch.StartNew();
+        _stepsSoFar = 0;
+        _stopwatch = Stopwatch.StartNew();
     }
 
     public override void _PhysicsProcess(double delta)
@@ -81,11 +84,9 @@ public partial class SimulationWorld : Node3D
         _stepsSoFar++;
         
         // For speed tests
-        // if (_stepsSoFar >= 10000)
-        // {
-        //     Running = false;
-        //     GD.Print($"Elapsed time = {_stopwatch.ElapsedMilliseconds} milliseconds");
-        // }
+        if (!Testing || _stepsSoFar < _maxSteps) return;
+        Running = false;
+        GD.Print($"Elapsed time = {_stopwatch.ElapsedMilliseconds} milliseconds");
     }
 
     public bool IsWithinWorldBounds(Vector3 position)

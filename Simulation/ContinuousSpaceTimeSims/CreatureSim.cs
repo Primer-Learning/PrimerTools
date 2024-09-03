@@ -130,6 +130,7 @@ public partial class CreatureSim : Node3D, ISimulation
 			if (creature.Energy <= 0)
 			{
 				creature.Alive = false;
+				if (VisualizationMode == VisualizationMode.NodeCreatures) Registry.NodeCreatures[i].Visible = false;
 			}
 
 			Registry.PhysicalCreatures[i] = creature;
@@ -323,6 +324,8 @@ public partial class CreatureSim : Node3D, ISimulation
 		switch (VisualizationMode)
 		{
 			case VisualizationMode.NodeCreatures:
+				_treeSim.Registry.NodeTrees[treeIndex].DestroyFruit();
+				break;
 			case VisualizationMode.Debug:
 				var visualTree = _treeSim.Registry.VisualTrees[treeIndex];
 				RenderingServer.InstanceSetVisible(visualTree.FruitMesh, false);

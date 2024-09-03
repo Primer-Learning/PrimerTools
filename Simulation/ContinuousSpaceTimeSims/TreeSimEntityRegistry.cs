@@ -45,9 +45,10 @@ public class TreeSimEntityRegistry
 
     public readonly List<PhysicalTree> PhysicalTrees = new();
     public readonly List<VisualTree> VisualTrees = new();
+    public readonly List<Tree> NodeTrees = new();
     public readonly Dictionary<Rid, int> TreeLookup = new();
 
-    public PhysicalTree CreateTree(Vector3 position, VisualizationMode visualizationMode)
+    public PhysicalTree CreateTree(Vector3 position, TreeSim treeSim)
     {
         var transform = Transform3D.Identity.Translated(position);
 
@@ -72,11 +73,10 @@ public class TreeSimEntityRegistry
         TreeLookup.Add(bodyArea, PhysicalTrees.Count);
         PhysicalTrees.Add(physicalTree);
 
-        switch (visualizationMode)
+        switch (treeSim.VisualizationMode)
         {
             case VisualizationMode.None:
                 break;
-            case VisualizationMode.NodeCreatures:
             case VisualizationMode.Debug:
                 var treeMesh = new CylinderMesh();
                 treeMesh.TopRadius = 0.5f;
@@ -93,38 +93,34 @@ public class TreeSimEntityRegistry
                     MeshResource = treeMesh
                 });
                 break;
+            case VisualizationMode.NodeCreatures:
+                var tree = new Tree();
+                treeSim.AddChild(tree);
+                tree.Scale = Vector3.One * 0.5f; // Start as a sapling
+                tree.Position = position;
+                tree.Name = "Tree";
+                NodeTrees.Add(tree);
+                tree.Owner = treeSim.GetTree().EditedSceneRoot;
+                break;
+            default:
+                throw new ArgumentOutOfRangeException();
         }
 
         return physicalTree;
     }
 
-    public void Reset(VisualizationMode visualizationMode)
+    public void Reset()
     {
-        foreach (var tree in PhysicalTrees)
-        {
-            tree.FreeRids();
-        }
+        foreach (var tree in PhysicalTrees) tree.FreeRids();
+        foreach (var tree in VisualTrees) tree.FreeRids();
         
-        switch (visualizationMode)
-        {
-            case VisualizationMode.NodeCreatures:
-            case VisualizationMode.Debug:
-                foreach (var tree in VisualTrees)
-                {
-                    tree.FreeRids();
-                }
-                break;
-            case VisualizationMode.None:
-                break;
-            default:
-                throw new ArgumentOutOfRangeException(nameof(visualizationMode), visualizationMode, null);
-        }
         PhysicalTrees.Clear();
         VisualTrees.Clear();
+        NodeTrees.Clear();
         TreeLookup.Clear();
     }
 
-    public void ClearDeadTrees(VisualizationMode visualizationMode)
+    public void ClearDeadTrees()
     {
         var deadIndices = new List<int>();
         for (var i = 0; i < PhysicalTrees.Count; i++)
@@ -142,17 +138,15 @@ public class TreeSimEntityRegistry
             TreeLookup.Remove(PhysicalTrees[deadIndex].Body);
             PhysicalTrees.RemoveAt(deadIndex);
             
-            switch (visualizationMode)
+            if (VisualTrees.Count > 0)
             {
-                case VisualizationMode.NodeCreatures:
-                case VisualizationMode.Debug:
-                    VisualTrees[deadIndex].FreeRids();
-                    VisualTrees.RemoveAt(deadIndex);
-                    break;
-                case VisualizationMode.None:
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(visualizationMode), visualizationMode, null);
+                VisualTrees[i].FreeRids();
+                VisualTrees.RemoveAt(i);
+            }
+            if (NodeTrees.Count > 0)
+            {
+                NodeTrees[i].QueueFree();
+                NodeTrees.RemoveAt(i);
             }
         }
 

@@ -62,8 +62,33 @@ public partial class SimulationTestScene : Node3D
 				}
 
 				_newSim = true;
+				SimulationWorld.TimeScale = 1;
 			}
 			_reset = false;
+		}
+	}
+
+	private bool _speedTest;
+	[Export] private bool SpeedTest
+	{
+		get => _speedTest;
+		set
+		{
+			if (value)
+			{
+				SimulationWorld.TimeScale = 1000;
+				SimulationWorld.VisualizationMode = VisualizationMode.None;
+				SimulationWorld._seed = 0;
+			}
+			else
+			{
+				SimulationWorld.TimeScale = 1;
+				SimulationWorld.VisualizationMode = VisualizationMode.NodeCreatures;
+				SimulationWorld._seed = -1;
+			}
+
+			SimulationWorld.Testing = value;
+			_speedTest = value;
 		}
 	}
 	
