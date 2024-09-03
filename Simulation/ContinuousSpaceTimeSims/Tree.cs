@@ -4,6 +4,7 @@ using PrimerTools;
 
 public partial class Tree : Node3D
 {
+	public Node3D Fruit;
 	public override void _Ready()
 	{
 		var mesh = new MeshInstance3D();
@@ -26,12 +27,14 @@ public partial class Tree : Node3D
 		fruit.Owner = GetTree().EditedSceneRoot;
 		
 		fruit.Position = Vector3.Up;
+		Fruit = fruit;
 	}
 
 	public void DestroyFruit()
 	{
 		var fruit = GetNodeOrNull<MeshInstance3D>("Fruit");
 		fruit?.QueueFree();
+		Fruit = null;
 	}
 	
 	

@@ -78,19 +78,42 @@ public partial class TreeSim : Node3D, ISimulation
 
         for (var i = 0; i < Registry.PhysicalTrees.Count; i++)
         {
+            var physicalTree = Registry.PhysicalTrees[i]; 
             switch (VisualizationMode)
             {
                 case VisualizationMode.None:
                     break;
                 case VisualizationMode.Debug:
-                    if (Registry.PhysicalTrees[i].IsDead)
+                    if (physicalTree.IsDead)
                     {
                         RenderingServer.InstanceSetVisible(Registry.VisualTrees[i].BodyMesh, false);
-                        RenderingServer.InstanceSetVisible(Registry.VisualTrees[i].FruitMesh, false);
+                        if (Registry.PhysicalTrees[i].HasFruit) RenderingServer.InstanceSetVisible(Registry.VisualTrees[i].FruitMesh, false);
+                        continue;
+                    }
+                    if (physicalTree.HasFruit && Registry.VisualTrees[i].FruitMesh == default)
+                    {
+                        CreateFruitMesh(i, physicalTree.Position);
+                    }
+                    if (physicalTree.IsMature)
+                    {
+                        var transform = Transform3D.Identity.Translated(physicalTree.Position);
+                        transform = transform.ScaledLocal(Vector3.One * 1.0f);
+                        RenderingServer.InstanceSetTransform(Registry.VisualTrees[i].BodyMesh, transform);
                     }
                     break;
                 case VisualizationMode.NodeCreatures:
-                    if (Registry.PhysicalTrees[i].IsDead) Registry.NodeTrees[i].Visible = false;
+                    if (physicalTree.IsDead)
+                    {
+                        Registry.NodeTrees[i].Visible = false;
+                    }
+                    if (physicalTree.HasFruit && Registry.NodeTrees[i].Fruit == null)
+                    {
+                        Registry.NodeTrees[i].AddFruit();
+                    }
+                    if (physicalTree.IsMature)
+                    {
+                        Registry.NodeTrees[i].Scale = Vector3.One * 1.0f;
+                    }
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -203,19 +226,6 @@ public partial class TreeSim : Node3D, ISimulation
                         if (tree.FruitGrowthProgress >= FruitGrowthTime)
                         {
                             tree.HasFruit = true;
-                            switch (VisualizationMode)
-                            {
-                                case VisualizationMode.None:
-                                    break;
-                                case VisualizationMode.Debug:
-                                    CreateFruitMesh(i, tree.Position);
-                                    break;
-                                case VisualizationMode.NodeCreatures:
-                                    Registry.NodeTrees[i].AddFruit();
-                                    break;
-                                default:
-                                    throw new ArgumentOutOfRangeException();
-                            }
                         }
                     }
                     break;
@@ -236,21 +246,6 @@ public partial class TreeSim : Node3D, ISimulation
                         if (!tree.IsDead && tree.Age >= TreeMaturationTime)
                         {
                             tree.IsMature = true;
-                            switch (VisualizationMode)
-                            {
-                                case VisualizationMode.None:
-                                    break;
-                                case VisualizationMode.Debug:
-                                    var transform = Transform3D.Identity.Translated(tree.Position);
-                                    transform = transform.ScaledLocal(Vector3.One * 1.0f);
-                                    RenderingServer.InstanceSetTransform(Registry.VisualTrees[i].BodyMesh, transform);
-                                    break;
-                                case VisualizationMode.NodeCreatures:
-                                    Registry.NodeTrees[i].Scale = Vector3.One * 1.0f;
-                                    break;
-                                default:
-                                    throw new ArgumentOutOfRangeException();
-                            }
                         }
                     }
                     else

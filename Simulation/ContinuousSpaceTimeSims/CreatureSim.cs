@@ -1,3 +1,4 @@
+using System;
 using Godot;
 using Godot.Collections;
 using PrimerTools;
@@ -18,7 +19,7 @@ public partial class CreatureSim : Node3D, ISimulation
 		get => _running;
 		set
 		{
-			if (value && (_stepsSoFar == 0))
+			if (value && _stepsSoFar == 0)
 			{
 				GD.Print("Starting sim creature sim");
 				Initialize();
@@ -77,7 +78,6 @@ public partial class CreatureSim : Node3D, ISimulation
 
 		EmitSignal(SignalName.SimulationInitialized);
 	}
-	
 	public void Step()
 	{
 		if (!_running) return;
@@ -96,6 +96,7 @@ public partial class CreatureSim : Node3D, ISimulation
 			var creature = Registry.PhysicalCreatures[i];
 			if (!creature.Alive) continue;
 
+			// If eating, don't do anything else
 			if (creature.EatingTimeLeft > 0)
 			{
 				creature.EatingTimeLeft -= 1f / SimulationWorld.PhysicsStepsPerSimSecond;
@@ -118,7 +119,7 @@ public partial class CreatureSim : Node3D, ISimulation
 				ChooseDestination(ref creature, closestFoodIndex);
 			}
 
-			// Move
+			// Move, updating destination if needed
 			UpdatePositionAndVelocity(ref creature);
 			var transformNextFrame = new Transform3D(Basis.Identity, creature.Position);
 			PhysicsServer3D.AreaSetTransform(creature.Body, transformNextFrame);
@@ -149,6 +150,12 @@ public partial class CreatureSim : Node3D, ISimulation
 			{
 				case VisualizationMode.None:
 					break;
+				case VisualizationMode.Debug:
+					var visualCreature = Registry.VisualCreatures[i];
+					var transform = Transform3D.Identity.Translated(Registry.PhysicalCreatures[i].Position);
+					RenderingServer.InstanceSetTransform(visualCreature.BodyMesh, transform);
+					RenderingServer.InstanceSetTransform(visualCreature.AwarenessMesh, transform);
+					break;
 				case VisualizationMode.NodeCreatures:
 					var nodeCreature = Registry.NodeCreatures[i];
 					var physicalCreature = Registry.PhysicalCreatures[i];
@@ -162,12 +169,8 @@ public partial class CreatureSim : Node3D, ISimulation
 						nodeCreature.LookAt(nodeCreature.GlobalPosition - lookAt, Vector3.Up);
 					}
 					break;
-				case VisualizationMode.Debug:
-					var visualCreature = Registry.VisualCreatures[i];
-					var transform = Transform3D.Identity.Translated(Registry.PhysicalCreatures[i].Position);
-					RenderingServer.InstanceSetTransform(visualCreature.BodyMesh, transform);
-					RenderingServer.InstanceSetTransform(visualCreature.AwarenessMesh, transform);
-					break;
+				default:
+					throw new ArgumentOutOfRangeException();
 			}
 		}
 		
