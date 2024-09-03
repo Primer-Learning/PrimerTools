@@ -7,15 +7,14 @@ using PrimerTools;
 [Tool]
 public partial class BlobAnimationTree : SelfBuildingAnimationTree
 {
+	#region Build
 	private int _circleRadius = 300;
-
 	private Vector2 CalculatePosition(int index, int total)
 	{
 		// Starts at 180 degrees so the "first" thing is on the left.
 		var angle = 2 * Mathf.Pi / total * index - Mathf.Pi;
 		return _circleRadius * new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
 	}
-	
 	protected override void Build()
 	{
 		base.Build();
@@ -39,21 +38,19 @@ public partial class BlobAnimationTree : SelfBuildingAnimationTree
 		topLevelBlendTree.ConnectNode("Add", 0, "BODY");
 		topLevelBlendTree.ConnectNode("Add", 1, "MOUTH");
 		topLevelBlendTree.ConnectNode("output", 0, "Add");
-		
 		TreeRoot = topLevelBlendTree;
 	}
-
 	private AnimationNodeStateMachine CreateOmniconnectedStateMachine(string prefix, bool loadWiggles)
 	{
 		var stateMachine = new AnimationNodeStateMachine();
 		stateMachine.SetNodePosition("Start", new Vector2(- 2 * _circleRadius, 0));
 		stateMachine.SetGraphOffset(new Vector2(- 2 * _circleRadius - 100, -250));
-		
-		var bodyAnimations = GetNode<AnimationPlayer>(AnimPlayer).GetAnimationList().Where(x => x.StartsWith(prefix)).ToList();
+
+		var animationNames = GetAnimationNamesForStateMachine(prefix);
 		var animationNodesSoFar = new List<StringName>();
 		
 		// Add the basic animations
-		foreach (var animName in bodyAnimations)
+		foreach (var animName in animationNames)
 		{
 			var animationNode = new AnimationNodeAnimation();
 			animationNode.Animation = animName;
@@ -65,14 +62,14 @@ public partial class BlobAnimationTree : SelfBuildingAnimationTree
 		{
 			// Set up the wiggles state, which is more complex and won't change often, so it's loaded rather than generated
 			var wigglesTree = ResourceLoader.Load<AnimationNodeBlendTree>("res://addons/PrimerAssets/Organized/Blob/Blobs/blob_wiggle_tree.tres");
-			stateMachine.AddNode("Wiggles", wigglesTree, CalculatePosition(0, bodyAnimations.Count + 1));
-			bodyAnimations.Insert(0, "Wiggles");
+			stateMachine.AddNode("Wiggles", wigglesTree, CalculatePosition(0, animationNames.Count + 1));
+			animationNames.Insert(0, "Wiggles");
 		}
 		
-		foreach (var (animName, index) in bodyAnimations.WithIndex())
+		foreach (var (animName, index) in animationNames.WithIndex())
 		{
 			// Set position
-			stateMachine.SetNodePosition(animName, CalculatePosition(index, bodyAnimations.Count)); // +1 is for the wiggles, which is loaded before this loop 
+			stateMachine.SetNodePosition(animName, CalculatePosition(index, animationNames.Count)); // +1 is for the wiggles, which is loaded before this loop 
 
 			if (animationNodesSoFar.Count == 0)
 			{
@@ -105,4 +102,74 @@ public partial class BlobAnimationTree : SelfBuildingAnimationTree
 		
 		return stateMachine;
 	}
+	#endregion
+
+	public void TransitionAnimationState(string stateMachineName, AnimationEnum animationEnum)
+	{
+		// Set them all to false
+		foreach (var animationName in GetAnimationNamesForStateMachine(stateMachineName))
+		{
+			Set($"parameters/{stateMachineName}/conditions/{animationName}", false);
+		}
+		// Set this specific one to true
+		Set($"parameters/{stateMachineName}/conditions/{_animationNames[animationEnum]}", true);
+
+		switch (stateMachineName)
+		{
+			case "BODY":
+				CurrentBodyState = animationEnum;
+				break;
+			case "MOUTH":
+				CurrentMouthState = animationEnum;
+				break;
+			default:
+				GD.PrintErr("You have passed an invalid state machine name to BlobAnimationTree");
+				break;
+		}
+	}
+
+	public AnimationEnum CurrentBodyState = AnimationEnum.Wiggles;
+	public AnimationEnum CurrentMouthState = AnimationEnum.Closed;
+
+	private List<string> GetAnimationNamesForStateMachine(string stateMachineName)
+	{
+		var list = GetNode<AnimationPlayer>(AnimPlayer).GetAnimationList().Where(x => x.StartsWith(stateMachineName)).ToList();
+		if (stateMachineName == "BODY") list.Add("Wiggles");
+		return list;
+	}
+	public enum AnimationEnum
+	{
+		Keying,
+		Hello,
+		HelloOneShot,
+		Scoop,
+		CastSpell,
+		Jam,
+		EvilPose,
+		Fight,
+		Bongos,
+		Wiggles,
+		
+		Closed,
+		Smile,
+		OpenWide
+	}
+	private Dictionary<AnimationEnum, string> _animationNames = new()
+	{
+		{ AnimationEnum.Keying, "BODY_00_keying" },
+		{ AnimationEnum.Hello, "BODY_01_hello" },
+		{ AnimationEnum.HelloOneShot, "BODY_02_hello_one_shot" },
+		{ AnimationEnum.Scoop, "BODY_03_scoop" },
+		{ AnimationEnum.CastSpell, "BODY_04_cast_spell" },
+		{ AnimationEnum.Jam, "BODY_07_JAM" },
+		{ AnimationEnum.EvilPose, "BODY_08_evil_pose" },
+		{ AnimationEnum.Fight, "BODY_09_fight" },
+		{ AnimationEnum.Bongos, "BODY_10_bongos" },
+		{ AnimationEnum.Wiggles, "Wiggles" },
+		
+		{ AnimationEnum.Closed, "MOUTH_closed" },
+		{ AnimationEnum.Smile, "MOUTH_smile" },
+		{ AnimationEnum.OpenWide, "MOUTH_open_wide" }
+	};
+
 }

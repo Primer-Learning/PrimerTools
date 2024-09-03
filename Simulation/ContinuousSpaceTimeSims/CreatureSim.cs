@@ -108,6 +108,10 @@ public partial class CreatureSim : Node3D, ISimulation
 			if (canEat)
 			{
 				EatFood(ref creature, closestFoodIndex);
+				if (VisualizationMode == VisualizationMode.NodeCreatures)
+				{
+					Registry.NodeCreatures[i].Eat();
+				}
 			}
 			else if (closestFoodIndex > -1)
 			{

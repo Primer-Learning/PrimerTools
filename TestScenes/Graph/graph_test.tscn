@@ -2989,7 +2989,7 @@ environment = SubResource("Environment_14y1i")
 [node name="Camera rig" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.095, 0.305, 0)
 script = ExtResource("10_inb6s")
-Distance = 3.415
+Distance = 10.0
 
 [node name="Camera3D" type="Camera3D" parent="Camera rig"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 3.415)
