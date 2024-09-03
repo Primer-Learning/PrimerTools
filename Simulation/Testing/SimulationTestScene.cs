@@ -39,6 +39,7 @@ public partial class SimulationTestScene : Node3D
 				_cts?.Cancel();
 				SimulationWorld.Running = false;
 				PeriodicPlotter.Plotting = false;
+				SimulationWorld.TimeScale = 1;
 			}
 			_run = value;
 		}

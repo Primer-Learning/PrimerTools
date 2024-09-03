@@ -122,6 +122,7 @@ public class TreeSimEntityRegistry
 
     public void ClearDeadTrees()
     {
+        // GD.Print("Bring out your dead");
         var deadIndices = new List<int>();
         for (var i = 0; i < PhysicalTrees.Count; i++)
         {
@@ -140,13 +141,13 @@ public class TreeSimEntityRegistry
             
             if (VisualTrees.Count > 0)
             {
-                VisualTrees[i].FreeRids();
-                VisualTrees.RemoveAt(i);
+                VisualTrees[deadIndex].FreeRids();
+                VisualTrees.RemoveAt(deadIndex);
             }
             if (NodeTrees.Count > 0)
             {
-                NodeTrees[i].QueueFree();
-                NodeTrees.RemoveAt(i);
+                NodeTrees[deadIndex].QueueFree();
+                NodeTrees.RemoveAt(deadIndex);
             }
         }
 

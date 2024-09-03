@@ -12,7 +12,7 @@ public partial class TreeSim : Node3D, ISimulation
         TreeGrowth,
         FruitGrowth
     }
-    [Export] public SimMode Mode = SimMode.TreeGrowth; 
+    [Export] public SimMode Mode = SimMode.TreeGrowth;
     
     private SimulationWorld SimulationWorld => GetParent<SimulationWorld>();
     
@@ -290,6 +290,11 @@ public partial class TreeSim : Node3D, ISimulation
     {
         _stepsSoFar = 0;
         Registry.Reset();
+        
+        foreach (var child in GetChildren())
+        {
+            child.QueueFree();
+        }
     }
 
     private void CreateFruitMesh(int treeIndex, Vector3 treePosition)
