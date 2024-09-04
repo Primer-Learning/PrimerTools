@@ -40,6 +40,7 @@ public partial class SimulationWorld : Node3D
     public const int PhysicsStepsPerSimSecond = 60;
 
     public bool Testing;
+    public bool PerformanceTest;
     private int _stepsSoFar = 0;
     private Stopwatch _stopwatch;
     private int _maxSteps = 3000;

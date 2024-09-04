@@ -39,9 +39,19 @@ public partial class SimulationTestScene : Node3D
 				_cts?.Cancel();
 				SimulationWorld.Running = false;
 				PeriodicPlotter.Plotting = false;
+				SimulationWorld.TimeScale = 1;
+				
+				// These prevent continuation of the sim without resetting.
+				// But setting these true on run would mess up the start sequence.
+				// If continuing becomes important, a separate pause button might do it.
 				CreatureSim.Running = false;
 				TreeSim.Running = false;
-				SimulationWorld.TimeScale = 1;
+
+				if (SimulationWorld.PerformanceTest)
+				{
+					CreatureSim.PrintPerformanceStats();
+					TreeSim.PrintPerformanceStats();
+				}
 			}
 			_run = value;
 		}
@@ -94,6 +104,18 @@ public partial class SimulationTestScene : Node3D
 			_speedTest = value;
 		}
 	}
+
+	[Export] private bool PerformanceTest
+	{
+		get => _performanceTest;
+		set
+		{
+			SimulationWorld.PerformanceTest = value;
+			_performanceTest = value;
+		}
+	}
+
+	private bool _performanceTest;
 	
 	private Node3D GraphParent => GetNode<Node3D>("GraphParent");
 

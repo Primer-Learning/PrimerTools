@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using Godot;
 using Godot.Collections;
 using PrimerTools;
@@ -7,6 +8,12 @@ using PrimerTools.Simulation;
 [Tool]
 public partial class CreatureSim : Node3D, ISimulation
 {
+    private Stopwatch _stepStopwatch = new Stopwatch();
+    private Stopwatch _processStopwatch = new Stopwatch();
+    private double _totalStepTime;
+    private double _totalProcessTime;
+    private int _stepCount;
+    private int _processCount;
     [Signal] public delegate void SimulationInitializedEventHandler();
     [Export] private TreeSim _treeSim;
     private SimulationWorld SimulationWorld => GetParent<SimulationWorld>();
@@ -87,6 +94,11 @@ public partial class CreatureSim : Node3D, ISimulation
 			Running = false;
 			return;
 		}
+
+		if (SimulationWorld.PerformanceTest)
+		{
+			_stepStopwatch.Restart();
+		}
 		
 		// Process creatures. Doing one creature at a time for now with one big struct.
 		// But eventually, it might make sense to do several loops which each work with narrower sets of data
@@ -111,7 +123,7 @@ public partial class CreatureSim : Node3D, ISimulation
 				EatFood(ref creature, closestFoodIndex);
 				if (VisualizationMode == VisualizationMode.NodeCreatures)
 				{
-					Registry.NodeCreatures[i].Eat();
+					// Registry.NodeCreatures[i].Eat();
 				}
 			}
 			else if (closestFoodIndex > -1)
@@ -138,10 +150,22 @@ public partial class CreatureSim : Node3D, ISimulation
 		}
 		
 		_stepsSoFar++;
+
+		if (SimulationWorld.PerformanceTest)
+		{
+			_stepStopwatch.Stop();
+			_totalStepTime += _stepStopwatch.Elapsed.TotalMilliseconds;
+			_stepCount++;
+		}
 	}
 	public override void _Process(double delta)
 	{
 		if (!_running) return;
+
+		if (SimulationWorld.PerformanceTest)
+		{
+			_processStopwatch.Restart();
+		}
 		
 		// Update visuals
 		for (var i = 0; i < Registry.PhysicalCreatures.Count; i++)
@@ -165,8 +189,7 @@ public partial class CreatureSim : Node3D, ISimulation
 					var direction = physicalCreature.Velocity;
 					if (direction != Vector3.Zero)
 					{
-						var lookAt = direction.Normalized();
-						nodeCreature.LookAt(nodeCreature.GlobalPosition - lookAt, Vector3.Up);
+						nodeCreature.LookAt(nodeCreature.GlobalPosition - direction, Vector3.Up);
 					}
 					break;
 				default:
@@ -179,9 +202,26 @@ public partial class CreatureSim : Node3D, ISimulation
 		// But high enough where things won't build up.
 		// Could be a better choice, though. Probably less often if anything.
 		Registry.ClearDeadCreatures();
+
+		if (SimulationWorld.PerformanceTest)
+		{
+			_processStopwatch.Stop();
+			_totalProcessTime += _processStopwatch.Elapsed.TotalMilliseconds;
+			_processCount++;
+		}
 	}
 
 	#endregion
+
+	public void PrintPerformanceStats()
+	{
+		if (_stepCount > 0 && _processCount > 0)
+		{
+			GD.Print($"CreatureSim Performance Stats:");
+			GD.Print($"  Average Step Time: {_totalStepTime / _stepCount:F3} ms");
+			GD.Print($"  Average Process Time: {_totalProcessTime / _processCount:F3} ms");
+		}
+	}
 
 	#region Helpers
 	private Array<Dictionary> DetectCollisionsWithCreature(CreatureSimEntityRegistry.PhysicalCreature creature)

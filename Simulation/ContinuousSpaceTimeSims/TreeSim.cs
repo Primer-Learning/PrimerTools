@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using Godot;
 using System.Collections.Generic;
 using PrimerTools;
@@ -7,6 +8,14 @@ using PrimerTools.Simulation;
 [Tool]
 public partial class TreeSim : Node3D, ISimulation
 {
+    private Stopwatch _stepStopwatch = new Stopwatch();
+    private Stopwatch _processStopwatch = new Stopwatch();
+    private Stopwatch _visualUpdateStopwatch = new Stopwatch();
+    private double _totalStepTime;
+    private double _totalProcessTime;
+    private double _totalVisualUpdateTime;
+    private int _stepCount;
+    private int _processCount;
     public enum SimMode
     {
         TreeGrowth,
@@ -75,6 +84,12 @@ public partial class TreeSim : Node3D, ISimulation
     public override void _Process(double delta)
     {
         if (!_running) return;
+        
+        if (SimulationWorld.PerformanceTest)
+        {
+            _processStopwatch.Restart();
+            _visualUpdateStopwatch.Restart();
+        }
 
         for (var i = 0; i < Registry.PhysicalTrees.Count; i++)
         {
@@ -119,12 +134,25 @@ public partial class TreeSim : Node3D, ISimulation
                     throw new ArgumentOutOfRangeException();
             }
         }
+
+        if (SimulationWorld.PerformanceTest)
+        {
+            _visualUpdateStopwatch.Stop();
+            _totalVisualUpdateTime += _visualUpdateStopwatch.Elapsed.TotalMilliseconds;
+        }
         
         _timeSinceLastClear += (float)delta;
         if (_timeSinceLastClear >= _deadTreeClearInterval)
         {
             Registry.ClearDeadTrees();
             _timeSinceLastClear = 0f;
+        }
+        
+        if (SimulationWorld.PerformanceTest)
+        {
+            _processStopwatch.Stop();
+            _totalProcessTime += _processStopwatch.Elapsed.TotalMilliseconds;
+            _processCount++;
         }
     }
 
@@ -209,6 +237,11 @@ public partial class TreeSim : Node3D, ISimulation
             return;
         }
 
+        if (SimulationWorld.PerformanceTest)
+        {
+            _stepStopwatch.Restart();
+        }
+
         var newTreePositions = new List<Vector3>();
         for (var i = 0; i < Registry.PhysicalTrees.Count; i++)
         {
@@ -279,6 +312,24 @@ public partial class TreeSim : Node3D, ISimulation
         }
 
         _stepsSoFar++;
+
+        if (SimulationWorld.PerformanceTest)
+        {
+            _stepStopwatch.Stop();
+            _totalStepTime += _stepStopwatch.Elapsed.TotalMilliseconds;
+            _stepCount++;
+        }
+    }
+
+    public void PrintPerformanceStats()
+    {
+        if (_stepCount > 0 && _processCount > 0)
+        {
+            GD.Print($"TreeSim Performance Stats:");
+            GD.Print($"  Average Step Time: {_totalStepTime / _stepCount:F3} ms");
+            GD.Print($"  Average Process Time: {_totalProcessTime / _processCount:F3} ms");
+            GD.Print($"  Average Visual Update Time: {_totalVisualUpdateTime / _processCount:F3} ms");
+        }
     }
 
     public void Reset()
