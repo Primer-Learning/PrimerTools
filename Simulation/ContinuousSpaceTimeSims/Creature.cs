@@ -24,7 +24,11 @@ public partial class Creature : Node3D
 	private bool _eating;
 	public async void Eat()
 	{
-		if (_eating) return;
+		if (_eating)
+		{
+			GD.Print("Attempting to eat while already eating.");
+			return;
+		}
 		_eating = true;
 		await _blob.TriggerEat();
 		_eating = false;
