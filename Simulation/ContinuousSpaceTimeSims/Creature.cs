@@ -21,8 +21,12 @@ public partial class Creature : Node3D
 		_blob.BlobAnimationTree.Active = false;
 	}
 
-	public void Eat()
+	private bool _eating;
+	public async void Eat()
 	{
-		_blob.TriggerEat();
+		if (_eating) return;
+		_eating = true;
+		await _blob.TriggerEat();
+		_eating = false;
 	}
 }
