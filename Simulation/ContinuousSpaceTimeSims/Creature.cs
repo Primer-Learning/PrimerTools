@@ -18,7 +18,7 @@ public partial class Creature : Node3D
 		AddChild(_blob);
 		// this.MakeSelfAndChildrenLocal();
 
-		_blob.BlobAnimationTree.Active = true;
+		_blob.BlobAnimationTree.Active = false;
 	}
 
 	public void Eat()

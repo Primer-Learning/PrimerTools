@@ -187,7 +187,7 @@ public partial class CreatureSim : Node3D, ISimulation
 					
 					// Calculate and apply rotation
 					var direction = physicalCreature.Velocity;
-					if (direction != Vector3.Zero)
+					if (direction.LengthSquared() > 0.0001f)
 					{
 						nodeCreature.LookAt(nodeCreature.GlobalPosition - direction, Vector3.Up);
 					}
