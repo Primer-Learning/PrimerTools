@@ -99,7 +99,7 @@ public class CreatureSimEntityRegistry
 				creatureSim.AddChild(creature);
 				creature.Name = "Creature"; 
 				NodeCreatures.Add(creature);
-				creature.Owner = creatureSim.GetTree().EditedSceneRoot;
+				// creature.Owner = creatureSim.GetTree().EditedSceneRoot;
 				break;
 			case VisualizationMode.Debug:
 				// RenderingServer stuff

@@ -100,7 +100,7 @@ public class TreeSimEntityRegistry
                 tree.Position = position;
                 tree.Name = "Tree";
                 NodeTrees.Add(tree);
-                tree.Owner = treeSim.GetTree().EditedSceneRoot;
+                // tree.Owner = treeSim.GetTree().EditedSceneRoot;
                 break;
             default:
                 throw new ArgumentOutOfRangeException();

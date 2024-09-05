@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using PrimerTools;
 
 [Tool]
 public partial class SelfBuildingAnimationTree : AnimationTree

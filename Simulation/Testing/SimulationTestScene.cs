@@ -135,7 +135,7 @@ public partial class SimulationTestScene : Node3D
 	{
 		var thisGraph = Graph.CreateInstance();
 		GraphParent.AddChild(thisGraph);
-		thisGraph.Owner = GetTree().EditedSceneRoot;
+		// thisGraph.Owner = GetTree().EditedSceneRoot;
 		thisGraph.XAxis.length = 60;
 		thisGraph.XAxis.Max = 40;
 		thisGraph.XAxis.TicStep = 20;
@@ -162,7 +162,7 @@ public partial class SimulationTestScene : Node3D
 			return dataList;
 		};
 		
-		PeriodicPlotter.Owner = GetTree().EditedSceneRoot;
+		// PeriodicPlotter.Owner = GetTree().EditedSceneRoot;
 		PeriodicPlotter.Name = "Periodic plotter";
 		PeriodicPlotter.Curve = curve;
 	}
@@ -195,5 +195,13 @@ public partial class SimulationTestScene : Node3D
 		{
 			GD.Print("Canceled");
 		}
-	} 
+	}
+
+	public override void _Ready()
+	{
+		base._Ready();
+		if (Engine.IsEditorHint()) return;
+		Run = true;
+		Engine.MaxFps = 0;
+	}
 }

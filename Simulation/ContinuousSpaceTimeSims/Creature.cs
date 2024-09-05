@@ -10,9 +10,13 @@ public partial class Creature : Node3D
 	{
 		base._Ready();
 
+		// var cube = new MeshInstance3D();
+		// cube.Mesh = new BoxMesh();
+		// AddChild(cube);
+
 		_blob = Blob.CreateInstance();
 		AddChild(_blob);
-		_blob.MakeSelfAndChildrenLocal();
+		// this.MakeSelfAndChildrenLocal();
 
 		_blob.BlobAnimationTree.Active = true;
 	}

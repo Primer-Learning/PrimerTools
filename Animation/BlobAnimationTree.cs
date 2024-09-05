@@ -7,6 +7,8 @@ using PrimerTools;
 [Tool]
 public partial class BlobAnimationTree : SelfBuildingAnimationTree
 {
+	// TODO: Separate the builder code into a builder class. No need for the functioning tree to carry this around.
+	
 	#region Build
 	private int _circleRadius = 300;
 	private Vector2 CalculatePosition(int index, int total)

@@ -10,7 +10,7 @@ public partial class Tree : Node3D
 		var mesh = new MeshInstance3D();
 		mesh.Mesh = new CylinderMesh();
 		AddChild(mesh);
-		this.MakeSelfAndChildrenLocal();
+		// this.MakeSelfAndChildrenLocal();
 	}
 	
 	public void AddFruit()
@@ -24,7 +24,7 @@ public partial class Tree : Node3D
 		fruit.Mesh.SurfaceSetMaterial(0, mat);
 		
 		AddChild(fruit);
-		fruit.Owner = GetTree().EditedSceneRoot;
+		// fruit.Owner = GetTree().EditedSceneRoot;
 		
 		fruit.Position = Vector3.Up;
 		Fruit = fruit;

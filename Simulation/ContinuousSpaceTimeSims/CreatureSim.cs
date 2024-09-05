@@ -123,7 +123,7 @@ public partial class CreatureSim : Node3D, ISimulation
 				EatFood(ref creature, closestFoodIndex);
 				if (VisualizationMode == VisualizationMode.NodeCreatures)
 				{
-					// Registry.NodeCreatures[i].Eat();
+					Registry.NodeCreatures[i].Eat();
 				}
 			}
 			else if (closestFoodIndex > -1)
