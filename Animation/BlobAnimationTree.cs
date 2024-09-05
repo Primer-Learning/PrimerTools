@@ -1,5 +1,4 @@
 using Godot;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using PrimerTools;
@@ -34,8 +33,8 @@ public partial class BlobAnimationTree : SelfBuildingAnimationTree
 		topLevelBlendTree.SetNodePosition("MOUTH", new Vector2(-200, 200));
 
 		var addNode = new AnimationNodeAdd2();
-		Set("parameters/Add/add_amount", 1);
 		topLevelBlendTree.AddNode("Add", addNode);
+		Set("parameters/Add/add_amount", 1);
 		
 		topLevelBlendTree.ConnectNode("Add", 0, "BODY");
 		topLevelBlendTree.ConnectNode("Add", 1, "MOUTH");
@@ -63,21 +62,21 @@ public partial class BlobAnimationTree : SelfBuildingAnimationTree
 		if (loadWiggles)
 		{
 			// Set up the wiggles state, which is more complex and won't change often, so it's loaded rather than generated
-			var wigglesTree = ResourceLoader.Load<AnimationNodeBlendTree>("res://addons/PrimerAssets/Organized/Blob/Blobs/blob_wiggle_tree.tres");
-			stateMachine.AddNode("Wiggles", wigglesTree, CalculatePosition(0, animationNames.Count + 1));
-			animationNames.Insert(0, "Wiggles");
+			var wigglesTree = ResourceLoader.Load<AnimationNodeBlendTree>("res://addons/PrimerAssets/Organized/Blob/Old Blobs/blob_wiggle_tree.tres");
+			stateMachine.AddNode("Wiggles", wigglesTree, CalculatePosition(animationNames.Count, animationNames.Count + 1));
+			animationNames.Add("Wiggles");
 		}
 		
 		foreach (var (animName, index) in animationNames.WithIndex())
 		{
 			// Set position
-			stateMachine.SetNodePosition(animName, CalculatePosition(index, animationNames.Count)); // +1 is for the wiggles, which is loaded before this loop 
+			stateMachine.SetNodePosition(animName, CalculatePosition(index, animationNames.Count));
 
 			if (animationNodesSoFar.Count == 0)
 			{
 				var startTransition = new AnimationNodeStateMachineTransition();
 				startTransition.AdvanceMode = AnimationNodeStateMachineTransition.AdvanceModeEnum.Auto;
-				startTransition.XfadeTime = 0.25f;
+				startTransition.XfadeTime = 0f;
 				startTransition.AdvanceCondition = animName;
 				stateMachine.AddTransition("Start", animName, startTransition);
 				Set($"parameters/{prefix}/conditions/{animName}", true);
@@ -109,7 +108,7 @@ public partial class BlobAnimationTree : SelfBuildingAnimationTree
 	public void TransitionAnimationState(string stateMachineName, AnimationEnum animationEnum)
 	{
 		// Set them all to false
-		foreach (var animationName in GetAnimationNamesForStateMachine(stateMachineName))
+		foreach (var animationName in GetAnimationNamesForStateMachine(stateMachineName, includeWiggles: true))
 		{
 			Set($"parameters/{stateMachineName}/conditions/{animationName}", false);
 		}
@@ -130,13 +129,13 @@ public partial class BlobAnimationTree : SelfBuildingAnimationTree
 		}
 	}
 
-	public AnimationEnum CurrentBodyState = AnimationEnum.Wiggles;
+	public AnimationEnum CurrentBodyState = AnimationEnum.Keying;
 	public AnimationEnum CurrentMouthState = AnimationEnum.Closed;
 
-	private List<string> GetAnimationNamesForStateMachine(string stateMachineName)
+	private List<string> GetAnimationNamesForStateMachine(string stateMachineName, bool includeWiggles = false)
 	{
 		var list = GetNode<AnimationPlayer>(AnimPlayer).GetAnimationList().Where(x => x.StartsWith(stateMachineName)).ToList();
-		if (stateMachineName == "BODY") list.Add("Wiggles");
+		if (includeWiggles && stateMachineName == "BODY") list.Add("Wiggles");
 		return list;
 	}
 	public enum AnimationEnum
