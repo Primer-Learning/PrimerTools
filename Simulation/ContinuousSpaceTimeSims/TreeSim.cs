@@ -60,7 +60,8 @@ public partial class TreeSim : Node3D, ISimulation
     private const float SaplingDeathProbabilityPerNeighbor = 0.01f;
     private const float MatureTreeDeathProbabilityBase = 0.0001f;
     private const float MatureTreeDeathProbabilityPerNeighbor = 0.0001f;
-    private const float FruitGrowthTime = 2f;
+    public const float FruitGrowthTime = 2f;
+    public const float NodeFruitGrowthDelay = 0.5f;
     private int _stepsSoFar = 0;
     #endregion
     
@@ -121,9 +122,9 @@ public partial class TreeSim : Node3D, ISimulation
                     {
                         Registry.NodeTrees[i].Visible = false;
                     }
-                    if (physicalTree.HasFruit && !Registry.NodeTrees[i].HasFruit)
+                    if (physicalTree.FruitGrowthProgress > NodeFruitGrowthDelay && !Registry.NodeTrees[i].HasFruit)
                     {
-                        Registry.NodeTrees[i].AddFruit();
+                        Registry.NodeTrees[i].GrowFruit(FruitGrowthTime - NodeFruitGrowthDelay);
                     }
                     if (physicalTree.IsMature)
                     {

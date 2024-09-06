@@ -1,3 +1,4 @@
+using System.Reflection.Metadata.Ecma335;
 using Godot;
 using PrimerAssets;
 using PrimerTools;
@@ -15,16 +16,30 @@ public partial class Tree : Node3D
 		// this.MakeSelfAndChildrenLocal();
 	}
 	
-	public void AddFruit()
+	public void GrowFruit(double duration)
 	{
-		_fruitTree.GrowFruit(0);
+		// _fruitTree.GrowFruitAnimation(0);
+		_fruitTree.GrowFruitTween(0, duration);
 	}
 	
 	public void DestroyFruit()
 	{
-		_fruitTree.GetFruit(0)?.QueueFree();
+		var fruit = _fruitTree.GetFruit(0); 
+		if (fruit == null) return;
+		fruit.Scale = Vector3.Zero;
+	}
+	
+	public Node3D GetFruit() 
+	{
+		return 	_fruitTree.GetFruit(0);
 	}
 
-	public bool HasFruit => _fruitTree.GetFruit(0) != null;
-
+	public bool HasFruit
+	{
+		get
+		{
+			var fruit = _fruitTree.GetFruit(0);
+			return fruit != null && _fruitTree.IsFruitOnFlower(fruit);
+		}
+	}
 }

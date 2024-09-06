@@ -30,7 +30,7 @@ public partial class SimulationTestScene : Node3D
 				else
 				{
 					SimulationWorld.Running = true;
-					_periodicPlotter.Plotting = true;
+					if (IsInstanceValid(_periodicPlotter)) _periodicPlotter.Plotting = true;
 				}
 			}
 			else if (_run)
@@ -38,7 +38,7 @@ public partial class SimulationTestScene : Node3D
 				GD.Print("Pausing");
 				_cts?.Cancel();
 				SimulationWorld.Running = false;
-				_periodicPlotter.Plotting = false;
+				if (IsInstanceValid(_periodicPlotter)) _periodicPlotter.Plotting = false;
 				SimulationWorld.TimeScale = 1;
 				
 				// These prevent continuation of the sim without resetting.

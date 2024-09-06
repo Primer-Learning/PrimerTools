@@ -97,6 +97,7 @@ public class CreatureSimEntityRegistry
 			case VisualizationMode.NodeCreatures:
 				var creature = new Creature();
 				creatureSim.AddChild(creature);
+				creature.Position = physicalCreature.Position;
 				creature.Name = "Creature"; 
 				NodeCreatures.Add(creature);
 				// creature.Owner = creatureSim.GetTree().EditedSceneRoot;

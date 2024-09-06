@@ -42,7 +42,7 @@ public partial class CreatureSim : Node3D, ISimulation
 	[Export] private int _initialCreatureCount = 4;
 	[Export] private float _initialCreatureSpeed = 5f;
 	private const float CreatureStepMaxLength = 10f;
-	private const float CreatureEatDistance = 0.5f;
+	private const float CreatureEatDistance = 1;
 	private const float EnergyGainFromFood = 1f;
 	private const float ReproductionEnergyThreshold = 2f;
 	private const float ReproductionEnergyCost = 1f;
@@ -118,12 +118,13 @@ public partial class CreatureSim : Node3D, ISimulation
 
 			// Food detection
 			var (closestFoodIndex, canEat) = FindClosestFood(creature);
-			if (canEat)
+			if (canEat && creature.EatingTimeLeft <= 0)
 			{
 				EatFood(ref creature, closestFoodIndex);
 				if (VisualizationMode == VisualizationMode.NodeCreatures)
 				{
-					Registry.NodeCreatures[i].Eat();
+					var fruit = _treeSim.Registry.NodeTrees[closestFoodIndex].GetFruit();
+					Registry.NodeCreatures[i].Eat(fruit);
 				}
 			}
 			else if (closestFoodIndex > -1)
@@ -319,7 +320,7 @@ public partial class CreatureSim : Node3D, ISimulation
 	private (int, bool) FindClosestFood(CreatureSimEntityRegistry.PhysicalCreature creature)
 	{
 		var objectsInAwareness = DetectCollisionsWithCreature(creature);
-		int closestFoodIndex = -1;
+		var closestFoodIndex = -1;
 		var canEat = false;
 		var closestFoodSqrDistance = float.MaxValue;
 
@@ -361,20 +362,22 @@ public partial class CreatureSim : Node3D, ISimulation
 		tree.HasFruit = false;
 		tree.FruitGrowthProgress = 0;
 		_treeSim.Registry.PhysicalTrees[treeIndex] = tree;
+		
 		creature.Energy += EnergyGainFromFood;
 		creature.EatingTimeLeft = EatDuration;
 
 		switch (VisualizationMode)
 		{
-			case VisualizationMode.NodeCreatures:
-				_treeSim.Registry.NodeTrees[treeIndex].DestroyFruit();
+			case VisualizationMode.None:
 				break;
 			case VisualizationMode.Debug:
 				var visualTree = _treeSim.Registry.VisualTrees[treeIndex];
 				RenderingServer.InstanceSetVisible(visualTree.FruitMesh, false);
 				break;
-			case VisualizationMode.None:
+			case VisualizationMode.NodeCreatures:
 				break;
+			default:
+				throw new ArgumentOutOfRangeException();
 		}
 	}
 
