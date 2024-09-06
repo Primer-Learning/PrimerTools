@@ -30,7 +30,7 @@ public partial class SimulationTestScene : Node3D
 				else
 				{
 					SimulationWorld.Running = true;
-					PeriodicPlotter.Plotting = true;
+					_periodicPlotter.Plotting = true;
 				}
 			}
 			else if (_run)
@@ -38,7 +38,7 @@ public partial class SimulationTestScene : Node3D
 				GD.Print("Pausing");
 				_cts?.Cancel();
 				SimulationWorld.Running = false;
-				PeriodicPlotter.Plotting = false;
+				_periodicPlotter.Plotting = false;
 				SimulationWorld.TimeScale = 1;
 				
 				// These prevent continuation of the sim without resetting.
@@ -120,17 +120,7 @@ public partial class SimulationTestScene : Node3D
 	private Node3D GraphParent => GetNode<Node3D>("GraphParent");
 
 	private PeriodicPlotter _periodicPlotter;
-	private PeriodicPlotter PeriodicPlotter
-	{
-		get
-		{
-			if (IsInstanceValid(_periodicPlotter)) return _periodicPlotter;
-			_periodicPlotter = new PeriodicPlotter();
-			GraphParent.AddChild(_periodicPlotter);
-			return _periodicPlotter;
-		}
-		set => _periodicPlotter = value;
-	}
+	
 	private void CreatePlot()
 	{
 		var thisGraph = Graph.CreateInstance();
@@ -162,9 +152,11 @@ public partial class SimulationTestScene : Node3D
 			return dataList;
 		};
 		
+		_periodicPlotter = new PeriodicPlotter();
+		GraphParent.AddChild(_periodicPlotter);
+		_periodicPlotter.Name = "Periodic plotter";
+		_periodicPlotter.Curve = curve;
 		// PeriodicPlotter.Owner = GetTree().EditedSceneRoot;
-		PeriodicPlotter.Name = "Periodic plotter";
-		PeriodicPlotter.Curve = curve;
 	}
 
 	private async Task RunSimSequence(CancellationToken ct = default)
@@ -189,7 +181,7 @@ public partial class SimulationTestScene : Node3D
 			ct.ThrowIfCancellationRequested();
 
 			CreatureSim.Running = true;
-			if (IsInstanceValid(PeriodicPlotter)) PeriodicPlotter.Plotting = true;
+			_periodicPlotter.Plotting = true;
 		}
 		catch
 		{

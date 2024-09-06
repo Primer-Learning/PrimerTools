@@ -15,8 +15,6 @@ public enum VisualizationMode
 public partial class SimulationWorld : Node3D
 {
     #region Editor controls
-    // private bool _running;
-    // [Export]
     public bool Running;
 
     [Export] public VisualizationMode VisualizationMode = VisualizationMode.None;
