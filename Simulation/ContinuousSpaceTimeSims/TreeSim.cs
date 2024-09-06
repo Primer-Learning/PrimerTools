@@ -121,7 +121,7 @@ public partial class TreeSim : Node3D, ISimulation
                     {
                         Registry.NodeTrees[i].Visible = false;
                     }
-                    if (physicalTree.HasFruit && Registry.NodeTrees[i].Fruit == null)
+                    if (physicalTree.HasFruit && !Registry.NodeTrees[i].HasFruit)
                     {
                         Registry.NodeTrees[i].AddFruit();
                     }

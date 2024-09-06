@@ -1,4 +1,5 @@
 using Godot;
+using PrimerAssets;
 using PrimerTools;
 using Blob = PrimerAssets.Blob;
 
@@ -19,6 +20,8 @@ public partial class Creature : Node3D
 		// this.MakeSelfAndChildrenLocal();
 
 		_blob.BlobAnimationTree.Active = false;
+		
+		_blob.SetColor(PrimerColor.blue);
 	}
 
 	private bool _eating;
