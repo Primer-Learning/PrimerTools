@@ -35,8 +35,19 @@ public partial class SimulationWorld : Node3D
             Engine.PhysicsTicksPerSecond = (int)(value * 60);
         }
     }
-    [Export] public int _seed = -1;
-    
+    private static int _seed = -1;
+
+    [Export]
+    public int Seed
+    {
+        get => _seed;
+        set
+        {
+            _seed = value;
+            _rng = null; // So it will be reconstructed with the new seed next time it's read
+        }
+    }
+
     public const int PhysicsStepsPerSimSecond = 60;
 
     public bool Testing;
@@ -45,8 +56,8 @@ public partial class SimulationWorld : Node3D
     private Stopwatch _stopwatch;
     private int _maxSteps = 3000;
 
-    private Rng _rng;
-    public Rng Rng => _rng ??= new Rng(_seed == -1 ? System.Environment.TickCount : _seed);
+    private static Rng _rng;
+    public static Rng Rng => _rng ??= new Rng(_seed == -1 ? System.Environment.TickCount : _seed);
     public World3D World3D => GetWorld3D();
     private List<ISimulation> _simulations = new();
 

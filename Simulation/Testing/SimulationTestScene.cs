@@ -91,13 +91,13 @@ public partial class SimulationTestScene : Node3D
 			{
 				SimulationWorld.TimeScale = 1000;
 				SimulationWorld.VisualizationMode = VisualizationMode.None;
-				SimulationWorld._seed = 0;
+				SimulationWorld.Seed = 0;
 			}
 			else
 			{
 				SimulationWorld.TimeScale = 1;
 				SimulationWorld.VisualizationMode = VisualizationMode.NodeCreatures;
-				SimulationWorld._seed = -1;
+				SimulationWorld.Seed = -1;
 			}
 
 			SimulationWorld.Testing = value;
