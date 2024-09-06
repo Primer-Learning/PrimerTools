@@ -106,10 +106,15 @@ public partial class TreeSim : Node3D, ISimulation
                         if (Registry.PhysicalTrees[i].HasFruit) RenderingServer.InstanceSetVisible(Registry.VisualTrees[i].FruitMesh, false);
                         continue;
                     }
+                    if (!physicalTree.HasFruit && Registry.VisualTrees[i].FruitMesh != default)
+                    {
+                        RenderingServer.InstanceSetVisible(Registry.VisualTrees[i].FruitMesh, false);
+                    }
                     if (physicalTree.HasFruit && Registry.VisualTrees[i].FruitMesh == default)
                     {
                         CreateFruitMesh(i, physicalTree.Position);
                     }
+                    
                     if (physicalTree.IsMature)
                     {
                         var transform = Transform3D.Identity.Translated(physicalTree.Position);

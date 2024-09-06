@@ -35,7 +35,6 @@ public partial class CreatureSim : Node3D, ISimulation
 		}
 	}
 
-	public VisualizationMode VisualizationMode => SimulationWorld.VisualizationMode;
 	#endregion
 	
 	#region Sim parameters
@@ -58,12 +57,28 @@ public partial class CreatureSim : Node3D, ISimulation
 	#endregion
 	
 	public readonly CreatureSimEntityRegistry Registry = new();
+	private ICreatureVisualizer _creatureVisualizer;
 
 	#region Simulation
 
 	private void Initialize()
 	{
 		Registry.World3D = SimulationWorld.World3D;
+		switch (SimulationWorld.VisualizationMode)
+		{
+			case VisualizationMode.None:
+				break;
+			case VisualizationMode.Debug:
+				_creatureVisualizer = new CreatureSimDebugVisualRegistry(SimulationWorld.World3D);
+				break;
+			case VisualizationMode.NodeCreatures:
+				_creatureVisualizer = new CreatureSimNodeRegistry(this);
+				break;
+			default:
+				throw new ArgumentOutOfRangeException();
+		}
+		
+		GD.Print("Initializing");
 		
 		if (_treeSim == null)
 		{
@@ -73,16 +88,18 @@ public partial class CreatureSim : Node3D, ISimulation
 		
 		for (var i = 0; i < _initialCreatureCount; i++)
 		{
-			Registry.CreateCreature(
-				new Vector3(
-					SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.X),
-					0,
-					SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.Y)
-				),
-				InitialAwarenessRadius,
-				_initialCreatureSpeed,
-				this
+			var physicalCreature = new PhysicalCreature();
+			physicalCreature.Position = new Vector3(
+				SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.X),
+				0,
+				SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.Y)
 			);
+			physicalCreature.AwarenessRadius = InitialAwarenessRadius;
+			physicalCreature.MaxSpeed = _initialCreatureSpeed;
+			
+			Registry.RegisterEntity(physicalCreature);
+
+			_creatureVisualizer.RegisterEntity(physicalCreature);
 		}
 
 		EmitSignal(SignalName.SimulationInitialized);
@@ -90,7 +107,7 @@ public partial class CreatureSim : Node3D, ISimulation
 	public void Step()
 	{
 		if (!_running) return;
-		if (Registry.PhysicalCreatures.Count == 0)
+		if (Registry.Entities.Count == 0)
 		{
 			GD.Print("No Creatures found. Stopping.");
 			Running = false;
@@ -105,16 +122,16 @@ public partial class CreatureSim : Node3D, ISimulation
 		// Process creatures. Doing one creature at a time for now with one big struct.
 		// But eventually, it might make sense to do several loops which each work with narrower sets of data
 		// For cache locality.
-		for (var i = 0; i < Registry.PhysicalCreatures.Count; i++)
+		for (var i = 0; i < Registry.Entities.Count; i++)
 		{
-			var creature = Registry.PhysicalCreatures[i];
+			var creature = (PhysicalCreature)Registry.Entities[i];
 			if (!creature.Alive) continue;
 
 			// If eating, don't do anything else
 			if (creature.EatingTimeLeft > 0)
 			{
 				creature.EatingTimeLeft -= 1f / SimulationWorld.PhysicsStepsPerSimSecond;
-				Registry.PhysicalCreatures[i] = creature;
+				Registry.Entities[i] = creature;
 				continue;
 			}
 
@@ -123,10 +140,9 @@ public partial class CreatureSim : Node3D, ISimulation
 			if (canEat && creature.EatingTimeLeft <= 0)
 			{
 				EatFood(ref creature, closestFoodIndex);
-				if (VisualizationMode == VisualizationMode.NodeCreatures)
+				if (SimulationWorld.VisualizationMode == VisualizationMode.NodeCreatures)
 				{
-					var fruit = _treeSim.Registry.NodeTrees[closestFoodIndex].GetFruit();
-					Registry.NodeCreatures[i].Eat(fruit);
+					((CreatureSimNodeRegistry)_creatureVisualizer).CreatureEat(i, _treeSim.Registry.NodeTrees[closestFoodIndex].GetFruit());
 				}
 			}
 			else if (closestFoodIndex > -1)
@@ -146,10 +162,10 @@ public partial class CreatureSim : Node3D, ISimulation
 			if (creature.Energy <= 0)
 			{
 				creature.Alive = false;
-				if (VisualizationMode == VisualizationMode.NodeCreatures) Registry.NodeCreatures[i].Visible = false;
+				if (SimulationWorld.VisualizationMode == VisualizationMode.NodeCreatures) ((Creature)((CreatureSimNodeRegistry)_creatureVisualizer).Entities[i]).Visible = false;
 			}
 
-			Registry.PhysicalCreatures[i] = creature;
+			Registry.Entities[i] = creature;
 		}
 		
 		_stepsSoFar++;
@@ -171,40 +187,16 @@ public partial class CreatureSim : Node3D, ISimulation
 		}
 		
 		// Update visuals
-		for (var i = 0; i < Registry.PhysicalCreatures.Count; i++)
+		for (var i = 0; i < Registry.Entities.Count; i++)
 		{
-			switch (VisualizationMode)
-			{
-				case VisualizationMode.None:
-					break;
-				case VisualizationMode.Debug:
-					var visualCreature = Registry.VisualCreatures[i];
-					var transform = Transform3D.Identity.Translated(Registry.PhysicalCreatures[i].Position);
-					RenderingServer.InstanceSetTransform(visualCreature.BodyMesh, transform);
-					RenderingServer.InstanceSetTransform(visualCreature.AwarenessMesh, transform);
-					break;
-				case VisualizationMode.NodeCreatures:
-					var nodeCreature = Registry.NodeCreatures[i];
-					var physicalCreature = Registry.PhysicalCreatures[i];
-					nodeCreature.Position = physicalCreature.Position;
-					
-					// Calculate and apply rotation
-					var direction = physicalCreature.Velocity;
-					if (direction.LengthSquared() > 0.0001f)
-					{
-						nodeCreature.LookAt(nodeCreature.GlobalPosition - direction, Vector3.Up);
-					}
-					break;
-				default:
-					throw new ArgumentOutOfRangeException();
-			}
+			_creatureVisualizer.UpdateVisualCreature(i, Registry.Entities[i]);
 		}
 		
 		// This happens every process frame, which is an intuitive choice
 		// for a frequency that isn't too high for sims with a fast physics loop.
 		// But high enough where things won't build up.
 		// Could be a better choice, though. Probably less often if anything.
-		Registry.ClearDeadCreatures();
+		ClearDeadCreatures();
 
 		if (SimulationWorld.PerformanceTest)
 		{
@@ -225,20 +217,9 @@ public partial class CreatureSim : Node3D, ISimulation
 			GD.Print($"  Average Process Time: {_totalProcessTime / _processCount:F3} ms");
 		}
 	}
-
-	#region Helpers
-	private Array<Dictionary> DetectCollisionsWithCreature(CreatureSimEntityRegistry.PhysicalCreature creature)
-	{
-		var queryParams = new PhysicsShapeQueryParameters3D();
-		queryParams.CollideWithAreas = true;
-		queryParams.ShapeRid = PhysicsServer3D.AreaGetShape(creature.Awareness, 0);
-		queryParams.Transform = Transform3D.Identity.Translated(creature.Position);
-
-		// Run query and print
-		return PhysicsServer3D.SpaceGetDirectState(GetWorld3D().Space).IntersectShape(queryParams);
-	}
 	
-	private void UpdatePositionAndVelocity(ref CreatureSimEntityRegistry.PhysicalCreature creature)
+	#region Behaviors
+	private void UpdatePositionAndVelocity(ref PhysicalCreature creature)
 	{
 		var desiredDisplacement = creature.CurrentDestination - creature.Position;
 		var desiredDisplacementLengthSquared = desiredDisplacement.LengthSquared();
@@ -285,7 +266,7 @@ public partial class CreatureSim : Node3D, ISimulation
 		creature.Position += creature.Velocity / SimulationWorld.PhysicsStepsPerSimSecond;
 	}
 
-	private void ChooseDestination(ref CreatureSimEntityRegistry.PhysicalCreature creature)
+	private void ChooseDestination(ref PhysicalCreature creature)
 	{
 		Vector3 newDestination;
 		int attempts = 0;
@@ -313,13 +294,13 @@ public partial class CreatureSim : Node3D, ISimulation
 		creature.CurrentDestination = newDestination;
 	}
 	
-	private void ChooseDestination(ref CreatureSimEntityRegistry.PhysicalCreature creature, int treeIndex)
+	private void ChooseDestination(ref PhysicalCreature creature, int treeIndex)
 	{
 		var tree = _treeSim.Registry.PhysicalTrees[treeIndex];
 		creature.CurrentDestination = tree.Position;
 	}
 	
-	private (int, bool) FindClosestFood(CreatureSimEntityRegistry.PhysicalCreature creature)
+	private (int, bool) FindClosestFood(PhysicalCreature creature)
 	{
 		var objectsInAwareness = DetectCollisionsWithCreature(creature);
 		var closestFoodIndex = -1;
@@ -348,7 +329,7 @@ public partial class CreatureSim : Node3D, ISimulation
 		return (closestFoodIndex, canEat);
 	}
 
-	private void SpendEnergy(ref CreatureSimEntityRegistry.PhysicalCreature creature)
+	private void SpendEnergy(ref PhysicalCreature creature)
 	{
 		var normalizedSpeed = creature.MaxSpeed / _initialCreatureSpeed;
 		var normalizedAwarenessRadius = creature.AwarenessRadius / InitialAwarenessRadius;
@@ -356,7 +337,7 @@ public partial class CreatureSim : Node3D, ISimulation
 		creature.Energy -= (BaseEnergySpend + GlobalEnergySpendAdjustmentFactor * ( normalizedSpeed * normalizedSpeed + normalizedAwarenessRadius)) / SimulationWorld.PhysicsStepsPerSimSecond;
 	}
 
-	private void EatFood(ref CreatureSimEntityRegistry.PhysicalCreature creature, int treeIndex)
+	private void EatFood(ref PhysicalCreature creature, int treeIndex)
 	{
 		var tree = _treeSim.Registry.PhysicalTrees[treeIndex];
 		if (!tree.HasFruit) return;
@@ -367,49 +348,28 @@ public partial class CreatureSim : Node3D, ISimulation
 		
 		creature.Energy += EnergyGainFromFood;
 		creature.EatingTimeLeft = EatDuration;
-
-		switch (VisualizationMode)
-		{
-			case VisualizationMode.None:
-				break;
-			case VisualizationMode.Debug:
-				var visualTree = _treeSim.Registry.VisualTrees[treeIndex];
-				RenderingServer.InstanceSetVisible(visualTree.FruitMesh, false);
-				break;
-			case VisualizationMode.NodeCreatures:
-				break;
-			default:
-				throw new ArgumentOutOfRangeException();
-		}
 	}
 
-	private void Reproduce(ref CreatureSimEntityRegistry.PhysicalCreature creature)
+	private void Reproduce(ref PhysicalCreature creature)
 	{
-		var transformNextFrame = new Transform3D(Basis.Identity, creature.Position);
-		
-		var newAwarenessRadius = creature.AwarenessRadius;
-		var newSpeed = creature.MaxSpeed;
-
-		if (SimulationWorld.Rng.RangeFloat(0, 1) < MutationProbability)
-		{
-			newAwarenessRadius += SimulationWorld.Rng.RangeFloat(0, 1) < 0.5f ? MutationIncrement : -MutationIncrement;
-			newAwarenessRadius = Mathf.Max(0, newAwarenessRadius);
-		}
-
-		if (SimulationWorld.Rng.RangeFloat(0, 1) < MutationProbability)
-		{
-			newSpeed += SimulationWorld.Rng.RangeFloat(0, 1) < 0.5f ? MutationIncrement : -MutationIncrement;
-			newSpeed = Mathf.Max(0, newSpeed);
-		}
-
-		var physicalCreature = Registry.CreateCreature(
-			transformNextFrame.Origin,
-			newAwarenessRadius,
-			newSpeed,
-			this
-		);
-		ChooseDestination(ref physicalCreature);
 		creature.Energy -= ReproductionEnergyCost;
+
+		var newCreature = creature;
+		
+		if (SimulationWorld.Rng.RangeFloat(0, 1) < MutationProbability)
+		{
+			newCreature.AwarenessRadius += SimulationWorld.Rng.RangeFloat(0, 1) < 0.5f ? MutationIncrement : -MutationIncrement;
+			newCreature.AwarenessRadius = Mathf.Max(0, newCreature.AwarenessRadius);
+		}
+		if (SimulationWorld.Rng.RangeFloat(0, 1) < MutationProbability)
+		{
+			newCreature.MaxSpeed += SimulationWorld.Rng.RangeFloat(0, 1) < 0.5f ? MutationIncrement : -MutationIncrement;
+			newCreature.MaxSpeed = Mathf.Max(0, newCreature.MaxSpeed);
+		}
+
+		ChooseDestination(ref newCreature);
+		Registry.RegisterEntity(newCreature);
+		_creatureVisualizer.RegisterEntity(newCreature);
 	}
 
 	#endregion
@@ -418,10 +378,41 @@ public partial class CreatureSim : Node3D, ISimulation
 	{
 		_stepsSoFar = 0;
 		Registry.Reset();
+		_creatureVisualizer.Reset();
 		
 		foreach (var child in GetChildren())
 		{
 			child.QueueFree();
 		}
 	}
+
+	private void ClearDeadCreatures()
+	{
+		for (var i = Registry.Entities.Count - 1; i >= 0; i--)
+		{
+			if (((PhysicalCreature)Registry.Entities[i]).Alive) continue;
+			
+			Registry.Entities[i].Dispose();
+			Registry.Entities.RemoveAt(i);
+
+			if (_creatureVisualizer.Entities.Count > 0)
+			{
+				_creatureVisualizer.Entities[i].Dispose();
+				_creatureVisualizer.Entities.RemoveAt(i);
+			}
+		}
+	}
+	
+	#region Helpers
+	private Array<Dictionary> DetectCollisionsWithCreature(PhysicalCreature creature)
+	{
+		var queryParams = new PhysicsShapeQueryParameters3D();
+		queryParams.CollideWithAreas = true;
+		queryParams.ShapeRid = PhysicsServer3D.AreaGetShape(creature.Awareness, 0);
+		queryParams.Transform = Transform3D.Identity.Translated(creature.Position);
+
+		// Run query and print
+		return PhysicsServer3D.SpaceGetDirectState(GetWorld3D().Space).IntersectShape(queryParams);
+	}
+	#endregion
 }

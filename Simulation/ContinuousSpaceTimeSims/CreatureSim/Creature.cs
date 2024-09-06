@@ -1,9 +1,9 @@
 using Godot;
 using PrimerAssets;
-using PrimerTools;
+using PrimerTools.Simulation;
 using Blob = PrimerAssets.Blob;
 
-public partial class Creature : Node3D
+public partial class Creature : Node3D, IEntity
 {
 	private Blob _blob;
 
@@ -13,8 +13,6 @@ public partial class Creature : Node3D
 
 		_blob = Blob.CreateInstance();
 		AddChild(_blob);
-		// this.MakeSelfAndChildrenLocal();
-
 		_blob.BlobAnimationTree.Active = false;
 		
 		_blob.SetColor(PrimerColor.blue);
@@ -48,5 +46,11 @@ public partial class Creature : Node3D
 
 		await _blob.TriggerEat();
 		_eating = false;
+	}
+
+	protected override void Dispose(bool disposing)
+	{
+		QueueFree();
+		base.Dispose(disposing);
 	}
 }

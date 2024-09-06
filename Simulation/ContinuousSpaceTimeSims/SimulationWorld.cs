@@ -17,7 +17,7 @@ public partial class SimulationWorld : Node3D
     #region Editor controls
     public bool Running;
 
-    [Export] public VisualizationMode VisualizationMode = VisualizationMode.None;
+    [Export] public VisualizationMode VisualizationMode = VisualizationMode.NodeCreatures;
     #endregion
     
     [Export] public Vector2 WorldDimensions = Vector2.One * 50;

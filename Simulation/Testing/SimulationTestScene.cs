@@ -148,7 +148,7 @@ public partial class SimulationTestScene : Node3D
 		curve.DataFetchMethod = () =>
 		{
 			var dataList = curve.GetData().ToList();
-			dataList.Add( new Vector3(dataList.Count, CreatureSim.Registry.PhysicalCreatures.Count(x => x.Alive), 0) );
+			dataList.Add( new Vector3(dataList.Count, CreatureSim.Registry.Entities.Count(x => ((PhysicalCreature)x).Alive), 0) );
 			return dataList;
 		};
 		
@@ -161,8 +161,8 @@ public partial class SimulationTestScene : Node3D
 
 	private async Task RunSimSequence(CancellationToken ct = default)
 	{
-		try
-		{
+		// try
+		// {
 			var originalTimeScale = SimulationWorld.TimeScale;
 			SimulationWorld.TimeScale = 99999;
 			SimulationWorld.Initialize();
@@ -182,11 +182,11 @@ public partial class SimulationTestScene : Node3D
 
 			CreatureSim.Running = true;
 			_periodicPlotter.Plotting = true;
-		}
-		catch
-		{
-			GD.Print("Canceled");
-		}
+		// }
+		// catch
+		// {
+		// 	GD.Print("Canceled");
+		// }
 	}
 
 	public override void _Ready()
