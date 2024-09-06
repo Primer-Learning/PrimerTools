@@ -50,6 +50,8 @@ public partial class CreatureSim : Node3D, ISimulation
 	private const float MutationIncrement = 1f;
 	private const float InitialAwarenessRadius = 3f;
 	private const float GlobalEnergySpendAdjustmentFactor = 0.2f;
+	private const float BaseEnergySpend = 0.1f;
+	
 	private const float MaxAccelerationFactor = 0.1f;
 	private const float EatDuration = 0.5f;
 	private int _stepsSoFar;
@@ -351,7 +353,7 @@ public partial class CreatureSim : Node3D, ISimulation
 		var normalizedSpeed = creature.MaxSpeed / _initialCreatureSpeed;
 		var normalizedAwarenessRadius = creature.AwarenessRadius / InitialAwarenessRadius;
 		
-		creature.Energy -= GlobalEnergySpendAdjustmentFactor * ( normalizedSpeed * normalizedSpeed + normalizedAwarenessRadius) / SimulationWorld.PhysicsStepsPerSimSecond;
+		creature.Energy -= (BaseEnergySpend + GlobalEnergySpendAdjustmentFactor * ( normalizedSpeed * normalizedSpeed + normalizedAwarenessRadius)) / SimulationWorld.PhysicsStepsPerSimSecond;
 	}
 
 	private void EatFood(ref CreatureSimEntityRegistry.PhysicalCreature creature, int treeIndex)
