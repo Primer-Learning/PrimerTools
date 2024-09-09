@@ -36,7 +36,6 @@ public class CreatureSimNodeRegistry : ICreatureVisualizer
     
     public async void CreatureDeath(int i)
     {
-        
         var creature = (NodeCreature)Entities[i];
         var tween = creature.CreateTween();
         tween.TweenProperty(
@@ -46,16 +45,9 @@ public class CreatureSimNodeRegistry : ICreatureVisualizer
             0.5f
         );
         await tween.ToSignal(tween, "finished");
-        creature.Dispose();
-        
-        // DeathAnimation(i, 0.5f);
+        creature.CleanUp();
     }
-
-    private async void DeathAnimation(int i, float delay)
-    {
-        
-    }
-
+    
     public void UpdateVisualCreature(int i, IEntity entity)
     {
         if (entity is not PhysicalCreature physicalCreature)

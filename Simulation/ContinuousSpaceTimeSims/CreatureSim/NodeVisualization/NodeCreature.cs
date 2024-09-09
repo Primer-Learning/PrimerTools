@@ -51,6 +51,5 @@ public partial class NodeCreature : Node3D, IEntity
 	public void CleanUp()
 	{
 		QueueFree();
-		Dispose();
 	}
 }

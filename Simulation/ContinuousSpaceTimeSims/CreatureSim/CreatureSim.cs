@@ -8,15 +8,22 @@ using PrimerTools.Simulation;
 [Tool]
 public partial class CreatureSim : Node3D, ISimulation
 {
+    private SimulationWorld SimulationWorld => GetParent<SimulationWorld>();
+    public readonly CreatureSimEntityRegistry Registry = new();
+    private ICreatureVisualizer _creatureVisualizer;
+    [Export] private TreeSim _treeSim;
+    
+    // I think this is from before the SimulationWorld and SimulationTest scene handled coordination of sims.
+    // But leaving for now in case I run into a need. 
+    // [Signal] public delegate void SimulationInitializedEventHandler();
+    
+	// Performance testing 
     private Stopwatch _stepStopwatch = new Stopwatch();
     private Stopwatch _processStopwatch = new Stopwatch();
     private double _totalStepTime;
     private double _totalProcessTime;
     private int _stepCount;
     private int _processCount;
-    [Signal] public delegate void SimulationInitializedEventHandler();
-    [Export] private TreeSim _treeSim;
-    private SimulationWorld SimulationWorld => GetParent<SimulationWorld>();
 
 	#region Editor controls
 	private bool _running;
@@ -34,32 +41,34 @@ public partial class CreatureSim : Node3D, ISimulation
 			_running = value;
 		}
 	}
-
 	#endregion
 	
 	#region Sim parameters
-	[Export] private int _initialCreatureCount = 4;
-	[Export] private float _initialCreatureSpeed = 5f;
+	// Movement
 	private const float CreatureStepMaxLength = 10f;
+	private const float MaxAccelerationFactor = 0.1f;
 	private const float CreatureEatDistance = 1;
+	private const float EatDuration = 0.5f;
+	
+	// Energy
+	private const float BaseEnergySpend = 0.1f;
+	private const float GlobalEnergySpendAdjustmentFactor = 0.2f;
 	private const float EnergyGainFromFood = 1f;
 	private const float ReproductionEnergyThreshold = 2f;
 	private const float ReproductionEnergyCost = 1f;
+	
+	// Initial population
+	[Export] private int _initialCreatureCount = 4;
+	[Export] private float _initialCreatureSpeed = 5f;
+	private const float InitialAwarenessRadius = 3f;
+	
+	// Mutation
 	private const float MutationProbability = 0.1f;
 	private const float MutationIncrement = 1f;
-	private const float InitialAwarenessRadius = 3f;
-	private const float GlobalEnergySpendAdjustmentFactor = 0.2f;
-	private const float BaseEnergySpend = 0.1f;
-	
-	private const float MaxAccelerationFactor = 0.1f;
-	private const float EatDuration = 0.5f;
-	private int _stepsSoFar;
 	#endregion
-	
-	public readonly CreatureSimEntityRegistry Registry = new();
-	private ICreatureVisualizer _creatureVisualizer;
 
 	#region Simulation
+	private int _stepsSoFar;
 
 	private void Initialize()
 	{
@@ -102,7 +111,7 @@ public partial class CreatureSim : Node3D, ISimulation
 			_creatureVisualizer.RegisterEntity(physicalCreature);
 		}
 
-		EmitSignal(SignalName.SimulationInitialized);
+		// EmitSignal(SignalName.SimulationInitialized);
 	}
 	public void Step()
 	{
@@ -394,6 +403,9 @@ public partial class CreatureSim : Node3D, ISimulation
 
 			if (_creatureVisualizer.Entities.Count > 0)
 			{
+				// Visual creatures aren't cleaned up here, since they may want to do an animation before freeing the object
+				// But we clear the list here so they stay in sync.
+				// For this reason, _creatureVisualizer.CreatureDeath must handle cleanup.
 				_creatureVisualizer.Entities.RemoveAt(i);
 			}
 		}

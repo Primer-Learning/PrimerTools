@@ -8,14 +8,6 @@ using PrimerTools.Simulation;
 [Tool]
 public partial class TreeSim : Node3D, ISimulation
 {
-    private Stopwatch _stepStopwatch = new Stopwatch();
-    private Stopwatch _processStopwatch = new Stopwatch();
-    private Stopwatch _visualUpdateStopwatch = new Stopwatch();
-    private double _totalStepTime;
-    private double _totalProcessTime;
-    private double _totalVisualUpdateTime;
-    private int _stepCount;
-    private int _processCount;
     public enum SimMode
     {
         TreeGrowth,
@@ -23,7 +15,10 @@ public partial class TreeSim : Node3D, ISimulation
     }
     [Export] public SimMode Mode = SimMode.TreeGrowth;
     
+    public readonly TreeSimEntityRegistry Registry = new();
     private SimulationWorld SimulationWorld => GetParent<SimulationWorld>();
+    public VisualizationMode VisualizationMode => SimulationWorld.VisualizationMode;
+    private int _stepsSoFar = 0;
     
     #region Editor controls
     private bool _running;
@@ -41,32 +36,41 @@ public partial class TreeSim : Node3D, ISimulation
             _running = value;
         }
     }
-
-    [Export] private bool _verbose;
-    public VisualizationMode VisualizationMode => SimulationWorld.VisualizationMode;
+    
     #endregion
     
     #region Sim parameters
     [Export] private int _initialTreeCount = 20;
-    [Export] private float _deadTreeClearInterval = 1f;
-    private float _timeSinceLastClear = 0f;
-    private const float TreeMaturationTime = 1f;
-    private const float TreeSpawnInterval = 0.4f;
+    
     private const float MaxTreeSpawnRadius = 5f;
     private const float MinTreeSpawnRadius = 1f;
     private const float TreeCompetitionRadius = 3f;
     private const float MinimumTreeDistance = 0.5f;
+    
+    private const float TreeMaturationTime = 1f;
+    private const float TreeSpawnInterval = 0.4f;
+    public const float FruitGrowthTime = 2f;
+    public const float NodeFruitGrowthDelay = 0.5f;
+    
     private const float SaplingDeathProbabilityBase = 0.001f;
     private const float SaplingDeathProbabilityPerNeighbor = 0.01f;
     private const float MatureTreeDeathProbabilityBase = 0.0001f;
     private const float MatureTreeDeathProbabilityPerNeighbor = 0.0001f;
-    public const float FruitGrowthTime = 2f;
-    public const float NodeFruitGrowthDelay = 0.5f;
-    private int _stepsSoFar = 0;
+    
+    [Export] private float _deadTreeClearInterval = 1f;
+    private float _timeSinceLastClear = 0f;
     #endregion
     
-    public readonly TreeSimEntityRegistry Registry = new();
-
+    // Performance testing
+    private Stopwatch _stepStopwatch = new Stopwatch();
+    private Stopwatch _processStopwatch = new Stopwatch();
+    private Stopwatch _visualUpdateStopwatch = new Stopwatch();
+    private double _totalStepTime;
+    private double _totalProcessTime;
+    private double _totalVisualUpdateTime;
+    private int _stepCount;
+    private int _processCount;
+    
     private void Initialize()
     {
         Registry.World3D = SimulationWorld.World3D;
