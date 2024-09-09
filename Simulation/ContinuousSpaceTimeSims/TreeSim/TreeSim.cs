@@ -135,10 +135,7 @@ public partial class TreeSim : Node3D, ISimulation
                     {
                         Registry.NodeTrees[i].GrowFruit(FruitGrowthTime - NodeFruitGrowthDelay);
                     }
-                    if (physicalTree.IsMature)
-                    {
-                        Registry.NodeTrees[i].Scale = Vector3.One * 1.0f;
-                    }
+                    Registry.NodeTrees[i].Scale = Vector3.One * Mathf.Min(1, physicalTree.Age / TreeMaturationTime);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -257,8 +254,6 @@ public partial class TreeSim : Node3D, ISimulation
         {
             var tree = Registry.PhysicalTrees[i];
             if (tree.IsDead) continue;
-
-            tree.Age += 1f / SimulationWorld.PhysicsStepsPerSimSecond;
             
             switch (Mode)
             {
@@ -273,6 +268,7 @@ public partial class TreeSim : Node3D, ISimulation
                     }
                     break;
                 case SimMode.TreeGrowth:
+                    tree.Age += 1f / SimulationWorld.PhysicsStepsPerSimSecond;
                     if (!tree.IsMature)
                     {
                         var neighborCount = CountNeighbors(tree);
