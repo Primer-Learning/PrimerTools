@@ -177,6 +177,8 @@ public partial class SimulationTestScene : Node3D
 			TreeSim.Mode = TreeSim.SimMode.TreeGrowth;
 			TreeSim.Running = true;
 
+			CreatureSim.Initialize();
+
 			await Task.Delay(2000, ct);
 			ct.ThrowIfCancellationRequested();
 			SimulationWorld.TimeScale = originalTimeScale;

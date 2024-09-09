@@ -46,6 +46,7 @@ public class CreatureSimEntityRegistry : IEntityRegistry
 			AwarenessRadius = physicalCreature.AwarenessRadius,
 			MaxSpeed = physicalCreature.MaxSpeed,
 			Alive = true,
+			Age = 0,
 			BodyShapeResource = bodyShape,
 			AwarenessShapeResource = awarenessShape,
 			Position = physicalCreature.Position,

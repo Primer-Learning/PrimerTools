@@ -59,7 +59,7 @@ public partial class NodeCreature : Node3D, IEntity
 		nextTween.TweenProperty(
 			fruit,
 			"global_position",
-			GlobalPosition + _blob.MouthPosition,
+			GlobalPosition + GlobalBasis * _blob.MouthPosition,
 			fruitMoveDuration
 		);
 

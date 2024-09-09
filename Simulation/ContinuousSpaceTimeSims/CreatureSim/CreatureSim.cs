@@ -33,9 +33,8 @@ public partial class CreatureSim : Node3D, ISimulation
 		get => _running;
 		set
 		{
-			if (value && _stepsSoFar == 0)
+			if (value && !_initialized)
 			{
-				GD.Print("Starting sim creature sim");
 				Initialize();
 			}
 			_running = value;
@@ -48,7 +47,10 @@ public partial class CreatureSim : Node3D, ISimulation
 	private const float CreatureStepMaxLength = 10f;
 	private const float MaxAccelerationFactor = 0.1f;
 	private const float CreatureEatDistance = 2;
+	
+	// State-based pause durations
 	private const float EatDuration = 1.5f;
+	public const float MaturationTime = 5f;
 	
 	// Energy
 	private const float BaseEnergySpend = 0.1f;
@@ -70,7 +72,8 @@ public partial class CreatureSim : Node3D, ISimulation
 	#region Simulation
 	private int _stepsSoFar;
 
-	private void Initialize()
+	private bool _initialized;
+	public void Initialize()
 	{
 		Registry.World3D = SimulationWorld.World3D;
 		switch (SimulationWorld.VisualizationMode)
@@ -111,6 +114,9 @@ public partial class CreatureSim : Node3D, ISimulation
 			_creatureVisualizer.RegisterEntity(physicalCreature);
 		}
 
+		_stepsSoFar = 0;
+		_initialized = true;
+
 		// EmitSignal(SignalName.SimulationInitialized);
 	}
 	public void Step()
@@ -127,6 +133,8 @@ public partial class CreatureSim : Node3D, ISimulation
 		{
 			_stepStopwatch.Restart();
 		}
+
+		float timeStep = 1f / SimulationWorld.PhysicsStepsPerSimSecond;
 		
 		// Process creatures. Doing one creature at a time for now with one big struct.
 		// But eventually, it might make sense to do several loops which each work with narrower sets of data
@@ -136,10 +144,16 @@ public partial class CreatureSim : Node3D, ISimulation
 			var creature = (PhysicalCreature)Registry.Entities[i];
 			if (!creature.Alive) continue;
 
-			// If eating, don't do anything else
+			creature.Age += timeStep;
+
+			if (creature.Age < MaturationTime)
+			{
+				Registry.Entities[i] = creature;
+				continue;
+			}
 			if (creature.EatingTimeLeft > 0)
 			{
-				creature.EatingTimeLeft -= 1f / SimulationWorld.PhysicsStepsPerSimSecond;
+				creature.EatingTimeLeft -= timeStep;
 				Registry.Entities[i] = creature;
 				continue;
 			}
@@ -390,6 +404,7 @@ public partial class CreatureSim : Node3D, ISimulation
 		_stepsSoFar = 0;
 		Registry.Reset();
 		_creatureVisualizer?.Reset();
+		_initialized = false;
 		
 		foreach (var child in GetChildren())
 		{

@@ -11,6 +11,7 @@ public struct PhysicalCreature : IEntity
     public float AwarenessRadius;
     public float MaxSpeed;
     public bool Alive;
+    public float Age;
     public float Energy;
     public Vector3 Position;
     public Vector3 Velocity;

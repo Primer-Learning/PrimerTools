@@ -24,6 +24,7 @@ public class CreatureSimNodeRegistry : ICreatureVisualizer
         var creature = new NodeCreature();
         _creatureSim.AddChild(creature);
         creature.Position = physicalCreature.Position;
+        creature.Scale = Vector3.Zero;
         creature.Name = "Creature"; 
         Entities.Add(creature);
         // creature.Owner = creatureSim.GetTree().EditedSceneRoot;
@@ -56,12 +57,14 @@ public class CreatureSimNodeRegistry : ICreatureVisualizer
             return;
         }
 
+        var nodeCreature = (NodeCreature)Entities[i];
+        var scaleFactor = Mathf.Min(1, physicalCreature.Age / CreatureSim.MaturationTime);
+        nodeCreature.Scale = scaleFactor * Vector3.One;
+        
         if (physicalCreature.EatingTimeLeft > 0) return;
         
-        var nodeCreature = (NodeCreature)Entities[i];
+        // Position and rotation
         nodeCreature.Position = physicalCreature.Position;
-					
-        // Calculate and apply rotation
         var direction = physicalCreature.Velocity;
         if (direction.LengthSquared() > 0.0001f)
         {
