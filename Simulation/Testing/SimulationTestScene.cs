@@ -123,6 +123,11 @@ public partial class SimulationTestScene : Node3D
 	
 	private void CreatePlot()
 	{
+		foreach (var child in GraphParent.GetChildren())
+		{
+			if (IsInstanceValid(child)) child.Free();
+		}
+		
 		var thisGraph = Graph.CreateInstance();
 		GraphParent.AddChild(thisGraph);
 		// thisGraph.Owner = GetTree().EditedSceneRoot;
@@ -152,6 +157,7 @@ public partial class SimulationTestScene : Node3D
 			return dataList;
 		};
 		
+		// _periodicPlotter?.QueueFree();
 		_periodicPlotter = new PeriodicPlotter();
 		GraphParent.AddChild(_periodicPlotter);
 		_periodicPlotter.Name = "Periodic plotter";
@@ -161,8 +167,8 @@ public partial class SimulationTestScene : Node3D
 
 	private async Task RunSimSequence(CancellationToken ct = default)
 	{
-		// try
-		// {
+		try
+		{
 			var originalTimeScale = SimulationWorld.TimeScale;
 			SimulationWorld.TimeScale = 99999;
 			SimulationWorld.Initialize();
@@ -182,11 +188,11 @@ public partial class SimulationTestScene : Node3D
 
 			CreatureSim.Running = true;
 			_periodicPlotter.Plotting = true;
-		// }
-		// catch
-		// {
-		// 	GD.Print("Canceled");
-		// }
+		}
+		catch
+		{
+			GD.Print("Canceled");
+		}
 	}
 
 	public override void _Ready()
