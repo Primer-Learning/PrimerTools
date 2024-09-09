@@ -21,7 +21,7 @@ public class CreatureSimNodeRegistry : ICreatureVisualizer
             return;
         }
         
-        var creature = new Creature();
+        var creature = new NodeCreature();
         _creatureSim.AddChild(creature);
         creature.Position = physicalCreature.Position;
         creature.Name = "Creature"; 
@@ -31,13 +31,13 @@ public class CreatureSimNodeRegistry : ICreatureVisualizer
 
     public void CreatureEat(int i, Node3D food)
     {
-        ((Creature)Entities[i]).Eat(food);
+        ((NodeCreature)Entities[i]).Eat(food);
     }
     
     public async void CreatureDeath(int i)
     {
         
-        var creature = (Creature)Entities[i];
+        var creature = (NodeCreature)Entities[i];
         var tween = creature.CreateTween();
         tween.TweenProperty(
             creature,
@@ -64,7 +64,7 @@ public class CreatureSimNodeRegistry : ICreatureVisualizer
             return;
         }
         
-        var nodeCreature = (Creature)Entities[i];
+        var nodeCreature = (NodeCreature)Entities[i];
         nodeCreature.Position = physicalCreature.Position;
 					
         // Calculate and apply rotation

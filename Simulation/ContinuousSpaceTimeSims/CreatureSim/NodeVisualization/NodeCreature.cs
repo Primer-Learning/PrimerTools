@@ -3,7 +3,7 @@ using PrimerAssets;
 using PrimerTools.Simulation;
 using Blob = PrimerAssets.Blob;
 
-public partial class Creature : Node3D, IEntity
+public partial class NodeCreature : Node3D, IEntity
 {
 	private Blob _blob;
 
