@@ -35,7 +35,7 @@ public partial class SimulationWorld : Node3D
     }
     private static int _seed = -1;
 
-    [Export]
+    [Export] // Would make this static, but you can't export a static property. And I want to control this from the editor.
     public int Seed
     {
         get => _seed;

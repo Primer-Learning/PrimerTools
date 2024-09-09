@@ -6,7 +6,7 @@ public interface ICreatureVisualizer : IEntityRegistry
 {
     public void UpdateVisualCreature(int i, IEntity entity);
 
-    public void CreatureEat(int i, Node3D food) {}
+    public void CreatureEat(int i, Node3D food, float eatingDuration) {}
 
     /// <summary>
     /// Should take care of disposal. It happens here so it can wait for an animation if necessary. 

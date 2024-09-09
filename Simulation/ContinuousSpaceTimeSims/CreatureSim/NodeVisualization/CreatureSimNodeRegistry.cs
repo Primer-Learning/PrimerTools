@@ -29,9 +29,9 @@ public class CreatureSimNodeRegistry : ICreatureVisualizer
         // creature.Owner = creatureSim.GetTree().EditedSceneRoot;
     }
 
-    public void CreatureEat(int i, Node3D food)
+    public void CreatureEat(int i, Node3D food, float eatDuration)
     {
-        ((NodeCreature)Entities[i]).Eat(food);
+        ((NodeCreature)Entities[i]).Eat(food, eatDuration);
     }
     
     public async void CreatureDeath(int i)
@@ -44,7 +44,7 @@ public class CreatureSimNodeRegistry : ICreatureVisualizer
             Vector3.Zero,
             0.5f
         );
-        await tween.ToSignal(tween, "finished");
+        await tween.ToSignal(tween, Tween.SignalName.Finished);
         creature.CleanUp();
     }
     
@@ -55,6 +55,8 @@ public class CreatureSimNodeRegistry : ICreatureVisualizer
             GD.PrintErr("CreatureSimNodeRegistry was passed the wrong kind of entity");
             return;
         }
+
+        if (physicalCreature.EatingTimeLeft > 0) return;
         
         var nodeCreature = (NodeCreature)Entities[i];
         nodeCreature.Position = physicalCreature.Position;

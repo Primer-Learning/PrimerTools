@@ -47,15 +47,15 @@ public partial class CreatureSim : Node3D, ISimulation
 	// Movement
 	private const float CreatureStepMaxLength = 10f;
 	private const float MaxAccelerationFactor = 0.1f;
-	private const float CreatureEatDistance = 1;
-	private const float EatDuration = 0.5f;
+	private const float CreatureEatDistance = 2;
+	private const float EatDuration = 1.5f;
 	
 	// Energy
 	private const float BaseEnergySpend = 0.1f;
 	private const float GlobalEnergySpendAdjustmentFactor = 0.2f;
 	private const float EnergyGainFromFood = 1f;
-	private const float ReproductionEnergyThreshold = 2f;
-	private const float ReproductionEnergyCost = 1f;
+	private const float ReproductionEnergyThreshold = 20f;
+	private const float ReproductionEnergyCost = 10f;
 	
 	// Initial population
 	[Export] private int _initialCreatureCount = 4;
@@ -149,7 +149,7 @@ public partial class CreatureSim : Node3D, ISimulation
 			if (canEat && creature.EatingTimeLeft <= 0)
 			{
 				EatFood(ref creature, closestFoodIndex);
-				_creatureVisualizer.CreatureEat(i, _treeSim.Registry.NodeTrees[closestFoodIndex].GetFruit());
+				_creatureVisualizer.CreatureEat(i, _treeSim.Registry.NodeTrees[closestFoodIndex].GetFruit(), EatDuration / SimulationWorld.TimeScale);
 			}
 			else if (closestFoodIndex > -1)
 			{
@@ -225,7 +225,8 @@ public partial class CreatureSim : Node3D, ISimulation
 	}
 	
 	#region Behaviors
-	private void UpdatePositionAndVelocity(ref PhysicalCreature creature)
+
+	private void UpdateVelocity(ref PhysicalCreature creature)
 	{
 		var desiredDisplacement = creature.CurrentDestination - creature.Position;
 		var desiredDisplacementLengthSquared = desiredDisplacement.LengthSquared();
@@ -259,6 +260,10 @@ public partial class CreatureSim : Node3D, ISimulation
 
 		// Update velocity
 		creature.Velocity += accelerationVector;
+	}
+	private void UpdatePositionAndVelocity(ref PhysicalCreature creature)
+	{
+		UpdateVelocity(ref creature);
 
 		// Limit velocity to max speed
 		var velocityLengthSquared = creature.Velocity.LengthSquared();
