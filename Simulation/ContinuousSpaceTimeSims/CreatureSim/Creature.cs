@@ -48,9 +48,9 @@ public partial class Creature : Node3D, IEntity
 		_eating = false;
 	}
 
-	protected override void Dispose(bool disposing)
+	public void CleanUp()
 	{
 		QueueFree();
-		base.Dispose(disposing);
+		Dispose();
 	}
 }

@@ -1,4 +1,5 @@
-﻿using Godot;
+﻿using System;
+using Godot;
 
 namespace PrimerTools.Simulation;
 
@@ -19,7 +20,7 @@ public struct PhysicalCreature : IEntity
     public CapsuleShape3D BodyShapeResource;
     public SphereShape3D AwarenessShapeResource;
     
-    public void Dispose()
+    public void CleanUp()
     {
         FreeRids();
         BodyShapeResource?.Dispose();

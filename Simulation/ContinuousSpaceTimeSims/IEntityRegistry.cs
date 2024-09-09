@@ -8,5 +8,9 @@ public interface IEntityRegistry
 
     public void RegisterEntity(IEntity entity);
 
-    public void Reset();
+    public void Reset()
+    {
+        foreach (var entity in Entities) entity.CleanUp();
+        Entities.Clear();
+    }
 }

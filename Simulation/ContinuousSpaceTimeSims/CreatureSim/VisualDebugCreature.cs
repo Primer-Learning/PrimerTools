@@ -15,7 +15,7 @@ public struct VisualDebugCreature : IEntity
         RenderingServer.FreeRid(AwarenessMesh);
     }
 
-    public void Dispose()
+    public void CleanUp()
     {
         FreeRids();
         BodyMeshResource?.Dispose();

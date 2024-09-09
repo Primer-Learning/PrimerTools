@@ -51,12 +51,6 @@ public class CreatureSimDebugVisualRegistry : ICreatureVisualizer
         );
     }
 
-    public void Reset()
-    {
-        foreach (var creature in Entities) creature.Dispose();
-        Entities.Clear();
-    }
-
     public void UpdateVisualCreature(int i, IEntity entity)
     {
         if (entity is not PhysicalCreature physicalCreature)
@@ -70,7 +64,7 @@ public class CreatureSimDebugVisualRegistry : ICreatureVisualizer
         RenderingServer.InstanceSetTransform(visualCreature.BodyMesh, transform);
         RenderingServer.InstanceSetTransform(visualCreature.AwarenessMesh, transform);
     }
-    
+
     #region Object prep
 
     private SphereMesh _cachedAwarenessBubbleMesh;

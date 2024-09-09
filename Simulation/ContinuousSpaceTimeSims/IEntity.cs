@@ -3,6 +3,7 @@ using Godot;
 
 namespace PrimerTools.Simulation;
 
-public interface IEntity : IDisposable
+public interface IEntity
 {
+    public void CleanUp();
 }

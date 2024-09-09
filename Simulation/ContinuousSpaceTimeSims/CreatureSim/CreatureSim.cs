@@ -140,10 +140,7 @@ public partial class CreatureSim : Node3D, ISimulation
 			if (canEat && creature.EatingTimeLeft <= 0)
 			{
 				EatFood(ref creature, closestFoodIndex);
-				if (SimulationWorld.VisualizationMode == VisualizationMode.NodeCreatures)
-				{
-					((CreatureSimNodeRegistry)_creatureVisualizer).CreatureEat(i, _treeSim.Registry.NodeTrees[closestFoodIndex].GetFruit());
-				}
+				_creatureVisualizer.CreatureEat(i, _treeSim.Registry.NodeTrees[closestFoodIndex].GetFruit());
 			}
 			else if (closestFoodIndex > -1)
 			{
@@ -162,7 +159,7 @@ public partial class CreatureSim : Node3D, ISimulation
 			if (creature.Energy <= 0)
 			{
 				creature.Alive = false;
-				if (SimulationWorld.VisualizationMode == VisualizationMode.NodeCreatures) ((Creature)((CreatureSimNodeRegistry)_creatureVisualizer).Entities[i]).Visible = false;
+				_creatureVisualizer.CreatureDeath(i);
 			}
 
 			Registry.Entities[i] = creature;
@@ -378,7 +375,7 @@ public partial class CreatureSim : Node3D, ISimulation
 	{
 		_stepsSoFar = 0;
 		Registry.Reset();
-		_creatureVisualizer.Reset();
+		_creatureVisualizer?.Reset();
 		
 		foreach (var child in GetChildren())
 		{
@@ -392,12 +389,11 @@ public partial class CreatureSim : Node3D, ISimulation
 		{
 			if (((PhysicalCreature)Registry.Entities[i]).Alive) continue;
 			
-			Registry.Entities[i].Dispose();
+			Registry.Entities[i].CleanUp();
 			Registry.Entities.RemoveAt(i);
 
 			if (_creatureVisualizer.Entities.Count > 0)
 			{
-				_creatureVisualizer.Entities[i].Dispose();
 				_creatureVisualizer.Entities.RemoveAt(i);
 			}
 		}

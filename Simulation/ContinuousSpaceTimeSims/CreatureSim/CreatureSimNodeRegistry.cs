@@ -29,15 +29,31 @@ public class CreatureSimNodeRegistry : ICreatureVisualizer
         // creature.Owner = creatureSim.GetTree().EditedSceneRoot;
     }
 
-    public void Reset()
+    public void CreatureEat(int i, Node3D food)
     {
-        foreach (var creature in Entities) creature.Dispose();
-        Entities.Clear();
+        ((Creature)Entities[i]).Eat(food);
+    }
+    
+    public async void CreatureDeath(int i)
+    {
+        
+        var creature = (Creature)Entities[i];
+        var tween = creature.CreateTween();
+        tween.TweenProperty(
+            creature,
+            "scale",
+            Vector3.Zero,
+            0.5f
+        );
+        await tween.ToSignal(tween, "finished");
+        creature.Dispose();
+        
+        // DeathAnimation(i, 0.5f);
     }
 
-    public void CreatureEat(int index, Node3D food)
+    private async void DeathAnimation(int i, float delay)
     {
-        ((Creature)Entities[index]).Eat(food);
+        
     }
 
     public void UpdateVisualCreature(int i, IEntity entity)
