@@ -4,11 +4,11 @@ using Godot;
 
 namespace PrimerTools.Simulation;
 
-public class CreatureSimEntityRegistry : IEntityRegistry
+public class CreatureSimEntityRegistry : IEntityRegistry<PhysicalCreature>
 {
 	public World3D World3D;
 
-	public List<IEntity> Entities { get; private set; } = new();
+	public List<PhysicalCreature> Entities { get; private set; } = new();
 
 	public void RegisterEntity(IEntity entity)
 	{

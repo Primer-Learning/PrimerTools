@@ -2,9 +2,9 @@
 
 namespace PrimerTools.Simulation;
 
-public interface IEntityRegistry
+public interface IEntityRegistry<T> where T : IEntity
 {
-    public List<IEntity> Entities { get; }
+    public List<T> Entities { get; }
 
     public void RegisterEntity(IEntity entity);
 

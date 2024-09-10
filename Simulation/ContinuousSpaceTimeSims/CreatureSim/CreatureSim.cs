@@ -58,7 +58,7 @@ public partial class CreatureSim : Node3D, ISimulation
 	private bool _initialized;
 	private SimulationWorld SimulationWorld => GetParent<SimulationWorld>();
 	public readonly CreatureSimEntityRegistry Registry = new();
-	private ICreatureVisualizer _creatureVisualizer;
+	private IEntityRegistry<IVisualCreature> _visualCreatureRegistry;
 	[Export] private TreeSim _treeSim;
 
 	#region Life cycle
@@ -70,10 +70,10 @@ public partial class CreatureSim : Node3D, ISimulation
 			case VisualizationMode.None:
 				break;
 			case VisualizationMode.Debug:
-				_creatureVisualizer = new CreatureSimDebugVisualRegistry(SimulationWorld.World3D);
+				_visualCreatureRegistry = new CreatureSimDebugVisualRegistry(SimulationWorld.World3D);
 				break;
 			case VisualizationMode.NodeCreatures:
-				_creatureVisualizer = new CreatureSimNodeRegistry(this);
+				_visualCreatureRegistry = new CreatureSimNodeRegistry(this);
 				break;
 			default:
 				throw new ArgumentOutOfRangeException();
@@ -108,7 +108,7 @@ public partial class CreatureSim : Node3D, ISimulation
 	{
 		_stepsSoFar = 0;
 		Registry.Reset();
-		_creatureVisualizer?.Reset();
+		_visualCreatureRegistry?.Reset();
 		_initialized = false;
 		
 		foreach (var child in GetChildren())
@@ -140,7 +140,7 @@ public partial class CreatureSim : Node3D, ISimulation
 		// For cache locality.
 		for (var i = 0; i < Registry.Entities.Count; i++)
 		{
-			var creature = (PhysicalCreature)Registry.Entities[i];
+			var creature = Registry.Entities[i];
 			if (!creature.Alive) continue;
 
 			creature.Age += timeStep;
@@ -162,7 +162,10 @@ public partial class CreatureSim : Node3D, ISimulation
 			if (canEat && creature.EatingTimeLeft <= 0)
 			{
 				EatFood(ref creature, closestFoodIndex);
-				_creatureVisualizer.CreatureEat(i, _treeSim.Registry.NodeTrees[closestFoodIndex].GetFruit(), EatDuration / SimulationWorld.TimeScale);
+				
+				// TODO: Eliminate this check. Currently, we need it because the tree sim doesn't handle the  
+				// different visualization modes gracefully
+				if (SimulationWorld.VisualizationMode == VisualizationMode.NodeCreatures) _visualCreatureRegistry.Entities[i].Eat(_treeSim.Registry.NodeTrees[closestFoodIndex].GetFruit(), EatDuration / SimulationWorld.TimeScale);
 			}
 			else if (closestFoodIndex > -1)
 			{
@@ -181,7 +184,7 @@ public partial class CreatureSim : Node3D, ISimulation
 			if (creature.Energy <= 0)
 			{
 				creature.Alive = false;
-				_creatureVisualizer.CreatureDeath(i);
+				_visualCreatureRegistry.Entities[i].Death();
 			}
 
 			Registry.Entities[i] = creature;
@@ -208,7 +211,7 @@ public partial class CreatureSim : Node3D, ISimulation
 		// Update visuals
 		for (var i = 0; i < Registry.Entities.Count; i++)
 		{
-			_creatureVisualizer.UpdateVisualCreature(i, Registry.Entities[i]);
+			_visualCreatureRegistry.Entities[i].UpdateTransform(Registry.Entities[i]);
 		}
 		
 		// This happens every process frame, which is an intuitive choice
@@ -413,19 +416,19 @@ public partial class CreatureSim : Node3D, ISimulation
 			Registry.Entities[i].CleanUp();
 			Registry.Entities.RemoveAt(i);
 
-			if (_creatureVisualizer.Entities.Count > 0)
+			if (_visualCreatureRegistry.Entities.Count > 0)
 			{
 				// Visual creatures aren't cleaned up here, since they may want to do an animation before freeing the object
 				// But we clear the list here so they stay in sync.
 				// For this reason, _creatureVisualizer.CreatureDeath must handle cleanup.
-				_creatureVisualizer.Entities.RemoveAt(i);
+				_visualCreatureRegistry.Entities.RemoveAt(i);
 			}
 		}
 	}
 	private void RegisterCreature(PhysicalCreature physicalCreature)
 	{
 		Registry.RegisterEntity(physicalCreature);
-		_creatureVisualizer.RegisterEntity(physicalCreature);
+		_visualCreatureRegistry.RegisterEntity(physicalCreature);
 	}
 	#endregion
 	

@@ -7,14 +7,15 @@ using PrimerTools.Simulation;
 using Blob = PrimerAssets.Blob;
 using Range = System.Range;
 
-public partial class NodeCreature : Node3D, IEntity
+public partial class NodeCreature : Node3D, IVisualCreature
 {
 	private Blob _blob;
 
 	public override void _Ready()
 	{
 		base._Ready();
-
+		
+		Name = "Creature"; 
 		_blob = Blob.CreateInstance();
 		AddChild(_blob);
 		_blob.BlobAnimationTree.Active = false;
@@ -22,8 +23,11 @@ public partial class NodeCreature : Node3D, IEntity
 		_blob.SetColor(PrimerColor.Blue);
 	}
 
-	public void AdjustVisualsToCreatureAttributes(PhysicalCreature physicalCreature)
+	public void Initialize(PhysicalCreature physicalCreature)
 	{
+		Position = physicalCreature.Position;
+		Scale = Vector3.Zero;
+		
 		if (_blob == null)
 		{
 			PrimerGD.PrintErrorWithStackTrace("Creature blob does not exist and cannot have its visuals adjusted.");
@@ -117,6 +121,34 @@ public partial class NodeCreature : Node3D, IEntity
 			originalRotation,
 			animationSettleDuration
 		);
+	}
+	public async void Death()
+	{
+		var tween = CreateTween();
+		tween.TweenProperty(
+			this,
+			"scale",
+			Vector3.Zero,
+			0.5f
+		);
+		await tween.ToSignal(tween, Tween.SignalName.Finished);
+		CleanUp();
+	}
+
+	public void UpdateTransform(PhysicalCreature physicalCreature)
+	{
+		var scaleFactor = Mathf.Min(1, physicalCreature.Age / CreatureSim.MaturationTime);
+		Scale = scaleFactor * Vector3.One;
+        
+		if (physicalCreature.EatingTimeLeft > 0) return;
+        
+		// Position and rotation
+		Position = physicalCreature.Position;
+		var direction = physicalCreature.Velocity;
+		if (direction.LengthSquared() > 0.0001f)
+		{
+			LookAt(GlobalPosition - direction, Vector3.Up);
+		}
 	}
 
 	public void CleanUp()

@@ -203,10 +203,4 @@ public partial class SimulationTestScene : Node3D
 		Run = true;
 		Engine.MaxFps = 0;
 	}
-
-	protected override void Dispose(bool disposing)
-	{
-		GD.Print("Dospises");
-		base.Dispose(disposing);
-	}
 }
