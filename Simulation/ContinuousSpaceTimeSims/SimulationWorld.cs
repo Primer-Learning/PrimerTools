@@ -22,8 +22,8 @@ public partial class SimulationWorld : Node3D
     
     [Export] public Vector2 WorldDimensions = Vector2.One * 50;
 
-    private float _timeScale = 1;
-    [Export]
+    private float _timeScale = 2;
+    // [Export]
     public float TimeScale
     {
         get => _timeScale;

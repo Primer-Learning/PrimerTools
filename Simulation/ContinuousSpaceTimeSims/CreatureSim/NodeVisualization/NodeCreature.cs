@@ -31,6 +31,9 @@ public partial class NodeCreature : Node3D, IEntity
 		}
 		
 		_blob.SetColor(ColorFromSpeed(physicalCreature.MaxSpeed));
+		var normalizedAwareness = physicalCreature.AwarenessRadius / CreatureSim.InitialAwarenessRadius;
+		_blob.LeftEye.Scale = normalizedAwareness * Vector3.One;
+		_blob.RightEye.Scale = normalizedAwareness * Vector3.One;
 	}
 
 	private static Color[] _speedColors = new[]

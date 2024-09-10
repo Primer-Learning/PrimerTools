@@ -8,23 +8,6 @@ using PrimerTools.Simulation;
 [Tool]
 public partial class CreatureSim : Node3D, ISimulation
 {
-    private SimulationWorld SimulationWorld => GetParent<SimulationWorld>();
-    public readonly CreatureSimEntityRegistry Registry = new();
-    private ICreatureVisualizer _creatureVisualizer;
-    [Export] private TreeSim _treeSim;
-    
-    // I think this is from before the SimulationWorld and SimulationTest scene handled coordination of sims.
-    // But leaving for now in case I run into a need. 
-    // [Signal] public delegate void SimulationInitializedEventHandler();
-    
-	// Performance testing 
-    private Stopwatch _stepStopwatch = new Stopwatch();
-    private Stopwatch _processStopwatch = new Stopwatch();
-    private double _totalStepTime;
-    private double _totalProcessTime;
-    private int _stepCount;
-    private int _processCount;
-
 	#region Editor controls
 	private bool _running;
 	[Export]
@@ -61,9 +44,9 @@ public partial class CreatureSim : Node3D, ISimulation
 	
 	// Initial population
 	[Export] private int _initialCreatureCount = 4;
-	public static readonly float InitialCreatureSpeed = 5f;
+	public const float InitialCreatureSpeed = 5f;
 
-	private const float InitialAwarenessRadius = 3f;
+	public const float InitialAwarenessRadius = 3f;
 	
 	// Mutation
 	private const float MutationProbability = 0.1f;
@@ -72,8 +55,13 @@ public partial class CreatureSim : Node3D, ISimulation
 
 	#region Simulation
 	private int _stepsSoFar;
-
 	private bool _initialized;
+	private SimulationWorld SimulationWorld => GetParent<SimulationWorld>();
+	public readonly CreatureSimEntityRegistry Registry = new();
+	private ICreatureVisualizer _creatureVisualizer;
+	[Export] private TreeSim _treeSim;
+
+	#region Life cycle
 	public void Initialize()
 	{
 		Registry.World3D = SimulationWorld.World3D;
@@ -110,16 +98,26 @@ public partial class CreatureSim : Node3D, ISimulation
 			physicalCreature.AwarenessRadius = InitialAwarenessRadius;
 			physicalCreature.MaxSpeed = InitialCreatureSpeed;
 			
-			Registry.RegisterEntity(physicalCreature);
-
-			_creatureVisualizer.RegisterEntity(physicalCreature);
+			RegisterCreature(physicalCreature);
 		}
 
 		_stepsSoFar = 0;
 		_initialized = true;
-
-		// EmitSignal(SignalName.SimulationInitialized);
 	}
+	public void Reset()
+	{
+		_stepsSoFar = 0;
+		Registry.Reset();
+		_creatureVisualizer?.Reset();
+		_initialized = false;
+		
+		foreach (var child in GetChildren())
+		{
+			child.QueueFree();
+		}
+	}
+	#endregion
+	
 	public void Step()
 	{
 		if (!_running) return;
@@ -229,6 +227,13 @@ public partial class CreatureSim : Node3D, ISimulation
 
 	#endregion
 
+	# region Performance testing 
+	private Stopwatch _stepStopwatch = new Stopwatch();
+	private Stopwatch _processStopwatch = new Stopwatch();
+	private double _totalStepTime;
+	private double _totalProcessTime;
+	private int _stepCount;
+	private int _processCount;
 	public void PrintPerformanceStats()
 	{
 		if (_stepCount > 0 && _processCount > 0)
@@ -238,6 +243,7 @@ public partial class CreatureSim : Node3D, ISimulation
 			GD.Print($"  Average Process Time: {_totalProcessTime / _processCount:F3} ms");
 		}
 	}
+	#endregion
 	
 	#region Behaviors
 
@@ -392,25 +398,12 @@ public partial class CreatureSim : Node3D, ISimulation
 		}
 
 		ChooseDestination(ref newCreature);
-		Registry.RegisterEntity(newCreature);
-		_creatureVisualizer.RegisterEntity(newCreature);
+		RegisterCreature(newCreature);
 	}
 
 	#endregion
 
-	public void Reset()
-	{
-		_stepsSoFar = 0;
-		Registry.Reset();
-		_creatureVisualizer?.Reset();
-		_initialized = false;
-		
-		foreach (var child in GetChildren())
-		{
-			child.QueueFree();
-		}
-	}
-
+	#region Registry interactions
 	private void ClearDeadCreatures()
 	{
 		for (var i = Registry.Entities.Count - 1; i >= 0; i--)
@@ -429,6 +422,12 @@ public partial class CreatureSim : Node3D, ISimulation
 			}
 		}
 	}
+	private void RegisterCreature(PhysicalCreature physicalCreature)
+	{
+		Registry.RegisterEntity(physicalCreature);
+		_creatureVisualizer.RegisterEntity(physicalCreature);
+	}
+	#endregion
 	
 	#region Helpers
 	private Array<Dictionary> DetectCollisionsWithCreature(PhysicalCreature creature)
