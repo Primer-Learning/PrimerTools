@@ -22,6 +22,7 @@ public partial class SimulationTestScene : Node3D
 			{
 				if (_newSim)
 				{
+					GD.Print("Running new sim");
 					CreatePlot();
 					_cts = new();
 					RunSimSequence(_cts.Token);
@@ -29,8 +30,9 @@ public partial class SimulationTestScene : Node3D
 				}
 				else
 				{
+					GD.Print("Continuing sim");
 					SimulationWorld.Running = true;
-					if (IsInstanceValid(_periodicPlotter)) _periodicPlotter.Plotting = true;
+					if (PeriodicPlotter != null) PeriodicPlotter.Plotting = true;
 				}
 			}
 			else if (_run)
@@ -38,7 +40,7 @@ public partial class SimulationTestScene : Node3D
 				GD.Print("Pausing");
 				_cts?.Cancel();
 				SimulationWorld.Running = false;
-				if (IsInstanceValid(_periodicPlotter)) _periodicPlotter.Plotting = false;
+				if (PeriodicPlotter != null) PeriodicPlotter.Plotting = false;
 				SimulationWorld.TimeScale = 1;
 				
 				// These prevent continuation of the sim without resetting.
@@ -118,8 +120,7 @@ public partial class SimulationTestScene : Node3D
 	private bool _performanceTest;
 	
 	private Node3D GraphParent => GetNode<Node3D>("GraphParent");
-
-	private PeriodicPlotter _periodicPlotter;
+	private PeriodicPlotter PeriodicPlotter => GraphParent.GetNodeOrNull<PeriodicPlotter>("Periodic plotter");
 	
 	private void CreatePlot()
 	{
@@ -157,12 +158,10 @@ public partial class SimulationTestScene : Node3D
 			return dataList;
 		};
 		
-		// _periodicPlotter?.QueueFree();
-		_periodicPlotter = new PeriodicPlotter();
-		GraphParent.AddChild(_periodicPlotter);
-		_periodicPlotter.Name = "Periodic plotter";
-		_periodicPlotter.Curve = curve;
-		// PeriodicPlotter.Owner = GetTree().EditedSceneRoot;
+		var periodicPlotter = new PeriodicPlotter();
+		GraphParent.AddChild(periodicPlotter);
+		periodicPlotter.Name = "Periodic plotter";
+		periodicPlotter.Curve = curve;
 	}
 
 	private async Task RunSimSequence(CancellationToken ct = default)
@@ -189,7 +188,7 @@ public partial class SimulationTestScene : Node3D
 			ct.ThrowIfCancellationRequested();
 
 			CreatureSim.Running = true;
-			_periodicPlotter.Plotting = true;
+			if (PeriodicPlotter != null) PeriodicPlotter.Plotting = true;
 		}
 		catch
 		{
@@ -203,5 +202,11 @@ public partial class SimulationTestScene : Node3D
 		if (Engine.IsEditorHint()) return;
 		Run = true;
 		Engine.MaxFps = 0;
+	}
+
+	protected override void Dispose(bool disposing)
+	{
+		GD.Print("Dospises");
+		base.Dispose(disposing);
 	}
 }
