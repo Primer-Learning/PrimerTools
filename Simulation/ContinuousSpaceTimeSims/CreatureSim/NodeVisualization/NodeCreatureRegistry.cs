@@ -1,13 +1,12 @@
 ﻿using System.Collections.Generic;
 using Godot;
-using PrimerAssets;
 
 namespace PrimerTools.Simulation;
 
-public class CreatureSimNodeRegistry : IEntityRegistry<IVisualCreature>
+public class NodeCreatureRegistry : IEntityRegistry<IVisualCreature>
 {
     private CreatureSim _creatureSim;
-    public CreatureSimNodeRegistry(CreatureSim creatureSim)
+    public NodeCreatureRegistry(CreatureSim creatureSim)
     {
         _creatureSim = creatureSim;
     }

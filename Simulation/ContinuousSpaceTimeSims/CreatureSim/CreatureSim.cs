@@ -57,23 +57,23 @@ public partial class CreatureSim : Node3D, ISimulation
 	private int _stepsSoFar;
 	private bool _initialized;
 	private SimulationWorld SimulationWorld => GetParent<SimulationWorld>();
-	public readonly CreatureSimEntityRegistry Registry = new();
+	public CreatureSimEntityRegistry Registry;
 	private IEntityRegistry<IVisualCreature> _visualCreatureRegistry;
 	[Export] private TreeSim _treeSim;
 
 	#region Life cycle
 	public void Initialize()
 	{
-		Registry.World3D = SimulationWorld.World3D;
+		Registry = new CreatureSimEntityRegistry(SimulationWorld.World3D);
 		switch (SimulationWorld.VisualizationMode)
 		{
 			case VisualizationMode.None:
 				break;
 			case VisualizationMode.Debug:
-				_visualCreatureRegistry = new CreatureSimDebugVisualRegistry(SimulationWorld.World3D);
+				_visualCreatureRegistry = new VisualDebugCreatureRegistry(SimulationWorld.World3D);
 				break;
 			case VisualizationMode.NodeCreatures:
-				_visualCreatureRegistry = new CreatureSimNodeRegistry(this);
+				_visualCreatureRegistry = new NodeCreatureRegistry(this);
 				break;
 			default:
 				throw new ArgumentOutOfRangeException();

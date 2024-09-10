@@ -3,9 +3,9 @@ using Godot;
 
 namespace PrimerTools.Simulation;
 
-public class CreatureSimDebugVisualRegistry : IEntityRegistry<IVisualCreature>
+public class VisualDebugCreatureRegistry : IEntityRegistry<IVisualCreature>
 {
-    public CreatureSimDebugVisualRegistry(World3D world3D)
+    public VisualDebugCreatureRegistry(World3D world3D)
     {
         VisualDebugCreature.World3D = world3D;
     }

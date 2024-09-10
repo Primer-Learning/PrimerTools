@@ -1,12 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Godot;
 
 namespace PrimerTools.Simulation;
 
 public class CreatureSimEntityRegistry : IEntityRegistry<PhysicalCreature>
 {
-	public World3D World3D;
+	public CreatureSimEntityRegistry(World3D world3D)
+	{
+		PhysicalCreature.World3D = world3D;
+	}
 
 	public List<PhysicalCreature> Entities { get; private set; } = new();
 
@@ -18,42 +20,8 @@ public class CreatureSimEntityRegistry : IEntityRegistry<PhysicalCreature>
 			return;
 		}
 		
-		var transform = Transform3D.Identity.Translated(physicalCreature.Position);
-		
-		// PhysicsServer3D stuff
-		var bodyArea = PhysicsServer3D.AreaCreate();
-		PhysicsServer3D.AreaSetSpace(bodyArea, World3D.Space);
-		PhysicsServer3D.AreaSetTransform(bodyArea, transform);
-		var bodyShape = new CapsuleShape3D();
-		bodyShape.Height = 1;
-		bodyShape.Radius = 0.25f;
-		PhysicsServer3D.AreaAddShape(bodyArea, bodyShape.GetRid());
-		
-		var awarenessArea = PhysicsServer3D.AreaCreate();
-		PhysicsServer3D.AreaSetSpace(awarenessArea, World3D.Space);
-		PhysicsServer3D.AreaSetTransform(awarenessArea, transform);
-		var awarenessShape = new SphereShape3D();
-		awarenessShape.Radius = physicalCreature.AwarenessRadius;
-		PhysicsServer3D.AreaAddShape(awarenessArea, awarenessShape.GetRid());
-
-		// Add the entity with new values;
-		// TODO: Just alter the values in the passed entity. No need to copy it again.
-		// This used to take values instead of an entity.
-		Entities.Add(new PhysicalCreature
-		{
-			Body = bodyArea,
-			Awareness = awarenessArea,
-			AwarenessRadius = physicalCreature.AwarenessRadius,
-			MaxSpeed = physicalCreature.MaxSpeed,
-			Alive = true,
-			Age = 0,
-			BodyShapeResource = bodyShape,
-			AwarenessShapeResource = awarenessShape,
-			Position = physicalCreature.Position,
-			Velocity = Vector3.Zero,
-			CurrentDestination = physicalCreature.Position, // Will be changed immediately
-			Energy = 1f
-		});
+		physicalCreature.Initialize();
+		Entities.Add(physicalCreature);
 	}
 	
 	// TODO: Understand why this is needed.

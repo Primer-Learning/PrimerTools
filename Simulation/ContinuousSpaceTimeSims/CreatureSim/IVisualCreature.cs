@@ -4,8 +4,6 @@ namespace PrimerTools.Simulation;
 
 public interface IVisualCreature : IEntity
 {
-    public void Initialize(PhysicalCreature physicalCreature);
-    
     public void Eat(Node3D food, float duration);
     
     /// <summary>

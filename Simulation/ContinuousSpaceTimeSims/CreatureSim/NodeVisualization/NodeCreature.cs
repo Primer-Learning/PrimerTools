@@ -1,11 +1,8 @@
-using System.Linq;
-using System.Threading.Tasks;
 using Godot;
 using PrimerAssets;
 using PrimerTools;
 using PrimerTools.Simulation;
 using Blob = PrimerAssets.Blob;
-using Range = System.Range;
 
 public partial class NodeCreature : Node3D, IVisualCreature
 {

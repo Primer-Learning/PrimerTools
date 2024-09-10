@@ -4,12 +4,12 @@ namespace PrimerTools.Simulation;
 
 public struct VisualDebugCreature : IVisualCreature
 {
-    public Rid BodyMesh;
-    public Rid AwarenessMesh;
-    public CapsuleMesh BodyMeshResource;
-    public SphereMesh AwarenessMeshResource;
-    public static World3D World3D;
-	
+    private Rid BodyMesh;
+    private Rid AwarenessMesh;
+    private CapsuleMesh BodyMeshResource;
+    private SphereMesh AwarenessMeshResource;
+    public static World3D World3D { get; set; }
+
     public void Initialize(PhysicalCreature physicalCreature)
     {
         var transform = Transform3D.Identity.Translated(physicalCreature.Position);
