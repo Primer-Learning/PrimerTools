@@ -10,7 +10,7 @@ namespace PrimerTools.Graph;
 
 public partial class BarPlot : Node3D, IPrimerGraphData
 {
-    public Color[] Colors = PrimerColor.rainbow.ToArray();
+    public Color[] Colors = PrimerColor.Rainbow.ToArray();
     
     public bool ShowValuesOnBars = false;
     public float BarLabelScaleFactor = 1;

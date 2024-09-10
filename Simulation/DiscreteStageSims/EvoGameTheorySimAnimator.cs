@@ -21,9 +21,9 @@ public partial class EvoGameTheorySimAnimator : Node3D
     
     public static readonly Dictionary<EvoGameTheorySim.RPSGame.Strategy, Color> StrategyColors = new()
     {
-        { EvoGameTheorySim.RPSGame.Strategy.Rock, PrimerColor.red },
-        { EvoGameTheorySim.RPSGame.Strategy.Paper, PrimerColor.blue },
-        { EvoGameTheorySim.RPSGame.Strategy.Scissors, PrimerColor.yellow }
+        { EvoGameTheorySim.RPSGame.Strategy.Rock, PrimerColor.Red },
+        { EvoGameTheorySim.RPSGame.Strategy.Paper, PrimerColor.Blue },
+        { EvoGameTheorySim.RPSGame.Strategy.Scissors, PrimerColor.Yellow }
     };
 
     public static EvoGameTheorySimAnimator NewSimAnimator(Vector2 size = default)

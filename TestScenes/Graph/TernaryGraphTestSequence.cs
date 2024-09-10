@@ -11,9 +11,9 @@ public partial class TernaryGraphTestSequence : AnimationSequence
 		var ternaryPlot = new TernaryGraphWithBars();
 		ternaryPlot.Colors = new[]
 		{
-			PrimerColor.red,
-			PrimerColor.blue,
-			PrimerColor.yellow
+			PrimerColor.Red,
+			PrimerColor.Blue,
+			PrimerColor.Yellow
 		};
 		AddChild(ternaryPlot);
 		ternaryPlot.CreateBounds();

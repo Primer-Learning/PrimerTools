@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Godot;
+using PrimerAssets;
 
 namespace PrimerTools.Simulation;
 
@@ -28,6 +29,8 @@ public class CreatureSimNodeRegistry : ICreatureVisualizer
         creature.Name = "Creature"; 
         Entities.Add(creature);
         // creature.Owner = creatureSim.GetTree().EditedSceneRoot;
+        
+        creature.AdjustVisualsToCreatureAttributes(physicalCreature);
     }
 
     public void CreatureEat(int i, Node3D food, float eatDuration)

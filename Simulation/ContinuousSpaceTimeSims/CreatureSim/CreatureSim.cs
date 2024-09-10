@@ -50,18 +50,19 @@ public partial class CreatureSim : Node3D, ISimulation
 	
 	// State-based pause durations
 	private const float EatDuration = 1.5f;
-	public const float MaturationTime = 5f;
+	public const float MaturationTime = 2f;
 	
 	// Energy
 	private const float BaseEnergySpend = 0.1f;
 	private const float GlobalEnergySpendAdjustmentFactor = 0.2f;
 	private const float EnergyGainFromFood = 1f;
-	private const float ReproductionEnergyThreshold = 20f;
-	private const float ReproductionEnergyCost = 10f;
+	private const float ReproductionEnergyThreshold = 4f;
+	private const float ReproductionEnergyCost = 2f;
 	
 	// Initial population
 	[Export] private int _initialCreatureCount = 4;
-	[Export] private float _initialCreatureSpeed = 5f;
+	public static readonly float InitialCreatureSpeed = 5f;
+
 	private const float InitialAwarenessRadius = 3f;
 	
 	// Mutation
@@ -107,7 +108,7 @@ public partial class CreatureSim : Node3D, ISimulation
 				SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.Y)
 			);
 			physicalCreature.AwarenessRadius = InitialAwarenessRadius;
-			physicalCreature.MaxSpeed = _initialCreatureSpeed;
+			physicalCreature.MaxSpeed = InitialCreatureSpeed;
 			
 			Registry.RegisterEntity(physicalCreature);
 
@@ -290,7 +291,6 @@ public partial class CreatureSim : Node3D, ISimulation
 		// Update position
 		creature.Position += creature.Velocity / SimulationWorld.PhysicsStepsPerSimSecond;
 	}
-
 	private void ChooseDestination(ref PhysicalCreature creature)
 	{
 		Vector3 newDestination;
@@ -318,7 +318,6 @@ public partial class CreatureSim : Node3D, ISimulation
 
 		creature.CurrentDestination = newDestination;
 	}
-	
 	private void ChooseDestination(ref PhysicalCreature creature, int treeIndex)
 	{
 		var tree = _treeSim.Registry.PhysicalTrees[treeIndex];
@@ -356,7 +355,7 @@ public partial class CreatureSim : Node3D, ISimulation
 
 	private void SpendEnergy(ref PhysicalCreature creature)
 	{
-		var normalizedSpeed = creature.MaxSpeed / _initialCreatureSpeed;
+		var normalizedSpeed = creature.MaxSpeed / InitialCreatureSpeed;
 		var normalizedAwarenessRadius = creature.AwarenessRadius / InitialAwarenessRadius;
 		
 		creature.Energy -= (BaseEnergySpend + GlobalEnergySpendAdjustmentFactor * ( normalizedSpeed * normalizedSpeed + normalizedAwarenessRadius)) / SimulationWorld.PhysicsStepsPerSimSecond;

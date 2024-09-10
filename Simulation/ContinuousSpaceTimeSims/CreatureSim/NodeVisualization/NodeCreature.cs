@@ -1,8 +1,11 @@
+using System.Linq;
 using System.Threading.Tasks;
 using Godot;
 using PrimerAssets;
+using PrimerTools;
 using PrimerTools.Simulation;
 using Blob = PrimerAssets.Blob;
+using Range = System.Range;
 
 public partial class NodeCreature : Node3D, IEntity
 {
@@ -16,7 +19,45 @@ public partial class NodeCreature : Node3D, IEntity
 		AddChild(_blob);
 		_blob.BlobAnimationTree.Active = false;
 		
-		_blob.SetColor(PrimerColor.blue);
+		_blob.SetColor(PrimerColor.Blue);
+	}
+
+	public void AdjustVisualsToCreatureAttributes(PhysicalCreature physicalCreature)
+	{
+		if (_blob == null)
+		{
+			PrimerGD.PrintErrorWithStackTrace("Creature blob does not exist and cannot have its visuals adjusted.");
+			return;
+		}
+		
+		_blob.SetColor(ColorFromSpeed(physicalCreature.MaxSpeed));
+	}
+
+	private static Color[] _speedColors = new[]
+	{
+		PrimerColor.Black,
+		PrimerColor.Purple,
+		PrimerColor.Blue,
+		PrimerColor.Green,
+		PrimerColor.Yellow,
+		PrimerColor.Orange,
+		PrimerColor.Red,
+		PrimerColor.White
+	};
+	public static Color ColorFromSpeed(float speed)
+	{
+		// TODO: Improve this algorithm
+		var normalizedSpeed = speed / CreatureSim.InitialCreatureSpeed;
+		normalizedSpeed /= 2; // Make the color range vary from zero speed to twice the initial speed
+
+		var numSpaces = normalizedSpeed * (_speedColors.Length - 1); // Map the speed to a range that spans the colors
+		var intSpaces = (int)numSpaces; // int
+		var extra = numSpaces % 1; // fraction
+
+		return PrimerColor.MixColorsByWeight(
+			new [] {_speedColors[intSpaces], _speedColors[intSpaces + 1]},
+			new [] { 1 - extra, extra}
+		);
 	}
 	
 	public async void Eat(Node3D fruit, float eatDuration)
