@@ -16,7 +16,7 @@ public class VisualDebugCreatureRegistry : IEntityRegistry<IVisualCreature>
     {
         if (entity is not PhysicalCreature physicalCreature)
         {
-            GD.PrintErr("CreatureSimDebugVisualRegistry was passed the wrong kind of entity");
+            GD.PrintErr($"CreatureSimNodeRegistry was passed the wrong kind of entity. {entity.GetType()} instead of PhysicalCreature.");
             return;
         }
 

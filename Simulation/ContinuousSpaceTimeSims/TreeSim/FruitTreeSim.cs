@@ -2,11 +2,13 @@ using System;
 using System.Diagnostics;
 using Godot;
 using System.Collections.Generic;
+using System.Linq;
 using PrimerTools;
 using PrimerTools.Simulation;
+using PrimerTools.Simulation.TreeSim;
 
 [Tool]
-public partial class TreeSim : Node3D, ISimulation
+public partial class FruitTreeSim : Node3D, ISimulation
 {
     public enum SimMode
     {
@@ -14,29 +16,29 @@ public partial class TreeSim : Node3D, ISimulation
         FruitGrowth
     }
     [Export] public SimMode Mode = SimMode.TreeGrowth;
-    
-    public readonly TreeSimEntityRegistry Registry = new();
+
+    public PhysicalTreeRegistry Registry;
+    public IEntityRegistry<IVisualTree> VisualTreeRegistry;
     private SimulationWorld SimulationWorld => GetParent<SimulationWorld>();
     public VisualizationMode VisualizationMode => SimulationWorld.VisualizationMode;
-    private int _stepsSoFar = 0;
+    private int _stepsSoFar;
     
     #region Editor controls
     private bool _running;
-    [Export]
     public bool Running
     {
         get => _running;
         set
         {
-            if (value && !_running && _stepsSoFar == 0)
+            if (value && !_initialized)
             {
                 Initialize();
                 GD.Print("Starting tree sim.");
             }
             _running = value;
+            GD.Print(_initialized);
         }
     }
-    
     #endregion
     
     #region Sim parameters
@@ -47,7 +49,7 @@ public partial class TreeSim : Node3D, ISimulation
     private const float TreeCompetitionRadius = 3f;
     private const float MinimumTreeDistance = 0.5f;
     
-    private const float TreeMaturationTime = 1f;
+    public static float TreeMaturationTime = 1f;
     private const float TreeSpawnInterval = 0.4f;
     public const float FruitGrowthTime = 4f;
     public const float NodeFruitGrowthDelay = 2f;
@@ -71,19 +73,43 @@ public partial class TreeSim : Node3D, ISimulation
     private int _stepCount;
     private int _processCount;
     
-    private void Initialize()
+    private bool _initialized;
+    public void Initialize()
     {
-        Registry.World3D = SimulationWorld.World3D;
+        Registry = new PhysicalTreeRegistry(SimulationWorld.World3D);
+        
+        switch (SimulationWorld.VisualizationMode)
+        {
+            case VisualizationMode.None:
+                break;
+            case VisualizationMode.Debug:
+                VisualTreeRegistry = new VisualDebugTreeRegistry(SimulationWorld.World3D);
+                break;
+            case VisualizationMode.NodeCreatures:
+                VisualTreeRegistry = new NodeTreeRegistry(this);
+                break;
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
 
         for (var i = 0; i < _initialTreeCount; i++)
         {
-            var position = new Vector3(
+            var physicalTree = new PhysicalTree();
+            physicalTree.Position = new Vector3(
                 SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.X),
                 0,
                 SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.Y)
             );
-            Registry.CreateTree(position, this);
+            RegisterTree(physicalTree);
         }
+
+        _initialized = true;
+    }
+
+    private void RegisterTree(PhysicalTree physicalTree)
+    {
+        Registry.RegisterEntity(physicalTree);
+        VisualTreeRegistry.RegisterEntity(physicalTree);
     }
 
     public override void _Process(double delta)
@@ -96,50 +122,25 @@ public partial class TreeSim : Node3D, ISimulation
             _visualUpdateStopwatch.Restart();
         }
 
-        for (var i = 0; i < Registry.PhysicalTrees.Count; i++)
+        for (var i = 0; i < Registry.Entities.Count; i++)
         {
-            var physicalTree = Registry.PhysicalTrees[i]; 
-            switch (VisualizationMode)
+            var physicalTree = Registry.Entities[i]; 
+            var visualTree = VisualTreeRegistry.Entities[i];
+            
+            if (physicalTree.IsDead)
             {
-                case VisualizationMode.None:
-                    break;
-                case VisualizationMode.Debug:
-                    if (physicalTree.IsDead)
-                    {
-                        RenderingServer.InstanceSetVisible(Registry.VisualTrees[i].BodyMesh, false);
-                        if (Registry.PhysicalTrees[i].HasFruit) RenderingServer.InstanceSetVisible(Registry.VisualTrees[i].FruitMesh, false);
-                        continue;
-                    }
-                    if (!physicalTree.HasFruit && Registry.VisualTrees[i].FruitMesh != default)
-                    {
-                        RenderingServer.InstanceSetVisible(Registry.VisualTrees[i].FruitMesh, false);
-                    }
-                    if (physicalTree.HasFruit && Registry.VisualTrees[i].FruitMesh == default)
-                    {
-                        CreateFruitMesh(i, physicalTree.Position);
-                    }
-                    
-                    if (physicalTree.IsMature)
-                    {
-                        var transform = Transform3D.Identity.Translated(physicalTree.Position);
-                        transform = transform.ScaledLocal(Vector3.One * 1.0f);
-                        RenderingServer.InstanceSetTransform(Registry.VisualTrees[i].BodyMesh, transform);
-                    }
-                    break;
-                case VisualizationMode.NodeCreatures:
-                    if (physicalTree.IsDead)
-                    {
-                        Registry.NodeTrees[i].Visible = false;
-                    }
-                    if (physicalTree.FruitGrowthProgress > NodeFruitGrowthDelay && !Registry.NodeTrees[i].HasFruit)
-                    {
-                        Registry.NodeTrees[i].GrowFruit(FruitGrowthTime - NodeFruitGrowthDelay);
-                    }
-                    Registry.NodeTrees[i].Scale = Vector3.One * Mathf.Min(1, physicalTree.Age / TreeMaturationTime);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
+                visualTree.Death();
+                VisualTreeRegistry.Entities[i] = visualTree;
+                continue;
             }
+            
+            if (physicalTree.FruitGrowthProgress > NodeFruitGrowthDelay && !visualTree.HasFruit)
+            {
+                visualTree.GrowFruit(FruitGrowthTime - NodeFruitGrowthDelay);
+            }
+            visualTree.UpdateTransform(physicalTree);
+
+            VisualTreeRegistry.Entities[i] = visualTree;
         }
 
         if (SimulationWorld.PerformanceTest)
@@ -151,7 +152,7 @@ public partial class TreeSim : Node3D, ISimulation
         _timeSinceLastClear += (float)delta;
         if (_timeSinceLastClear >= _deadTreeClearInterval)
         {
-            Registry.ClearDeadTrees();
+            ClearDeadTrees();
             _timeSinceLastClear = 0f;
         }
         
@@ -163,7 +164,7 @@ public partial class TreeSim : Node3D, ISimulation
         }
     }
 
-    private void TryGenerateNewTreePosition(TreeSimEntityRegistry.PhysicalTree parent, List<Vector3> newTrees)
+    private void TryGenerateNewTreePosition(PhysicalTree parent, List<Vector3> newTrees)
     {
         var angle = SimulationWorld.Rng.RangeFloat(0, Mathf.Tau);
         var distance = SimulationWorld.Rng.RangeFloat(MinTreeSpawnRadius, MaxTreeSpawnRadius);
@@ -176,7 +177,7 @@ public partial class TreeSim : Node3D, ISimulation
         }
     }
 
-    private int CountNeighbors(TreeSimEntityRegistry.PhysicalTree tree)
+    private int CountNeighbors(PhysicalTree tree)
     {
         var queryParams = new PhysicsShapeQueryParameters3D();
         queryParams.CollideWithAreas = true;
@@ -191,9 +192,10 @@ public partial class TreeSim : Node3D, ISimulation
         foreach (var intersection in intersections)
         {
             var intersectedBody = (Rid)intersection["rid"];
-            if (Registry.TreeLookup.TryGetValue(intersectedBody, out int index))
+            if (Registry.TreeLookup.TryGetValue(intersectedBody, out var index))
             {
-                if (!Registry.PhysicalTrees[index].IsDead && intersectedBody != tree.Body)
+                var dataTree = Registry.Entities[index];
+                if (!dataTree.IsDead && intersectedBody != tree.Body)
                 {
                     livingNeighbors++;
                 }
@@ -203,7 +205,7 @@ public partial class TreeSim : Node3D, ISimulation
         return livingNeighbors;
     }
 
-    private bool IsTooCloseToMatureTree(TreeSimEntityRegistry.PhysicalTree sapling)
+    private bool IsTooCloseToMatureTree(PhysicalTree sapling)
     {
         var queryParams = new PhysicsShapeQueryParameters3D();
         queryParams.CollideWithAreas = true;
@@ -217,9 +219,9 @@ public partial class TreeSim : Node3D, ISimulation
         foreach (var intersection in intersections)
         {
             var intersectedBody = (Rid)intersection["rid"];
-            if (Registry.TreeLookup.TryGetValue(intersectedBody, out int index))
+            if (Registry.TreeLookup.TryGetValue(intersectedBody, out var index))
             {
-                if (Registry.PhysicalTrees[index].IsMature)
+                if (Registry.Entities[index].IsMature)
                 {
                     return true;
                 }
@@ -237,7 +239,7 @@ public partial class TreeSim : Node3D, ISimulation
     public void Step()
     {
         if (!_running) return;
-        if (Registry.PhysicalTrees.Count == 0)
+        if (Registry.Entities.Count == 0)
         {
             GD.Print("No Trees found. Stopping.");
             Running = false;
@@ -250,9 +252,9 @@ public partial class TreeSim : Node3D, ISimulation
         }
 
         var newTreePositions = new List<Vector3>();
-        for (var i = 0; i < Registry.PhysicalTrees.Count; i++)
+        for (var i = 0; i < Registry.Entities.Count; i++)
         {
-            var tree = Registry.PhysicalTrees[i];
+            var tree = Registry.Entities[i];
             if (tree.IsDead) continue;
             
             switch (Mode)
@@ -309,12 +311,14 @@ public partial class TreeSim : Node3D, ISimulation
                     throw new ArgumentOutOfRangeException();
             }
 
-            Registry.PhysicalTrees[i] = tree;
+            Registry.Entities[i] = tree;
         }
         
         foreach (var newTreePosition in newTreePositions)
         {
-            Registry.CreateTree(newTreePosition, this);
+            var physicalTree = new PhysicalTree();
+            physicalTree.Position = newTreePosition;
+            RegisterTree(physicalTree);
         }
 
         _stepsSoFar++;
@@ -341,31 +345,40 @@ public partial class TreeSim : Node3D, ISimulation
     public void Reset()
     {
         _stepsSoFar = 0;
-        Registry.Reset();
+        _initialized = false;
+        Registry?.Reset();
         
         foreach (var child in GetChildren())
         {
             child.QueueFree();
         }
     }
-
-    private void CreateFruitMesh(int treeIndex, Vector3 treePosition)
+    
+    public void ClearDeadTrees()
     {
-        var fruitMesh = new SphereMesh();
-        fruitMesh.Radius = 0.6f;
-        fruitMesh.Height = 1.2f;
-
-        var fruitMaterial = new StandardMaterial3D();
-        fruitMaterial.AlbedoColor = new Color(0, 1, 0); // Red color for the fruit
-        fruitMesh.Material = fruitMaterial;
-
-        var fruitInstance = RenderingServer.InstanceCreate2(fruitMesh.GetRid(), GetWorld3D().Scenario);
-        var fruitTransform = Transform3D.Identity.Translated(treePosition + new Vector3(0, 1.5f, 0)); // Position the fruit above the tree
-        RenderingServer.InstanceSetTransform(fruitInstance, fruitTransform);
-
-        var visualTree = Registry.VisualTrees[treeIndex];
-        visualTree.FruitMesh = fruitInstance;
-        visualTree.FruitMeshResource = fruitMesh;
-        Registry.VisualTrees[treeIndex] = visualTree;
+        // TODO: Probably best to make the registries take care of this. They do need to be triggered together, though.
+        
+        for (var i = Registry.Entities.Count - 1; i >= 0; i--)
+        {
+            if (!Registry.Entities[i].IsDead) continue;
+			     
+            Registry.Entities[i].CleanUp();
+            Registry.Entities.RemoveAt(i);
+        
+            if (VisualTreeRegistry.Entities.Count > 0)
+            {
+                // Visual trees aren't cleaned up here, since they may want to do an animation before freeing the object
+                // But we clear the list here so they stay in sync.
+                // For this reason, _creatureVisualizer.CreatureDeath must handle cleanup.
+                VisualTreeRegistry.Entities.RemoveAt(i);
+            }
+        }
+        
+        // Rebuild TreeLookup
+        Registry.TreeLookup.Clear();
+        for (int i = 0; i < Registry.Entities.Count; i++)
+        {
+            Registry.TreeLookup[Registry.Entities[i].Body] = i;
+        }
     }
 }

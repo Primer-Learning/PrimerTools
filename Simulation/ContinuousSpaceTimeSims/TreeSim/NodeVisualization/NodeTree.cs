@@ -1,10 +1,8 @@
-using System.Reflection.Metadata.Ecma335;
 using Godot;
-using PrimerAssets;
-using PrimerTools;
 using PrimerTools.Simulation;
+using PrimerTools.Simulation.TreeSim;
 
-public partial class Tree : Node3D
+public partial class NodeTree : Node3D, IVisualTree
 {
 	private FruitTree _fruitTree;
 	public override void _Ready()
@@ -33,7 +31,7 @@ public partial class Tree : Node3D
 	{
 		return 	_fruitTree.GetFruit(0);
 	}
-
+	
 	public bool HasFruit
 	{
 		get
@@ -41,5 +39,27 @@ public partial class Tree : Node3D
 			var fruit = _fruitTree.GetFruit(0);
 			return fruit != null && _fruitTree.IsFruitOnFlower(fruit);
 		}
+	}
+
+	public void CleanUp()
+	{
+		QueueFree();
+	}
+
+	public void UpdateTransform(PhysicalTree physicalTree)
+	{
+		Scale = Vector3.One * Mathf.Min(1, physicalTree.Age / FruitTreeSim.TreeMaturationTime);
+	}
+
+	public void Death()
+	{
+		Visible = false;
+	}
+
+	public void Initialize(PhysicalTree physicalTree)
+	{
+		Scale = Vector3.One * 0.5f; // Start as a sapling
+		Position = physicalTree.Position;
+		Name = "Tree";
 	}
 }

@@ -2,6 +2,8 @@
 
 public interface ISimulation
 {
-    void Step();
-    void Reset();
+    public void Initialize();
+    public void Step();
+    public void Reset();
+
 }

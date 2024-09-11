@@ -10,7 +10,7 @@ public partial class SimulationTestScene : Node3D
 {
 	private SimulationWorld SimulationWorld => GetNode<SimulationWorld>("SimulationWorld");
 	private CreatureSim CreatureSim => SimulationWorld.GetNode<CreatureSim>("Creature Sim");
-	private TreeSim TreeSim => SimulationWorld.GetNode<TreeSim>("Tree Sim");
+	private FruitTreeSim FruitTreeSim => SimulationWorld.GetNode<FruitTreeSim>("Tree Sim");
 	
 	private CancellationTokenSource _cts;
 	private bool _newSim = true;
@@ -47,12 +47,12 @@ public partial class SimulationTestScene : Node3D
 				// But setting these true on run would mess up the start sequence.
 				// If continuing becomes important, a separate pause button might do it.
 				CreatureSim.Running = false;
-				TreeSim.Running = false;
+				FruitTreeSim.Running = false;
 
 				if (SimulationWorld.PerformanceTest)
 				{
 					CreatureSim.PrintPerformanceStats();
-					TreeSim.PrintPerformanceStats();
+					FruitTreeSim.PrintPerformanceStats();
 				}
 			}
 			_run = value;
@@ -69,7 +69,7 @@ public partial class SimulationTestScene : Node3D
 				SimulationWorld.ResetSimulations();
 				SimulationWorld.Running = false;
 				CreatureSim.Running = false;
-				TreeSim.Running = false;
+				FruitTreeSim.Running = false;
 				
 				foreach (var child in GraphParent.GetChildren())
 				{
@@ -166,15 +166,15 @@ public partial class SimulationTestScene : Node3D
 
 	private async Task RunSimSequence(CancellationToken ct = default)
 	{
-		try
-		{
+		// try
+		// {
 			var originalTimeScale = SimulationWorld.TimeScale;
 			SimulationWorld.TimeScale = 99999;
 			SimulationWorld.Initialize();
 			SimulationWorld.Running = true;
 
-			TreeSim.Mode = TreeSim.SimMode.TreeGrowth;
-			TreeSim.Running = true;
+			FruitTreeSim.Mode = FruitTreeSim.SimMode.TreeGrowth;
+			FruitTreeSim.Running = true;
 
 			CreatureSim.Initialize();
 
@@ -182,18 +182,18 @@ public partial class SimulationTestScene : Node3D
 			ct.ThrowIfCancellationRequested();
 			SimulationWorld.TimeScale = originalTimeScale;
 
-			TreeSim.Mode = TreeSim.SimMode.FruitGrowth;
+			FruitTreeSim.Mode = FruitTreeSim.SimMode.FruitGrowth;
 
 			await Task.Delay(3000, ct);
 			ct.ThrowIfCancellationRequested();
 
 			CreatureSim.Running = true;
 			if (PeriodicPlotter != null) PeriodicPlotter.Plotting = true;
-		}
-		catch
-		{
-			GD.Print("Canceled");
-		}
+		// }
+		// catch
+		// {
+		// 	GD.Print("Canceled");
+		// }
 	}
 
 	public override void _Ready()

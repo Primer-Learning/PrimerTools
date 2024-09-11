@@ -5,7 +5,7 @@ namespace PrimerTools.Simulation;
 
 public class NodeCreatureRegistry : IEntityRegistry<IVisualCreature>
 {
-    private CreatureSim _creatureSim;
+    private readonly CreatureSim _creatureSim;
     public NodeCreatureRegistry(CreatureSim creatureSim)
     {
         _creatureSim = creatureSim;

@@ -57,14 +57,15 @@ public partial class CreatureSim : Node3D, ISimulation
 	private int _stepsSoFar;
 	private bool _initialized;
 	private SimulationWorld SimulationWorld => GetParent<SimulationWorld>();
-	public CreatureSimEntityRegistry Registry;
+	public PhysicalCreatureRegistry Registry;
 	private IEntityRegistry<IVisualCreature> _visualCreatureRegistry;
-	[Export] private TreeSim _treeSim;
+	[Export] private FruitTreeSim _fruitTreeSim;
 
 	#region Life cycle
 	public void Initialize()
 	{
-		Registry = new CreatureSimEntityRegistry(SimulationWorld.World3D);
+		Registry = new PhysicalCreatureRegistry(SimulationWorld.World3D);
+		
 		switch (SimulationWorld.VisualizationMode)
 		{
 			case VisualizationMode.None:
@@ -79,9 +80,7 @@ public partial class CreatureSim : Node3D, ISimulation
 				throw new ArgumentOutOfRangeException();
 		}
 		
-		GD.Print("Initializing");
-		
-		if (_treeSim == null)
+		if (_fruitTreeSim == null)
 		{
 			GD.PrintErr("TreeSim not found. Not initializing creature sim because they will all starve to death immediately. You monster.");
 			return;
@@ -107,7 +106,7 @@ public partial class CreatureSim : Node3D, ISimulation
 	public void Reset()
 	{
 		_stepsSoFar = 0;
-		Registry.Reset();
+		Registry?.Reset();
 		_visualCreatureRegistry?.Reset();
 		_initialized = false;
 		
@@ -162,10 +161,7 @@ public partial class CreatureSim : Node3D, ISimulation
 			if (canEat && creature.EatingTimeLeft <= 0)
 			{
 				EatFood(ref creature, closestFoodIndex);
-				
-				// TODO: Eliminate this check. Currently, we need it because the tree sim doesn't handle the  
-				// different visualization modes gracefully
-				if (SimulationWorld.VisualizationMode == VisualizationMode.NodeCreatures) _visualCreatureRegistry.Entities[i].Eat(_treeSim.Registry.NodeTrees[closestFoodIndex].GetFruit(), EatDuration / SimulationWorld.TimeScale);
+				_visualCreatureRegistry.Entities[i].Eat(_fruitTreeSim.VisualTreeRegistry.Entities[closestFoodIndex].GetFruit(), EatDuration / SimulationWorld.TimeScale);
 			}
 			else if (closestFoodIndex > -1)
 			{
@@ -184,7 +180,9 @@ public partial class CreatureSim : Node3D, ISimulation
 			if (creature.Energy <= 0)
 			{
 				creature.Alive = false;
-				_visualCreatureRegistry.Entities[i].Death();
+				var visualCreature = _visualCreatureRegistry.Entities[i];
+				visualCreature.Death();
+				_visualCreatureRegistry.Entities[i] = visualCreature;
 			}
 
 			Registry.Entities[i] = creature;
@@ -329,7 +327,7 @@ public partial class CreatureSim : Node3D, ISimulation
 	}
 	private void ChooseDestination(ref PhysicalCreature creature, int treeIndex)
 	{
-		var tree = _treeSim.Registry.PhysicalTrees[treeIndex];
+		var tree = _fruitTreeSim.Registry.Entities[treeIndex];
 		creature.CurrentDestination = tree.Position;
 	}
 	
@@ -343,9 +341,10 @@ public partial class CreatureSim : Node3D, ISimulation
 		foreach (var objectData in objectsInAwareness)
 		{
 			var objectRid = (Rid)objectData["rid"];
-			if (!_treeSim.Registry.TreeLookup.TryGetValue(objectRid, out var treeIndex)) continue;
-			
-			var tree = _treeSim.Registry.PhysicalTrees[treeIndex];
+			// GD.Print($"Entities in dict: {_fruitTreeSim.Registry.TreeLookup.Count}");
+			if (!_fruitTreeSim.Registry.TreeLookup.TryGetValue(objectRid, out var treeIndex)) continue;
+			// GD.Print($"Index is {treeIndex}. Data entities: {_fruitTreeSim.Registry.Entities.Count}");
+			var tree = _fruitTreeSim.Registry.Entities[treeIndex];
 			if (!tree.HasFruit) continue;
 			
 			var sqrDistance = (creature.Position - tree.Position).LengthSquared();
@@ -372,12 +371,12 @@ public partial class CreatureSim : Node3D, ISimulation
 
 	private void EatFood(ref PhysicalCreature creature, int treeIndex)
 	{
-		var tree = _treeSim.Registry.PhysicalTrees[treeIndex];
+		var tree = _fruitTreeSim.Registry.Entities[treeIndex];
 		if (!tree.HasFruit) return;
 		
 		tree.HasFruit = false;
 		tree.FruitGrowthProgress = 0;
-		_treeSim.Registry.PhysicalTrees[treeIndex] = tree;
+		_fruitTreeSim.Registry.Entities[treeIndex] = tree;
 		
 		creature.Energy += EnergyGainFromFood;
 		creature.EatingTimeLeft = EatDuration;
@@ -411,7 +410,7 @@ public partial class CreatureSim : Node3D, ISimulation
 	{
 		for (var i = Registry.Entities.Count - 1; i >= 0; i--)
 		{
-			if (((PhysicalCreature)Registry.Entities[i]).Alive) continue;
+			if (Registry.Entities[i].Alive) continue;
 			
 			Registry.Entities[i].CleanUp();
 			Registry.Entities.RemoveAt(i);
