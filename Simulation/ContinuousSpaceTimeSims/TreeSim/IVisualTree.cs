@@ -4,7 +4,7 @@ namespace PrimerTools.Simulation;
 
 public interface IVisualTree : IEntity
 {
-    public void UpdateTransform(PhysicalTree physicalTree);
+    public void UpdateTransform(DataTree dataTree);
     /// <summary>
     /// Should take care of disposal. It happens here so it can wait for an animation if necessary.
     /// </summary>

@@ -20,9 +20,9 @@ public partial class NodeCreature : Node3D, IVisualCreature
 		_blob.SetColor(PrimerColor.Blue);
 	}
 
-	public void Initialize(PhysicalCreature physicalCreature)
+	public void Initialize(DataCreature dataCreature)
 	{
-		Position = physicalCreature.Position;
+		Position = dataCreature.Position;
 		Scale = Vector3.Zero;
 		
 		if (_blob == null)
@@ -31,8 +31,8 @@ public partial class NodeCreature : Node3D, IVisualCreature
 			return;
 		}
 		
-		_blob.SetColor(ColorFromSpeed(physicalCreature.MaxSpeed));
-		var normalizedAwareness = physicalCreature.AwarenessRadius / CreatureSim.InitialAwarenessRadius;
+		_blob.SetColor(ColorFromSpeed(dataCreature.MaxSpeed));
+		var normalizedAwareness = dataCreature.AwarenessRadius / CreatureSim.InitialAwarenessRadius;
 		_blob.LeftEye.Scale = normalizedAwareness * Vector3.One;
 		_blob.RightEye.Scale = normalizedAwareness * Vector3.One;
 	}
@@ -132,16 +132,16 @@ public partial class NodeCreature : Node3D, IVisualCreature
 		CleanUp();
 	}
 
-	public void UpdateTransform(PhysicalCreature physicalCreature)
+	public void UpdateTransform(DataCreature dataCreature)
 	{
-		var scaleFactor = Mathf.Min(1, physicalCreature.Age / CreatureSim.MaturationTime);
+		var scaleFactor = Mathf.Min(1, dataCreature.Age / CreatureSim.MaturationTime);
 		Scale = scaleFactor * Vector3.One;
         
-		if (physicalCreature.EatingTimeLeft > 0) return;
+		if (dataCreature.EatingTimeLeft > 0) return;
         
 		// Position and rotation
-		Position = physicalCreature.Position;
-		var direction = physicalCreature.Velocity;
+		Position = dataCreature.Position;
+		var direction = dataCreature.Velocity;
 		if (direction.LengthSquared() > 0.0001f)
 		{
 			LookAt(GlobalPosition - direction, Vector3.Up);

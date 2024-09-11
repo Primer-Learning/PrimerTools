@@ -154,7 +154,7 @@ public partial class SimulationTestScene : Node3D
 		curve.DataFetchMethod = () =>
 		{
 			var dataList = curve.GetData().ToList();
-			dataList.Add( new Vector3(dataList.Count, CreatureSim.Registry.Entities.Count(x => ((PhysicalCreature)x).Alive), 0) );
+			dataList.Add( new Vector3(dataList.Count, CreatureSim.Registry.Entities.Count(x => ((DataCreature)x).Alive), 0) );
 			return dataList;
 		};
 		

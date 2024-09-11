@@ -16,5 +16,5 @@ public interface IVisualCreature : IEntity
     /// </summary>
     public void Death();
 
-    public void UpdateTransform(PhysicalCreature physicalCreature);
+    public void UpdateTransform(DataCreature dataCreature);
 }

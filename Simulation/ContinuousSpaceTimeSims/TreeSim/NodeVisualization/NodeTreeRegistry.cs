@@ -15,7 +15,7 @@ public class NodeTreeRegistry : IEntityRegistry<IVisualTree>
     public List<IVisualTree> Entities { get; } = new();
     public void RegisterEntity(IEntity entity)
     {
-        if (entity is not PhysicalTree physicalTree)
+        if (entity is not DataTree physicalTree)
         {
             GD.PrintErr($"{GetType()} was passed the wrong kind of entity. {entity.GetType()} instead of PhysicalTree.");
             return;

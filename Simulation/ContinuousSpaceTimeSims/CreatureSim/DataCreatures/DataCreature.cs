@@ -2,7 +2,7 @@
 
 namespace PrimerTools.Simulation;
 
-public struct PhysicalCreature : IEntity
+public struct DataCreature : IEntity
 {
     public Rid Body;
     public Rid Awareness;

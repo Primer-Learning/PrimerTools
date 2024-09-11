@@ -57,14 +57,14 @@ public partial class CreatureSim : Node3D, ISimulation
 	private int _stepsSoFar;
 	private bool _initialized;
 	private SimulationWorld SimulationWorld => GetParent<SimulationWorld>();
-	public PhysicalCreatureRegistry Registry;
+	public DataCreatureRegistry Registry;
 	private IEntityRegistry<IVisualCreature> _visualCreatureRegistry;
 	[Export] private FruitTreeSim _fruitTreeSim;
 
 	#region Life cycle
 	public void Initialize()
 	{
-		Registry = new PhysicalCreatureRegistry(SimulationWorld.World3D);
+		Registry = new DataCreatureRegistry(SimulationWorld.World3D);
 		
 		switch (SimulationWorld.VisualizationMode)
 		{
@@ -85,7 +85,7 @@ public partial class CreatureSim : Node3D, ISimulation
 		
 		for (var i = 0; i < _initialCreatureCount; i++)
 		{
-			var physicalCreature = new PhysicalCreature();
+			var physicalCreature = new DataCreature();
 			physicalCreature.Position = new Vector3(
 				SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.X),
 				0,
@@ -251,7 +251,7 @@ public partial class CreatureSim : Node3D, ISimulation
 	
 	#region Behaviors
 
-	private void UpdateVelocity(ref PhysicalCreature creature)
+	private void UpdateVelocity(ref DataCreature creature)
 	{
 		var desiredDisplacement = creature.CurrentDestination - creature.Position;
 		var desiredDisplacementLengthSquared = desiredDisplacement.LengthSquared();
@@ -286,7 +286,7 @@ public partial class CreatureSim : Node3D, ISimulation
 		// Update velocity
 		creature.Velocity += accelerationVector;
 	}
-	private void UpdatePositionAndVelocity(ref PhysicalCreature creature)
+	private void UpdatePositionAndVelocity(ref DataCreature creature)
 	{
 		UpdateVelocity(ref creature);
 
@@ -301,7 +301,7 @@ public partial class CreatureSim : Node3D, ISimulation
 		// Update position
 		creature.Position += creature.Velocity / SimulationWorld.PhysicsStepsPerSimSecond;
 	}
-	private void ChooseDestination(ref PhysicalCreature creature)
+	private void ChooseDestination(ref DataCreature creature)
 	{
 		Vector3 newDestination;
 		int attempts = 0;
@@ -328,13 +328,13 @@ public partial class CreatureSim : Node3D, ISimulation
 
 		creature.CurrentDestination = newDestination;
 	}
-	private void ChooseDestination(ref PhysicalCreature creature, int treeIndex)
+	private void ChooseDestination(ref DataCreature creature, int treeIndex)
 	{
 		var tree = _fruitTreeSim.Registry.Entities[treeIndex];
 		creature.CurrentDestination = tree.Position;
 	}
 	
-	private (int, bool) FindClosestFood(PhysicalCreature creature)
+	private (int, bool) FindClosestFood(DataCreature creature)
 	{
 		var objectsInAwareness = DetectCollisionsWithCreature(creature);
 		var closestFoodIndex = -1;
@@ -364,7 +364,7 @@ public partial class CreatureSim : Node3D, ISimulation
 		return (closestFoodIndex, canEat);
 	}
 
-	private void SpendEnergy(ref PhysicalCreature creature)
+	private void SpendEnergy(ref DataCreature creature)
 	{
 		var normalizedSpeed = creature.MaxSpeed / InitialCreatureSpeed;
 		var normalizedAwarenessRadius = creature.AwarenessRadius / InitialAwarenessRadius;
@@ -372,7 +372,7 @@ public partial class CreatureSim : Node3D, ISimulation
 		creature.Energy -= (BaseEnergySpend + GlobalEnergySpendAdjustmentFactor * ( normalizedSpeed * normalizedSpeed + normalizedAwarenessRadius)) / SimulationWorld.PhysicsStepsPerSimSecond;
 	}
 
-	private void EatFood(ref PhysicalCreature creature, int treeIndex)
+	private void EatFood(ref DataCreature creature, int treeIndex)
 	{
 		var tree = _fruitTreeSim.Registry.Entities[treeIndex];
 		if (!tree.HasFruit) return;
@@ -385,7 +385,7 @@ public partial class CreatureSim : Node3D, ISimulation
 		creature.EatingTimeLeft = EatDuration;
 	}
 
-	private void Reproduce(ref PhysicalCreature creature)
+	private void Reproduce(ref DataCreature creature)
 	{
 		creature.Energy -= ReproductionEnergyCost;
 
@@ -427,15 +427,15 @@ public partial class CreatureSim : Node3D, ISimulation
 			}
 		}
 	}
-	private void RegisterCreature(PhysicalCreature physicalCreature)
+	private void RegisterCreature(DataCreature dataCreature)
 	{
-		Registry.RegisterEntity(physicalCreature);
-		_visualCreatureRegistry?.RegisterEntity(physicalCreature);
+		Registry.RegisterEntity(dataCreature);
+		_visualCreatureRegistry?.RegisterEntity(dataCreature);
 	}
 	#endregion
 	
 	#region Helpers
-	private Array<Dictionary> DetectCollisionsWithCreature(PhysicalCreature creature)
+	private Array<Dictionary> DetectCollisionsWithCreature(DataCreature creature)
 	{
 		var queryParams = new PhysicsShapeQueryParameters3D();
 		queryParams.CollideWithAreas = true;

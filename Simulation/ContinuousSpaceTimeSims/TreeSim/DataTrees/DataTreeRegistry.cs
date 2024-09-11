@@ -4,16 +4,16 @@ using Godot;
 
 namespace PrimerTools.Simulation;
 
-public class PhysicalTreeRegistry : IEntityRegistry<PhysicalTree>
+public class DataTreeRegistry : IEntityRegistry<DataTree>
 {
-    public PhysicalTreeRegistry(World3D world3D)
+    public DataTreeRegistry(World3D world3D)
     {
-        PhysicalTree.World3D = world3D;
+        DataTree.World3D = world3D;
     }
 
     public void RegisterEntity(IEntity entity)
     {
-        if (entity is not PhysicalTree physicalTree)
+        if (entity is not DataTree physicalTree)
         {
             GD.PrintErr($"{GetType()} was passed the wrong kind of entity. {entity.GetType()} instead of PhysicalTree.");
             return;
@@ -24,7 +24,7 @@ public class PhysicalTreeRegistry : IEntityRegistry<PhysicalTree>
         Entities.Add(physicalTree);
     }
 
-    public List<PhysicalTree> Entities { get; } = new();
+    public List<DataTree> Entities { get; } = new();
     public readonly Dictionary<Rid, int> TreeLookup = new();
     
     public void Reset()

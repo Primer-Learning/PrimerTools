@@ -15,7 +15,7 @@ public class NodeCreatureRegistry : IEntityRegistry<IVisualCreature>
     
     public void RegisterEntity(IEntity entity)
     {
-        if (entity is not PhysicalCreature physicalCreature)
+        if (entity is not DataCreature physicalCreature)
         {
             GD.PrintErr($"CreatureSimNodeRegistry was passed the wrong kind of entity. {entity.GetType()} instead of PhysicalCreature.");
             return;

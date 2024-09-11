@@ -17,7 +17,7 @@ public partial class FruitTreeSim : Node3D, ISimulation
     }
     [Export] public SimMode Mode = SimMode.TreeGrowth;
 
-    public PhysicalTreeRegistry Registry;
+    public DataTreeRegistry Registry;
     public IEntityRegistry<IVisualTree> VisualTreeRegistry;
     private SimulationWorld SimulationWorld => GetParent<SimulationWorld>();
     public VisualizationMode VisualizationMode => SimulationWorld.VisualizationMode;
@@ -76,7 +76,7 @@ public partial class FruitTreeSim : Node3D, ISimulation
     private bool _initialized;
     public void Initialize()
     {
-        Registry = new PhysicalTreeRegistry(SimulationWorld.World3D);
+        Registry = new DataTreeRegistry(SimulationWorld.World3D);
         
         switch (SimulationWorld.VisualizationMode)
         {
@@ -91,7 +91,7 @@ public partial class FruitTreeSim : Node3D, ISimulation
 
         for (var i = 0; i < _initialTreeCount; i++)
         {
-            var physicalTree = new PhysicalTree();
+            var physicalTree = new DataTree();
             physicalTree.Position = new Vector3(
                 SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.X),
                 0,
@@ -103,10 +103,10 @@ public partial class FruitTreeSim : Node3D, ISimulation
         _initialized = true;
     }
 
-    private void RegisterTree(PhysicalTree physicalTree)
+    private void RegisterTree(DataTree dataTree)
     {
-        Registry.RegisterEntity(physicalTree);
-        VisualTreeRegistry?.RegisterEntity(physicalTree);
+        Registry.RegisterEntity(dataTree);
+        VisualTreeRegistry?.RegisterEntity(dataTree);
     }
 
     public override void _Process(double delta)
@@ -164,7 +164,7 @@ public partial class FruitTreeSim : Node3D, ISimulation
         }
     }
 
-    private void TryGenerateNewTreePosition(PhysicalTree parent, List<Vector3> newTrees)
+    private void TryGenerateNewTreePosition(DataTree parent, List<Vector3> newTrees)
     {
         var angle = SimulationWorld.Rng.RangeFloat(0, Mathf.Tau);
         var distance = SimulationWorld.Rng.RangeFloat(MinTreeSpawnRadius, MaxTreeSpawnRadius);
@@ -177,7 +177,7 @@ public partial class FruitTreeSim : Node3D, ISimulation
         }
     }
 
-    private int CountNeighbors(PhysicalTree tree)
+    private int CountNeighbors(DataTree tree)
     {
         var queryParams = new PhysicsShapeQueryParameters3D();
         queryParams.CollideWithAreas = true;
@@ -205,7 +205,7 @@ public partial class FruitTreeSim : Node3D, ISimulation
         return livingNeighbors;
     }
 
-    private bool IsTooCloseToMatureTree(PhysicalTree sapling)
+    private bool IsTooCloseToMatureTree(DataTree sapling)
     {
         var queryParams = new PhysicsShapeQueryParameters3D();
         queryParams.CollideWithAreas = true;
@@ -316,7 +316,7 @@ public partial class FruitTreeSim : Node3D, ISimulation
         
         foreach (var newTreePosition in newTreePositions)
         {
-            var physicalTree = new PhysicalTree();
+            var physicalTree = new DataTree();
             physicalTree.Position = newTreePosition;
             RegisterTree(physicalTree);
         }

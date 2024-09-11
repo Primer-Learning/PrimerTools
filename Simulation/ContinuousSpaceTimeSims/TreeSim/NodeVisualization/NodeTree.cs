@@ -46,9 +46,9 @@ public partial class NodeTree : Node3D, IVisualTree
 		QueueFree();
 	}
 
-	public void UpdateTransform(PhysicalTree physicalTree)
+	public void UpdateTransform(DataTree dataTree)
 	{
-		Scale = Vector3.One * Mathf.Min(1, physicalTree.Age / FruitTreeSim.TreeMaturationTime);
+		Scale = Vector3.One * Mathf.Min(1, dataTree.Age / FruitTreeSim.TreeMaturationTime);
 	}
 
 	public void Death()
@@ -56,10 +56,10 @@ public partial class NodeTree : Node3D, IVisualTree
 		Visible = false;
 	}
 
-	public void Initialize(PhysicalTree physicalTree)
+	public void Initialize(DataTree dataTree)
 	{
 		Scale = Vector3.One * 0.5f; // Start as a sapling
-		Position = physicalTree.Position;
+		Position = dataTree.Position;
 		Name = "Tree";
 	}
 }

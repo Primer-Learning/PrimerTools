@@ -3,18 +3,18 @@ using Godot;
 
 namespace PrimerTools.Simulation;
 
-public class PhysicalCreatureRegistry : IEntityRegistry<PhysicalCreature>
+public class DataCreatureRegistry : IEntityRegistry<DataCreature>
 {
-	public PhysicalCreatureRegistry(World3D world3D)
+	public DataCreatureRegistry(World3D world3D)
 	{
-		PhysicalCreature.World3D = world3D;
+		DataCreature.World3D = world3D;
 	}
 
-	public List<PhysicalCreature> Entities { get; } = new();
+	public List<DataCreature> Entities { get; } = new();
 
 	public void RegisterEntity(IEntity entity)
 	{
-		if (entity is not PhysicalCreature physicalCreature)
+		if (entity is not DataCreature physicalCreature)
 		{
 			GD.PrintErr($"CreatureSimNodeRegistry was passed the wrong kind of entity. {entity.GetType()} instead of PhysicalCreature.");
 			return;
