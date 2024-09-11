@@ -2,7 +2,7 @@ using Godot;
 using PrimerTools.Simulation;
 using PrimerTools.Simulation.TreeSim;
 
-public partial class NodeTree : Node3D, IVisualTree
+public partial class NodeTree : Node3D, IEntity
 {
 	private FruitTree _fruitTree;
 	public override void _Ready()

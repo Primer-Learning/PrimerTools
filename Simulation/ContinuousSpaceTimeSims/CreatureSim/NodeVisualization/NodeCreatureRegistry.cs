@@ -3,7 +3,7 @@ using Godot;
 
 namespace PrimerTools.Simulation;
 
-public class NodeCreatureRegistry : IEntityRegistry<IVisualCreature>
+public class NodeCreatureRegistry : IEntityRegistry<NodeCreature>
 {
     private readonly CreatureSim _creatureSim;
     public NodeCreatureRegistry(CreatureSim creatureSim)
@@ -11,7 +11,7 @@ public class NodeCreatureRegistry : IEntityRegistry<IVisualCreature>
         _creatureSim = creatureSim;
     }
     
-    public List<IVisualCreature> Entities { get; } = new();
+    public List<NodeCreature> Entities { get; } = new();
     
     public void RegisterEntity(IEntity entity)
     {

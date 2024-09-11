@@ -3,7 +3,7 @@ using Godot;
 
 namespace PrimerTools.Simulation.TreeSim;
 
-public class NodeTreeRegistry : IEntityRegistry<IVisualTree>
+public class NodeTreeRegistry : IEntityRegistry<NodeTree>
 {
     private readonly FruitTreeSim _fruitTreeSim;
 
@@ -12,7 +12,7 @@ public class NodeTreeRegistry : IEntityRegistry<IVisualTree>
         _fruitTreeSim = treeSim;
     }
 
-    public List<IVisualTree> Entities { get; } = new();
+    public List<NodeTree> Entities { get; } = new();
     public void RegisterEntity(IEntity entity)
     {
         if (entity is not DataTree physicalTree)

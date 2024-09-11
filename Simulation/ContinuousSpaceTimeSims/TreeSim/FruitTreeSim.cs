@@ -18,7 +18,7 @@ public partial class FruitTreeSim : Node3D, ISimulation
     [Export] public SimMode Mode = SimMode.TreeGrowth;
 
     public DataTreeRegistry Registry;
-    public IEntityRegistry<IVisualTree> VisualTreeRegistry;
+    public IEntityRegistry<NodeTree> VisualTreeRegistry;
     private SimulationWorld SimulationWorld => GetParent<SimulationWorld>();
     public VisualizationMode VisualizationMode => SimulationWorld.VisualizationMode;
     private int _stepsSoFar;

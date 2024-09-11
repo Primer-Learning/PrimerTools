@@ -58,7 +58,7 @@ public partial class CreatureSim : Node3D, ISimulation
 	private bool _initialized;
 	private SimulationWorld SimulationWorld => GetParent<SimulationWorld>();
 	public DataCreatureRegistry Registry;
-	private IEntityRegistry<IVisualCreature> _visualCreatureRegistry;
+	private IEntityRegistry<NodeCreature> _visualCreatureRegistry;
 	[Export] private FruitTreeSim _fruitTreeSim;
 
 	#region Life cycle
