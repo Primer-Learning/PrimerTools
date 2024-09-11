@@ -61,7 +61,8 @@ public partial class SimulationWorld : Node3D
     public void ResetSimulations()
     {
 	    foreach (var simulation in _simulations)
-	    {
+        {
+            simulation.Running = false;
 		    simulation.Reset();
 	    }
     }
