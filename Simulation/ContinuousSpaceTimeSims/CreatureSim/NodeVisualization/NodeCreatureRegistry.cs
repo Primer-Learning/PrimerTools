@@ -12,18 +12,17 @@ public class NodeCreatureRegistry : IEntityRegistry<NodeCreature>
     }
     
     public List<NodeCreature> Entities { get; } = new();
-    
     public void RegisterEntity(IEntity entity)
     {
-        if (entity is not DataCreature physicalCreature)
+        if (entity is not DataCreature dataCreature)
         {
-            GD.PrintErr($"CreatureSimNodeRegistry was passed the wrong kind of entity. {entity.GetType()} instead of PhysicalCreature.");
+            GD.PrintErr($"{GetType()} was passed the wrong kind of entity. {entity.GetType()} instead of DataCreature.");
             return;
         }
         
         var creature = new NodeCreature();
         _creatureSim.AddChild(creature);
         Entities.Add(creature);
-        creature.Initialize(physicalCreature);
+        creature.Initialize(dataCreature);
     }
 }

@@ -10,22 +10,22 @@ public class DataTreeRegistry : IEntityRegistry<DataTree>
     {
         DataTree.World3D = world3D;
     }
+    
+    public List<DataTree> Entities { get; } = new();
+    public readonly Dictionary<Rid, int> TreeLookup = new();
 
     public void RegisterEntity(IEntity entity)
     {
-        if (entity is not DataTree physicalTree)
+        if (entity is not DataTree dataTree)
         {
-            GD.PrintErr($"{GetType()} was passed the wrong kind of entity. {entity.GetType()} instead of PhysicalTree.");
+            GD.PrintErr($"{GetType()} was passed the wrong kind of entity. {entity.GetType()} instead of DataTree.");
             return;
         }
         
-        physicalTree.Initialize();
-        TreeLookup.Add(physicalTree.Body, Entities.Count);
-        Entities.Add(physicalTree);
+        dataTree.Initialize();
+        TreeLookup.Add(dataTree.Body, Entities.Count);
+        Entities.Add(dataTree);
     }
-
-    public List<DataTree> Entities { get; } = new();
-    public readonly Dictionary<Rid, int> TreeLookup = new();
     
     public void Reset()
     {

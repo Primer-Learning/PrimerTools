@@ -8,6 +8,8 @@ public partial class NodeCreature : Node3D, IEntity
 {
 	private Blob _blob;
 
+	#region Core methods
+	// Considering putting these methods in an interface
 	public override void _Ready()
 	{
 		base._Ready();
@@ -19,7 +21,6 @@ public partial class NodeCreature : Node3D, IEntity
 		
 		_blob.SetColor(PrimerColor.Blue);
 	}
-
 	public void Initialize(DataCreature dataCreature)
 	{
 		Position = dataCreature.Position;
@@ -36,8 +37,41 @@ public partial class NodeCreature : Node3D, IEntity
 		_blob.LeftEye.Scale = normalizedAwareness * Vector3.One;
 		_blob.RightEye.Scale = normalizedAwareness * Vector3.One;
 	}
+	public void UpdateTransform(DataCreature dataCreature)
+	{
+		var scaleFactor = Mathf.Min(1, dataCreature.Age / CreatureSim.MaturationTime);
+		Scale = scaleFactor * Vector3.One;
+        
+		if (dataCreature.EatingTimeLeft > 0) return;
+        
+		// Position and rotation
+		Position = dataCreature.Position;
+		var direction = dataCreature.Velocity;
+		if (direction.LengthSquared() > 0.0001f)
+		{
+			LookAt(GlobalPosition - direction, Vector3.Up);
+		}
+	}
+	public async void Death()
+	{
+		var tween = CreateTween();
+		tween.TweenProperty(
+			this,
+			"scale",
+			Vector3.Zero,
+			0.5f
+		);
+		await tween.ToSignal(tween, Tween.SignalName.Finished);
+		CleanUp();
+	}
+	public void CleanUp()
+	{
+		QueueFree();
+	}
+	#endregion
 
-	private static Color[] _speedColors = new[]
+	#region Behaviors and helpers
+	private static Color[] _speedColors = 
 	{
 		PrimerColor.Black,
 		PrimerColor.Purple,
@@ -119,37 +153,5 @@ public partial class NodeCreature : Node3D, IEntity
 			animationSettleDuration
 		);
 	}
-	public async void Death()
-	{
-		var tween = CreateTween();
-		tween.TweenProperty(
-			this,
-			"scale",
-			Vector3.Zero,
-			0.5f
-		);
-		await tween.ToSignal(tween, Tween.SignalName.Finished);
-		CleanUp();
-	}
-
-	public void UpdateTransform(DataCreature dataCreature)
-	{
-		var scaleFactor = Mathf.Min(1, dataCreature.Age / CreatureSim.MaturationTime);
-		Scale = scaleFactor * Vector3.One;
-        
-		if (dataCreature.EatingTimeLeft > 0) return;
-        
-		// Position and rotation
-		Position = dataCreature.Position;
-		var direction = dataCreature.Velocity;
-		if (direction.LengthSquared() > 0.0001f)
-		{
-			LookAt(GlobalPosition - direction, Vector3.Up);
-		}
-	}
-
-	public void CleanUp()
-	{
-		QueueFree();
-	}
+	#endregion
 }

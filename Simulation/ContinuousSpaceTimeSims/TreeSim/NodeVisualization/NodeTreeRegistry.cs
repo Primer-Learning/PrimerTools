@@ -6,7 +6,6 @@ namespace PrimerTools.Simulation.TreeSim;
 public class NodeTreeRegistry : IEntityRegistry<NodeTree>
 {
     private readonly FruitTreeSim _fruitTreeSim;
-
     public NodeTreeRegistry(FruitTreeSim treeSim)
     {
         _fruitTreeSim = treeSim;
@@ -15,15 +14,15 @@ public class NodeTreeRegistry : IEntityRegistry<NodeTree>
     public List<NodeTree> Entities { get; } = new();
     public void RegisterEntity(IEntity entity)
     {
-        if (entity is not DataTree physicalTree)
+        if (entity is not DataTree dataTree)
         {
-            GD.PrintErr($"{GetType()} was passed the wrong kind of entity. {entity.GetType()} instead of PhysicalTree.");
+            GD.PrintErr($"{GetType()} was passed the wrong kind of entity. {entity.GetType()} instead of DataTree.");
             return;
         }
 
         var tree = new NodeTree();
         _fruitTreeSim.AddChild(tree);
         Entities.Add(tree);
-        tree.Initialize(physicalTree);
+        tree.Initialize(dataTree);
     }
 }

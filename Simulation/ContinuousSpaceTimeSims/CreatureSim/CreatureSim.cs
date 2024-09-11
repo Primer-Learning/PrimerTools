@@ -54,14 +54,14 @@ public partial class CreatureSim : Node3D, ISimulation
 	#endregion
 
 	#region Simulation
-	private int _stepsSoFar;
-	private bool _initialized;
 	private SimulationWorld SimulationWorld => GetParent<SimulationWorld>();
 	public DataCreatureRegistry Registry;
 	private IEntityRegistry<NodeCreature> _visualCreatureRegistry;
 	[Export] private FruitTreeSim _fruitTreeSim;
+	private int _stepsSoFar;
 
 	#region Life cycle
+	private bool _initialized;
 	public void Initialize()
 	{
 		Registry = new DataCreatureRegistry(SimulationWorld.World3D);
@@ -113,7 +113,6 @@ public partial class CreatureSim : Node3D, ISimulation
 		}
 	}
 	#endregion
-	
 	public void Step()
 	{
 		if (!_running) return;
@@ -231,7 +230,7 @@ public partial class CreatureSim : Node3D, ISimulation
 
 	#endregion
 
-	# region Performance testing 
+	#region Performance testing 
 	private Stopwatch _stepStopwatch = new Stopwatch();
 	private Stopwatch _processStopwatch = new Stopwatch();
 	private double _totalStepTime;
