@@ -70,9 +70,6 @@ public partial class CreatureSim : Node3D, ISimulation
 		{
 			case VisualizationMode.None:
 				break;
-			case VisualizationMode.Debug:
-				_visualCreatureRegistry = new VisualDebugCreatureRegistry(SimulationWorld.World3D);
-				break;
 			case VisualizationMode.NodeCreatures:
 				_visualCreatureRegistry = new NodeCreatureRegistry(this);
 				break;
@@ -161,7 +158,7 @@ public partial class CreatureSim : Node3D, ISimulation
 			if (canEat && creature.EatingTimeLeft <= 0)
 			{
 				EatFood(ref creature, closestFoodIndex);
-				_visualCreatureRegistry.Entities[i].Eat(_fruitTreeSim.VisualTreeRegistry.Entities[closestFoodIndex].GetFruit(), EatDuration / SimulationWorld.TimeScale);
+				_visualCreatureRegistry?.Entities[i].Eat(_fruitTreeSim.VisualTreeRegistry.Entities[closestFoodIndex].GetFruit(), EatDuration / SimulationWorld.TimeScale);
 			}
 			else if (closestFoodIndex > -1)
 			{
@@ -180,9 +177,12 @@ public partial class CreatureSim : Node3D, ISimulation
 			if (creature.Energy <= 0)
 			{
 				creature.Alive = false;
-				var visualCreature = _visualCreatureRegistry.Entities[i];
-				visualCreature.Death();
-				_visualCreatureRegistry.Entities[i] = visualCreature;
+				if (_visualCreatureRegistry != null)
+				{
+					var visualCreature = _visualCreatureRegistry.Entities[i];
+					visualCreature.Death();
+					_visualCreatureRegistry.Entities[i] = visualCreature;
+				}
 			}
 
 			Registry.Entities[i] = creature;
@@ -207,9 +207,12 @@ public partial class CreatureSim : Node3D, ISimulation
 		}
 		
 		// Update visuals
-		for (var i = 0; i < Registry.Entities.Count; i++)
+		if (_visualCreatureRegistry != null)
 		{
-			_visualCreatureRegistry.Entities[i].UpdateTransform(Registry.Entities[i]);
+			for (var i = 0; i < Registry.Entities.Count; i++)
+			{
+				_visualCreatureRegistry.Entities[i].UpdateTransform(Registry.Entities[i]);
+			}
 		}
 		
 		// This happens every process frame, which is an intuitive choice
@@ -415,7 +418,7 @@ public partial class CreatureSim : Node3D, ISimulation
 			Registry.Entities[i].CleanUp();
 			Registry.Entities.RemoveAt(i);
 
-			if (_visualCreatureRegistry.Entities.Count > 0)
+			if (_visualCreatureRegistry != null && _visualCreatureRegistry.Entities.Count > 0)
 			{
 				// Visual creatures aren't cleaned up here, since they may want to do an animation before freeing the object
 				// But we clear the list here so they stay in sync.
@@ -427,7 +430,7 @@ public partial class CreatureSim : Node3D, ISimulation
 	private void RegisterCreature(PhysicalCreature physicalCreature)
 	{
 		Registry.RegisterEntity(physicalCreature);
-		_visualCreatureRegistry.RegisterEntity(physicalCreature);
+		_visualCreatureRegistry?.RegisterEntity(physicalCreature);
 	}
 	#endregion
 	

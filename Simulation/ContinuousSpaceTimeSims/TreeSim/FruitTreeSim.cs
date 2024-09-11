@@ -82,9 +82,6 @@ public partial class FruitTreeSim : Node3D, ISimulation
         {
             case VisualizationMode.None:
                 break;
-            case VisualizationMode.Debug:
-                VisualTreeRegistry = new VisualDebugTreeRegistry(SimulationWorld.World3D);
-                break;
             case VisualizationMode.NodeCreatures:
                 VisualTreeRegistry = new NodeTreeRegistry(this);
                 break;
@@ -109,7 +106,7 @@ public partial class FruitTreeSim : Node3D, ISimulation
     private void RegisterTree(PhysicalTree physicalTree)
     {
         Registry.RegisterEntity(physicalTree);
-        VisualTreeRegistry.RegisterEntity(physicalTree);
+        VisualTreeRegistry?.RegisterEntity(physicalTree);
     }
 
     public override void _Process(double delta)
@@ -122,25 +119,28 @@ public partial class FruitTreeSim : Node3D, ISimulation
             _visualUpdateStopwatch.Restart();
         }
 
-        for (var i = 0; i < Registry.Entities.Count; i++)
+        if (VisualTreeRegistry != null)
         {
-            var physicalTree = Registry.Entities[i]; 
-            var visualTree = VisualTreeRegistry.Entities[i];
-            
-            if (physicalTree.IsDead)
+            for (var i = 0; i < Registry.Entities.Count; i++)
             {
-                visualTree.Death();
-                VisualTreeRegistry.Entities[i] = visualTree;
-                continue;
-            }
-            
-            if (physicalTree.FruitGrowthProgress > NodeFruitGrowthDelay && !visualTree.HasFruit)
-            {
-                visualTree.GrowFruit(FruitGrowthTime - NodeFruitGrowthDelay);
-            }
-            visualTree.UpdateTransform(physicalTree);
+                var physicalTree = Registry.Entities[i]; 
+                var visualTree = VisualTreeRegistry.Entities[i];
+                
+                if (physicalTree.IsDead)
+                {
+                    visualTree.Death();
+                    VisualTreeRegistry.Entities[i] = visualTree;
+                    continue;
+                }
+                
+                if (physicalTree.FruitGrowthProgress > NodeFruitGrowthDelay && !visualTree.HasFruit)
+                {
+                    visualTree.GrowFruit(FruitGrowthTime - NodeFruitGrowthDelay);
+                }
+                visualTree.UpdateTransform(physicalTree);
 
-            VisualTreeRegistry.Entities[i] = visualTree;
+                VisualTreeRegistry.Entities[i] = visualTree;
+            }
         }
 
         if (SimulationWorld.PerformanceTest)
@@ -365,7 +365,7 @@ public partial class FruitTreeSim : Node3D, ISimulation
             Registry.Entities[i].CleanUp();
             Registry.Entities.RemoveAt(i);
         
-            if (VisualTreeRegistry.Entities.Count > 0)
+            if (VisualTreeRegistry != null && VisualTreeRegistry.Entities.Count > 0)
             {
                 // Visual trees aren't cleaned up here, since they may want to do an animation before freeing the object
                 // But we clear the list here so they stay in sync.
