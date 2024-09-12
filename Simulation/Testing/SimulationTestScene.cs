@@ -10,7 +10,7 @@ public partial class SimulationTestScene : Node3D
 {
 	private SimulationWorld SimulationWorld => GetNode<SimulationWorld>("SimulationWorld");
 	private CreatureSim CreatureSim => SimulationWorld.GetNode<CreatureSim>("Creature Sim");
-	private FruitTreeSim FruitTreeSim => SimulationWorld.GetNode<FruitTreeSim>("Tree Sim");
+	public FruitTreeSim FruitTreeSim => SimulationWorld.GetNode<FruitTreeSim>("Tree Sim");
 	
 	private CancellationTokenSource _cts;
 	private bool _newSim = true;

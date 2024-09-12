@@ -37,7 +37,7 @@ public partial class FruitTreeSim : Node3D, ISimulation
     
     public static float TreeMaturationTime = 1f;
     private const float TreeSpawnInterval = 0.4f;
-    public const float FruitGrowthTime = 4f;
+    public float FruitGrowthTime = 4f;
     public const float NodeFruitGrowthDelay = 2f;
     
     private const float SaplingDeathProbabilityBase = 0.001f;
