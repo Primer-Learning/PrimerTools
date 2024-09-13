@@ -33,13 +33,13 @@ public partial class NodeCreature : Node3D, IEntity
 		}
 		
 		_blob.SetColor(ColorFromSpeed(dataCreature.MaxSpeed));
-		var normalizedAwareness = dataCreature.AwarenessRadius / CreatureSim.InitialAwarenessRadius;
+		var normalizedAwareness = dataCreature.AwarenessRadius / CreatureBehaviorHandler.InitialAwarenessRadius;
 		_blob.LeftEye.Scale = normalizedAwareness * Vector3.One;
 		_blob.RightEye.Scale = normalizedAwareness * Vector3.One;
 	}
 	public void UpdateTransform(DataCreature dataCreature)
 	{
-		var scaleFactor = Mathf.Min(1, dataCreature.Age / CreatureSim.MaturationTime);
+		var scaleFactor = Mathf.Min(1, dataCreature.Age / CreatureBehaviorHandler.MaturationTime);
 		Scale = scaleFactor * Vector3.One;
         
 		if (dataCreature.EatingTimeLeft > 0) return;
@@ -85,7 +85,7 @@ public partial class NodeCreature : Node3D, IEntity
 	public static Color ColorFromSpeed(float speed)
 	{
 		// TODO: Improve this algorithm
-		var normalizedSpeed = speed / CreatureSim.InitialCreatureSpeed;
+		var normalizedSpeed = speed / CreatureBehaviorHandler.InitialCreatureSpeed;
 		normalizedSpeed /= 2; // Make the color range vary from zero speed to twice the initial speed
 
 		var numSpaces = normalizedSpeed * (_speedColors.Length - 1); // Map the speed to a range that spans the colors

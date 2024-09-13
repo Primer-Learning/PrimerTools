@@ -11,6 +11,7 @@ public class DataCreatureRegistry : IEntityRegistry<DataCreature>
 	}
 
 	public List<DataCreature> Entities { get; } = new();
+	public readonly Dictionary<Rid, int> CreatureLookup = new();
 
 	public void RegisterEntity(IEntity entity)
 	{
@@ -21,6 +22,7 @@ public class DataCreatureRegistry : IEntityRegistry<DataCreature>
 		}
 		
 		dataCreature.Initialize();
+		CreatureLookup.Add(dataCreature.Body, Entities.Count);
 		Entities.Add(dataCreature);
 	}
 	
@@ -30,5 +32,6 @@ public class DataCreatureRegistry : IEntityRegistry<DataCreature>
 	{
 		foreach (var entity in Entities) entity.CleanUp();
 		Entities.Clear();
+		CreatureLookup.Clear();
 	}
 }

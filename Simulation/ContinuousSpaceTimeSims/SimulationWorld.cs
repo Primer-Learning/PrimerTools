@@ -19,7 +19,13 @@ public partial class SimulationWorld : Node3D
     [Export] public VisualizationMode VisualizationMode = VisualizationMode.NodeCreatures;
     #endregion
     
-    [Export] public Vector2 WorldDimensions = Vector2.One * 50;
+    private static Vector2 _worldDimension = Vector2.One * 50;
+    [Export]
+    public Vector2 WorldDimensions
+    {
+        get => _worldDimension;
+        set => _worldDimension = value;
+    } 
 
     private float _timeScale = 1;
     // [Export]
@@ -99,10 +105,10 @@ public partial class SimulationWorld : Node3D
         GD.Print($"Elapsed time = {_stopwatch.ElapsedMilliseconds} milliseconds");
     }
 
-    public bool IsWithinWorldBounds(Vector3 position)
+    public static bool IsWithinWorldBounds(Vector3 position)
     {
-        return position.X >= 0 && position.X <= WorldDimensions.X &&
-               position.Z >= 0 && position.Z <= WorldDimensions.Y;
+        return position.X >= 0 && position.X <= _worldDimension.X &&
+               position.Z >= 0 && position.Z <= _worldDimension.Y;
     }
 }
 

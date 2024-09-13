@@ -16,6 +16,9 @@ public struct DataCreature : IEntity
     public Vector3 Velocity;
     public Vector3 CurrentDestination;
     public float EatingTimeLeft;
+    public float MatingTimeLeft;
+
+    public bool OpenToMating;
 		
     private CapsuleShape3D _bodyShapeResource;
     private SphereShape3D _awarenessShapeResource;

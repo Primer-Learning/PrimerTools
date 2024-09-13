@@ -1,6 +1,13 @@
-[gd_resource type="Environment" format=3 uid="uid://xpav3hoy6ldu"]
+[gd_resource type="Environment" load_steps=3 format=3 uid="uid://xpav3hoy6ldu"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_hhdik"]
+
+[sub_resource type="Sky" id="Sky_twrfi"]
+sky_material = SubResource("ProceduralSkyMaterial_hhdik")
 
 [resource]
 background_mode = 1
 background_color = Color(0.184314, 0.2, 0.211765, 0)
+sky = SubResource("Sky_twrfi")
+ambient_light_color = Color(1, 1, 1, 1)
 sdfgi_enabled = true

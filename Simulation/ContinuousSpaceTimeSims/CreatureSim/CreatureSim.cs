@@ -24,46 +24,26 @@ public partial class CreatureSim : Node3D, ISimulation
 		}
 	}
 	#endregion
-	
-	#region Sim parameters
-	// Movement
-	private const float CreatureStepMaxLength = 10f;
-	private const float MaxAccelerationFactor = 0.1f;
-	private const float CreatureEatDistance = 2;
-	
-	// State-based pause durations
-	private const float EatDuration = 1.5f;
-	public const float MaturationTime = 2f;
-	
-	// Energy
-	private const float BaseEnergySpend = 0.1f;
-	private const float GlobalEnergySpendAdjustmentFactor = 0.2f;
-	private const float EnergyGainFromFood = 1f;
-	private const float ReproductionEnergyThreshold = 4f;
-	private const float ReproductionEnergyCost = 2f;
-	
-	// Initial population
-	[Export] private int _initialCreatureCount = 4;
-	public const float InitialCreatureSpeed = 5f;
-
-	public const float InitialAwarenessRadius = 3f;
-	
-	// Mutation
-	private const float MutationProbability = 0.1f;
-	private const float MutationIncrement = 1f;
-	#endregion
 
 	#region Simulation
 	private SimulationWorld SimulationWorld => GetParent<SimulationWorld>();
 	public DataCreatureRegistry Registry;
 	private IEntityRegistry<NodeCreature> _visualCreatureRegistry;
-	[Export] private FruitTreeSim _fruitTreeSim;
+	[Export] public FruitTreeSim _fruitTreeSim;
 	private int _stepsSoFar;
+	
+	[Export]
+	private int _initialCreatureCount = 4;
 
 	#region Life cycle
 	private bool _initialized;
 	public void Initialize()
 	{
+		// TODO: Not this. See comment in CreatureBehaviorHandler
+		CreatureBehaviorHandler.FruitTreeSim = _fruitTreeSim;
+		CreatureBehaviorHandler.CreatureSim = this;
+		CreatureBehaviorHandler.Space = PhysicsServer3D.SpaceGetDirectState(GetWorld3D().Space);
+		
 		Registry = new DataCreatureRegistry(SimulationWorld.World3D);
 		
 		switch (SimulationWorld.VisualizationMode)
@@ -91,8 +71,8 @@ public partial class CreatureSim : Node3D, ISimulation
 				0,
 				SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.Y)
 			);
-			physicalCreature.AwarenessRadius = InitialAwarenessRadius;
-			physicalCreature.MaxSpeed = InitialCreatureSpeed;
+			physicalCreature.AwarenessRadius = CreatureBehaviorHandler.InitialAwarenessRadius;
+			physicalCreature.MaxSpeed = CreatureBehaviorHandler.InitialCreatureSpeed;
 			
 			RegisterCreature(physicalCreature);
 		}
@@ -128,7 +108,7 @@ public partial class CreatureSim : Node3D, ISimulation
 			_stepStopwatch.Restart();
 		}
 
-		float timeStep = 1f / SimulationWorld.PhysicsStepsPerSimSecond;
+		const float timeStep = 1f / SimulationWorld.PhysicsStepsPerSimSecond;
 		
 		// Process creatures. Doing one creature at a time for now with one big struct.
 		// But eventually, it might make sense to do several loops which each work with narrower sets of data
@@ -136,11 +116,10 @@ public partial class CreatureSim : Node3D, ISimulation
 		for (var i = 0; i < Registry.Entities.Count; i++)
 		{
 			var creature = Registry.Entities[i];
+			
 			if (!creature.Alive) continue;
-
 			creature.Age += timeStep;
-
-			if (creature.Age < MaturationTime)
+			if (creature.Age < CreatureBehaviorHandler.MaturationTime)
 			{
 				Registry.Entities[i] = creature;
 				continue;
@@ -153,26 +132,50 @@ public partial class CreatureSim : Node3D, ISimulation
 			}
 
 			// Food detection
-			var (closestFoodIndex, canEat) = FindClosestFood(creature);
+			var (closestFoodIndex, canEat) = CreatureBehaviorHandler.FindClosestFood(creature);
 			if (canEat && creature.EatingTimeLeft <= 0)
 			{
-				EatFood(ref creature, closestFoodIndex);
-				_visualCreatureRegistry?.Entities[i].Eat(_fruitTreeSim.VisualTreeRegistry.Entities[closestFoodIndex].GetFruit(), EatDuration / SimulationWorld.TimeScale);
+				CreatureBehaviorHandler.EatFood(ref creature, closestFoodIndex);
+				_visualCreatureRegistry?.Entities[i].Eat(_fruitTreeSim.VisualTreeRegistry.Entities[closestFoodIndex].GetFruit(), CreatureBehaviorHandler.EatDuration / SimulationWorld.TimeScale);
 			}
 			else if (closestFoodIndex > -1)
 			{
-				ChooseDestination(ref creature, closestFoodIndex);
+				CreatureBehaviorHandler.ChooseTreeDestination(ref creature, closestFoodIndex);
+			}
+			
+			// Reproduction
+			if (creature.Energy > CreatureBehaviorHandler.ReproductionEnergyThreshold)
+			{
+				
+				if (CreatureBehaviorHandler.CurrentSexMode == CreatureBehaviorHandler.SexMode.Asexual)
+				{
+					RegisterCreature(CreatureBehaviorHandler.ReproduceAsexually(ref creature));
+				}
+				else
+				{
+					creature.OpenToMating = true;
+					// Look for partner
+					var (closestMateIndex, canMate) = CreatureBehaviorHandler.FindClosestPotentialMate(creature);
+					if (canMate && creature.MatingTimeLeft <= 0)
+					{
+						RegisterCreature(CreatureBehaviorHandler.ReproduceSexually(ref creature, closestMateIndex));
+						// _visualCreatureRegistry?.Entities[i].Eat(_fruitTreeSim.VisualTreeRegistry.Entities[closestFoodIndex].GetFruit(), CreatureBehaviorHandler.EatDuration / SimulationWorld.TimeScale);
+					}
+					else if (closestMateIndex > -1)
+					{
+						CreatureBehaviorHandler.ChooseMateDestination(ref creature, closestMateIndex);
+					}
+				}
 			}
 
 			// Move, updating destination if needed
-			UpdatePositionAndVelocity(ref creature);
+			CreatureBehaviorHandler.UpdatePositionAndVelocity(ref creature);
 			var transformNextFrame = new Transform3D(Basis.Identity, creature.Position);
 			PhysicsServer3D.AreaSetTransform(creature.Body, transformNextFrame);
 			PhysicsServer3D.AreaSetTransform(creature.Awareness, transformNextFrame);
+			CreatureBehaviorHandler.SpendMovementEnergy(ref creature);
 			
-			// Reproduction and death
-			SpendEnergy(ref creature);
-			if (creature.Energy > ReproductionEnergyThreshold) Reproduce(ref creature);
+			// Ded?
 			if (creature.Energy <= 0)
 			{
 				creature.Alive = false;
@@ -247,165 +250,6 @@ public partial class CreatureSim : Node3D, ISimulation
 		}
 	}
 	#endregion
-	
-	#region Behaviors
-
-	private void UpdateVelocity(ref DataCreature creature)
-	{
-		var desiredDisplacement = creature.CurrentDestination - creature.Position;
-		var desiredDisplacementLengthSquared = desiredDisplacement.LengthSquared();
-		
-		// If we're basically there, choose a new destination
-		if (desiredDisplacementLengthSquared < CreatureEatDistance * CreatureEatDistance)
-		{
-			ChooseDestination(ref creature);
-			desiredDisplacement = creature.CurrentDestination - creature.Position;
-			desiredDisplacementLengthSquared = desiredDisplacement.LengthSquared();
-		}
-		
-		// Calculate desired velocity
-		var desiredVelocity = desiredDisplacement * creature.MaxSpeed / Mathf.Sqrt(desiredDisplacementLengthSquared);
-		
-		// Calculate velocity change
-		var velocityChange = desiredVelocity - creature.Velocity;
-		var velocityChangeLengthSquared = velocityChange.LengthSquared();
-
-		// Calculate acceleration vector with a maximum magnitude
-		var maxAccelerationMagnitudeSquared = creature.MaxSpeed * creature.MaxSpeed * MaxAccelerationFactor * MaxAccelerationFactor;
-		Vector3 accelerationVector;
-		if (velocityChangeLengthSquared > maxAccelerationMagnitudeSquared)
-		{
-			accelerationVector =  Mathf.Sqrt(maxAccelerationMagnitudeSquared / velocityChangeLengthSquared) * velocityChange;
-		}
-		else
-		{
-			accelerationVector = velocityChange;
-		}
-
-		// Update velocity
-		creature.Velocity += accelerationVector;
-	}
-	private void UpdatePositionAndVelocity(ref DataCreature creature)
-	{
-		UpdateVelocity(ref creature);
-
-		// Limit velocity to max speed
-		var velocityLengthSquared = creature.Velocity.LengthSquared();
-		var maxSpeedSquared = creature.MaxSpeed * creature.MaxSpeed;
-		if (velocityLengthSquared > maxSpeedSquared)
-		{
-			creature.Velocity = creature.MaxSpeed / Mathf.Sqrt(velocityLengthSquared) * creature.Velocity;
-		}
-		
-		// Update position
-		creature.Position += creature.Velocity / SimulationWorld.PhysicsStepsPerSimSecond;
-	}
-	private void ChooseDestination(ref DataCreature creature)
-	{
-		Vector3 newDestination;
-		int attempts = 0;
-		const int maxAttempts = 100;
-
-		do
-		{
-			var angle = SimulationWorld.Rng.RangeFloat(1) * 2 * Mathf.Pi;
-			var displacement = Rng.RangeFloat(1) * CreatureStepMaxLength * new Vector3(
-				Mathf.Sin(angle),
-				0,
-				Mathf.Cos(angle)
-			);
-			newDestination = creature.Position + displacement;
-			attempts++;
-
-			if (attempts >= maxAttempts)
-			{
-				GD.PrintErr($"Failed to find a valid destination after {maxAttempts} attempts. Using current position.");
-				newDestination = creature.Position;
-				break;
-			}
-		} while (!SimulationWorld.IsWithinWorldBounds(newDestination));
-
-		creature.CurrentDestination = newDestination;
-	}
-	private void ChooseDestination(ref DataCreature creature, int treeIndex)
-	{
-		var tree = _fruitTreeSim.Registry.Entities[treeIndex];
-		creature.CurrentDestination = tree.Position;
-	}
-	
-	private (int, bool) FindClosestFood(DataCreature creature)
-	{
-		var objectsInAwareness = DetectCollisionsWithCreature(creature);
-		var closestFoodIndex = -1;
-		var canEat = false;
-		var closestFoodSqrDistance = float.MaxValue;
-
-		foreach (var objectData in objectsInAwareness)
-		{
-			var objectRid = (Rid)objectData["rid"];
-			// GD.Print($"Entities in dict: {_fruitTreeSim.Registry.TreeLookup.Count}");
-			if (!_fruitTreeSim.Registry.TreeLookup.TryGetValue(objectRid, out var treeIndex)) continue;
-			// GD.Print($"Index is {treeIndex}. Data entities: {_fruitTreeSim.Registry.Entities.Count}");
-			var tree = _fruitTreeSim.Registry.Entities[treeIndex];
-			if (!tree.HasFruit) continue;
-			
-			var sqrDistance = (creature.Position - tree.Position).LengthSquared();
-			if (!(sqrDistance < closestFoodSqrDistance)) continue;
-			
-			closestFoodSqrDistance = sqrDistance;
-			closestFoodIndex = treeIndex;
-			if (closestFoodSqrDistance < CreatureEatDistance * CreatureEatDistance)
-			{
-				canEat = true;
-			}
-		}
-
-		return (closestFoodIndex, canEat);
-	}
-
-	private void SpendEnergy(ref DataCreature creature)
-	{
-		var normalizedSpeed = creature.MaxSpeed / InitialCreatureSpeed;
-		var normalizedAwarenessRadius = creature.AwarenessRadius / InitialAwarenessRadius;
-		
-		creature.Energy -= (BaseEnergySpend + GlobalEnergySpendAdjustmentFactor * ( normalizedSpeed * normalizedSpeed + normalizedAwarenessRadius)) / SimulationWorld.PhysicsStepsPerSimSecond;
-	}
-
-	private void EatFood(ref DataCreature creature, int treeIndex)
-	{
-		var tree = _fruitTreeSim.Registry.Entities[treeIndex];
-		if (!tree.HasFruit) return;
-		
-		tree.HasFruit = false;
-		tree.FruitGrowthProgress = 0;
-		_fruitTreeSim.Registry.Entities[treeIndex] = tree;
-		
-		creature.Energy += EnergyGainFromFood;
-		creature.EatingTimeLeft = EatDuration;
-	}
-
-	private void Reproduce(ref DataCreature creature)
-	{
-		creature.Energy -= ReproductionEnergyCost;
-
-		var newCreature = creature;
-		
-		if (SimulationWorld.Rng.RangeFloat(0, 1) < MutationProbability)
-		{
-			newCreature.AwarenessRadius += SimulationWorld.Rng.RangeFloat(0, 1) < 0.5f ? MutationIncrement : -MutationIncrement;
-			newCreature.AwarenessRadius = Mathf.Max(0, newCreature.AwarenessRadius);
-		}
-		if (SimulationWorld.Rng.RangeFloat(0, 1) < MutationProbability)
-		{
-			newCreature.MaxSpeed += SimulationWorld.Rng.RangeFloat(0, 1) < 0.5f ? MutationIncrement : -MutationIncrement;
-			newCreature.MaxSpeed = Mathf.Max(0, newCreature.MaxSpeed);
-		}
-
-		ChooseDestination(ref newCreature);
-		RegisterCreature(newCreature);
-	}
-
-	#endregion
 
 	#region Registry interactions
 	private void ClearDeadCreatures()
@@ -425,24 +269,18 @@ public partial class CreatureSim : Node3D, ISimulation
 				_visualCreatureRegistry.Entities.RemoveAt(i);
 			}
 		}
+		
+		// Rebuild TreeLookup
+		Registry.CreatureLookup.Clear();
+		for (int i = 0; i < Registry.Entities.Count; i++)
+		{
+			Registry.CreatureLookup[Registry.Entities[i].Body] = i;
+		}
 	}
 	private void RegisterCreature(DataCreature dataCreature)
 	{
 		Registry.RegisterEntity(dataCreature);
 		_visualCreatureRegistry?.RegisterEntity(dataCreature);
-	}
-	#endregion
-	
-	#region Helpers
-	private Array<Dictionary> DetectCollisionsWithCreature(DataCreature creature)
-	{
-		var queryParams = new PhysicsShapeQueryParameters3D();
-		queryParams.CollideWithAreas = true;
-		queryParams.ShapeRid = PhysicsServer3D.AreaGetShape(creature.Awareness, 0);
-		queryParams.Transform = Transform3D.Identity.Translated(creature.Position);
-
-		// Run query and print
-		return PhysicsServer3D.SpaceGetDirectState(GetWorld3D().Space).IntersectShape(queryParams);
 	}
 	#endregion
 }
