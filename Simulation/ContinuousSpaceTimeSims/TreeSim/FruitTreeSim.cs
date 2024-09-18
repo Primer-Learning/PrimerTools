@@ -81,7 +81,7 @@ public partial class FruitTreeSim : Simulation
         for (var i = 0; i < Registry.Entities.Count; i++)
         {
             var tree = Registry.Entities[i];
-            if (tree.IsDead) continue;
+            if (!tree.Alive) continue;
             
             switch (Mode)
             {
@@ -125,7 +125,7 @@ public partial class FruitTreeSim : Simulation
                 var physicalTree = Registry.Entities[i]; 
                 var visualTree = VisualTreeRegistry.Entities[i];
                 
-                if (physicalTree.IsDead)
+                if (!physicalTree.Alive)
                 {
                     visualTree.Death();
                     VisualTreeRegistry.Entities[i] = visualTree;
@@ -159,7 +159,7 @@ public partial class FruitTreeSim : Simulation
         
         for (var i = Registry.Entities.Count - 1; i >= 0; i--)
         {
-            if (!Registry.Entities[i].IsDead) continue;
+            if (Registry.Entities[i].Alive) continue;
 			     
             Registry.Entities[i].CleanUp();
             Registry.Entities.RemoveAt(i);

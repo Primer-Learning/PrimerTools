@@ -35,11 +35,11 @@ namespace PrimerTools.Simulation
                 // Check if sapling is too close to a mature tree
                 if (IsTooCloseToMatureTree(tree, spaceState, registry) || SimulationWorld.Rng.rand.NextDouble() < deathProbability)
                 {
-                    tree.IsDead = true;
+                    tree.Alive = false;
                 }
 
                 // Check for maturation
-                if (!tree.IsDead && tree.Age >= TreeMaturationTime)
+                if (tree.Alive && tree.Age >= TreeMaturationTime)
                 {
                     tree.IsMature = true;
                 }
@@ -58,7 +58,7 @@ namespace PrimerTools.Simulation
                                        neighborCount * MatureTreeDeathProbabilityPerNeighbor;
                 if (SimulationWorld.Rng.rand.NextDouble() < deathProbability)
                 {
-                    tree.IsDead = true;
+                    tree.Alive = false;
                 }
             }
         }
@@ -119,7 +119,7 @@ namespace PrimerTools.Simulation
                 if (registry.TreeLookup.TryGetValue(intersectedBody, out var index))
                 {
                     var dataTree = registry.Entities[index];
-                    if (!dataTree.IsDead && intersectedBody != tree.Body)
+                    if (dataTree.Alive && intersectedBody != tree.Body)
                     {
                         livingNeighbors++;
                     }

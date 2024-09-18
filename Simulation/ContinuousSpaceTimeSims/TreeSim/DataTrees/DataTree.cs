@@ -10,7 +10,7 @@ public struct DataTree : IEntity
     public bool IsMature;
     public float TimeSinceLastSpawn;
     public SphereShape3D BodyShapeResource;
-    public bool IsDead;
+    public bool Alive;
     public bool HasFruit;
     public float FruitGrowthProgress;
  
@@ -38,6 +38,6 @@ public struct DataTree : IEntity
         IsMature = false;
         TimeSinceLastSpawn = 0;
         BodyShapeResource = bodyShape;
-        IsDead = false;
+        Alive = true;
     }
 }
