@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Godot;
 
 namespace PrimerTools.Simulation
@@ -74,7 +75,7 @@ namespace PrimerTools.Simulation
             }
         }
 
-        public static bool IsTooCloseToMatureTree(DataTree sapling, PhysicsDirectSpaceState3D spaceState, DataTreeRegistry registry)
+        private static bool IsTooCloseToMatureTree(DataTree sapling, PhysicsDirectSpaceState3D spaceState, DataTreeRegistry registry)
         {
             var queryParams = new PhysicsShapeQueryParameters3D();
             queryParams.CollideWithAreas = true;
@@ -100,7 +101,7 @@ namespace PrimerTools.Simulation
             return false;
         }
 
-        public static int CountNeighbors(DataTree tree, PhysicsDirectSpaceState3D spaceState, DataTreeRegistry registry)
+        private static int CountNeighbors(DataTree tree, PhysicsDirectSpaceState3D spaceState, DataTreeRegistry registry)
         {
             var queryParams = new PhysicsShapeQueryParameters3D();
             queryParams.CollideWithAreas = true;
@@ -126,6 +127,14 @@ namespace PrimerTools.Simulation
             }
 
             return livingNeighbors;
+        }
+        
+        public static Vector3 TryGenerateNewTreePosition(DataTree parent)
+        {
+            var angle = SimulationWorld.Rng.RangeFloat(0, Mathf.Tau);
+            var distance = SimulationWorld.Rng.RangeFloat(MinTreeSpawnRadius, MaxTreeSpawnRadius);
+            var offset = new Vector3(Mathf.Cos(angle) * distance, 0, Mathf.Sin(angle) * distance);
+            return parent.Position + offset;
         }
         #endregion
     }

@@ -92,7 +92,11 @@ public partial class FruitTreeSim : Simulation
                     FruitTreeBehaviorHandler.UpdateTree(ref tree, PhysicsServer3D.SpaceGetDirectState(GetWorld3D().Space), Registry);
                     if (tree is { IsMature: true, TimeSinceLastSpawn: 0 })
                     {
-                        TryGenerateNewTreePosition(tree, newTreePositions);
+                        var newPosition = FruitTreeBehaviorHandler.TryGenerateNewTreePosition(tree);
+                        if (SimulationWorld.IsWithinWorldBounds(newPosition))
+                        {
+                            newTreePositions.Add(newPosition);
+                        }
                     }
                     break;
                 default:
@@ -101,7 +105,6 @@ public partial class FruitTreeSim : Simulation
 
             Registry.Entities[i] = tree;
         }
-        
         foreach (var newTreePosition in newTreePositions)
         {
             var physicalTree = new DataTree
@@ -140,23 +143,6 @@ public partial class FruitTreeSim : Simulation
         }
         ClearDeadTrees();
     }
-    #endregion
-
-    #region Behaviors
-
-    private void TryGenerateNewTreePosition(DataTree parent, List<Vector3> newTrees)
-    {
-        var angle = SimulationWorld.Rng.RangeFloat(0, Mathf.Tau);
-        var distance = SimulationWorld.Rng.RangeFloat(FruitTreeBehaviorHandler.MinTreeSpawnRadius, FruitTreeBehaviorHandler.MaxTreeSpawnRadius);
-        var offset = new Vector3(Mathf.Cos(angle) * distance, 0, Mathf.Sin(angle) * distance);
-        var newPosition = parent.Position + offset;
-
-        if (SimulationWorld.IsWithinWorldBounds(newPosition))
-        {
-            newTrees.Add(newPosition);
-        }
-    }
-
     #endregion
 
     #region Registry interactions
