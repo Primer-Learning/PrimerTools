@@ -32,13 +32,7 @@ namespace PrimerTools.Simulation
         #endregion
 
         #region Visual
-        protected abstract void VisualProcess(double delta);
-        public override void _Process(double delta)
-        {
-            if (!_running) return;
-            // The point of having this separate is to put performance measurement stuff here.
-            VisualProcess(delta);
-        }
+        public abstract void VisualProcess(double delta);
         #endregion
     }
 }

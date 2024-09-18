@@ -10,7 +10,7 @@ public partial class SimulationTestScene : Node3D
 {
 	private SimulationWorld SimulationWorld => GetNode<SimulationWorld>("SimulationWorld");
 	private CreatureSim CreatureSim => SimulationWorld.GetNode<CreatureSim>("Creature Sim");
-	public FruitTreeSim FruitTreeSim => SimulationWorld.GetNode<FruitTreeSim>("Tree Sim");
+	private FruitTreeSim FruitTreeSim => SimulationWorld.GetNode<FruitTreeSim>("Tree Sim");
 	
 	private CancellationTokenSource _cts;
 	private bool _newSim = true;
@@ -96,18 +96,7 @@ public partial class SimulationTestScene : Node3D
                 SimulationWorld.Seed = -1;
 			}
 
-			SimulationWorld.Testing = value;
 			_speedTest = value;
-		}
-	}
-
-	[Export] private bool PerformanceTest
-	{
-		get => _performanceTest;
-		set
-		{
-			SimulationWorld.PerformanceTest = value;
-			_performanceTest = value;
 		}
 	}
 

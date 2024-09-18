@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Diagnostics;
 using Godot;
 
 namespace PrimerTools.Simulation;
@@ -15,7 +14,6 @@ public partial class SimulationWorld : Node3D
 {
     #region Editor controls
     public bool Running;
-
     [Export] public VisualizationMode VisualizationMode = VisualizationMode.NodeCreatures;
     #endregion
     
@@ -28,7 +26,7 @@ public partial class SimulationWorld : Node3D
     } 
 
     private float _timeScale = 1;
-    // [Export]
+    [Export]
     public float TimeScale
     {
         get => _timeScale;
@@ -39,8 +37,7 @@ public partial class SimulationWorld : Node3D
         }
     }
     private static int _seed = -1;
-
-    [Export] // Would make this static, but you can't export a static property. And I want to control this from the editor.
+    [Export]
     public int Seed
     {
         get => _seed;
@@ -52,12 +49,6 @@ public partial class SimulationWorld : Node3D
     }
 
     public const int PhysicsStepsPerSimSecond = 60;
-
-    public bool Testing;
-    public bool PerformanceTest;
-    private int _stepsSoFar = 0;
-    private Stopwatch _stopwatch;
-    private int _maxSteps = 3000;
 
     private static Rng _rng;
     public static Rng Rng => _rng ??= new Rng(_seed == -1 ? System.Environment.TickCount : _seed);
@@ -85,9 +76,6 @@ public partial class SimulationWorld : Node3D
                 _simulations.Add(simulation);
             }
         }
-
-        _stepsSoFar = 0;
-        _stopwatch = Stopwatch.StartNew();
     }
 
     public override void _PhysicsProcess(double delta)
@@ -95,14 +83,19 @@ public partial class SimulationWorld : Node3D
         if (!Running) return;
         foreach (var simulation in _simulations)
         {
+            if (!simulation.Running) continue;
             simulation.Step();
         }
-        _stepsSoFar++;
-        
-        // For speed tests
-        if (!Testing || _stepsSoFar < _maxSteps) return;
-        Running = false;
-        GD.Print($"Elapsed time = {_stopwatch.ElapsedMilliseconds} milliseconds");
+    }
+
+    public override void _Process(double delta)
+    {
+        if (!Running) return;
+        foreach (var simulation in _simulations)
+        {
+            if (!simulation.Running) continue;
+            simulation.VisualProcess(delta);
+        }
     }
 
     public static bool IsWithinWorldBounds(Vector3 position)

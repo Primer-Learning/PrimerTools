@@ -167,7 +167,7 @@ public partial class CreatureSim : Simulation
 		StepsSoFar++;
 	}
 
-	protected override void VisualProcess(double delta)
+	public override void VisualProcess(double delta)
 	{
 		// Update visuals
 		if (_visualCreatureRegistry != null)

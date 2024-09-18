@@ -113,8 +113,7 @@ public partial class FruitTreeSim : Simulation
 
         StepsSoFar++;
     }
-
-    protected override void VisualProcess(double delta)
+    public override void VisualProcess(double delta)
     {
         if (VisualTreeRegistry != null)
         {
