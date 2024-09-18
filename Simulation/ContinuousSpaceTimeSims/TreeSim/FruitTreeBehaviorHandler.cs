@@ -1,6 +1,4 @@
-using System;
 using Godot;
-using PrimerTools.Simulation;
 
 namespace PrimerTools.Simulation
 {
@@ -23,6 +21,7 @@ namespace PrimerTools.Simulation
         private const float MatureTreeDeathProbabilityPerNeighbor = 0.0001f;
         #endregion
 
+        #region Behaviors
         public static void UpdateTree(ref DataTree tree, PhysicsDirectSpaceState3D spaceState, DataTreeRegistry registry)
         {
             tree.Age += 1f / SimulationWorld.PhysicsStepsPerSimSecond;
@@ -63,7 +62,7 @@ namespace PrimerTools.Simulation
             }
         }
 
-        public static void UpdateFruit(ref DataTree tree, SimulationWorld SimulationWorld)
+        public static void UpdateFruit(ref DataTree tree)
         {
             if (tree.IsMature && !tree.HasFruit)
             {
@@ -128,5 +127,6 @@ namespace PrimerTools.Simulation
 
             return livingNeighbors;
         }
+        #endregion
     }
 }

@@ -1,46 +1,25 @@
 using System;
-using System.Diagnostics;
 using Godot;
-using Godot.Collections;
 using PrimerTools;
 using PrimerTools.Simulation;
 
 [Tool]
 public partial class CreatureSim : Simulation
 {
-	#region Editor controls
-	private bool _running;
-	[Export]
-	public bool Running
-	{
-		get => _running;
-		set
-		{
-			if (value && !_initialized)
-			{
-				Initialize();
-			}
-			_running = value;
-		}
-	}
-	#endregion
-
 	#region Simulation
-	private SimulationWorld SimulationWorld => GetParent<SimulationWorld>();
 	public DataCreatureRegistry Registry;
 	private IEntityRegistry<NodeCreature> _visualCreatureRegistry;
-	[Export] public FruitTreeSim _fruitTreeSim;
-	private int _stepsSoFar;
+	[Export] public FruitTreeSim FruitTreeSim;
 	
 	[Export]
 	private int _initialCreatureCount = 4;
 
 	#region Life cycle
-	private bool _initialized;
 	public override void Initialize()
 	{
+		if (Initialized) return;
 		// TODO: Not this. See comment in CreatureBehaviorHandler
-		CreatureBehaviorHandler.FruitTreeSim = _fruitTreeSim;
+		CreatureBehaviorHandler.FruitTreeSim = FruitTreeSim;
 		CreatureBehaviorHandler.CreatureSim = this;
 		CreatureBehaviorHandler.Space = PhysicsServer3D.SpaceGetDirectState(GetWorld3D().Space);
 		
@@ -57,7 +36,7 @@ public partial class CreatureSim : Simulation
 				throw new ArgumentOutOfRangeException();
 		}
 		
-		if (_fruitTreeSim == null)
+		if (FruitTreeSim == null)
 		{
 			GD.PrintErr("TreeSim not found. Not initializing creature sim because they will all starve to death immediately. You monster.");
 			return;
@@ -77,15 +56,15 @@ public partial class CreatureSim : Simulation
 			RegisterCreature(physicalCreature);
 		}
 
-		_stepsSoFar = 0;
-		_initialized = true;
+		StepsSoFar = 0;
+		Initialized = true;
 	}
 	public override void Reset()
 	{
-		_stepsSoFar = 0;
+		StepsSoFar = 0;
 		Registry?.Reset();
 		_visualCreatureRegistry?.Reset();
-		_initialized = false;
+		Initialized = false;
 		
 		foreach (var child in GetChildren())
 		{
@@ -95,17 +74,12 @@ public partial class CreatureSim : Simulation
 	#endregion
 	public override void Step()
 	{
-		if (!_running) return;
+		if (!Running) return;
 		if (Registry.Entities.Count == 0)
 		{
 			GD.Print("No Creatures found. Stopping.");
 			Running = false;
 			return;
-		}
-
-		if (SimulationWorld.PerformanceTest)
-		{
-			_stepStopwatch.Restart();
 		}
 
 		const float timeStep = 1f / SimulationWorld.PhysicsStepsPerSimSecond;
@@ -136,7 +110,7 @@ public partial class CreatureSim : Simulation
 			if (canEat && creature.EatingTimeLeft <= 0)
 			{
 				CreatureBehaviorHandler.EatFood(ref creature, closestFoodIndex);
-				_visualCreatureRegistry?.Entities[i].Eat(_fruitTreeSim.VisualTreeRegistry.Entities[closestFoodIndex].GetFruit(), CreatureBehaviorHandler.EatDuration / SimulationWorld.TimeScale);
+				_visualCreatureRegistry?.Entities[i].Eat(FruitTreeSim.VisualTreeRegistry.Entities[closestFoodIndex].GetFruit(), CreatureBehaviorHandler.EatDuration / SimulationWorld.TimeScale);
 			}
 			else if (closestFoodIndex > -1)
 			{
@@ -190,24 +164,11 @@ public partial class CreatureSim : Simulation
 			Registry.Entities[i] = creature;
 		}
 		
-		_stepsSoFar++;
-
-		if (SimulationWorld.PerformanceTest)
-		{
-			_stepStopwatch.Stop();
-			_totalStepTime += _stepStopwatch.Elapsed.TotalMilliseconds;
-			_stepCount++;
-		}
+		StepsSoFar++;
 	}
-	public override void _Process(double delta)
-	{
-		if (!_running) return;
 
-		if (SimulationWorld.PerformanceTest)
-		{
-			_processStopwatch.Restart();
-		}
-		
+	protected override void VisualProcess(double delta)
+	{
 		// Update visuals
 		if (_visualCreatureRegistry != null)
 		{
@@ -222,33 +183,8 @@ public partial class CreatureSim : Simulation
 		// But high enough where things won't build up.
 		// Could be a better choice, though. Probably less often if anything.
 		ClearDeadCreatures();
-
-		if (SimulationWorld.PerformanceTest)
-		{
-			_processStopwatch.Stop();
-			_totalProcessTime += _processStopwatch.Elapsed.TotalMilliseconds;
-			_processCount++;
-		}
 	}
 
-	#endregion
-
-	#region Performance testing 
-	private Stopwatch _stepStopwatch = new Stopwatch();
-	private Stopwatch _processStopwatch = new Stopwatch();
-	private double _totalStepTime;
-	private double _totalProcessTime;
-	private int _stepCount;
-	private int _processCount;
-	public void PrintPerformanceStats()
-	{
-		if (_stepCount > 0 && _processCount > 0)
-		{
-			GD.Print($"CreatureSim Performance Stats:");
-			GD.Print($"  Average Step Time: {_totalStepTime / _stepCount:F3} ms");
-			GD.Print($"  Average Process Time: {_totalProcessTime / _processCount:F3} ms");
-		}
-	}
 	#endregion
 
 	#region Registry interactions

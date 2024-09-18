@@ -48,12 +48,6 @@ public partial class SimulationTestScene : Node3D
 				// If continuing becomes important, a separate pause button might do it.
 				CreatureSim.Running = false;
 				FruitTreeSim.Running = false;
-
-				if (SimulationWorld.PerformanceTest)
-				{
-					CreatureSim.PrintPerformanceStats();
-					FruitTreeSim.PrintPerformanceStats();
-				}
 			}
 			_run = value;
 		}

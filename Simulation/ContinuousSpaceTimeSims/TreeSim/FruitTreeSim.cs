@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using Godot;
 using System.Collections.Generic;
 using PrimerTools;
@@ -8,29 +7,8 @@ using PrimerTools.Simulation;
 [Tool]
 public partial class FruitTreeSim : Simulation
 {
-    #region Editor controls
-    private bool _running;
-    public bool Running
-    {
-        get => _running;
-        set
-        {
-            if (value && !_initialized)
-            {
-                Initialize();
-                GD.Print("Starting tree sim.");
-            }
-            _running = value;
-            GD.Print(_initialized);
-        }
-    }
-    #endregion
-
     #region Sim parameters
     [Export] private int _initialTreeCount = 20;
-    
-    [Export] private float _deadTreeClearInterval = 1f;
-    private float _timeSinceLastClear = 0f;
     
     public enum SimMode
     {
@@ -41,15 +19,14 @@ public partial class FruitTreeSim : Simulation
     #endregion
 
     #region Simulation
-    private SimulationWorld SimulationWorld => GetParent<SimulationWorld>();
     public DataTreeRegistry Registry;
     public IEntityRegistry<NodeTree> VisualTreeRegistry;
-    private int _stepsSoFar;
 
     #region Life cycle
-    private bool _initialized;
     public override void Initialize()
     {
+        if (Initialized) return;
+        
         Registry = new DataTreeRegistry(SimulationWorld.World3D);
         
         switch (SimulationWorld.VisualizationMode)
@@ -65,21 +42,23 @@ public partial class FruitTreeSim : Simulation
 
         for (var i = 0; i < _initialTreeCount; i++)
         {
-            var physicalTree = new DataTree();
-            physicalTree.Position = new Vector3(
-                SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.X),
-                0,
-                SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.Y)
-            );
+            var physicalTree = new DataTree
+            {
+                Position = new Vector3(
+                    SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.X),
+                    0,
+                    SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.Y)
+                )
+            };
             RegisterTree(physicalTree);
         }
 
-        _initialized = true;
+        Initialized = true;
     }
     public override void Reset()
     {
-        _stepsSoFar = 0;
-        _initialized = false;
+        StepsSoFar = 0;
+        Initialized = false;
         Registry?.Reset();
         
         foreach (var child in GetChildren())
@@ -90,17 +69,12 @@ public partial class FruitTreeSim : Simulation
     #endregion
     public override void Step()
     {
-        if (!_running) return;
+        if (!Running) return;
         if (Registry.Entities.Count == 0)
         {
             GD.Print("No Trees found. Stopping.");
             Running = false;
             return;
-        }
-
-        if (SimulationWorld.PerformanceTest)
-        {
-            _stepStopwatch.Restart();
         }
 
         var newTreePositions = new List<Vector3>();
@@ -112,11 +86,11 @@ public partial class FruitTreeSim : Simulation
             switch (Mode)
             {
                 case SimMode.FruitGrowth:
-                    FruitTreeBehaviorHandler.UpdateFruit(ref tree, SimulationWorld);
+                    FruitTreeBehaviorHandler.UpdateFruit(ref tree);
                     break;
                 case SimMode.TreeGrowth:
                     FruitTreeBehaviorHandler.UpdateTree(ref tree, PhysicsServer3D.SpaceGetDirectState(GetWorld3D().Space), Registry);
-                    if (tree.IsMature && tree.TimeSinceLastSpawn == 0)
+                    if (tree is { IsMature: true, TimeSinceLastSpawn: 0 })
                     {
                         TryGenerateNewTreePosition(tree, newTreePositions);
                     }
@@ -130,30 +104,18 @@ public partial class FruitTreeSim : Simulation
         
         foreach (var newTreePosition in newTreePositions)
         {
-            var physicalTree = new DataTree();
-            physicalTree.Position = newTreePosition;
+            var physicalTree = new DataTree
+            {
+                Position = newTreePosition
+            };
             RegisterTree(physicalTree);
         }
 
-        _stepsSoFar++;
-
-        if (SimulationWorld.PerformanceTest)
-        {
-            _stepStopwatch.Stop();
-            _totalStepTime += _stepStopwatch.Elapsed.TotalMilliseconds;
-            _stepCount++;
-        }
+        StepsSoFar++;
     }
-    public override void _Process(double delta)
-    {
-        if (!_running) return;
-        
-        if (SimulationWorld.PerformanceTest)
-        {
-            _processStopwatch.Restart();
-            _visualUpdateStopwatch.Restart();
-        }
 
+    protected override void VisualProcess(double delta)
+    {
         if (VisualTreeRegistry != null)
         {
             for (var i = 0; i < Registry.Entities.Count; i++)
@@ -177,52 +139,8 @@ public partial class FruitTreeSim : Simulation
                 VisualTreeRegistry.Entities[i] = visualTree;
             }
         }
-
-        if (SimulationWorld.PerformanceTest)
-        {
-            _visualUpdateStopwatch.Stop();
-            _totalVisualUpdateTime += _visualUpdateStopwatch.Elapsed.TotalMilliseconds;
-        }
-        
-        _timeSinceLastClear += (float)delta;
-        if (_timeSinceLastClear >= _deadTreeClearInterval)
-        {
-            ClearDeadTrees();
-            _timeSinceLastClear = 0f;
-        }
-        
-        if (SimulationWorld.PerformanceTest)
-        {
-            _processStopwatch.Stop();
-            _totalProcessTime += _processStopwatch.Elapsed.TotalMilliseconds;
-            _processCount++;
-        }
+        ClearDeadTrees();
     }
-    #endregion
-
-    #region Performance testing
-
-    // Performance testing
-    private Stopwatch _stepStopwatch = new Stopwatch();
-    private Stopwatch _processStopwatch = new Stopwatch();
-    private Stopwatch _visualUpdateStopwatch = new Stopwatch();
-    private double _totalStepTime;
-    private double _totalProcessTime;
-    private double _totalVisualUpdateTime;
-    private int _stepCount;
-    private int _processCount;
-    
-    public void PrintPerformanceStats()
-    {
-        if (_stepCount > 0 && _processCount > 0)
-        {
-            GD.Print($"TreeSim Performance Stats:");
-            GD.Print($"  Average Step Time: {_totalStepTime / _stepCount:F3} ms");
-            GD.Print($"  Average Process Time: {_totalProcessTime / _processCount:F3} ms");
-            GD.Print($"  Average Visual Update Time: {_totalVisualUpdateTime / _processCount:F3} ms");
-        }
-    }
-
     #endregion
 
     #region Behaviors
@@ -249,7 +167,8 @@ public partial class FruitTreeSim : Simulation
         Registry.RegisterEntity(dataTree);
         VisualTreeRegistry?.RegisterEntity(dataTree);
     }
-    public void ClearDeadTrees()
+
+    private void ClearDeadTrees()
     {
         // TODO: Probably best to make the registries take care of this. They do need to be triggered together, though.
         

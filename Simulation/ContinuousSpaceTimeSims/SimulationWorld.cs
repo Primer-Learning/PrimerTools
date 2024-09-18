@@ -62,7 +62,7 @@ public partial class SimulationWorld : Node3D
     private static Rng _rng;
     public static Rng Rng => _rng ??= new Rng(_seed == -1 ? System.Environment.TickCount : _seed);
     public World3D World3D => GetWorld3D();
-    private List<ISimulation> _simulations = new();
+    private List<Simulation> _simulations = new();
 
     public void ResetSimulations()
     {
@@ -80,7 +80,7 @@ public partial class SimulationWorld : Node3D
         _simulations.Clear();
         foreach (var child in GetChildren())
         {
-            if (child is ISimulation simulation)
+            if (child is Simulation simulation)
             {
                 _simulations.Add(simulation);
             }
