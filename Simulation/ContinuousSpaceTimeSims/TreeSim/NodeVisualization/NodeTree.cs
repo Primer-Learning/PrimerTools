@@ -1,6 +1,5 @@
 using Godot;
 using PrimerTools.Simulation;
-using PrimerTools.Simulation.TreeSim;
 
 public partial class NodeTree : Node3D, IEntity
 {
@@ -23,7 +22,7 @@ public partial class NodeTree : Node3D, IEntity
 	}
 	public void UpdateTransform(DataTree dataTree)
 	{
-		Scale = Vector3.One * Mathf.Min(1, dataTree.Age / FruitTreeSim.TreeMaturationTime);
+		Scale = Vector3.One * Mathf.Min(1, dataTree.Age / FruitTreeBehaviorHandler.TreeMaturationTime);
 	}
 	public void Death()
 	{

@@ -6,11 +6,11 @@ public partial class FruitGrowthSlider : HSlider
 	public override void _Ready()
 	{
 		base._Ready();
-		Value = GetNode<FruitTreeSim>("%Tree Sim").FruitGrowthTime;
+		Value = FruitTreeBehaviorHandler.FruitGrowthTime;
 	}
 
 	public override void _ValueChanged(double newValue)
 	{
-		GetNode<FruitTreeSim>("%Tree Sim").FruitGrowthTime = (float) newValue;
+		FruitTreeBehaviorHandler.FruitGrowthTime = (float) newValue;
 	}
 }

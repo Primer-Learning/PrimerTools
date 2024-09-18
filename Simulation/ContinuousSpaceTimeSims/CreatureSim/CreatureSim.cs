@@ -6,7 +6,7 @@ using PrimerTools;
 using PrimerTools.Simulation;
 
 [Tool]
-public partial class CreatureSim : Node3D, ISimulation
+public partial class CreatureSim : Simulation
 {
 	#region Editor controls
 	private bool _running;
@@ -37,7 +37,7 @@ public partial class CreatureSim : Node3D, ISimulation
 
 	#region Life cycle
 	private bool _initialized;
-	public void Initialize()
+	public override void Initialize()
 	{
 		// TODO: Not this. See comment in CreatureBehaviorHandler
 		CreatureBehaviorHandler.FruitTreeSim = _fruitTreeSim;
@@ -80,7 +80,7 @@ public partial class CreatureSim : Node3D, ISimulation
 		_stepsSoFar = 0;
 		_initialized = true;
 	}
-	public void Reset()
+	public override void Reset()
 	{
 		_stepsSoFar = 0;
 		Registry?.Reset();
@@ -93,7 +93,7 @@ public partial class CreatureSim : Node3D, ISimulation
 		}
 	}
 	#endregion
-	public void Step()
+	public override void Step()
 	{
 		if (!_running) return;
 		if (Registry.Entities.Count == 0)

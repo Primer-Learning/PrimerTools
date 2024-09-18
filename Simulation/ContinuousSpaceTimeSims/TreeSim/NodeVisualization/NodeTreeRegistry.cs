@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using Godot;
 
-namespace PrimerTools.Simulation.TreeSim;
+namespace PrimerTools.Simulation;
 
 public class NodeTreeRegistry : IEntityRegistry<NodeTree>
 {

@@ -4,10 +4,9 @@ using Godot;
 using System.Collections.Generic;
 using PrimerTools;
 using PrimerTools.Simulation;
-using PrimerTools.Simulation.TreeSim;
 
 [Tool]
-public partial class FruitTreeSim : Node3D, ISimulation
+public partial class FruitTreeSim : Simulation
 {
     #region Editor controls
     private bool _running;
@@ -30,21 +29,6 @@ public partial class FruitTreeSim : Node3D, ISimulation
     #region Sim parameters
     [Export] private int _initialTreeCount = 20;
     
-    private const float MaxTreeSpawnRadius = 5f;
-    private const float MinTreeSpawnRadius = 1f;
-    private const float TreeCompetitionRadius = 3f;
-    private const float MinimumTreeDistance = 0.5f;
-    
-    public static float TreeMaturationTime = 1f;
-    private const float TreeSpawnInterval = 0.4f;
-    public float FruitGrowthTime = 4f;
-    public const float NodeFruitGrowthDelay = 2f;
-    
-    private const float SaplingDeathProbabilityBase = 0.001f;
-    private const float SaplingDeathProbabilityPerNeighbor = 0.01f;
-    private const float MatureTreeDeathProbabilityBase = 0.0001f;
-    private const float MatureTreeDeathProbabilityPerNeighbor = 0.0001f;
-    
     [Export] private float _deadTreeClearInterval = 1f;
     private float _timeSinceLastClear = 0f;
     
@@ -64,7 +48,7 @@ public partial class FruitTreeSim : Node3D, ISimulation
 
     #region Life cycle
     private bool _initialized;
-    public void Initialize()
+    public override void Initialize()
     {
         Registry = new DataTreeRegistry(SimulationWorld.World3D);
         
@@ -92,7 +76,7 @@ public partial class FruitTreeSim : Node3D, ISimulation
 
         _initialized = true;
     }
-    public void Reset()
+    public override void Reset()
     {
         _stepsSoFar = 0;
         _initialized = false;
@@ -104,7 +88,7 @@ public partial class FruitTreeSim : Node3D, ISimulation
         }
     }
     #endregion
-    public void Step()
+    public override void Step()
     {
         if (!_running) return;
         if (Registry.Entities.Count == 0)
@@ -128,51 +112,13 @@ public partial class FruitTreeSim : Node3D, ISimulation
             switch (Mode)
             {
                 case SimMode.FruitGrowth:
-                    if (tree.IsMature && !tree.HasFruit)
-                    {
-                        tree.FruitGrowthProgress += 1f / SimulationWorld.PhysicsStepsPerSimSecond;
-                        if (tree.FruitGrowthProgress >= FruitGrowthTime)
-                        {
-                            tree.HasFruit = true;
-                        }
-                    }
+                    FruitTreeBehaviorHandler.UpdateFruit(ref tree, SimulationWorld);
                     break;
                 case SimMode.TreeGrowth:
-                    tree.Age += 1f / SimulationWorld.PhysicsStepsPerSimSecond;
-                    if (!tree.IsMature)
+                    FruitTreeBehaviorHandler.UpdateTree(ref tree, PhysicsServer3D.SpaceGetDirectState(GetWorld3D().Space), Registry);
+                    if (tree.IsMature && tree.TimeSinceLastSpawn == 0)
                     {
-                        var neighborCount = CountNeighbors(tree);
-                        var deathProbability = SaplingDeathProbabilityBase +
-                                               neighborCount * SaplingDeathProbabilityPerNeighbor;
-
-                        // Check if sapling is too close to a mature tree
-                        if (IsTooCloseToMatureTree(tree) || SimulationWorld.Rng.rand.NextDouble() < deathProbability)
-                        {
-                            tree.IsDead = true;
-                        }
-
-                        // Check for maturation
-                        if (!tree.IsDead && tree.Age >= TreeMaturationTime)
-                        {
-                            tree.IsMature = true;
-                        }
-                    }
-                    else
-                    {
-                        tree.TimeSinceLastSpawn += 1f / SimulationWorld.PhysicsStepsPerSimSecond;
-                        if (tree.TimeSinceLastSpawn >= TreeSpawnInterval)
-                        {
-                            tree.TimeSinceLastSpawn = 0;
-                            TryGenerateNewTreePosition(tree, newTreePositions);
-                        }
-
-                        var neighborCount = CountNeighbors(tree);
-                        var deathProbability = MatureTreeDeathProbabilityBase +
-                                               neighborCount * MatureTreeDeathProbabilityPerNeighbor;
-                        if (SimulationWorld.Rng.rand.NextDouble() < deathProbability)
-                        {
-                            tree.IsDead = true;
-                        }
+                        TryGenerateNewTreePosition(tree, newTreePositions);
                     }
                     break;
                 default:
@@ -222,9 +168,9 @@ public partial class FruitTreeSim : Node3D, ISimulation
                     continue;
                 }
                 
-                if (physicalTree.FruitGrowthProgress > NodeFruitGrowthDelay && !visualTree.HasFruit)
+                if (physicalTree.FruitGrowthProgress > FruitTreeBehaviorHandler.NodeFruitGrowthDelay && !visualTree.HasFruit)
                 {
-                    visualTree.GrowFruit(FruitGrowthTime - NodeFruitGrowthDelay);
+                    visualTree.GrowFruit(FruitTreeBehaviorHandler.FruitGrowthTime - FruitTreeBehaviorHandler.NodeFruitGrowthDelay);
                 }
                 visualTree.UpdateTransform(physicalTree);
 
@@ -284,7 +230,7 @@ public partial class FruitTreeSim : Node3D, ISimulation
     private void TryGenerateNewTreePosition(DataTree parent, List<Vector3> newTrees)
     {
         var angle = SimulationWorld.Rng.RangeFloat(0, Mathf.Tau);
-        var distance = SimulationWorld.Rng.RangeFloat(MinTreeSpawnRadius, MaxTreeSpawnRadius);
+        var distance = SimulationWorld.Rng.RangeFloat(FruitTreeBehaviorHandler.MinTreeSpawnRadius, FruitTreeBehaviorHandler.MaxTreeSpawnRadius);
         var offset = new Vector3(Mathf.Cos(angle) * distance, 0, Mathf.Sin(angle) * distance);
         var newPosition = parent.Position + offset;
 
@@ -292,32 +238,6 @@ public partial class FruitTreeSim : Node3D, ISimulation
         {
             newTrees.Add(newPosition);
         }
-    }
-    
-    private bool IsTooCloseToMatureTree(DataTree sapling)
-    {
-        var queryParams = new PhysicsShapeQueryParameters3D();
-        queryParams.CollideWithAreas = true;
-        queryParams.ShapeRid = PhysicsServer3D.AreaGetShape(sapling.Body, 0);
-        var transform = Transform3D.Identity.Translated(sapling.Position);
-        transform = transform.ScaledLocal(Vector3.One * MinimumTreeDistance);
-        queryParams.Transform = transform;
-
-        var intersections = PhysicsServer3D.SpaceGetDirectState(GetWorld3D().Space).IntersectShape(queryParams);
-        
-        foreach (var intersection in intersections)
-        {
-            var intersectedBody = (Rid)intersection["rid"];
-            if (Registry.TreeLookup.TryGetValue(intersectedBody, out var index))
-            {
-                if (Registry.Entities[index].IsMature)
-                {
-                    return true;
-                }
-            }
-        }
-        
-        return false;
     }
 
     #endregion
@@ -355,38 +275,6 @@ public partial class FruitTreeSim : Node3D, ISimulation
         {
             Registry.TreeLookup[Registry.Entities[i].Body] = i;
         }
-    }
-
-    #endregion
-
-    #region Helpers
-
-    private int CountNeighbors(DataTree tree)
-    {
-        var queryParams = new PhysicsShapeQueryParameters3D();
-        queryParams.CollideWithAreas = true;
-        queryParams.ShapeRid = PhysicsServer3D.AreaGetShape(tree.Body, 0);
-        var transform = Transform3D.Identity.Translated(tree.Position);
-        transform = transform.ScaledLocal(Vector3.One * TreeCompetitionRadius);
-        queryParams.Transform = transform;
-
-        var intersections = PhysicsServer3D.SpaceGetDirectState(GetWorld3D().Space).IntersectShape(queryParams);
-        int livingNeighbors = 0;
-
-        foreach (var intersection in intersections)
-        {
-            var intersectedBody = (Rid)intersection["rid"];
-            if (Registry.TreeLookup.TryGetValue(intersectedBody, out var index))
-            {
-                var dataTree = Registry.Entities[index];
-                if (!dataTree.IsDead && intersectedBody != tree.Body)
-                {
-                    livingNeighbors++;
-                }
-            }
-        }
-
-        return livingNeighbors;
     }
 
     #endregion
