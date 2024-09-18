@@ -1,7 +1,7 @@
 using Godot;
 using PrimerTools.Simulation;
 
-public partial class NodeTree : Node3D, IEntity
+public partial class NodeTree : Node3D
 {
 	private FruitTree _fruitTree;
 	
@@ -27,9 +27,6 @@ public partial class NodeTree : Node3D, IEntity
 	public void Death()
 	{
 		Visible = false;
-	}
-	public void CleanUp()
-	{
 		QueueFree();
 	}
 	#endregion

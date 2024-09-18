@@ -1,18 +1,12 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Godot;
 
 namespace PrimerTools.Simulation;
 
-public class NodeCreatureRegistry : IEntityRegistry<NodeCreature>
+public partial class NodeCreatureManager : Node3D
 {
-    private readonly CreatureSim _creatureSim;
-    public NodeCreatureRegistry(CreatureSim creatureSim)
-    {
-        _creatureSim = creatureSim;
-    }
-    
-    public List<NodeCreature> Entities { get; } = new();
-    public Dictionary<Rid, int> EntityLookup { get; }
+    public List<NodeCreature> Entities => GetChildren().OfType<NodeCreature>().ToList();
 
     public void RegisterEntity(IEntity entity)
     {
@@ -23,8 +17,20 @@ public class NodeCreatureRegistry : IEntityRegistry<NodeCreature>
         }
         
         var creature = new NodeCreature();
-        _creatureSim.AddChild(creature);
-        Entities.Add(creature);
+        AddChild(creature);
         creature.Initialize(dataCreature);
+    }
+
+    public void RemoveCreature(int index)
+    {
+        GetChild(index).QueueFree();
+    }
+
+    public void Reset()
+    {
+        foreach (var child in Entities)
+        {
+            child.QueueFree();
+        }
     }
 }

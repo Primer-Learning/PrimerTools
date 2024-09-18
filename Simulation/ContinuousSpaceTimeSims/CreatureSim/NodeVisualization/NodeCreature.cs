@@ -4,7 +4,8 @@ using PrimerTools;
 using PrimerTools.Simulation;
 using Blob = PrimerAssets.Blob;
 
-public partial class NodeCreature : Node3D, IEntity
+
+public partial class NodeCreature : Node3D
 {
 	private Blob _blob;
 
@@ -62,10 +63,6 @@ public partial class NodeCreature : Node3D, IEntity
 			0.5f
 		);
 		await tween.ToSignal(tween, Tween.SignalName.Finished);
-		CleanUp();
-	}
-	public void CleanUp()
-	{
 		QueueFree();
 	}
 	#endregion

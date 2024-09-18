@@ -105,7 +105,7 @@ public partial class SimulationWorld : Node3D
         _timeSinceLastStatusPrint += delta;
         if (!(_timeSinceLastStatusPrint > _statusPrintInterval)) return;
         GD.Print($"Trees: {_simulations.OfType<FruitTreeSim>().FirstOrDefault().Registry.Entities.Count(x => x.Alive)}");
-        GD.Print($"Creatures: {_simulations.OfType<CreatureSim>().FirstOrDefault().Registry.Entities.Count(x => x.Alive)}");
+        GD.Print($"Creatures: {_simulations.OfType<CreatureSim>().FirstOrDefault().Registry.Entities.Count(x => ((DataCreature)x).Alive)}");
     }
 
     public static bool IsWithinWorldBounds(Vector3 position)

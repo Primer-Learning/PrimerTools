@@ -7,8 +7,8 @@ using PrimerTools.Simulation;
 public partial class CreatureSim : Simulation
 {
 	#region Simulation
-	public DataCreatureRegistry Registry;
-	private IEntityRegistry<NodeCreature> _visualCreatureRegistry;
+	public DataEntityRegistry<DataCreature> Registry;
+	private NodeCreatureManager _visualCreatureRegistry;
 	[Export] public FruitTreeSim FruitTreeSim;
 	
 	[Export]
@@ -23,14 +23,19 @@ public partial class CreatureSim : Simulation
 		CreatureBehaviorHandler.CreatureSim = this;
 		CreatureBehaviorHandler.Space = PhysicsServer3D.SpaceGetDirectState(GetWorld3D().Space);
 		
-		Registry = new DataCreatureRegistry(SimulationWorld.World3D);
+		Registry = new DataEntityRegistry<DataCreature>(SimulationWorld.World3D);
 		
 		switch (SimulationWorld.VisualizationMode)
 		{
 			case VisualizationMode.None:
 				break;
 			case VisualizationMode.NodeCreatures:
-				_visualCreatureRegistry = new NodeCreatureRegistry(this);
+				foreach (var child in GetChildren())
+				{
+					child.Free();
+				}
+				_visualCreatureRegistry = new NodeCreatureManager();
+				AddChild(_visualCreatureRegistry);
 				break;
 			default:
 				throw new ArgumentOutOfRangeException();
@@ -44,15 +49,17 @@ public partial class CreatureSim : Simulation
 		
 		for (var i = 0; i < _initialCreatureCount; i++)
 		{
-			var physicalCreature = new DataCreature();
-			physicalCreature.Position = new Vector3(
-				SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.X),
-				0,
-				SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.Y)
-			);
-			physicalCreature.AwarenessRadius = CreatureBehaviorHandler.InitialAwarenessRadius;
-			physicalCreature.MaxSpeed = CreatureBehaviorHandler.InitialCreatureSpeed;
-			
+			var physicalCreature = new DataCreature
+			{
+				Position = new Vector3(
+					SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.X),
+					0,
+					SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.Y)
+				),
+				AwarenessRadius = CreatureBehaviorHandler.InitialAwarenessRadius,
+				MaxSpeed = CreatureBehaviorHandler.InitialCreatureSpeed
+			};
+
 			RegisterCreature(physicalCreature);
 		}
 
@@ -63,7 +70,7 @@ public partial class CreatureSim : Simulation
 	{
 		StepsSoFar = 0;
 		Registry?.Reset();
-		_visualCreatureRegistry?.Reset();
+		_visualCreatureRegistry?.Free();
 		Initialized = false;
 		
 		foreach (var child in GetChildren())
@@ -196,7 +203,7 @@ public partial class CreatureSim : Simulation
 				// Visual creatures aren't cleaned up here, since they may want to do an animation before freeing the object
 				// But we clear the list here so they stay in sync.
 				// For this reason, _creatureVisualizer.CreatureDeath must handle cleanup.
-				_visualCreatureRegistry.Entities.RemoveAt(i);
+				_visualCreatureRegistry.RemoveCreature(i);
 			}
 		}
 		

@@ -131,11 +131,11 @@ public static class CreatureBehaviorHandler
 	public static void ChooseTreeDestination(ref DataCreature creature, int treeIndex)
 	{
 		var tree = FruitTreeSim.Registry.Entities[treeIndex];
-		creature.CurrentDestination = tree.Position;
+		creature.CurrentDestination = ((DataTree)tree).Position;
 	}
 	public static void ChooseMateDestination(ref DataCreature creature, int mateIndex)
 	{
-		var mate = CreatureSim.Registry.Entities[mateIndex];
+		var mate = (DataCreature)CreatureSim.Registry.Entities[mateIndex];
 		creature.CurrentDestination = mate.Position;
 	}
 	
@@ -152,7 +152,7 @@ public static class CreatureBehaviorHandler
 			// GD.Print($"Entities in dict: {FruitTreeSim.Registry.EntityLookup.Count}");
 			if (!FruitTreeSim.Registry.EntityLookup.TryGetValue(objectRid, out var treeIndex)) continue;
 			// GD.Print($"Index is {treeIndex}. Data entities: {FruitTreeSim.Registry.Entities.Count}");
-			var tree = FruitTreeSim.Registry.Entities[treeIndex];
+			var tree = (DataTree)FruitTreeSim.Registry.Entities[treeIndex];
 			if (!tree.HasFruit) continue;
 			
 			var sqrDistance = (creature.Position - tree.Position).LengthSquared();
@@ -182,7 +182,7 @@ public static class CreatureBehaviorHandler
 			// GD.Print($"Entities in dict: {FruitTreeSim.Registry.EntityLookup.Count}");
 			if (!CreatureSim.Registry.EntityLookup.TryGetValue(objectRid, out var potentialMateIndex)) continue;
 			// GD.Print($"Index is {treeIndex}. Data entities: {FruitTreeSim.Registry.Entities.Count}");
-			var potentialMate = CreatureSim.Registry.Entities[potentialMateIndex];
+			var potentialMate = (DataCreature)CreatureSim.Registry.Entities[potentialMateIndex];
 			if (!potentialMate.OpenToMating) continue;
 			
 			var sqrDistance = (creature.Position - potentialMate.Position).LengthSquared();
@@ -209,7 +209,7 @@ public static class CreatureBehaviorHandler
 
 	public static void EatFood(ref DataCreature creature, int treeIndex)
 	{
-		var tree = FruitTreeSim.Registry.Entities[treeIndex];
+		var tree = (DataTree)FruitTreeSim.Registry.Entities[treeIndex];
 		if (!tree.HasFruit) return;
 		
 		tree.HasFruit = false;
@@ -222,7 +222,7 @@ public static class CreatureBehaviorHandler
 
 	public static DataCreature ReproduceSexually(ref DataCreature parent1, int parent2Index)
 	{
-		var parent2 = CreatureSim.Registry.Entities[parent2Index];
+		var parent2 = (DataCreature)CreatureSim.Registry.Entities[parent2Index];
 		
 		parent1.Energy -= ReproductionEnergyCost / 2;
 		parent2.Energy -= ReproductionEnergyCost / 2;

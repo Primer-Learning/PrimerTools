@@ -19,22 +19,28 @@ public partial class FruitTreeSim : Simulation
     #endregion
 
     #region Simulation
-    public DataTreeRegistry Registry;
-    public IEntityRegistry<NodeTree> VisualTreeRegistry;
+    public DataEntityRegistry<DataTree> Registry;
+    public NodeTreeManager VisualTreeRegistry;
 
     #region Life cycle
     public override void Initialize()
     {
         if (Initialized) return;
         
-        Registry = new DataTreeRegistry(SimulationWorld.World3D);
+        Registry = new DataEntityRegistry<DataTree>(SimulationWorld.World3D);
         
         switch (SimulationWorld.VisualizationMode)
         {
             case VisualizationMode.None:
                 break;
             case VisualizationMode.NodeCreatures:
-                VisualTreeRegistry = new NodeTreeRegistry(this);
+                foreach (var child in GetChildren())
+                {
+                    child.Free();
+                }
+                VisualTreeRegistry = new NodeTreeManager();
+                AddChild(VisualTreeRegistry);
+                VisualTreeRegistry.Owner = GetTree().EditedSceneRoot;
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
@@ -60,6 +66,7 @@ public partial class FruitTreeSim : Simulation
         StepsSoFar = 0;
         Initialized = false;
         Registry?.Reset();
+        if (VisualTreeRegistry != null && IsInstanceValid(VisualTreeRegistry)) VisualTreeRegistry.Free(); Initialized = false;
         
         foreach (var child in GetChildren())
         {
@@ -128,7 +135,6 @@ public partial class FruitTreeSim : Simulation
                 if (!physicalTree.Alive)
                 {
                     visualTree.Death();
-                    VisualTreeRegistry.Entities[i] = visualTree;
                     continue;
                 }
                 
@@ -137,8 +143,6 @@ public partial class FruitTreeSim : Simulation
                     visualTree.GrowFruit(FruitTreeBehaviorHandler.FruitGrowthTime - FruitTreeBehaviorHandler.NodeFruitGrowthDelay);
                 }
                 visualTree.UpdateTransform(physicalTree);
-
-                VisualTreeRegistry.Entities[i] = visualTree;
             }
         }
     }
@@ -154,8 +158,6 @@ public partial class FruitTreeSim : Simulation
 
     public override void ClearDeadEntities()
     {
-        // TODO: Probably best to make the registries take care of this. They do need to be triggered together, though.
-        
         for (var i = Registry.Entities.Count - 1; i >= 0; i--)
         {
             if (Registry.Entities[i].Alive) continue;
@@ -166,9 +168,9 @@ public partial class FruitTreeSim : Simulation
             if (VisualTreeRegistry != null && VisualTreeRegistry.Entities.Count > 0)
             {
                 // Visual trees aren't cleaned up here, since they may want to do an animation before freeing the object
-                // But we clear the list here so they stay in sync.
-                // For this reason, _creatureVisualizer.CreatureDeath must handle cleanup.
-                VisualTreeRegistry.Entities.RemoveAt(i);
+                // But we remove them from the manager here so they stay in sync.
+                // For this reason, NodeTree.Death must handle cleanup.
+                VisualTreeRegistry.RemoveTree(i);
             }
         }
         

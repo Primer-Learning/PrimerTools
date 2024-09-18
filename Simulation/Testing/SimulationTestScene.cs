@@ -155,7 +155,7 @@ public partial class SimulationTestScene : Node3D
 			SimulationWorld.TimeScale = 99999;
 			SimulationWorld.Initialize();
 			SimulationWorld.Running = true;
-
+			
 			FruitTreeSim.Mode = FruitTreeSim.SimMode.TreeGrowth;
 			FruitTreeSim.Running = true;
 

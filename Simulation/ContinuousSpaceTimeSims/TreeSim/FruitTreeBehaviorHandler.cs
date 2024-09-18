@@ -23,7 +23,7 @@ namespace PrimerTools.Simulation
         #endregion
 
         #region Behaviors
-        public static void UpdateTree(ref DataTree tree, PhysicsDirectSpaceState3D spaceState, DataTreeRegistry registry)
+        public static void UpdateTree(ref DataTree tree, PhysicsDirectSpaceState3D spaceState, DataEntityRegistry<DataTree> registry)
         {
             tree.Age += 1f / SimulationWorld.PhysicsStepsPerSimSecond;
             if (!tree.IsMature)
@@ -75,7 +75,7 @@ namespace PrimerTools.Simulation
             }
         }
 
-        private static bool IsTooCloseToMatureTree(DataTree sapling, PhysicsDirectSpaceState3D spaceState, DataTreeRegistry registry)
+        private static bool IsTooCloseToMatureTree(DataTree sapling, PhysicsDirectSpaceState3D spaceState, DataEntityRegistry<DataTree> registry)
         {
             var queryParams = new PhysicsShapeQueryParameters3D();
             queryParams.CollideWithAreas = true;
@@ -101,7 +101,7 @@ namespace PrimerTools.Simulation
             return false;
         }
 
-        private static int CountNeighbors(DataTree tree, PhysicsDirectSpaceState3D spaceState, DataTreeRegistry registry)
+        private static int CountNeighbors(DataTree tree, PhysicsDirectSpaceState3D spaceState, DataEntityRegistry<DataTree> registry)
         {
             var queryParams = new PhysicsShapeQueryParameters3D();
             queryParams.CollideWithAreas = true;
