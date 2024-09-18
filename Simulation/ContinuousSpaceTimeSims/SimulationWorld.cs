@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Godot;
 
 namespace PrimerTools.Simulation;
@@ -88,6 +89,8 @@ public partial class SimulationWorld : Node3D
         }
     }
 
+    private double _statusPrintInterval = 1;
+    private double _timeSinceLastStatusPrint;
     public override void _Process(double delta)
     {
         if (!Running) return;
@@ -96,6 +99,12 @@ public partial class SimulationWorld : Node3D
             if (!simulation.Running) continue;
             simulation.VisualProcess(delta);
         }
+
+        if (VisualizationMode != VisualizationMode.None) return;
+        _timeSinceLastStatusPrint += delta;
+        if (!(_timeSinceLastStatusPrint > _statusPrintInterval)) return;
+        GD.Print($"Trees: {_simulations.OfType<FruitTreeSim>().FirstOrDefault().Registry.Entities.Count(x => !x.IsDead)}");
+        GD.Print($"Creatures: {_simulations.OfType<CreatureSim>().FirstOrDefault().Registry.Entities.Count(x => x.Alive)}");
     }
 
     public static bool IsWithinWorldBounds(Vector3 position)
