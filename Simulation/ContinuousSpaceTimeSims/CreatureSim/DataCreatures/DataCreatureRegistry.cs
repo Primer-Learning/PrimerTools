@@ -11,7 +11,7 @@ public class DataCreatureRegistry : IEntityRegistry<DataCreature>
 	}
 
 	public List<DataCreature> Entities { get; } = new();
-	public readonly Dictionary<Rid, int> CreatureLookup = new();
+	public Dictionary<Rid, int> EntityLookup { get; } = new();
 
 	public void RegisterEntity(IEntity entity)
 	{
@@ -22,16 +22,17 @@ public class DataCreatureRegistry : IEntityRegistry<DataCreature>
 		}
 		
 		dataCreature.Initialize();
-		CreatureLookup.Add(dataCreature.Body, Entities.Count);
+		EntityLookup.Add(dataCreature.Body, Entities.Count);
 		Entities.Add(dataCreature);
 	}
 	
-	// TODO: Understand why this is needed.
-	// This should come from IEntityRegistry, but without this, CreatureSim can't find Reset's default implementation.
+	// TODO: Understand why these are needed.
+	// They should come from IEntityRegistry, but without this, simulations can't find the default implementations of
+	// Reset or ClearDeadEntities
 	public void Reset()
 	{
 		foreach (var entity in Entities) entity.CleanUp();
 		Entities.Clear();
-		CreatureLookup.Clear();
+		EntityLookup.Clear();
 	}
 }

@@ -177,18 +177,12 @@ public partial class CreatureSim : Simulation
 				_visualCreatureRegistry.Entities[i].UpdateTransform(Registry.Entities[i]);
 			}
 		}
-		
-		// This happens every process frame, which is an intuitive choice
-		// for a frequency that isn't too high for sims with a fast physics loop.
-		// But high enough where things won't build up.
-		// Could be a better choice, though. Probably less often if anything.
-		ClearDeadCreatures();
 	}
 
 	#endregion
 
 	#region Registry interactions
-	private void ClearDeadCreatures()
+	public override void ClearDeadEntities()
 	{
 		for (var i = Registry.Entities.Count - 1; i >= 0; i--)
 		{
@@ -207,10 +201,10 @@ public partial class CreatureSim : Simulation
 		}
 		
 		// Rebuild TreeLookup
-		Registry.CreatureLookup.Clear();
+		Registry.EntityLookup.Clear();
 		for (int i = 0; i < Registry.Entities.Count; i++)
 		{
-			Registry.CreatureLookup[Registry.Entities[i].Body] = i;
+			Registry.EntityLookup[Registry.Entities[i].Body] = i;
 		}
 	}
 	private void RegisterCreature(DataCreature dataCreature)

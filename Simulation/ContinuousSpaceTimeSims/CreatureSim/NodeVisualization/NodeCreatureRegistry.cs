@@ -12,6 +12,8 @@ public class NodeCreatureRegistry : IEntityRegistry<NodeCreature>
     }
     
     public List<NodeCreature> Entities { get; } = new();
+    public Dictionary<Rid, int> EntityLookup { get; }
+
     public void RegisterEntity(IEntity entity)
     {
         if (entity is not DataCreature dataCreature)

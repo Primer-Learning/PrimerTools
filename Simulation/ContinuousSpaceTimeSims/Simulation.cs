@@ -29,6 +29,7 @@ namespace PrimerTools.Simulation
         public abstract void Initialize();
         public abstract void Reset();
         public abstract void Step();
+        public abstract void ClearDeadEntities();
         #endregion
 
         #region Visual

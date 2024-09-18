@@ -141,7 +141,6 @@ public partial class FruitTreeSim : Simulation
                 VisualTreeRegistry.Entities[i] = visualTree;
             }
         }
-        ClearDeadTrees();
     }
     #endregion
 
@@ -153,7 +152,7 @@ public partial class FruitTreeSim : Simulation
         VisualTreeRegistry?.RegisterEntity(dataTree);
     }
 
-    private void ClearDeadTrees()
+    public override void ClearDeadEntities()
     {
         // TODO: Probably best to make the registries take care of this. They do need to be triggered together, though.
         
@@ -173,11 +172,11 @@ public partial class FruitTreeSim : Simulation
             }
         }
         
-        // Rebuild TreeLookup
-        Registry.TreeLookup.Clear();
+        // Rebuild EntityLookup
+        Registry.EntityLookup.Clear();
         for (int i = 0; i < Registry.Entities.Count; i++)
         {
-            Registry.TreeLookup[Registry.Entities[i].Body] = i;
+            Registry.EntityLookup[Registry.Entities[i].Body] = i;
         }
     }
 

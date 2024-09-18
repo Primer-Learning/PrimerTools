@@ -98,6 +98,7 @@ public partial class SimulationWorld : Node3D
         {
             if (!simulation.Running) continue;
             simulation.VisualProcess(delta);
+            simulation.ClearDeadEntities();
         }
 
         if (VisualizationMode != VisualizationMode.None) return;

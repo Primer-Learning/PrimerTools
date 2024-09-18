@@ -12,7 +12,7 @@ public class DataTreeRegistry : IEntityRegistry<DataTree>
     }
     
     public List<DataTree> Entities { get; } = new();
-    public readonly Dictionary<Rid, int> TreeLookup = new();
+    public Dictionary<Rid, int> EntityLookup { get; } = new();
 
     public void RegisterEntity(IEntity entity)
     {
@@ -23,7 +23,7 @@ public class DataTreeRegistry : IEntityRegistry<DataTree>
         }
         
         dataTree.Initialize();
-        TreeLookup.Add(dataTree.Body, Entities.Count);
+        EntityLookup.Add(dataTree.Body, Entities.Count);
         Entities.Add(dataTree);
     }
     
@@ -32,6 +32,6 @@ public class DataTreeRegistry : IEntityRegistry<DataTree>
         foreach (var tree in Entities) tree.CleanUp();
         
         Entities.Clear();
-        TreeLookup.Clear();
+        EntityLookup.Clear();
     }
 }

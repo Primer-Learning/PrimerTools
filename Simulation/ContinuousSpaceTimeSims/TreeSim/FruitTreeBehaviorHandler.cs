@@ -89,7 +89,7 @@ namespace PrimerTools.Simulation
             foreach (var intersection in intersections)
             {
                 var intersectedBody = (Rid)intersection["rid"];
-                if (registry.TreeLookup.TryGetValue(intersectedBody, out var index))
+                if (registry.EntityLookup.TryGetValue(intersectedBody, out var index))
                 {
                     if (registry.Entities[index].IsMature)
                     {
@@ -116,7 +116,7 @@ namespace PrimerTools.Simulation
             foreach (var intersection in intersections)
             {
                 var intersectedBody = (Rid)intersection["rid"];
-                if (registry.TreeLookup.TryGetValue(intersectedBody, out var index))
+                if (registry.EntityLookup.TryGetValue(intersectedBody, out var index))
                 {
                     var dataTree = registry.Entities[index];
                     if (dataTree.Alive && intersectedBody != tree.Body)

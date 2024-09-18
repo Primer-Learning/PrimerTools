@@ -12,6 +12,8 @@ public class NodeTreeRegistry : IEntityRegistry<NodeTree>
     }
 
     public List<NodeTree> Entities { get; } = new();
+    public Dictionary<Rid, int> EntityLookup { get; }
+
     public void RegisterEntity(IEntity entity)
     {
         if (entity is not DataTree dataTree)

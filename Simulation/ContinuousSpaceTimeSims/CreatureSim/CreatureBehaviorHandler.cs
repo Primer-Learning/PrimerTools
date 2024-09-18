@@ -149,8 +149,8 @@ public static class CreatureBehaviorHandler
 		foreach (var objectData in objectsInAwareness)
 		{
 			var objectRid = (Rid)objectData["rid"];
-			// GD.Print($"Entities in dict: {FruitTreeSim.Registry.TreeLookup.Count}");
-			if (!FruitTreeSim.Registry.TreeLookup.TryGetValue(objectRid, out var treeIndex)) continue;
+			// GD.Print($"Entities in dict: {FruitTreeSim.Registry.EntityLookup.Count}");
+			if (!FruitTreeSim.Registry.EntityLookup.TryGetValue(objectRid, out var treeIndex)) continue;
 			// GD.Print($"Index is {treeIndex}. Data entities: {FruitTreeSim.Registry.Entities.Count}");
 			var tree = FruitTreeSim.Registry.Entities[treeIndex];
 			if (!tree.HasFruit) continue;
@@ -179,8 +179,8 @@ public static class CreatureBehaviorHandler
 		foreach (var objectData in objectsInAwareness)
 		{
 			var objectRid = (Rid)objectData["rid"];
-			// GD.Print($"Entities in dict: {FruitTreeSim.Registry.TreeLookup.Count}");
-			if (!CreatureSim.Registry.CreatureLookup.TryGetValue(objectRid, out var potentialMateIndex)) continue;
+			// GD.Print($"Entities in dict: {FruitTreeSim.Registry.EntityLookup.Count}");
+			if (!CreatureSim.Registry.EntityLookup.TryGetValue(objectRid, out var potentialMateIndex)) continue;
 			// GD.Print($"Index is {treeIndex}. Data entities: {FruitTreeSim.Registry.Entities.Count}");
 			var potentialMate = CreatureSim.Registry.Entities[potentialMateIndex];
 			if (!potentialMate.OpenToMating) continue;
