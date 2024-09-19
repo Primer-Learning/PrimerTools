@@ -101,10 +101,11 @@ public static class CreatureBehaviorHandler
 		// Update position
 		creature.Position += creature.Velocity / SimulationWorld.PhysicsStepsPerSimSecond;
 	}
-	public static void ChooseDestination(ref DataCreature creature)
+
+	private static void ChooseDestination(ref DataCreature creature)
 	{
 		Vector3 newDestination;
-		int attempts = 0;
+		var attempts = 0;
 		const int maxAttempts = 100;
 
 		do
@@ -131,11 +132,11 @@ public static class CreatureBehaviorHandler
 	public static void ChooseTreeDestination(ref DataCreature creature, int treeIndex)
 	{
 		var tree = FruitTreeSim.Registry.Entities[treeIndex];
-		creature.CurrentDestination = ((DataTree)tree).Position;
+		creature.CurrentDestination = tree.Position;
 	}
 	public static void ChooseMateDestination(ref DataCreature creature, int mateIndex)
 	{
-		var mate = (DataCreature)CreatureSim.Registry.Entities[mateIndex];
+		var mate = CreatureSim.Registry.Entities[mateIndex];
 		creature.CurrentDestination = mate.Position;
 	}
 	
@@ -149,10 +150,8 @@ public static class CreatureBehaviorHandler
 		foreach (var objectData in objectsInAwareness)
 		{
 			var objectRid = (Rid)objectData["rid"];
-			// GD.Print($"Entities in dict: {FruitTreeSim.Registry.EntityLookup.Count}");
 			if (!FruitTreeSim.Registry.EntityLookup.TryGetValue(objectRid, out var treeIndex)) continue;
-			// GD.Print($"Index is {treeIndex}. Data entities: {FruitTreeSim.Registry.Entities.Count}");
-			var tree = (DataTree)FruitTreeSim.Registry.Entities[treeIndex];
+			var tree = FruitTreeSim.Registry.Entities[treeIndex];
 			if (!tree.HasFruit) continue;
 			
 			var sqrDistance = (creature.Position - tree.Position).LengthSquared();
@@ -179,10 +178,9 @@ public static class CreatureBehaviorHandler
 		foreach (var objectData in objectsInAwareness)
 		{
 			var objectRid = (Rid)objectData["rid"];
-			// GD.Print($"Entities in dict: {FruitTreeSim.Registry.EntityLookup.Count}");
 			if (!CreatureSim.Registry.EntityLookup.TryGetValue(objectRid, out var potentialMateIndex)) continue;
-			// GD.Print($"Index is {treeIndex}. Data entities: {FruitTreeSim.Registry.Entities.Count}");
-			var potentialMate = (DataCreature)CreatureSim.Registry.Entities[potentialMateIndex];
+			var potentialMate = CreatureSim.Registry.Entities[potentialMateIndex];
+			if (potentialMate.Body == creature.Body) continue; // Cannot mate with self :(
 			if (!potentialMate.OpenToMating) continue;
 			
 			var sqrDistance = (creature.Position - potentialMate.Position).LengthSquared();
@@ -209,7 +207,7 @@ public static class CreatureBehaviorHandler
 
 	public static void EatFood(ref DataCreature creature, int treeIndex)
 	{
-		var tree = (DataTree)FruitTreeSim.Registry.Entities[treeIndex];
+		var tree = FruitTreeSim.Registry.Entities[treeIndex];
 		if (!tree.HasFruit) return;
 		
 		tree.HasFruit = false;
