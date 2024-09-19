@@ -1,11 +1,12 @@
 using System;
 using Godot;
 using System.Collections.Generic;
+using System.Linq;
 using PrimerTools;
 using PrimerTools.Simulation;
 
 [Tool]
-public partial class FruitTreeSim : Simulation
+public class FruitTreeSim : Simulation
 {
     #region Sim parameters
     [Export] private int _initialTreeCount = 20;
@@ -34,13 +35,9 @@ public partial class FruitTreeSim : Simulation
             case VisualizationMode.None:
                 break;
             case VisualizationMode.NodeCreatures:
-                foreach (var child in GetChildren())
-                {
-                    child.Free();
-                }
+                SimulationWorld.GetChildren().OfType<NodeTreeManager>().FirstOrDefault()?.Free();
                 VisualTreeRegistry = new NodeTreeManager();
-                AddChild(VisualTreeRegistry);
-                VisualTreeRegistry.Owner = GetTree().EditedSceneRoot;
+                SimulationWorld.AddChild(VisualTreeRegistry);
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
@@ -66,12 +63,8 @@ public partial class FruitTreeSim : Simulation
         StepsSoFar = 0;
         Initialized = false;
         Registry?.Reset();
-        if (VisualTreeRegistry != null && IsInstanceValid(VisualTreeRegistry)) VisualTreeRegistry.Free(); Initialized = false;
-        
-        foreach (var child in GetChildren())
-        {
-            child.QueueFree();
-        }
+        VisualTreeRegistry?.Free();
+        Initialized = false;
     }
     #endregion
     public override void Step()
@@ -96,7 +89,7 @@ public partial class FruitTreeSim : Simulation
                     FruitTreeBehaviorHandler.UpdateFruit(ref tree);
                     break;
                 case SimMode.TreeGrowth:
-                    FruitTreeBehaviorHandler.UpdateTree(ref tree, PhysicsServer3D.SpaceGetDirectState(GetWorld3D().Space), Registry);
+                    FruitTreeBehaviorHandler.UpdateTree(ref tree, PhysicsServer3D.SpaceGetDirectState(SimulationWorld.GetWorld3D().Space), Registry);
                     if (tree is { IsMature: true, TimeSinceLastSpawn: 0 })
                     {
                         var newPosition = FruitTreeBehaviorHandler.TryGenerateNewTreePosition(tree);
@@ -183,5 +176,8 @@ public partial class FruitTreeSim : Simulation
     }
 
     #endregion
-    
+
+    public FruitTreeSim(SimulationWorld simulationWorld) : base(simulationWorld)
+    {
+    }
 }

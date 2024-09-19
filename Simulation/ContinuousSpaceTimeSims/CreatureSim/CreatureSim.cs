@@ -1,17 +1,17 @@
 using System;
+using System.Linq;
 using Godot;
 using PrimerTools;
 using PrimerTools.Simulation;
 
 [Tool]
-public partial class CreatureSim : Simulation
+public class CreatureSim : Simulation
 {
 	#region Simulation
 	public DataEntityRegistry<DataCreature> Registry;
 	private NodeCreatureManager _visualCreatureRegistry;
-	[Export] public FruitTreeSim FruitTreeSim;
+	private FruitTreeSim FruitTreeSim => SimulationWorld.Simulations.OfType<FruitTreeSim>().FirstOrDefault();
 	
-	[Export]
 	private int _initialCreatureCount = 4;
 
 	#region Life cycle
@@ -21,7 +21,7 @@ public partial class CreatureSim : Simulation
 		// TODO: Not this. See comment in CreatureBehaviorHandler
 		CreatureBehaviorHandler.FruitTreeSim = FruitTreeSim;
 		CreatureBehaviorHandler.CreatureSim = this;
-		CreatureBehaviorHandler.Space = PhysicsServer3D.SpaceGetDirectState(GetWorld3D().Space);
+		CreatureBehaviorHandler.Space = PhysicsServer3D.SpaceGetDirectState(SimulationWorld.GetWorld3D().Space);
 		
 		Registry = new DataEntityRegistry<DataCreature>(SimulationWorld.World3D);
 		
@@ -30,12 +30,9 @@ public partial class CreatureSim : Simulation
 			case VisualizationMode.None:
 				break;
 			case VisualizationMode.NodeCreatures:
-				foreach (var child in GetChildren())
-				{
-					child.Free();
-				}
+				SimulationWorld.GetChildren().OfType<NodeCreatureManager>().FirstOrDefault()?.Free();
 				_visualCreatureRegistry = new NodeCreatureManager();
-				AddChild(_visualCreatureRegistry);
+				SimulationWorld.AddChild(_visualCreatureRegistry);
 				break;
 			default:
 				throw new ArgumentOutOfRangeException();
@@ -72,11 +69,6 @@ public partial class CreatureSim : Simulation
 		Registry?.Reset();
 		_visualCreatureRegistry?.Free();
 		Initialized = false;
-		
-		foreach (var child in GetChildren())
-		{
-			child.QueueFree();
-		}
 	}
 	#endregion
 	public override void Step()
@@ -220,4 +212,8 @@ public partial class CreatureSim : Simulation
 		_visualCreatureRegistry?.RegisterEntity(dataCreature);
 	}
 	#endregion
+
+	public CreatureSim(SimulationWorld simulationWorld) : base(simulationWorld)
+	{
+	}
 }

@@ -54,11 +54,11 @@ public partial class SimulationWorld : Node3D
     private static Rng _rng;
     public static Rng Rng => _rng ??= new Rng(_seed == -1 ? System.Environment.TickCount : _seed);
     public World3D World3D => GetWorld3D();
-    private List<Simulation> _simulations = new();
+    public readonly List<Simulation> Simulations = new();
 
     public void ResetSimulations()
     {
-	    foreach (var simulation in _simulations)
+	    foreach (var simulation in Simulations)
         {
             simulation.Running = false;
 		    simulation.Reset();
@@ -69,20 +69,15 @@ public partial class SimulationWorld : Node3D
         PhysicsServer3D.SetActive(true);
         Engine.PhysicsTicksPerSecond = (int) (_timeScale * 60);
 
-        _simulations.Clear();
-        foreach (var child in GetChildren())
-        {
-            if (child is Simulation simulation)
-            {
-                _simulations.Add(simulation);
-            }
-        }
+        Simulations.Clear();
+        Simulations.Add(new CreatureSim(this));
+        Simulations.Add(new FruitTreeSim(this));
     }
 
     public override void _PhysicsProcess(double delta)
     {
         if (!Running) return;
-        foreach (var simulation in _simulations)
+        foreach (var simulation in Simulations)
         {
             if (!simulation.Running) continue;
             simulation.Step();
@@ -94,7 +89,7 @@ public partial class SimulationWorld : Node3D
     public override void _Process(double delta)
     {
         if (!Running) return;
-        foreach (var simulation in _simulations)
+        foreach (var simulation in Simulations)
         {
             if (!simulation.Running) continue;
             simulation.VisualProcess(delta);
@@ -104,8 +99,8 @@ public partial class SimulationWorld : Node3D
         if (VisualizationMode != VisualizationMode.None) return;
         _timeSinceLastStatusPrint += delta;
         if (!(_timeSinceLastStatusPrint > _statusPrintInterval)) return;
-        GD.Print($"Trees: {_simulations.OfType<FruitTreeSim>().FirstOrDefault().Registry.Entities.Count(x => x.Alive)}");
-        GD.Print($"Creatures: {_simulations.OfType<CreatureSim>().FirstOrDefault().Registry.Entities.Count(x => ((DataCreature)x).Alive)}");
+        GD.Print($"Trees: {Simulations.OfType<FruitTreeSim>().FirstOrDefault().Registry.Entities.Count(x => x.Alive)}");
+        GD.Print($"Creatures: {Simulations.OfType<CreatureSim>().FirstOrDefault().Registry.Entities.Count(x => ((DataCreature)x).Alive)}");
     }
 
     public static bool IsWithinWorldBounds(Vector3 position)

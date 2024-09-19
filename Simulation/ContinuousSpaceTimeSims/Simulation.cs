@@ -1,39 +1,43 @@
 using Godot;
 
-namespace PrimerTools.Simulation
+namespace PrimerTools.Simulation;
+
+public abstract class Simulation
 {
-    public abstract partial class Simulation : Node3D
+    #region Editor controls
+    private bool _running;
+    [Export]
+    public bool Running
     {
-        #region Editor controls
-        private bool _running;
-        [Export]
-        public bool Running
+        get => _running;
+        set
         {
-            get => _running;
-            set
+            if (value && !Initialized)
             {
-                if (value && !Initialized)
-                {
-                    Initialize();
-                }
-                _running = value;
+                Initialize();
             }
+            _running = value;
         }
-        #endregion
-
-        #region Simulation
-        protected SimulationWorld SimulationWorld => GetParent<SimulationWorld>();
-        protected int StepsSoFar;
-        protected bool Initialized;
-
-        public abstract void Initialize();
-        public abstract void Reset();
-        public abstract void Step();
-        public abstract void ClearDeadEntities();
-        #endregion
-
-        #region Visual
-        public abstract void VisualProcess(double delta);
-        #endregion
     }
+    #endregion
+    
+    public Simulation(SimulationWorld simulationWorld)
+    {
+        SimulationWorld = simulationWorld;
+    }
+
+    #region Simulation
+    protected readonly SimulationWorld SimulationWorld;
+    protected int StepsSoFar;
+    protected bool Initialized;
+
+    public abstract void Initialize();
+    public abstract void Reset();
+    public abstract void Step();
+    public abstract void ClearDeadEntities();
+    #endregion
+
+    #region Visual
+    public abstract void VisualProcess(double delta);
+    #endregion
 }

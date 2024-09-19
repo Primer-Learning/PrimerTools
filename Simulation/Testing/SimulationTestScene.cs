@@ -9,8 +9,8 @@ using PrimerTools.Simulation;
 public partial class SimulationTestScene : Node3D
 {
 	private SimulationWorld SimulationWorld => GetNode<SimulationWorld>("SimulationWorld");
-	private CreatureSim CreatureSim => SimulationWorld.GetNode<CreatureSim>("Creature Sim");
-	private FruitTreeSim FruitTreeSim => SimulationWorld.GetNode<FruitTreeSim>("Tree Sim");
+	private CreatureSim CreatureSim => SimulationWorld.Simulations.OfType<CreatureSim>().FirstOrDefault();
+	private FruitTreeSim FruitTreeSim => SimulationWorld.Simulations.OfType<FruitTreeSim>().FirstOrDefault();
 	
 	private CancellationTokenSource _cts;
 	private bool _newSim = true;
@@ -62,8 +62,9 @@ public partial class SimulationTestScene : Node3D
 				GD.Print("Resetting");
 				SimulationWorld.ResetSimulations();
 				SimulationWorld.Running = false;
-				CreatureSim.Running = false;
-				FruitTreeSim.Running = false;
+				
+				if (CreatureSim != null) CreatureSim.Running = false;
+				if (FruitTreeSim != null) FruitTreeSim.Running = false;
 				
 				foreach (var child in GraphParent.GetChildren())
 				{
