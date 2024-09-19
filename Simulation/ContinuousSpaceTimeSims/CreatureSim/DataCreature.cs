@@ -2,7 +2,7 @@
 
 namespace PrimerTools.Simulation;
 
-public struct DataCreature : IEntity
+public struct DataCreature : IDataEntity
 {
     public Rid Body { get; set; }
     

@@ -41,9 +41,7 @@ public static class CreatureBehaviorHandler
 	private const float ReproductionEnergyCost = 2f;
 	
 	// Initial population
-	
 	public const float InitialCreatureSpeed = 5f;
-
 	public const float InitialAwarenessRadius = 3f;
 	
 	// Mutation
@@ -101,7 +99,6 @@ public static class CreatureBehaviorHandler
 		// Update position
 		creature.Position += creature.Velocity / SimulationWorld.PhysicsStepsPerSimSecond;
 	}
-
 	private static void ChooseDestination(ref DataCreature creature)
 	{
 		Vector3 newDestination;
@@ -139,7 +136,6 @@ public static class CreatureBehaviorHandler
 		var mate = CreatureSim.Registry.Entities[mateIndex];
 		creature.CurrentDestination = mate.Position;
 	}
-	
 	public static (int, bool) FindClosestFood(DataCreature creature)
 	{
 		var objectsInAwareness = DetectCollisionsWithCreature(creature);
@@ -167,7 +163,6 @@ public static class CreatureBehaviorHandler
 
 		return (closestFoodIndex, canEat);
 	}
-
 	public static (int, bool) FindClosestPotentialMate(DataCreature creature)
 	{
 		var objectsInAwareness = DetectCollisionsWithCreature(creature);
@@ -196,7 +191,6 @@ public static class CreatureBehaviorHandler
 
 		return (closestMateIndex, canMate);
 	}
-
 	public static void SpendMovementEnergy(ref DataCreature creature)
 	{
 		var normalizedSpeed = creature.MaxSpeed / InitialCreatureSpeed;
@@ -204,7 +198,6 @@ public static class CreatureBehaviorHandler
 		
 		creature.Energy -= (BaseEnergySpend + GlobalEnergySpendAdjustmentFactor * ( normalizedSpeed * normalizedSpeed + normalizedAwarenessRadius)) / SimulationWorld.PhysicsStepsPerSimSecond;
 	}
-
 	public static void EatFood(ref DataCreature creature, int treeIndex)
 	{
 		var tree = FruitTreeSim.Registry.Entities[treeIndex];
@@ -217,7 +210,6 @@ public static class CreatureBehaviorHandler
 		creature.Energy += EnergyGainFromFood;
 		creature.EatingTimeLeft = EatDuration;
 	}
-
 	public static DataCreature ReproduceSexually(ref DataCreature parent1, int parent2Index)
 	{
 		var parent2 = CreatureSim.Registry.Entities[parent2Index];
@@ -255,7 +247,6 @@ public static class CreatureBehaviorHandler
 		
 		return newCreature;
 	}
-
 	public static DataCreature ReproduceAsexually(ref DataCreature parentCreature)
 	{
 		parentCreature.Energy -= ReproductionEnergyCost;

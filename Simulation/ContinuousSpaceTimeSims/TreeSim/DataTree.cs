@@ -2,7 +2,7 @@
 
 namespace PrimerTools.Simulation;
 
-public struct DataTree : IEntity
+public struct DataTree : IDataEntity
 {
     public Rid Body { get; set; }
     public Vector3 Position;

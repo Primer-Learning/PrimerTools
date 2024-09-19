@@ -5,7 +5,7 @@ using Godot;
 namespace PrimerTools.Simulation;
 
 public abstract class Simulation<TDataEntity, TNodeEntity> : ISimulation
-    where TDataEntity : IEntity
+    where TDataEntity : IDataEntity
     where TNodeEntity : NodeEntity<TDataEntity>, new()
 {
     public int InitialEntityCount = 2;
@@ -18,7 +18,7 @@ public abstract class Simulation<TDataEntity, TNodeEntity> : ISimulation
     #region Simulation
     protected readonly SimulationWorld SimulationWorld;
     public DataEntityRegistry<TDataEntity> Registry;
-    public NodeEntityManager<TDataEntity, TNodeEntity> VisualRegistry;
+    public NodeEntityRegistry<TDataEntity, TNodeEntity> VisualRegistry;
 
     private bool _initialized;
     protected bool _running;
@@ -35,8 +35,8 @@ public abstract class Simulation<TDataEntity, TNodeEntity> : ISimulation
             case VisualizationMode.None:
                 break;
             case VisualizationMode.NodeCreatures:
-                SimulationWorld.GetChildren().OfType<NodeEntityManager<DataCreature, NodeCreature>>().FirstOrDefault()?.Free();
-                VisualRegistry = new NodeEntityManager<TDataEntity, TNodeEntity>();
+                SimulationWorld.GetChildren().OfType<NodeEntityRegistry<DataCreature, NodeCreature>>().FirstOrDefault()?.Free();
+                VisualRegistry = new NodeEntityRegistry<TDataEntity, TNodeEntity>();
                 SimulationWorld.AddChild(VisualRegistry);
                 break;
             default:

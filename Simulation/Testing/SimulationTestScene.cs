@@ -1,6 +1,5 @@
 using Godot;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using PrimerTools.Graph;
 using PrimerTools.Simulation;

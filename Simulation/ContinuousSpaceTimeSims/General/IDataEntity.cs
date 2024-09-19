@@ -3,7 +3,7 @@ using Godot;
 
 namespace PrimerTools.Simulation;
 
-public interface IEntity
+public interface IDataEntity
 {
     // Body serves as a unique ID for lookup dictionaries
     // It currently exists in all implementations of IEntity, so no reason not to use it for now.

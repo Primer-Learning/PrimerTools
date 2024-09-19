@@ -3,7 +3,7 @@ using Godot;
 
 namespace PrimerTools.Simulation;
 
-public class DataEntityRegistry<T> where T : IEntity
+public class DataEntityRegistry<T> where T : IDataEntity
 {
 	private World3D _world3D;
 	public DataEntityRegistry(World3D world3D)
