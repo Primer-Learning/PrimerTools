@@ -222,7 +222,7 @@ public static class CreatureBehaviorHandler
 
 	public static DataCreature ReproduceSexually(ref DataCreature parent1, int parent2Index)
 	{
-		var parent2 = (DataCreature)CreatureSim.Registry.Entities[parent2Index];
+		var parent2 = CreatureSim.Registry.Entities[parent2Index];
 		
 		parent1.Energy -= ReproductionEnergyCost / 2;
 		parent2.Energy -= ReproductionEnergyCost / 2;

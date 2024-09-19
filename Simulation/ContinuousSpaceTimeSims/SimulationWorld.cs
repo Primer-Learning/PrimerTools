@@ -54,7 +54,7 @@ public partial class SimulationWorld : Node3D
     private static Rng _rng;
     public static Rng Rng => _rng ??= new Rng(_seed == -1 ? System.Environment.TickCount : _seed);
     public World3D World3D => GetWorld3D();
-    public readonly List<Simulation> Simulations = new();
+    public readonly List<ISimulation> Simulations = new();
 
     public void ResetSimulations()
     {
@@ -100,7 +100,7 @@ public partial class SimulationWorld : Node3D
         _timeSinceLastStatusPrint += delta;
         if (!(_timeSinceLastStatusPrint > _statusPrintInterval)) return;
         GD.Print($"Trees: {Simulations.OfType<FruitTreeSim>().FirstOrDefault().Registry.Entities.Count(x => x.Alive)}");
-        GD.Print($"Creatures: {Simulations.OfType<CreatureSim>().FirstOrDefault().Registry.Entities.Count(x => ((DataCreature)x).Alive)}");
+        GD.Print($"Creatures: {Simulations.OfType<CreatureSim>().FirstOrDefault().Registry.Entities.Count(x => x.Alive)}");
     }
 
     public static bool IsWithinWorldBounds(Vector3 position)

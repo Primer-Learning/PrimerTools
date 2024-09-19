@@ -1,49 +1,23 @@
 using System;
 using Godot;
 using System.Collections.Generic;
-using System.Linq;
 using PrimerTools;
 using PrimerTools.Simulation;
 
 [Tool]
-public class FruitTreeSim : Simulation
+public class FruitTreeSim : Simulation<DataTree, NodeTree>
 {
-    #region Sim parameters
-    [Export] private int _initialTreeCount = 20;
-    
+    public FruitTreeSim(SimulationWorld simulationWorld) : base(simulationWorld) {}
     public enum SimMode
     {
         TreeGrowth,
         FruitGrowth
     }
-    [Export] public SimMode Mode = SimMode.TreeGrowth;
-    #endregion
-
-    #region Simulation
-    public DataEntityRegistry<DataTree> Registry;
-    public NodeEntityManager<DataTree, NodeTree> VisualTreeRegistry;
-
-    #region Life cycle
-    public override void Initialize()
+    public SimMode Mode = SimMode.TreeGrowth;
+    
+    protected override void CustomInitialize()
     {
-        if (Initialized) return;
-        
-        Registry = new DataEntityRegistry<DataTree>(SimulationWorld.World3D);
-        
-        switch (SimulationWorld.VisualizationMode)
-        {
-            case VisualizationMode.None:
-                break;
-            case VisualizationMode.NodeCreatures:
-                SimulationWorld.GetChildren().OfType<NodeEntityManager<DataTree, NodeTree>>().FirstOrDefault()?.Free();
-                VisualTreeRegistry = new NodeEntityManager<DataTree, NodeTree>();
-                SimulationWorld.AddChild(VisualTreeRegistry);
-                break;
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
-
-        for (var i = 0; i < _initialTreeCount; i++)
+        for (var i = 0; i < InitialEntityCount; i++)
         {
             var physicalTree = new DataTree
             {
@@ -53,30 +27,11 @@ public class FruitTreeSim : Simulation
                     SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.Y)
                 )
             };
-            RegisterTree(physicalTree);
+            RegisterEntity(physicalTree);
         }
-
-        Initialized = true;
     }
-    public override void Reset()
+    protected override void CustomStep()
     {
-        StepsSoFar = 0;
-        Initialized = false;
-        Registry?.Reset();
-        VisualTreeRegistry?.Free();
-        Initialized = false;
-    }
-    #endregion
-    public override void Step()
-    {
-        if (!Running) return;
-        if (Registry.Entities.Count == 0)
-        {
-            GD.Print("No Trees found. Stopping.");
-            Running = false;
-            return;
-        }
-
         var newTreePositions = new List<Vector3>();
         for (var i = 0; i < Registry.Entities.Count; i++)
         {
@@ -106,78 +61,39 @@ public class FruitTreeSim : Simulation
             Registry.Entities[i] = tree;
         }
         foreach (var newTreePosition in newTreePositions)
+            
         {
             var physicalTree = new DataTree
             {
                 Position = newTreePosition
             };
-            RegisterTree(physicalTree);
+            RegisterEntity(physicalTree);
         }
-
-        StepsSoFar++;
     }
     public override void VisualProcess(double delta)
     {
-        if (VisualTreeRegistry != null)
+        if (VisualRegistry != null)
         {
             for (var i = 0; i < Registry.Entities.Count; i++)
             {
                 var physicalTree = Registry.Entities[i]; 
-                var visualTree = VisualTreeRegistry.Entities[i];
+                var visualTree = VisualRegistry.Entities[i];
                 
                 if (!physicalTree.Alive)
                 {
-                    visualTree.Death();
+                    visualTree?.Death();
                     continue;
                 }
                 
-                if (physicalTree.FruitGrowthProgress > FruitTreeBehaviorHandler.NodeFruitGrowthDelay && !visualTree.HasFruit)
+                if (physicalTree.FruitGrowthProgress > FruitTreeBehaviorHandler.NodeFruitGrowthDelay && visualTree is
+                    {
+                        HasFruit: false
+                    })
                 {
                     visualTree.GrowFruit(FruitTreeBehaviorHandler.FruitGrowthTime - FruitTreeBehaviorHandler.NodeFruitGrowthDelay);
                 }
-                visualTree.UpdateTransform(physicalTree);
+                visualTree?.UpdateTransform(physicalTree);
             }
         }
-    }
-    #endregion
-
-    #region Registry interactions
-
-    private void RegisterTree(DataTree dataTree)
-    {
-        Registry.RegisterEntity(dataTree);
-        VisualTreeRegistry?.RegisterEntity(dataTree);
-    }
-
-    public override void ClearDeadEntities()
-    {
-        for (var i = Registry.Entities.Count - 1; i >= 0; i--)
-        {
-            if (Registry.Entities[i].Alive) continue;
-			     
-            Registry.Entities[i].CleanUp();
-            Registry.Entities.RemoveAt(i);
-        
-            if (VisualTreeRegistry != null && VisualTreeRegistry.Entities.Count > 0)
-            {
-                // Visual trees aren't cleaned up here, since they may want to do an animation before freeing the object
-                // But we remove them from the manager here so they stay in sync.
-                // For this reason, NodeTree.Death must handle cleanup.
-                VisualTreeRegistry.RemoveEntity(i);
-            }
-        }
-        
-        // Rebuild EntityLookup
-        Registry.EntityLookup.Clear();
-        for (int i = 0; i < Registry.Entities.Count; i++)
-        {
-            Registry.EntityLookup[Registry.Entities[i].Body] = i;
-        }
-    }
-
-    #endregion
-
-    public FruitTreeSim(SimulationWorld simulationWorld) : base(simulationWorld)
-    {
     }
 }
