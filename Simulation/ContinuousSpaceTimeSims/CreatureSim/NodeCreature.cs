@@ -5,12 +5,11 @@ using PrimerTools.Simulation;
 using Blob = PrimerAssets.Blob;
 
 
-public partial class NodeCreature : Node3D
+public partial class NodeCreature : NodeEntity<DataCreature>
 {
 	private Blob _blob;
 
 	#region Core methods
-	// Considering putting these methods in an interface
 	public override void _Ready()
 	{
 		base._Ready();
@@ -22,7 +21,7 @@ public partial class NodeCreature : Node3D
 		
 		_blob.SetColor(PrimerColor.Blue);
 	}
-	public void Initialize(DataCreature dataCreature)
+	public override void Initialize(DataCreature dataCreature)
 	{
 		Position = dataCreature.Position;
 		Scale = Vector3.Zero;
@@ -38,7 +37,7 @@ public partial class NodeCreature : Node3D
 		_blob.LeftEye.Scale = normalizedAwareness * Vector3.One;
 		_blob.RightEye.Scale = normalizedAwareness * Vector3.One;
 	}
-	public void UpdateTransform(DataCreature dataCreature)
+	public override void UpdateTransform(DataCreature dataCreature)
 	{
 		var scaleFactor = Mathf.Min(1, dataCreature.Age / CreatureBehaviorHandler.MaturationTime);
 		Scale = scaleFactor * Vector3.One;
@@ -53,7 +52,7 @@ public partial class NodeCreature : Node3D
 			LookAt(GlobalPosition - direction, Vector3.Up);
 		}
 	}
-	public async void Death()
+	public override async void Death()
 	{
 		var tween = CreateTween();
 		tween.TweenProperty(

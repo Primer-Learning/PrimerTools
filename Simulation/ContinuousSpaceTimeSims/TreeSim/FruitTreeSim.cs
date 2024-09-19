@@ -21,7 +21,7 @@ public class FruitTreeSim : Simulation
 
     #region Simulation
     public DataEntityRegistry<DataTree> Registry;
-    public NodeTreeManager VisualTreeRegistry;
+    public NodeEntityManager<DataTree, NodeTree> VisualTreeRegistry;
 
     #region Life cycle
     public override void Initialize()
@@ -35,8 +35,8 @@ public class FruitTreeSim : Simulation
             case VisualizationMode.None:
                 break;
             case VisualizationMode.NodeCreatures:
-                SimulationWorld.GetChildren().OfType<NodeTreeManager>().FirstOrDefault()?.Free();
-                VisualTreeRegistry = new NodeTreeManager();
+                SimulationWorld.GetChildren().OfType<NodeEntityManager<DataTree, NodeTree>>().FirstOrDefault()?.Free();
+                VisualTreeRegistry = new NodeEntityManager<DataTree, NodeTree>();
                 SimulationWorld.AddChild(VisualTreeRegistry);
                 break;
             default:
@@ -163,7 +163,7 @@ public class FruitTreeSim : Simulation
                 // Visual trees aren't cleaned up here, since they may want to do an animation before freeing the object
                 // But we remove them from the manager here so they stay in sync.
                 // For this reason, NodeTree.Death must handle cleanup.
-                VisualTreeRegistry.RemoveTree(i);
+                VisualTreeRegistry.RemoveEntity(i);
             }
         }
         

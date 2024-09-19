@@ -1,7 +1,7 @@
 using Godot;
 using PrimerTools.Simulation;
 
-public partial class NodeTree : Node3D
+public partial class NodeTree : NodeEntity<DataTree>
 {
 	private FruitTree _fruitTree;
 	
@@ -14,17 +14,17 @@ public partial class NodeTree : Node3D
 		_fruitTree.Rng = SimulationWorld.Rng;
 		AddChild(_fruitTree);
 	}
-	public void Initialize(DataTree dataTree)
+	public override void Initialize(DataTree dataTree)
 	{
 		Scale = Vector3.One * 0.5f; // Start as a sapling
 		Position = dataTree.Position;
 		Name = "Tree";
 	}
-	public void UpdateTransform(DataTree dataTree)
+	public override void UpdateTransform(DataTree dataTree)
 	{
 		Scale = Vector3.One * Mathf.Min(1, dataTree.Age / FruitTreeBehaviorHandler.TreeMaturationTime);
 	}
-	public void Death()
+	public override void Death()
 	{
 		Visible = false;
 		QueueFree();

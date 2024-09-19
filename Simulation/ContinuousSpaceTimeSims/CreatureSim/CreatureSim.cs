@@ -9,7 +9,7 @@ public class CreatureSim : Simulation
 {
 	#region Simulation
 	public DataEntityRegistry<DataCreature> Registry;
-	private NodeCreatureManager _visualCreatureRegistry;
+	private NodeEntityManager<DataCreature, NodeCreature> _visualCreatureRegistry;
 	private FruitTreeSim FruitTreeSim => SimulationWorld.Simulations.OfType<FruitTreeSim>().FirstOrDefault();
 	
 	private int _initialCreatureCount = 4;
@@ -30,8 +30,8 @@ public class CreatureSim : Simulation
 			case VisualizationMode.None:
 				break;
 			case VisualizationMode.NodeCreatures:
-				SimulationWorld.GetChildren().OfType<NodeCreatureManager>().FirstOrDefault()?.Free();
-				_visualCreatureRegistry = new NodeCreatureManager();
+				SimulationWorld.GetChildren().OfType<NodeEntityManager<DataCreature, NodeCreature>>().FirstOrDefault()?.Free();
+				_visualCreatureRegistry = new NodeEntityManager<DataCreature, NodeCreature>();
 				SimulationWorld.AddChild(_visualCreatureRegistry);
 				break;
 			default:
@@ -195,7 +195,7 @@ public class CreatureSim : Simulation
 				// Visual creatures aren't cleaned up here, since they may want to do an animation before freeing the object
 				// But we clear the list here so they stay in sync.
 				// For this reason, _creatureVisualizer.CreatureDeath must handle cleanup.
-				_visualCreatureRegistry.RemoveCreature(i);
+				_visualCreatureRegistry.RemoveEntity(i);
 			}
 		}
 		
