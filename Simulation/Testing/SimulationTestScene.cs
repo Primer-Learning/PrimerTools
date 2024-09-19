@@ -12,11 +12,10 @@ public partial class SimulationTestScene : Node3D
 	private CreatureSim CreatureSim => SimulationWorld.Simulations.OfType<CreatureSim>().FirstOrDefault();
 	private FruitTreeSim FruitTreeSim => SimulationWorld.Simulations.OfType<FruitTreeSim>().FirstOrDefault();
 	
-	private CancellationTokenSource _cts;
 	private bool _newSim = true;
-	private bool _run;
+	private bool _running;
 	[Export] private bool Run {
-		get => _run;
+		get => _running;
 		set {
 			if (value)
 			{
@@ -24,8 +23,7 @@ public partial class SimulationTestScene : Node3D
 				{
 					GD.Print("Running new sim");
 					CreatePlot();
-					_cts = new();
-					RunSimSequence(_cts.Token);
+					RunSimSequence();
 					_newSim = false;
 				}
 				else
@@ -35,21 +33,13 @@ public partial class SimulationTestScene : Node3D
 					if (PeriodicPlotter != null) PeriodicPlotter.Plotting = true;
 				}
 			}
-			else if (_run)
+			else if (_running)
 			{
 				GD.Print("Pausing");
-				_cts?.Cancel();
 				SimulationWorld.Running = false;
 				if (PeriodicPlotter != null) PeriodicPlotter.Plotting = false;
-				SimulationWorld.TimeScale = 1;
-				
-				// These prevent continuation of the sim without resetting.
-				// But setting these true on run would mess up the start sequence.
-				// If continuing becomes important, a separate pause button might do it.
-				CreatureSim.Running = false;
-				FruitTreeSim.Running = false;
 			}
-			_run = value;
+			_running = value;
 		}
 	}
 	
@@ -57,14 +47,11 @@ public partial class SimulationTestScene : Node3D
 	[Export] private bool Reset {
 		get => _reset;
 		set {
-			if (value && !_reset)
+			if (value)
 			{
 				GD.Print("Resetting");
 				SimulationWorld.ResetSimulations();
 				SimulationWorld.Running = false;
-				
-				if (CreatureSim != null) CreatureSim.Running = false;
-				if (FruitTreeSim != null) FruitTreeSim.Running = false;
 				
 				foreach (var child in GraphParent.GetChildren())
 				{
@@ -77,31 +64,6 @@ public partial class SimulationTestScene : Node3D
 			_reset = false;
 		}
 	}
-
-	private bool _speedTest;
-	[Export] private bool SpeedTest
-	{
-		get => _speedTest;
-		set
-		{
-			if (value)
-			{
-				SimulationWorld.TimeScale = 1000;
-				SimulationWorld.VisualizationMode = VisualizationMode.None;
-                SimulationWorld.Seed = 0;
-			}
-			else
-			{
-				SimulationWorld.TimeScale = 1;
-				SimulationWorld.VisualizationMode = VisualizationMode.NodeCreatures;
-                SimulationWorld.Seed = -1;
-			}
-
-			_speedTest = value;
-		}
-	}
-
-	private bool _performanceTest;
 	
 	private Node3D GraphParent => GetNode<Node3D>("GraphParent");
 	private PeriodicPlotter PeriodicPlotter => GraphParent.GetNodeOrNull<PeriodicPlotter>("Periodic plotter");
@@ -148,36 +110,28 @@ public partial class SimulationTestScene : Node3D
 		periodicPlotter.Curve = curve;
 	}
 
-	private async Task RunSimSequence(CancellationToken ct = default)
+	private async Task RunSimSequence()
 	{
-		// try
-		// {
-			var originalTimeScale = SimulationWorld.TimeScale;
-			SimulationWorld.TimeScale = 99999;
-			SimulationWorld.Initialize();
-			SimulationWorld.Running = true;
-			
-			FruitTreeSim.Mode = FruitTreeSim.SimMode.TreeGrowth;
-			FruitTreeSim.Running = true;
+		var originalTimeScale = SimulationWorld.TimeScale;
+		SimulationWorld.TimeScale = 99999;
+		SimulationWorld.Initialize();
+		SimulationWorld.Running = true;
+		
+		FruitTreeSim.Mode = FruitTreeSim.SimMode.TreeGrowth;
+		FruitTreeSim.Initialize();
 
-			CreatureSim.Initialize();
+		await Task.Delay(2000);
+		while (!_running) await Task.Delay(100);
+		
+		SimulationWorld.TimeScale = originalTimeScale;
 
-			await Task.Delay(2000, ct);
-			ct.ThrowIfCancellationRequested();
-			SimulationWorld.TimeScale = originalTimeScale;
+		FruitTreeSim.Mode = FruitTreeSim.SimMode.FruitGrowth;
 
-			FruitTreeSim.Mode = FruitTreeSim.SimMode.FruitGrowth;
+		await Task.Delay(3000);
+		while (!_running) await Task.Delay(100);
 
-			await Task.Delay(3000, ct);
-			ct.ThrowIfCancellationRequested();
-
-			CreatureSim.Running = true;
-			if (PeriodicPlotter != null) PeriodicPlotter.Plotting = true;
-		// }
-		// catch
-		// {
-		// 	GD.Print("Canceled");
-		// }
+		CreatureSim.Initialize();
+		if (PeriodicPlotter != null) PeriodicPlotter.Plotting = true;
 	}
 
 	public override void _Ready()

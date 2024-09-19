@@ -124,6 +124,7 @@ public class CreatureSim : Simulation<DataCreature, NodeCreature>
 	}
 	public override void VisualProcess(double delta)
 	{
+		if (!_running) return;
 		if (VisualRegistry != null)
 		{
 			for (var i = 0; i < Registry.Entities.Count; i++)

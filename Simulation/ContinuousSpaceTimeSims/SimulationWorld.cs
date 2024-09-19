@@ -60,7 +60,6 @@ public partial class SimulationWorld : Node3D
     {
 	    foreach (var simulation in Simulations)
         {
-            simulation.Running = false;
 		    simulation.Reset();
 	    }
     }
@@ -79,7 +78,6 @@ public partial class SimulationWorld : Node3D
         if (!Running) return;
         foreach (var simulation in Simulations)
         {
-            if (!simulation.Running) continue;
             simulation.Step();
         }
     }
@@ -91,7 +89,6 @@ public partial class SimulationWorld : Node3D
         if (!Running) return;
         foreach (var simulation in Simulations)
         {
-            if (!simulation.Running) continue;
             simulation.VisualProcess(delta);
             simulation.ClearDeadEntities();
         }

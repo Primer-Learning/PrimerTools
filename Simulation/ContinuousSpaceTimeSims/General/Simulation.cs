@@ -8,23 +8,6 @@ public abstract class Simulation<TDataEntity, TNodeEntity> : ISimulation
     where TDataEntity : IEntity
     where TNodeEntity : NodeEntity<TDataEntity>, new()
 {
-    #region Editor controls
-    private bool _running;
-    [Export]
-    public bool Running
-    {
-        get => _running;
-        set
-        {
-            if (value && !_initialized)
-            {
-                Initialize();
-            }
-            _running = value;
-        }
-    }
-
-    #endregion
     public int InitialEntityCount = 2;
     
     protected Simulation(SimulationWorld simulationWorld)
@@ -38,10 +21,12 @@ public abstract class Simulation<TDataEntity, TNodeEntity> : ISimulation
     public NodeEntityManager<TDataEntity, TNodeEntity> VisualRegistry;
 
     private bool _initialized;
+    protected bool _running;
     public void Initialize()
     {
         if (_initialized) return;
         _initialized = true;
+        _running = true;
         
         Registry = new DataEntityRegistry<TDataEntity>(SimulationWorld.World3D);
         
@@ -66,15 +51,16 @@ public abstract class Simulation<TDataEntity, TNodeEntity> : ISimulation
         Registry?.Reset();
         VisualRegistry?.Free();
         _initialized = false;
+        _running = false;
     }
-
+    
     public void Step()
     {
-        if (!Running) return;
+        if (!_running) return;
         if (Registry.Entities.Count == 0)
         {
             GD.Print($"No {typeof(TDataEntity)}s found. Stopping.");
-            Running = false;
+            _running = false;
             return;
         }
         CustomStep();
@@ -89,6 +75,7 @@ public abstract class Simulation<TDataEntity, TNodeEntity> : ISimulation
     
     public void ClearDeadEntities()
     {
+        if (!_running) return;
         for (var i = Registry.Entities.Count - 1; i >= 0; i--)
         {
             if (Registry.Entities[i].Alive) continue;
