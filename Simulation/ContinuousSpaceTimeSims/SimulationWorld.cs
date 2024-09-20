@@ -55,8 +55,8 @@ public partial class SimulationWorld : Node3D
     public static Rng Rng => _rng ??= new Rng(_seed == -1 ? System.Environment.TickCount : _seed);
     public World3D World3D => GetWorld3D();
     public readonly List<ISimulation> Simulations = new();
-    public NodeCreatureAnimationManager CreatureAnimationManager;
-    public NodeTreeAnimationManager TreeAnimationManager;
+    public NodeEntityManager<DataCreature, NodeCreature> CreatureEntityManager;
+    public NodeEntityManager<DataTree, NodeTree> TreeEntityManager;
 
     public void ResetSimulations()
     {
@@ -64,10 +64,10 @@ public partial class SimulationWorld : Node3D
         {
 		    simulation.Reset();
 	    }
-        CreatureAnimationManager?.QueueFree();
-        CreatureAnimationManager = null;
-        TreeAnimationManager?.QueueFree();
-        TreeAnimationManager = null;
+        CreatureEntityManager?.QueueFree();
+        CreatureEntityManager = null;
+        TreeEntityManager?.QueueFree();
+        TreeEntityManager = null;
     }
     public void Initialize()
     {
@@ -80,17 +80,16 @@ public partial class SimulationWorld : Node3D
         
         if (VisualizationMode == VisualizationMode.NodeCreatures)
         {
-            CreatureAnimationManager = new NodeCreatureAnimationManager(this);
-            CreatureAnimationManager.Name = "NodeCreatureAnimationManager";
-            AddChild(CreatureAnimationManager);
-            Simulations.OfType<CreatureSim>().FirstOrDefault().AnimationManager = CreatureAnimationManager;
+            CreatureEntityManager = new NodeEntityManager<DataCreature, NodeCreature>();
+            CreatureEntityManager.Name = "NodeCreatureAnimationManager";
+            AddChild(CreatureEntityManager);
+            Simulations.OfType<CreatureSim>().FirstOrDefault().EntityManager = CreatureEntityManager;
 
-            TreeAnimationManager = new NodeTreeAnimationManager(this);
-            TreeAnimationManager.Name = "NodeTreeAnimationManager";
-            AddChild(TreeAnimationManager);
-            Simulations.OfType<FruitTreeSim>().FirstOrDefault().AnimationManager = TreeAnimationManager;
+            TreeEntityManager = new NodeEntityManager<DataTree, NodeTree>();
+            TreeEntityManager.Name = "NodeTreeAnimationManager";
+            AddChild(TreeEntityManager);
+            Simulations.OfType<FruitTreeSim>().FirstOrDefault().EntityManager = TreeEntityManager;
         }
-        GD.Print("Hello");
     }
 
     public override void _PhysicsProcess(double delta)
@@ -108,8 +107,8 @@ public partial class SimulationWorld : Node3D
     {
         if (!Running) return;
         
-        CreatureAnimationManager?.VisualProcess(delta);
-        TreeAnimationManager?.VisualProcess(delta);
+        CreatureEntityManager?.VisualProcess(delta);
+        TreeEntityManager?.VisualProcess(delta);
         
         foreach (var simulation in Simulations)
         {

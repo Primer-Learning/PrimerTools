@@ -20,7 +20,7 @@ public class FruitTreeSim : Simulation<DataTree, NodeTree>
     {
         if (SimulationWorld.VisualizationMode == VisualizationMode.NodeCreatures)
         {
-            AnimationManager = SimulationWorld.GetNode<NodeTreeAnimationManager>("NodeTreeAnimationManager");
+            EntityManager = SimulationWorld.GetNode<NodeEntityManager<DataTree, NodeTree>>("NodeTreeAnimationManager");
         }
         
         for (var i = 0; i < InitialEntityCount; i++)
@@ -34,7 +34,7 @@ public class FruitTreeSim : Simulation<DataTree, NodeTree>
                 )
             };
             RegisterEntity(physicalTree);
-            AnimationManager?.CreateVisualEntity(physicalTree);
+            EntityManager?.RegisterEntity(physicalTree);
         }
     }
     protected override void CustomStep()
@@ -75,7 +75,7 @@ public class FruitTreeSim : Simulation<DataTree, NodeTree>
                 Position = newTreePosition
             };
             RegisterEntity(physicalTree);
-            AnimationManager?.CreateVisualEntity(physicalTree);
+            EntityManager?.RegisterEntity(physicalTree);
         }
     }
 }

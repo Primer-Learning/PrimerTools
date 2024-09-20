@@ -26,7 +26,7 @@ public class CreatureSim : Simulation<DataCreature, NodeCreature>
 
 		if (SimulationWorld.VisualizationMode == VisualizationMode.NodeCreatures)
 		{
-			AnimationManager = SimulationWorld.GetNode<NodeCreatureAnimationManager>("NodeCreatureAnimationManager");
+			EntityManager = SimulationWorld.GetNode<NodeEntityManager<DataCreature, NodeCreature>>("NodeCreatureAnimationManager");
 		}
 		
 		for (var i = 0; i < InitialEntityCount; i++)
@@ -43,7 +43,7 @@ public class CreatureSim : Simulation<DataCreature, NodeCreature>
 			};
 
 			RegisterEntity(physicalCreature);
-			AnimationManager?.CreateVisualEntity(physicalCreature);
+			EntityManager?.RegisterEntity(physicalCreature);
 		}
 	}
 	protected override void CustomStep()
@@ -76,7 +76,7 @@ public class CreatureSim : Simulation<DataCreature, NodeCreature>
 			if (canEat && creature.EatingTimeLeft <= 0)
 			{
 				DataCreatureBehaviorHandler.EatFood(ref creature, closestFoodIndex);
-				AnimationManager?.Entities[i]?.Eat(FruitTreeSim.AnimationManager?.Entities[closestFoodIndex]?.GetFruit(), DataCreatureBehaviorHandler.EatDuration / SimulationWorld.TimeScale);
+				EntityManager?.NodeEntities[i]?.Eat(FruitTreeSim.EntityManager?.NodeEntities[closestFoodIndex]?.GetFruit(), DataCreatureBehaviorHandler.EatDuration / SimulationWorld.TimeScale);
 			}
 			else if (closestFoodIndex > -1)
 			{
@@ -90,7 +90,7 @@ public class CreatureSim : Simulation<DataCreature, NodeCreature>
 				{
 					var newCreature = DataCreatureBehaviorHandler.ReproduceAsexually(ref creature);
 					RegisterEntity(newCreature);
-					AnimationManager?.CreateVisualEntity(newCreature);
+					EntityManager?.RegisterEntity(newCreature);
 				}
 				else
 				{
@@ -101,7 +101,7 @@ public class CreatureSim : Simulation<DataCreature, NodeCreature>
 					{
 						var newCreature = DataCreatureBehaviorHandler.ReproduceSexually(ref creature, closestMateIndex); 
 						RegisterEntity(newCreature);
-						AnimationManager?.CreateVisualEntity(newCreature);
+						EntityManager?.RegisterEntity(newCreature);
 					}
 					else if (closestMateIndex > -1)
 					{
@@ -122,7 +122,7 @@ public class CreatureSim : Simulation<DataCreature, NodeCreature>
 			{
 				creature.Alive = false;
 				
-				var visualCreature = AnimationManager?.Entities[i];
+				var visualCreature = EntityManager?.NodeEntities[i];
 				visualCreature?.Death();
 			}
 
