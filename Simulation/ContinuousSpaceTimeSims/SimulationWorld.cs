@@ -55,6 +55,8 @@ public partial class SimulationWorld : Node3D
     public static Rng Rng => _rng ??= new Rng(_seed == -1 ? System.Environment.TickCount : _seed);
     public World3D World3D => GetWorld3D();
     public readonly List<ISimulation> Simulations = new();
+    public NodeCreatureAnimationManager CreatureAnimationManager;
+    public NodeTreeAnimationManager TreeAnimationManager;
 
     public void ResetSimulations()
     {
@@ -62,15 +64,33 @@ public partial class SimulationWorld : Node3D
         {
 		    simulation.Reset();
 	    }
+        CreatureAnimationManager?.QueueFree();
+        CreatureAnimationManager = null;
+        TreeAnimationManager?.QueueFree();
+        TreeAnimationManager = null;
     }
     public void Initialize()
     {
         PhysicsServer3D.SetActive(true);
         Engine.PhysicsTicksPerSecond = (int) (_timeScale * 60);
-
+        
         Simulations.Clear();
         Simulations.Add(new CreatureSim(this));
         Simulations.Add(new FruitTreeSim(this));
+        
+        if (VisualizationMode == VisualizationMode.NodeCreatures)
+        {
+            CreatureAnimationManager = new NodeCreatureAnimationManager(this);
+            CreatureAnimationManager.Name = "NodeCreatureAnimationManager";
+            AddChild(CreatureAnimationManager);
+            Simulations.OfType<CreatureSim>().FirstOrDefault().AnimationManager = CreatureAnimationManager;
+
+            TreeAnimationManager = new NodeTreeAnimationManager(this);
+            TreeAnimationManager.Name = "NodeTreeAnimationManager";
+            AddChild(TreeAnimationManager);
+            Simulations.OfType<FruitTreeSim>().FirstOrDefault().AnimationManager = TreeAnimationManager;
+        }
+        GD.Print("Hello");
     }
 
     public override void _PhysicsProcess(double delta)
@@ -87,11 +107,16 @@ public partial class SimulationWorld : Node3D
     public override void _Process(double delta)
     {
         if (!Running) return;
+        
+        CreatureAnimationManager?.VisualProcess(delta);
+        TreeAnimationManager?.VisualProcess(delta);
+        
         foreach (var simulation in Simulations)
         {
-            simulation.VisualProcess(delta);
+            // if (simulation is FruitTreeSim treeSim) treeSim.VisualProcess(delta);
             simulation.ClearDeadEntities();
         }
+
 
         if (VisualizationMode != VisualizationMode.None) return;
         _timeSinceLastStatusPrint += delta;

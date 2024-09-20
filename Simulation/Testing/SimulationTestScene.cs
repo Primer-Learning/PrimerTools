@@ -118,6 +118,7 @@ public partial class SimulationTestScene : Node3D
 		
 		FruitTreeSim.Mode = FruitTreeSim.SimMode.TreeGrowth;
 		FruitTreeSim.Initialize();
+		if (SimulationWorld.VisualizationMode == VisualizationMode.NodeCreatures) SimulationWorld.TreeAnimationManager.TreeSim = FruitTreeSim;
 
 		await Task.Delay(2000);
 		while (!_running) await Task.Delay(100);
@@ -128,8 +129,9 @@ public partial class SimulationTestScene : Node3D
 
 		await Task.Delay(3000);
 		while (!_running) await Task.Delay(100);
-
+		
 		CreatureSim.Initialize();
+		if (SimulationWorld.VisualizationMode == VisualizationMode.NodeCreatures) SimulationWorld.CreatureAnimationManager.CreatureSim = CreatureSim;
 		if (PeriodicPlotter != null) PeriodicPlotter.Plotting = true;
 	}
 

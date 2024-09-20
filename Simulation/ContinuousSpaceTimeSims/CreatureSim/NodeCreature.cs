@@ -33,13 +33,13 @@ public partial class NodeCreature : NodeEntity<DataCreature>
 		}
 		
 		_blob.SetColor(ColorFromSpeed(dataCreature.MaxSpeed));
-		var normalizedAwareness = dataCreature.AwarenessRadius / CreatureBehaviorHandler.InitialAwarenessRadius;
+		var normalizedAwareness = dataCreature.AwarenessRadius / DataCreatureBehaviorHandler.InitialAwarenessRadius;
 		_blob.LeftEye.Scale = normalizedAwareness * Vector3.One;
 		_blob.RightEye.Scale = normalizedAwareness * Vector3.One;
 	}
 	public override void UpdateTransform(DataCreature dataCreature)
 	{
-		var scaleFactor = Mathf.Min(1, dataCreature.Age / CreatureBehaviorHandler.MaturationTime);
+		var scaleFactor = Mathf.Min(1, dataCreature.Age / DataCreatureBehaviorHandler.MaturationTime);
 		Scale = scaleFactor * Vector3.One;
         
 		if (dataCreature.EatingTimeLeft > 0) return;
@@ -62,7 +62,13 @@ public partial class NodeCreature : NodeEntity<DataCreature>
 			0.5f
 		);
 		await tween.ToSignal(tween, Tween.SignalName.Finished);
-		QueueFree();
+		
+		// Don't queuefree here. That should only be done from the Registry script so it stays in sync with the 
+		// data registry. Perhaps this means the registry script should just keep a list instead of relying on
+		// child index in the scene tree.
+		
+		// ALSO. Queuefreeing from the registry means this animation gets cut short anyway.
+		// TODO: The obove.
 	}
 	#endregion
 
@@ -81,7 +87,7 @@ public partial class NodeCreature : NodeEntity<DataCreature>
 	public static Color ColorFromSpeed(float speed)
 	{
 		// TODO: Improve this algorithm
-		var normalizedSpeed = speed / CreatureBehaviorHandler.InitialCreatureSpeed;
+		var normalizedSpeed = speed / DataCreatureBehaviorHandler.InitialCreatureSpeed;
 		normalizedSpeed /= 2; // Make the color range vary from zero speed to twice the initial speed
 
 		var numSpaces = normalizedSpeed * (_speedColors.Length - 1); // Map the speed to a range that spans the colors

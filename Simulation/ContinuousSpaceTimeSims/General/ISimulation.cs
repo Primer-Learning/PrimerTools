@@ -6,6 +6,5 @@ public interface ISimulation
     void Initialize();
     void Reset();
     void Step();
-    void VisualProcess(double delta);
     void ClearDeadEntities();
 }

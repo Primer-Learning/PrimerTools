@@ -22,6 +22,19 @@ public partial class NodeTree : NodeEntity<DataTree>
 	}
 	public override void UpdateTransform(DataTree dataTree)
 	{
+		if (!dataTree.Alive)
+		{
+			Death();
+			return;
+		}
+                
+		if (dataTree.FruitGrowthProgress > FruitTreeBehaviorHandler.NodeFruitGrowthDelay && this is
+		    {
+			    HasFruit: false
+		    })
+		{
+			GrowFruit(FruitTreeBehaviorHandler.FruitGrowthTime - FruitTreeBehaviorHandler.NodeFruitGrowthDelay);
+		}
 		Scale = Vector3.One * Mathf.Min(1, dataTree.Age / FruitTreeBehaviorHandler.TreeMaturationTime);
 	}
 	public override void Death()

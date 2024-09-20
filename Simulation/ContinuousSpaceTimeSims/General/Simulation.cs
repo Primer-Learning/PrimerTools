@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using Godot;
 
 namespace PrimerTools.Simulation;
@@ -18,10 +16,15 @@ public abstract class Simulation<TDataEntity, TNodeEntity> : ISimulation
     #region Simulation
     protected readonly SimulationWorld SimulationWorld;
     public DataEntityRegistry<TDataEntity> Registry;
-    public NodeEntityRegistry<TDataEntity, TNodeEntity> VisualRegistry;
+    public NodeAnimationManager<TDataEntity, TNodeEntity> AnimationManager;
 
     private bool _initialized;
-    protected bool _running;
+    private bool _running;
+
+    public Simulation()
+    {
+    }
+
     public void Initialize()
     {
         if (_initialized) return;
@@ -30,26 +33,13 @@ public abstract class Simulation<TDataEntity, TNodeEntity> : ISimulation
         
         Registry = new DataEntityRegistry<TDataEntity>(SimulationWorld.World3D);
         
-        switch (SimulationWorld.VisualizationMode)
-        {
-            case VisualizationMode.None:
-                break;
-            case VisualizationMode.NodeCreatures:
-                SimulationWorld.GetChildren().OfType<NodeEntityRegistry<DataCreature, NodeCreature>>().FirstOrDefault()?.Free();
-                VisualRegistry = new NodeEntityRegistry<TDataEntity, TNodeEntity>();
-                SimulationWorld.AddChild(VisualRegistry);
-                break;
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
-        
         CustomInitialize();
     }
     protected abstract void CustomInitialize();
     public virtual void Reset()
     {
         Registry?.Reset();
-        VisualRegistry?.Free();
+        AnimationManager?.Reset();
         _initialized = false;
         _running = false;
     }
@@ -70,7 +60,6 @@ public abstract class Simulation<TDataEntity, TNodeEntity> : ISimulation
     protected void RegisterEntity(TDataEntity dataEntity)
     {
         Registry.RegisterEntity(dataEntity);
-        VisualRegistry?.RegisterEntity(dataEntity);
     }
     
     public void ClearDeadEntities()
@@ -82,26 +71,22 @@ public abstract class Simulation<TDataEntity, TNodeEntity> : ISimulation
 			
             Registry.Entities[i].CleanUp();
             Registry.Entities.RemoveAt(i);
-
-            if (VisualRegistry != null && VisualRegistry.Entities.Count > 0)
+            
+            if (AnimationManager != null && AnimationManager.Entities.Count > 0)
             {
                 // Visual creatures aren't cleaned up here, since they may want to do an animation before freeing the object
                 // But we clear the list here so they stay in sync.
                 // For this reason, NodeCreature.Death must handle cleanup.
-                VisualRegistry.RemoveEntity(i);
+                AnimationManager.RemoveEntity(i);
             }
         }
 		
-        // Rebuild TreeLookup
+        // Rebuild Lookup
         Registry.EntityLookup.Clear();
         for (int i = 0; i < Registry.Entities.Count; i++)
         {
             Registry.EntityLookup[Registry.Entities[i].Body] = i;
         }
     }
-    #endregion
-
-    #region Visual
-    public abstract void VisualProcess(double delta);
     #endregion
 }

@@ -4,7 +4,7 @@ using Godot.Collections;
 namespace PrimerTools.Simulation;
 
 [Tool]
-public static class CreatureBehaviorHandler
+public static class DataCreatureBehaviorHandler
 {
 	public enum SexMode
 	{

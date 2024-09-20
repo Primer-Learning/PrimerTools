@@ -1,6 +1,7 @@
 using System;
 using Godot;
 using System.Collections.Generic;
+using System.Linq;
 using PrimerTools;
 using PrimerTools.Simulation;
 
@@ -14,9 +15,14 @@ public class FruitTreeSim : Simulation<DataTree, NodeTree>
         FruitGrowth
     }
     public SimMode Mode = SimMode.TreeGrowth;
-    
+
     protected override void CustomInitialize()
     {
+        if (SimulationWorld.VisualizationMode == VisualizationMode.NodeCreatures)
+        {
+            AnimationManager = SimulationWorld.GetNode<NodeTreeAnimationManager>("NodeTreeAnimationManager");
+        }
+        
         for (var i = 0; i < InitialEntityCount; i++)
         {
             var physicalTree = new DataTree
@@ -28,6 +34,7 @@ public class FruitTreeSim : Simulation<DataTree, NodeTree>
                 )
             };
             RegisterEntity(physicalTree);
+            AnimationManager?.CreateVisualEntity(physicalTree);
         }
     }
     protected override void CustomStep()
@@ -68,33 +75,7 @@ public class FruitTreeSim : Simulation<DataTree, NodeTree>
                 Position = newTreePosition
             };
             RegisterEntity(physicalTree);
-        }
-    }
-    public override void VisualProcess(double delta)
-    {
-        if (!_running) return;
-        if (VisualRegistry != null)
-        {
-            for (var i = 0; i < Registry.Entities.Count; i++)
-            {
-                var physicalTree = Registry.Entities[i]; 
-                var visualTree = VisualRegistry.Entities[i];
-                
-                if (!physicalTree.Alive)
-                {
-                    visualTree?.Death();
-                    continue;
-                }
-                
-                if (physicalTree.FruitGrowthProgress > FruitTreeBehaviorHandler.NodeFruitGrowthDelay && visualTree is
-                    {
-                        HasFruit: false
-                    })
-                {
-                    visualTree.GrowFruit(FruitTreeBehaviorHandler.FruitGrowthTime - FruitTreeBehaviorHandler.NodeFruitGrowthDelay);
-                }
-                visualTree?.UpdateTransform(physicalTree);
-            }
+            AnimationManager?.CreateVisualEntity(physicalTree);
         }
     }
 }
