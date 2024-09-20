@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Godot;
 
 namespace PrimerTools.Simulation;
@@ -8,17 +7,25 @@ public partial class NodeEntityManager<TDataEntity, TNodeEntity> : Node3D
     where TDataEntity : IDataEntity
     where TNodeEntity : NodeEntity<TDataEntity>, new()
 {
-    public DataEntityRegistry<TDataEntity> DataEntityRegistry;
     public readonly List<TNodeEntity> NodeEntities = new();
+    private readonly DataEntityRegistry<TDataEntity> DataEntityRegistry;
     
-    public void RegisterEntity(TDataEntity dataEntity)
+    public NodeEntityManager(DataEntityRegistry<TDataEntity> dataEntityRegistry)
+    {
+        DataEntityRegistry = dataEntityRegistry;
+        DataEntityRegistry.EntityRegistered += RegisterEntity;
+        DataEntityRegistry.EntityUnregistered += RemoveEntity;
+        DataEntityRegistry.ResetEvent += Reset;
+    }
+    
+    private void RegisterEntity(TDataEntity dataEntity)
     {
         var node = new TNodeEntity();
         AddChild(node);
         node.Initialize(dataEntity);
         NodeEntities.Add(node);
     }
-    public void RemoveEntity(int index)
+    private void RemoveEntity(int index)
     {
         NodeEntities.RemoveAt(index);
         // Don't queuefree here. It can queuefree itself after an animation
@@ -40,7 +47,7 @@ public partial class NodeEntityManager<TDataEntity, TNodeEntity> : Node3D
 
         for (var i = 0; i < DataEntityRegistry.Entities.Count; i++)
         {
-            NodeEntities[i].UpdateTransform(DataEntityRegistry.Entities[i]);
+            NodeEntities[i].Update(DataEntityRegistry.Entities[i]);
         }
     }
     

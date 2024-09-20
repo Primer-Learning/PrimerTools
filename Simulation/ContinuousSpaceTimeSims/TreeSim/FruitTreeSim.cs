@@ -1,12 +1,11 @@
 using System;
 using Godot;
 using System.Collections.Generic;
-using System.Linq;
 using PrimerTools;
 using PrimerTools.Simulation;
 
 [Tool]
-public class FruitTreeSim : Simulation<DataTree, NodeTree>
+public class FruitTreeSim : Simulation<DataTree>
 {
     public FruitTreeSim(SimulationWorld simulationWorld) : base(simulationWorld) {}
     public enum SimMode
@@ -18,11 +17,6 @@ public class FruitTreeSim : Simulation<DataTree, NodeTree>
 
     protected override void CustomInitialize()
     {
-        if (SimulationWorld.VisualizationMode == VisualizationMode.NodeCreatures)
-        {
-            EntityManager = SimulationWorld.GetNode<NodeEntityManager<DataTree, NodeTree>>("NodeTreeAnimationManager");
-        }
-        
         for (var i = 0; i < InitialEntityCount; i++)
         {
             var physicalTree = new DataTree
@@ -33,8 +27,7 @@ public class FruitTreeSim : Simulation<DataTree, NodeTree>
                     SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.Y)
                 )
             };
-            RegisterEntity(physicalTree);
-            EntityManager?.RegisterEntity(physicalTree);
+            Registry.RegisterEntity(physicalTree);
         }
     }
     protected override void CustomStep()
@@ -74,8 +67,7 @@ public class FruitTreeSim : Simulation<DataTree, NodeTree>
             {
                 Position = newTreePosition
             };
-            RegisterEntity(physicalTree);
-            EntityManager?.RegisterEntity(physicalTree);
+            Registry.RegisterEntity(physicalTree);
         }
     }
 }

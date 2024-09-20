@@ -6,7 +6,6 @@ public partial class NodeTree : NodeEntity<DataTree>
 	private FruitTree _fruitTree;
 	
 	#region Core methods
-	// Considering putting these methods in an interface
 	public override void _Ready()
 	{
 		base._Ready();
@@ -20,7 +19,7 @@ public partial class NodeTree : NodeEntity<DataTree>
 		Position = dataTree.Position;
 		Name = "Tree";
 	}
-	public override void UpdateTransform(DataTree dataTree)
+	public override void Update(DataTree dataTree)
 	{
 		if (!dataTree.Alive)
 		{
@@ -37,10 +36,9 @@ public partial class NodeTree : NodeEntity<DataTree>
 		}
 		Scale = Vector3.One * Mathf.Min(1, dataTree.Age / FruitTreeBehaviorHandler.TreeMaturationTime);
 	}
-	public override void Death()
+	private void Death()
 	{
 		Visible = false;
-		QueueFree();
 	}
 	#endregion
 

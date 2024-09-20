@@ -16,7 +16,6 @@ public partial class SimulationWorld : Node3D
     #region Editor controls
     public bool Running;
     [Export] public VisualizationMode VisualizationMode = VisualizationMode.NodeCreatures;
-    #endregion
     
     private static Vector2 _worldDimension = Vector2.One * 50;
     [Export]
@@ -48,6 +47,7 @@ public partial class SimulationWorld : Node3D
             _rng = null; // So it will be reconstructed with the new seed next time it's read
         }
     }
+    #endregion
 
     public const int PhysicsStepsPerSimSecond = 60;
 
@@ -55,8 +55,8 @@ public partial class SimulationWorld : Node3D
     public static Rng Rng => _rng ??= new Rng(_seed == -1 ? System.Environment.TickCount : _seed);
     public World3D World3D => GetWorld3D();
     public readonly List<ISimulation> Simulations = new();
-    public NodeEntityManager<DataCreature, NodeCreature> CreatureEntityManager;
-    public NodeEntityManager<DataTree, NodeTree> TreeEntityManager;
+    public NodeCreatureManager CreatureNodeManager;
+    public NodeTreeManager TreeNodeManager;
 
     public void ResetSimulations()
     {
@@ -64,10 +64,10 @@ public partial class SimulationWorld : Node3D
         {
 		    simulation.Reset();
 	    }
-        CreatureEntityManager?.QueueFree();
-        CreatureEntityManager = null;
-        TreeEntityManager?.QueueFree();
-        TreeEntityManager = null;
+        CreatureNodeManager?.QueueFree();
+        CreatureNodeManager = null;
+        TreeNodeManager?.QueueFree();
+        TreeNodeManager = null;
     }
     public void Initialize()
     {
@@ -75,20 +75,20 @@ public partial class SimulationWorld : Node3D
         Engine.PhysicsTicksPerSecond = (int) (_timeScale * 60);
         
         Simulations.Clear();
-        Simulations.Add(new CreatureSim(this));
-        Simulations.Add(new FruitTreeSim(this));
+        var creatureSim = new CreatureSim(this);
+        Simulations.Add(creatureSim);
+        var treeSim = new FruitTreeSim(this);
+        Simulations.Add(treeSim);
         
         if (VisualizationMode == VisualizationMode.NodeCreatures)
         {
-            CreatureEntityManager = new NodeEntityManager<DataCreature, NodeCreature>();
-            CreatureEntityManager.Name = "NodeCreatureAnimationManager";
-            AddChild(CreatureEntityManager);
-            Simulations.OfType<CreatureSim>().FirstOrDefault().EntityManager = CreatureEntityManager;
-
-            TreeEntityManager = new NodeEntityManager<DataTree, NodeTree>();
-            TreeEntityManager.Name = "NodeTreeAnimationManager";
-            AddChild(TreeEntityManager);
-            Simulations.OfType<FruitTreeSim>().FirstOrDefault().EntityManager = TreeEntityManager;
+            TreeNodeManager = new NodeTreeManager(treeSim.Registry);
+            TreeNodeManager.Name = "NodeTreeAnimationManager";
+            AddChild(TreeNodeManager);
+            
+            CreatureNodeManager = new NodeCreatureManager(creatureSim.Registry, TreeNodeManager);
+            CreatureNodeManager.Name = "NodeCreatureAnimationManager";
+            AddChild(CreatureNodeManager);
         }
     }
 
@@ -107,15 +107,13 @@ public partial class SimulationWorld : Node3D
     {
         if (!Running) return;
         
-        CreatureEntityManager?.VisualProcess(delta);
-        TreeEntityManager?.VisualProcess(delta);
+        CreatureNodeManager?.VisualProcess(delta);
+        TreeNodeManager?.VisualProcess(delta);
         
         foreach (var simulation in Simulations)
         {
-            // if (simulation is FruitTreeSim treeSim) treeSim.VisualProcess(delta);
             simulation.ClearDeadEntities();
         }
-
 
         if (VisualizationMode != VisualizationMode.None) return;
         _timeSinceLastStatusPrint += delta;

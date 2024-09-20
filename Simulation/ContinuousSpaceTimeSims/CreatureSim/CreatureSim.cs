@@ -4,10 +4,9 @@ using PrimerTools;
 using PrimerTools.Simulation;
 
 [Tool]
-public class CreatureSim : Simulation<DataCreature, NodeCreature>
+public class CreatureSim : Simulation<DataCreature>
 {
 	public CreatureSim(SimulationWorld simulationWorld) : base(simulationWorld) {}
-	public CreatureSim() {}
 
 	private FruitTreeSim FruitTreeSim => SimulationWorld.Simulations.OfType<FruitTreeSim>().FirstOrDefault();
 	
@@ -17,16 +16,12 @@ public class CreatureSim : Simulation<DataCreature, NodeCreature>
 		DataCreatureBehaviorHandler.FruitTreeSim = FruitTreeSim;
 		DataCreatureBehaviorHandler.CreatureSim = this;
 		DataCreatureBehaviorHandler.Space = PhysicsServer3D.SpaceGetDirectState(SimulationWorld.GetWorld3D().Space);
+		DataCreatureBehaviorHandler.SimulationWorld = SimulationWorld;
 		
 		if (FruitTreeSim == null)
 		{
 			GD.PrintErr("TreeSim not found. Not initializing creature sim because they will all starve to death immediately. You monster.");
 			return;
-		}
-
-		if (SimulationWorld.VisualizationMode == VisualizationMode.NodeCreatures)
-		{
-			EntityManager = SimulationWorld.GetNode<NodeEntityManager<DataCreature, NodeCreature>>("NodeCreatureAnimationManager");
 		}
 		
 		for (var i = 0; i < InitialEntityCount; i++)
@@ -42,8 +37,7 @@ public class CreatureSim : Simulation<DataCreature, NodeCreature>
 				MaxSpeed = DataCreatureBehaviorHandler.InitialCreatureSpeed
 			};
 
-			RegisterEntity(physicalCreature);
-			EntityManager?.RegisterEntity(physicalCreature);
+			Registry.RegisterEntity(physicalCreature);
 		}
 	}
 	protected override void CustomStep()
@@ -75,8 +69,7 @@ public class CreatureSim : Simulation<DataCreature, NodeCreature>
 			var (closestFoodIndex, canEat) = DataCreatureBehaviorHandler.FindClosestFood(creature);
 			if (canEat && creature.EatingTimeLeft <= 0)
 			{
-				DataCreatureBehaviorHandler.EatFood(ref creature, closestFoodIndex);
-				EntityManager?.NodeEntities[i]?.Eat(FruitTreeSim.EntityManager?.NodeEntities[closestFoodIndex]?.GetFruit(), DataCreatureBehaviorHandler.EatDuration / SimulationWorld.TimeScale);
+				DataCreatureBehaviorHandler.EatFood(ref creature, closestFoodIndex, i);
 			}
 			else if (closestFoodIndex > -1)
 			{
@@ -89,8 +82,7 @@ public class CreatureSim : Simulation<DataCreature, NodeCreature>
 				if (DataCreatureBehaviorHandler.CurrentSexMode == DataCreatureBehaviorHandler.SexMode.Asexual)
 				{
 					var newCreature = DataCreatureBehaviorHandler.ReproduceAsexually(ref creature);
-					RegisterEntity(newCreature);
-					EntityManager?.RegisterEntity(newCreature);
+					Registry.RegisterEntity(newCreature);
 				}
 				else
 				{
@@ -100,8 +92,7 @@ public class CreatureSim : Simulation<DataCreature, NodeCreature>
 					if (canMate && creature.MatingTimeLeft <= 0)
 					{
 						var newCreature = DataCreatureBehaviorHandler.ReproduceSexually(ref creature, closestMateIndex); 
-						RegisterEntity(newCreature);
-						EntityManager?.RegisterEntity(newCreature);
+						Registry.RegisterEntity(newCreature);
 					}
 					else if (closestMateIndex > -1)
 					{
@@ -121,9 +112,7 @@ public class CreatureSim : Simulation<DataCreature, NodeCreature>
 			if (creature.Energy <= 0)
 			{
 				creature.Alive = false;
-				
-				var visualCreature = EntityManager?.NodeEntities[i];
-				visualCreature?.Death();
+				DataCreatureBehaviorHandler.HandleCreatureDeath(i);
 			}
 
 			Registry.Entities[i] = creature;

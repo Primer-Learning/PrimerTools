@@ -1,4 +1,5 @@
-﻿using Godot;
+﻿using System;
+using Godot;
 using Godot.Collections;
 
 namespace PrimerTools.Simulation;
@@ -18,6 +19,7 @@ public static class DataCreatureBehaviorHandler
 	// Possibly have SimulationWorld be the hub for sims talking to each other.
 	public static FruitTreeSim FruitTreeSim;
 	public static CreatureSim CreatureSim;
+	public static SimulationWorld SimulationWorld;
 	
 	// This is less bad, but let's still think about it
 	public static PhysicsDirectSpaceState3D Space;
@@ -198,7 +200,10 @@ public static class DataCreatureBehaviorHandler
 		
 		creature.Energy -= (BaseEnergySpend + GlobalEnergySpendAdjustmentFactor * ( normalizedSpeed * normalizedSpeed + normalizedAwarenessRadius)) / SimulationWorld.PhysicsStepsPerSimSecond;
 	}
-	public static void EatFood(ref DataCreature creature, int treeIndex)
+	public static event Action<int, int, float> CreatureEatEvent; // creatureIndex, treeIndex, duration
+	public static event Action<int> CreatureDeathEvent; // creatureIndex
+
+	public static void EatFood(ref DataCreature creature, int treeIndex, int creatureIndex)
 	{
 		var tree = FruitTreeSim.Registry.Entities[treeIndex];
 		if (!tree.HasFruit) return;
@@ -209,6 +214,8 @@ public static class DataCreatureBehaviorHandler
 		
 		creature.Energy += EnergyGainFromFood;
 		creature.EatingTimeLeft = EatDuration;
+
+		CreatureEatEvent?.Invoke(creatureIndex, treeIndex, EatDuration / SimulationWorld.TimeScale);
 	}
 	public static DataCreature ReproduceSexually(ref DataCreature parent1, int parent2Index)
 	{
@@ -266,6 +273,12 @@ public static class DataCreatureBehaviorHandler
 
 		return newCreature;
 	}
+
+	public static void HandleCreatureDeath(int creatureIndex)
+	{
+		CreatureDeathEvent?.Invoke(creatureIndex);
+	}
+
 	#region Helpers
 	private static Array<Dictionary> DetectCollisionsWithCreature(DataCreature creature)
 	{

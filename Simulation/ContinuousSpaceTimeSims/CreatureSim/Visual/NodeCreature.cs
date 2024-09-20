@@ -37,7 +37,13 @@ public partial class NodeCreature : NodeEntity<DataCreature>
 		_blob.LeftEye.Scale = normalizedAwareness * Vector3.One;
 		_blob.RightEye.Scale = normalizedAwareness * Vector3.One;
 	}
-	public override void UpdateTransform(DataCreature dataCreature)
+
+	public override void Update(DataCreature dataCreature)
+	{
+		UpdateTransform(dataCreature);
+	}
+	
+	public void UpdateTransform(DataCreature dataCreature)
 	{
 		var scaleFactor = Mathf.Min(1, dataCreature.Age / DataCreatureBehaviorHandler.MaturationTime);
 		Scale = scaleFactor * Vector3.One;
@@ -52,7 +58,7 @@ public partial class NodeCreature : NodeEntity<DataCreature>
 			LookAt(GlobalPosition - direction, Vector3.Up);
 		}
 	}
-	public override async void Death()
+	public async void Death()
 	{
 		var tween = CreateTween();
 		tween.TweenProperty(
@@ -64,11 +70,7 @@ public partial class NodeCreature : NodeEntity<DataCreature>
 		await tween.ToSignal(tween, Tween.SignalName.Finished);
 		
 		// Don't queuefree here. That should only be done from the Registry script so it stays in sync with the 
-		// data registry. Perhaps this means the registry script should just keep a list instead of relying on
-		// child index in the scene tree.
-		
-		// ALSO. Queuefreeing from the registry means this animation gets cut short anyway.
-		// TODO: The obove.
+		// data registry.
 	}
 	#endregion
 
