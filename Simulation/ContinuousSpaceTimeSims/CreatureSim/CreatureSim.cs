@@ -66,14 +66,17 @@ public class CreatureSim : Simulation<DataCreature>
 			}
 
 			// Food detection
-			var (closestFoodIndex, canEat) = DataCreatureBehaviorHandler.FindClosestFood(creature);
-			if (canEat && creature.EatingTimeLeft <= 0)
+			if (creature.Energy < creature.HungerThreshold)
 			{
-				DataCreatureBehaviorHandler.EatFood(ref creature, closestFoodIndex, i);
-			}
-			else if (closestFoodIndex > -1)
-			{
-				DataCreatureBehaviorHandler.ChooseTreeDestination(ref creature, closestFoodIndex);
+				var (closestFoodIndex, canEat) = DataCreatureBehaviorHandler.FindClosestFood(creature);
+				if (canEat && creature.EatingTimeLeft <= 0)
+				{
+					DataCreatureBehaviorHandler.EatFood(ref creature, closestFoodIndex, i);
+				}
+				else if (closestFoodIndex > -1)
+				{
+					DataCreatureBehaviorHandler.ChooseTreeDestination(ref creature, closestFoodIndex);
+				}
 			}
 			
 			// Reproduction

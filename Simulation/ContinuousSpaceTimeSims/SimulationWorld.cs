@@ -55,19 +55,20 @@ public partial class SimulationWorld : Node3D
     public static Rng Rng => _rng ??= new Rng(_seed == -1 ? System.Environment.TickCount : _seed);
     public World3D World3D => GetWorld3D();
     public readonly List<ISimulation> Simulations = new();
-    public NodeCreatureManager CreatureNodeManager;
-    public NodeTreeManager TreeNodeManager;
+    private NodeCreatureManager _creatureNodeManager;
+    private NodeTreeManager _treeNodeManager;
 
     public void ResetSimulations()
     {
+        Running = false;
 	    foreach (var simulation in Simulations)
         {
 		    simulation.Reset();
 	    }
-        CreatureNodeManager?.QueueFree();
-        CreatureNodeManager = null;
-        TreeNodeManager?.QueueFree();
-        TreeNodeManager = null;
+        _creatureNodeManager?.QueueFree();
+        _creatureNodeManager = null;
+        _treeNodeManager?.QueueFree();
+        _treeNodeManager = null;
     }
     public void Initialize()
     {
@@ -82,13 +83,13 @@ public partial class SimulationWorld : Node3D
         
         if (VisualizationMode == VisualizationMode.NodeCreatures)
         {
-            TreeNodeManager = new NodeTreeManager(treeSim.Registry);
-            TreeNodeManager.Name = "NodeTreeAnimationManager";
-            AddChild(TreeNodeManager);
+            _treeNodeManager = new NodeTreeManager(treeSim.Registry);
+            _treeNodeManager.Name = "NodeTreeAnimationManager";
+            AddChild(_treeNodeManager);
             
-            CreatureNodeManager = new NodeCreatureManager(creatureSim.Registry, TreeNodeManager);
-            CreatureNodeManager.Name = "NodeCreatureAnimationManager";
-            AddChild(CreatureNodeManager);
+            _creatureNodeManager = new NodeCreatureManager(creatureSim.Registry, _treeNodeManager);
+            _creatureNodeManager.Name = "NodeCreatureAnimationManager";
+            AddChild(_creatureNodeManager);
         }
     }
 
@@ -107,8 +108,8 @@ public partial class SimulationWorld : Node3D
     {
         if (!Running) return;
         
-        CreatureNodeManager?.VisualProcess(delta);
-        TreeNodeManager?.VisualProcess(delta);
+        _creatureNodeManager?.VisualProcess(delta);
+        _treeNodeManager?.VisualProcess(delta);
         
         foreach (var simulation in Simulations)
         {

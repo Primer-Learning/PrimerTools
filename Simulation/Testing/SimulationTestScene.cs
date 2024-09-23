@@ -63,6 +63,9 @@ public partial class SimulationTestScene : Node3D
 			_reset = false;
 		}
 	}
+
+	[Export] private int _initialCreatureCount = 2;
+	[Export] private int _initialTreeCount = 10;
 	
 	private Node3D GraphParent => GetNode<Node3D>("GraphParent");
 	private PeriodicPlotter PeriodicPlotter => GraphParent.GetNodeOrNull<PeriodicPlotter>("Periodic plotter");
@@ -117,9 +120,10 @@ public partial class SimulationTestScene : Node3D
 		SimulationWorld.Running = true;
 		
 		FruitTreeSim.Mode = FruitTreeSim.SimMode.TreeGrowth;
+		FruitTreeSim.InitialEntityCount = _initialTreeCount;
 		FruitTreeSim.Initialize();
 		
-		await Task.Delay(2000);
+		await Task.Delay(3000);
 		while (!_running) await Task.Delay(100);
 		
 		SimulationWorld.TimeScale = originalTimeScale;
@@ -128,7 +132,8 @@ public partial class SimulationTestScene : Node3D
 
 		await Task.Delay(3000);
 		while (!_running) await Task.Delay(100);
-		
+
+		CreatureSim.InitialEntityCount = _initialCreatureCount;
 		CreatureSim.Initialize();
 		if (PeriodicPlotter != null) PeriodicPlotter.Plotting = true;
 	}

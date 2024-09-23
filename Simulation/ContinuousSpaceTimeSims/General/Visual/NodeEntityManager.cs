@@ -32,7 +32,7 @@ public partial class NodeEntityManager<TDataEntity, TNodeEntity> : Node3D
         // GetChild(index).QueueFree();
     }
 
-    public void Reset()
+    private void Reset()
     {
         foreach (var child in NodeEntities)
         {

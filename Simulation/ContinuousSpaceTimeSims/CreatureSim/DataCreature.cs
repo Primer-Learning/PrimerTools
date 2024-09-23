@@ -13,6 +13,7 @@ public struct DataCreature : IDataEntity
     public bool Alive { get; set; }
     public float Age;
     public float Energy;
+    public float HungerThreshold;
     public Vector3 Position;
     public Vector3 Velocity;
     public Vector3 CurrentDestination;
@@ -61,5 +62,6 @@ public struct DataCreature : IDataEntity
         Velocity = Vector3.Zero;
         CurrentDestination = Position; // Will be changed immediately
         Energy = 1f;
+        HungerThreshold = DataCreatureBehaviorHandler.DefaultHungerThreshold;
     }
 }

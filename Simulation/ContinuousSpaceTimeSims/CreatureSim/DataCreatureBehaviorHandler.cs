@@ -41,6 +41,7 @@ public static class DataCreatureBehaviorHandler
 	private const float EnergyGainFromFood = 1f;
 	public const float ReproductionEnergyThreshold = 4f;
 	private const float ReproductionEnergyCost = 2f;
+	public const float DefaultHungerThreshold = 5;
 	
 	// Initial population
 	public const float InitialCreatureSpeed = 5f;
