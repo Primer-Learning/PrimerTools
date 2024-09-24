@@ -23,7 +23,9 @@ public partial class SimulationWorld : Node3D
     {
         get => _worldDimension;
         set => _worldDimension = value;
-    } 
+    }
+
+    [Export] private Node3D _ground; 
 
     private float _timeScale = 1;
     [Export]
@@ -74,6 +76,7 @@ public partial class SimulationWorld : Node3D
     {
         PhysicsServer3D.SetActive(true);
         Engine.PhysicsTicksPerSecond = (int) (_timeScale * 60);
+        _ground.Scale = new Vector3(WorldDimensions.Y, (WorldDimensions.X + WorldDimensions.Y) / 2, WorldDimensions.X);
         
         Simulations.Clear();
         var creatureSim = new CreatureSim(this);

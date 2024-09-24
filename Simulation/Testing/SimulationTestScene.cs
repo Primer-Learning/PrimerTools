@@ -114,16 +114,27 @@ public partial class SimulationTestScene : Node3D
 
 	private async Task RunSimSequence()
 	{
+		// TODO: Figure out an actual good approach to time and step counts
+		// Step counts are important for consistent results. But timing is important for perception.
+		// Probably always set timings in terms of total steps.
+		// Waiting could happen a number of ways. The current way waits 100 ms between checks, which will be imprecise.
+		// Could await every physics frame? But that seems silly. Maybe it's not silly of GetPhysicsFrames is cheap.
+		// We do unfortunately have to use an async method because the physics update needs to run between sim steps.
+		
+		var startPhysicsFrame = Engine.GetPhysicsFrames();
+		
 		var originalTimeScale = SimulationWorld.TimeScale;
-		SimulationWorld.TimeScale = 99999;
+		SimulationWorld.TimeScale = 2;
 		SimulationWorld.Initialize();
 		SimulationWorld.Running = true;
 		
 		FruitTreeSim.Mode = FruitTreeSim.SimMode.TreeGrowth;
 		FruitTreeSim.InitialEntityCount = _initialTreeCount;
 		FruitTreeSim.Initialize();
+
+		const ulong treeGrowthStepGoal = 100;
 		
-		await Task.Delay(3000);
+		while (Engine.GetPhysicsFrames() < startPhysicsFrame + treeGrowthStepGoal) await Task.Delay(100);
 		while (!_running) await Task.Delay(100);
 		
 		SimulationWorld.TimeScale = originalTimeScale;
@@ -131,7 +142,6 @@ public partial class SimulationTestScene : Node3D
 		FruitTreeSim.Mode = FruitTreeSim.SimMode.FruitGrowth;
 
 		await Task.Delay(3000);
-		while (!_running) await Task.Delay(100);
 
 		CreatureSim.InitialEntityCount = _initialCreatureCount;
 		CreatureSim.Initialize();
