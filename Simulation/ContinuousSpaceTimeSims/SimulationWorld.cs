@@ -95,6 +95,10 @@ public partial class SimulationWorld : Node3D
         }
     }
 
+    private int _timeOfLastStatusPrint;
+    private int _stepsSinceLastStatusPrint;
+    [Export] private int _statusPrintStepInterval;
+    private int _totalPhysicsSteps;
     public override void _PhysicsProcess(double delta)
     {
         if (!Running) return;
@@ -106,19 +110,17 @@ public partial class SimulationWorld : Node3D
         if (_statusPrintStepInterval == 0) return;
         _totalPhysicsSteps++;
         _stepsSinceLastStatusPrint++;
-        _timeSinceLastStatusPrint += delta;
 
         if (_stepsSinceLastStatusPrint >= _statusPrintStepInterval)
         {
-            GD.Print($"{_stepsSinceLastStatusPrint} steps in {_timeSinceLastStatusPrint} seconds");
+            var currentTime = System.Environment.TickCount;
+            var differenceInSeconds = (currentTime - _timeOfLastStatusPrint) / 1000f; 
+            GD.Print($"{_stepsSinceLastStatusPrint} steps in {differenceInSeconds} seconds");
             _stepsSinceLastStatusPrint = 0;
-            _timeSinceLastStatusPrint = 0;
+            _timeOfLastStatusPrint = currentTime;
         }
     }
-    private double _timeSinceLastStatusPrint;
-    private int _stepsSinceLastStatusPrint;
-    [Export] private int _statusPrintStepInterval;
-    private int _totalPhysicsSteps;
+    
     public override void _Process(double delta)
     {
         if (!Running) return;
