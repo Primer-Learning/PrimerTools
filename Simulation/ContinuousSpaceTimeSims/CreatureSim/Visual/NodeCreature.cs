@@ -68,9 +68,7 @@ public partial class NodeCreature : NodeEntity<DataCreature>
 			0.5f
 		);
 		await tween.ToSignal(tween, Tween.SignalName.Finished);
-		
-		// Don't queuefree here. That should only be done from the Registry script so it stays in sync with the 
-		// data registry.
+		QueueFree();
 	}
 	#endregion
 
