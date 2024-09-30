@@ -58,7 +58,7 @@ public partial class SimulationTestScene : Node3D
 				}
 
 				_newSim = true;
-				SimulationWorld.TimeScale = 1;
+				// SimulationWorld.TimeScale = 1;
 			}
 			_reset = false;
 		}
@@ -132,7 +132,7 @@ public partial class SimulationTestScene : Node3D
 		FruitTreeSim.InitialEntityCount = _initialTreeCount;
 		FruitTreeSim.Initialize();
 
-		const ulong treeGrowthStepGoal = 100;
+		const ulong treeGrowthStepGoal = 200;
 		
 		while (Engine.GetPhysicsFrames() < startPhysicsFrame + treeGrowthStepGoal) await Task.Delay(100);
 		while (!_running) await Task.Delay(100);

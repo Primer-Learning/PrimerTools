@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using Godot;
 
 namespace PrimerTools.Simulation;
@@ -103,10 +102,23 @@ public partial class SimulationWorld : Node3D
         {
             simulation.Step();
         }
-    }
 
-    private double _statusPrintInterval = 1;
+        if (_statusPrintStepInterval == 0) return;
+        _totalPhysicsSteps++;
+        _stepsSinceLastStatusPrint++;
+        _timeSinceLastStatusPrint += delta;
+
+        if (_stepsSinceLastStatusPrint >= _statusPrintStepInterval)
+        {
+            GD.Print($"{_stepsSinceLastStatusPrint} steps in {_timeSinceLastStatusPrint} seconds");
+            _stepsSinceLastStatusPrint = 0;
+            _timeSinceLastStatusPrint = 0;
+        }
+    }
     private double _timeSinceLastStatusPrint;
+    private int _stepsSinceLastStatusPrint;
+    [Export] private int _statusPrintStepInterval;
+    private int _totalPhysicsSteps;
     public override void _Process(double delta)
     {
         if (!Running) return;
@@ -118,12 +130,6 @@ public partial class SimulationWorld : Node3D
         {
             simulation.ClearDeadEntities();
         }
-
-        if (VisualizationMode != VisualizationMode.None) return;
-        _timeSinceLastStatusPrint += delta;
-        if (!(_timeSinceLastStatusPrint > _statusPrintInterval)) return;
-        GD.Print($"Trees: {Simulations.OfType<FruitTreeSim>().FirstOrDefault().Registry.Entities.Count(x => x.Alive)}");
-        GD.Print($"Creatures: {Simulations.OfType<CreatureSim>().FirstOrDefault().Registry.Entities.Count(x => x.Alive)}");
     }
 
     public static bool IsWithinWorldBounds(Vector3 position)

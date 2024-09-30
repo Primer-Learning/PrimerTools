@@ -251,8 +251,6 @@ public static class DataCreatureBehaviorHandler
 		parent1.OpenToMating = false;
 		CreatureSim.Registry.Entities[parent2Index] = parent2;
 		
-		GD.Print("Made a baby");
-		
 		return newCreature;
 	}
 	public static DataCreature ReproduceAsexually(ref DataCreature parentCreature)
