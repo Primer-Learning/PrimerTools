@@ -12,6 +12,7 @@ public struct DataCreature : IDataEntity
     public float MaxSpeed;
     public bool Alive { get; set; }
     public float Age;
+    public float MaxAge;
     public float Energy;
     public float HungerThreshold;
     public Vector3 Position;
@@ -57,6 +58,7 @@ public struct DataCreature : IDataEntity
         Awareness = awarenessArea;
         Alive = true;
         Age = 0;
+        MaxAge = 80;
         _bodyShapeResource = bodyShape;
         _awarenessShapeResource = awarenessShape;
         Velocity = Vector3.Zero;

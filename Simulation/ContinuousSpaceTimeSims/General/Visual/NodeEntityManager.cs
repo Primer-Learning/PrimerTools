@@ -8,14 +8,14 @@ public partial class NodeEntityManager<TDataEntity, TNodeEntity> : Node3D
     where TNodeEntity : NodeEntity<TDataEntity>, new()
 {
     public readonly List<TNodeEntity> NodeEntities = new();
-    private readonly DataEntityRegistry<TDataEntity> DataEntityRegistry;
+    private readonly DataEntityRegistry<TDataEntity> _dataEntityRegistry;
     
     public NodeEntityManager(DataEntityRegistry<TDataEntity> dataEntityRegistry)
     {
-        DataEntityRegistry = dataEntityRegistry;
-        DataEntityRegistry.EntityRegistered += RegisterEntity;
-        DataEntityRegistry.EntityUnregistered += RemoveEntity;
-        DataEntityRegistry.ResetEvent += Reset;
+        _dataEntityRegistry = dataEntityRegistry;
+        _dataEntityRegistry.EntityRegistered += RegisterEntity;
+        _dataEntityRegistry.EntityUnregistered += RemoveEntity;
+        _dataEntityRegistry.ResetEvent += Reset;
     }
     
     private void RegisterEntity(TDataEntity dataEntity)
@@ -43,11 +43,11 @@ public partial class NodeEntityManager<TDataEntity, TNodeEntity> : Node3D
     
     public void VisualProcess(double delta)
     {
-        if (DataEntityRegistry == null) return;
+        if (_dataEntityRegistry == null) return;
 
-        for (var i = 0; i < DataEntityRegistry.Entities.Count; i++)
+        for (var i = 0; i < _dataEntityRegistry.Entities.Count; i++)
         {
-            NodeEntities[i].Update(DataEntityRegistry.Entities[i]);
+            NodeEntities[i].Update(_dataEntityRegistry.Entities[i]);
         }
     }
     

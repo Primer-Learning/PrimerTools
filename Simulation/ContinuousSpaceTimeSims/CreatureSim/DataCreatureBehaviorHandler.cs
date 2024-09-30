@@ -13,8 +13,9 @@ public static class DataCreatureBehaviorHandler
 		Plurisexual,
 		Sexual
 	}
-	public static SexMode CurrentSexMode = SexMode.Sexual;
-	
+
+	public const SexMode CurrentSexMode = SexMode.Sexual;
+
 	// TODO: Not this. There's a better way to have things talk to each other.
 	// Possibly have SimulationWorld be the hub for sims talking to each other.
 	public static FruitTreeSim FruitTreeSim;
@@ -269,13 +270,25 @@ public static class DataCreatureBehaviorHandler
 			newCreature.MaxSpeed += SimulationWorld.Rng.RangeFloat(0, 1) < 0.5f ? MutationIncrement : -MutationIncrement;
 			newCreature.MaxSpeed = Mathf.Max(0, newCreature.MaxSpeed);
 		}
+		if (SimulationWorld.Rng.RangeFloat(0, 1) < MutationProbability)
+		{
+			newCreature.MaxAge += SimulationWorld.Rng.RangeFloat(0, 1) < 0.5f ? MutationIncrement : -MutationIncrement;
+			newCreature.MaxAge = Mathf.Max(0, newCreature.MaxAge);
+		}
+
 
 		return newCreature;
 	}
 
-	public static void HandleCreatureDeath(int creatureIndex)
+	public static void CheckAndHandleCreatureDeath(ref DataCreature creature, int creatureIndex)
 	{
-		CreatureDeathEvent?.Invoke(creatureIndex);
+		var alive = creature.Energy > 0;
+		alive = alive && creature.Age < creature.MaxAge;
+		if (!alive)
+		{
+			creature.Alive = false;
+			CreatureDeathEvent?.Invoke(creatureIndex);
+		}
 	}
 
 	#region Helpers

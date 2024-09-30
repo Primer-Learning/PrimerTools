@@ -112,11 +112,7 @@ public class CreatureSim : Simulation<DataCreature>
 			DataCreatureBehaviorHandler.SpendMovementEnergy(ref creature);
 			
 			// Ded?
-			if (creature.Energy <= 0)
-			{
-				creature.Alive = false;
-				DataCreatureBehaviorHandler.HandleCreatureDeath(i);
-			}
+			DataCreatureBehaviorHandler.CheckAndHandleCreatureDeath(ref creature, i);
 
 			Registry.Entities[i] = creature;
 		}

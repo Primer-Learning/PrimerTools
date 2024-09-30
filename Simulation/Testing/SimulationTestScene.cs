@@ -21,7 +21,7 @@ public partial class SimulationTestScene : Node3D
 				if (_newSim)
 				{
 					GD.Print("Running new sim");
-					CreatePlot();
+					if (_plotting) CreatePlot();
 					RunSimSequence();
 					_newSim = false;
 				}
@@ -64,6 +64,7 @@ public partial class SimulationTestScene : Node3D
 		}
 	}
 
+	[Export] private bool _plotting;
 	[Export] private int _initialCreatureCount = 2;
 	[Export] private int _initialTreeCount = 10;
 	
@@ -85,8 +86,8 @@ public partial class SimulationTestScene : Node3D
 		thisGraph.XAxis.TicStep = 20;
 		
 		thisGraph.YAxis.length = 30;
-		thisGraph.YAxis.Max = 100;
-		thisGraph.YAxis.TicStep = 20;
+		thisGraph.YAxis.Max = 50;
+		thisGraph.YAxis.TicStep = 10;
 		
 		thisGraph.ZAxis.length = 0;
 
@@ -102,7 +103,13 @@ public partial class SimulationTestScene : Node3D
 		curve.DataFetchMethod = () =>
 		{
 			var dataList = curve.GetData().ToList();
-			dataList.Add( new Vector3(dataList.Count, CreatureSim.Registry.Entities.Count(x => ((DataCreature)x).Alive), 0) );
+			
+			// Creature count
+			// dataList.Add( new Vector3(dataList.Count, CreatureSim.Registry.Entities.Count(x => x.Alive), 0) );
+			
+			// Average age
+			dataList.Add( new Vector3(dataList.Count, CreatureSim.Registry.Entities.Average(x => x.Age), 0) );
+			
 			return dataList;
 		};
 		
