@@ -42,7 +42,6 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
     #region Data
     private List<Vector3> _dataPoints = new();
     public delegate List<Vector3> DataFetch();
-
     public DataFetch DataFetchMethod = () =>
     {
         PrimerGD.PrintWithStackTrace("Data fetch method not assigned. Returning empty list.");

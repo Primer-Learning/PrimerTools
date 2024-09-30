@@ -34,7 +34,8 @@ public class CreatureSim : Simulation<DataCreature>
 					SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.Y)
 				),
 				AwarenessRadius = DataCreatureBehaviorHandler.InitialAwarenessRadius,
-				MaxSpeed = DataCreatureBehaviorHandler.InitialCreatureSpeed
+				MaxSpeed = DataCreatureBehaviorHandler.InitialCreatureSpeed,
+				MaxAge = DataCreatureBehaviorHandler.InitialMaxAge
 			};
 
 			Registry.RegisterEntity(physicalCreature);

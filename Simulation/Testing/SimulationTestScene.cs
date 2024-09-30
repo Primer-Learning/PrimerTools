@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Godot;
 using System.Linq;
 using System.Threading.Tasks;
@@ -97,26 +98,57 @@ public partial class SimulationTestScene : Node3D
 		thisGraph.ZAxis.Chonk = thisChonk;
 		thisGraph.Transition();
 
-		var curve = thisGraph.AddCurvePlot2D();
-		curve.Width = 200;
-
-		curve.DataFetchMethod = () =>
-		{
-			var dataList = curve.GetData().ToList();
-			
-			// Creature count
-			// dataList.Add( new Vector3(dataList.Count, CreatureSim.Registry.Entities.Count(x => x.Alive), 0) );
-			
-			// Average age
-			dataList.Add( new Vector3(dataList.Count, CreatureSim.Registry.Entities.Average(x => x.Age), 0) );
-			
-			return dataList;
-		};
-		
 		var periodicPlotter = new PeriodicPlotter();
 		GraphParent.AddChild(periodicPlotter);
 		periodicPlotter.Name = "Periodic plotter";
-		periodicPlotter.Curve = curve;
+		
+		// Curve
+		//
+		// var curve = thisGraph.AddCurvePlot2D();
+		// curve.Width = 200;
+		//
+		// curve.DataFetchMethod = () =>
+		// {
+		// 	var dataList = curve.GetData().ToList();
+		// 	
+		// 	// Creature count
+		// 	// dataList.Add( new Vector3(dataList.Count, CreatureSim.Registry.Entities.Count(x => x.Alive), 0) );
+		// 	
+		// 	// Average age
+		// 	dataList.Add( new Vector3(dataList.Count, CreatureSim.Registry.Entities.Average(x => x.Age), 0) );
+		// 	
+		// 	return dataList;
+		// };
+		// periodicPlotter.Curve = curve;
+		
+		// Bar plot
+		var barPlot = thisGraph.AddBarPlot();
+		barPlot.DataFetchMethod = () =>
+		{
+			var values = CreatureSim.Registry.Entities.Select(x => x.MaxAge).ToList();
+			var binWidth = 1;
+
+			if (values.Count == 0) return new List<float>();
+
+			var maxValue = values.Max();
+			var numBins = Mathf.CeilToInt(maxValue / binWidth);
+			var histogram = new List<float>(new float[numBins]);
+
+			foreach (var value in values)
+			{
+				if (value == 0)
+				{
+					histogram[0]++;
+					continue;
+				}
+
+				var binIndex = Mathf.CeilToInt(value / binWidth) - 1;
+				histogram[binIndex]++;
+			}
+
+			return histogram;
+		};
+		periodicPlotter.BarPlot = barPlot;
 	}
 
 	private async Task RunSimSequence()
@@ -139,7 +171,7 @@ public partial class SimulationTestScene : Node3D
 		FruitTreeSim.InitialEntityCount = _initialTreeCount;
 		FruitTreeSim.Initialize();
 
-		const ulong treeGrowthStepGoal = 200;
+		const ulong treeGrowthStepGoal = 300;
 		
 		while (Engine.GetPhysicsFrames() < startPhysicsFrame + treeGrowthStepGoal) await Task.Delay(100);
 		while (!_running) await Task.Delay(100);

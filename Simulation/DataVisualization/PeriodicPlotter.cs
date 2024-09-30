@@ -4,6 +4,7 @@ using PrimerTools.Graph;
 public partial class PeriodicPlotter : Node
 {
     public CurvePlot2D Curve;
+    public BarPlot BarPlot;
 
     [Export] public bool Plotting;
     [Export] private float _plottingInterval = 1;
@@ -19,9 +20,18 @@ public partial class PeriodicPlotter : Node
     
     private void PlotData()
     {
-        var numPoints = Curve.GetData().Length;
-        Curve.FetchData();
-        if (numPoints == Curve.GetData().Length) return;
-        Curve.TweenTransition(1);
+        if (Curve != null)
+        {
+            var numPoints = Curve.GetData().Length;
+            Curve.FetchData();
+            if (numPoints == Curve.GetData().Length) return;
+            Curve.TweenTransition(1);
+        }
+
+        if (BarPlot != null)
+        {
+            BarPlot.FetchData();
+            BarPlot.TweenTransition(1);
+        }
     }
 }

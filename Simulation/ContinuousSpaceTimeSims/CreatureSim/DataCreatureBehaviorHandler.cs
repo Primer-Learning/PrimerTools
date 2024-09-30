@@ -47,6 +47,7 @@ public static class DataCreatureBehaviorHandler
 	// Initial population
 	public const float InitialCreatureSpeed = 5f;
 	public const float InitialAwarenessRadius = 3f;
+	public const float InitialMaxAge = 80;
 	
 	// Mutation
 	private const float MutationProbability = 0.1f;
@@ -236,6 +237,10 @@ public static class DataCreatureBehaviorHandler
 		{
 			newCreature.MaxSpeed = parent2.MaxSpeed;
 		}
+		if (SimulationWorld.Rng.RangeFloat(0, 1) < 0.5)
+		{
+			newCreature.MaxAge = parent2.MaxAge;
+		}
 		
 		if (SimulationWorld.Rng.RangeFloat(0, 1) < MutationProbability)
 		{
@@ -246,6 +251,11 @@ public static class DataCreatureBehaviorHandler
 		{
 			newCreature.MaxSpeed += SimulationWorld.Rng.RangeFloat(0, 1) < 0.5f ? MutationIncrement : -MutationIncrement;
 			newCreature.MaxSpeed = Mathf.Max(0, newCreature.MaxSpeed);
+		}
+		if (SimulationWorld.Rng.RangeFloat(0, 1) < MutationProbability)
+		{
+			newCreature.MaxAge += SimulationWorld.Rng.RangeFloat(0, 1) < 0.5f ? MutationIncrement : -MutationIncrement;
+			newCreature.MaxAge = Mathf.Max(0, newCreature.MaxAge);
 		}
 
 		parent2.OpenToMating = false;
