@@ -93,6 +93,8 @@ public partial class SimulationWorld : Node3D
             _creatureNodeManager.Name = "NodeCreatureAnimationManager";
             AddChild(_creatureNodeManager);
         }
+
+        _timeOfLastStatusPrint = System.Environment.TickCount;
     }
 
     private int _timeOfLastStatusPrint;

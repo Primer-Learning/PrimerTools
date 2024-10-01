@@ -40,14 +40,14 @@ public static class DataCreatureBehaviorHandler
 	private const float BaseEnergySpend = 0.1f;
 	private const float GlobalEnergySpendAdjustmentFactor = 0.2f;
 	private const float EnergyGainFromFood = 1f;
-	public const float ReproductionEnergyThreshold = 4f;
-	private const float ReproductionEnergyCost = 2f;
-	public const float DefaultHungerThreshold = 5;
+	public const float ReproductionEnergyThreshold = 2f;
+	private const float ReproductionEnergyCost = 1f;
+	public const float DefaultHungerThreshold = 2;
 	
 	// Initial population
-	public const float InitialCreatureSpeed = 5f;
+	public const float InitialCreatureSpeed = 20f;
 	public const float InitialAwarenessRadius = 3f;
-	public const float InitialMaxAge = 80;
+	public const float InitialMaxAge = 20;
 	
 	// Mutation
 	private const float MutationProbability = 0.1f;
