@@ -36,6 +36,7 @@ public partial class NodeCreature : NodeEntity<DataCreature>
 		var normalizedAwareness = dataCreature.AwarenessRadius / DataCreatureBehaviorHandler.InitialAwarenessRadius;
 		_blob.LeftEye.Scale = normalizedAwareness * Vector3.One;
 		_blob.RightEye.Scale = normalizedAwareness * Vector3.One;
+		this.MakeSelfAndChildrenLocal();
 	}
 
 	public override void Update(DataCreature dataCreature)
@@ -65,7 +66,7 @@ public partial class NodeCreature : NodeEntity<DataCreature>
 			this,
 			"scale",
 			Vector3.Zero,
-			0.5f
+			0.5f / SimulationWorld.TimeScale
 		);
 		await tween.ToSignal(tween, Tween.SignalName.Finished);
 		QueueFree();
@@ -125,7 +126,7 @@ public partial class NodeCreature : NodeEntity<DataCreature>
 			this,
 			"quaternion",
 			intendedRotation,
-			turnDuration
+			turnDuration / SimulationWorld.TimeScale
 		);
 		await tween.ToSignal(tween, Tween.SignalName.Finished);
 		
@@ -134,14 +135,14 @@ public partial class NodeCreature : NodeEntity<DataCreature>
 			fruit,
 			"scale",
 			Vector3.Zero,
-			fruitMoveDuration
+			fruitMoveDuration / SimulationWorld.TimeScale
 		);
 		nextTween.Parallel();
 		nextTween.TweenProperty(
 			fruit,
 			"global_position",
 			GlobalPosition + GlobalBasis * _blob.MouthPosition,
-			fruitMoveDuration
+			fruitMoveDuration / SimulationWorld.TimeScale
 		);
 
 		_blob.TriggerEat(fruitMoveDuration + animationSettleDuration);
@@ -152,7 +153,7 @@ public partial class NodeCreature : NodeEntity<DataCreature>
 			this,
 			"quaternion",
 			originalRotation,
-			animationSettleDuration
+			animationSettleDuration / SimulationWorld.TimeScale
 		);
 	}
 	#endregion

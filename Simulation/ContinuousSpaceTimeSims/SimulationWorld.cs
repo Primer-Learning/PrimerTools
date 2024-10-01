@@ -26,9 +26,8 @@ public partial class SimulationWorld : Node3D
 
     [Export] private Node3D _ground; 
 
-    private float _timeScale = 1;
-    [Export]
-    public float TimeScale
+    private static float _timeScale = 1;
+    public static float TimeScale
     {
         get => _timeScale;
         set
@@ -37,6 +36,14 @@ public partial class SimulationWorld : Node3D
             Engine.PhysicsTicksPerSecond = (int)(value * 60);
         }
     }
+
+    [Export]
+    public float TimeScaleControl
+    {
+        get => TimeScale;
+        set => TimeScale = value;
+    }
+    
     private static int _seed = -1;
     [Export]
     public int Seed
@@ -92,6 +99,7 @@ public partial class SimulationWorld : Node3D
             _creatureNodeManager = new NodeCreatureManager(creatureSim.Registry, _treeNodeManager);
             _creatureNodeManager.Name = "NodeCreatureAnimationManager";
             AddChild(_creatureNodeManager);
+            _creatureNodeManager.MakeSelfAndChildrenLocal();
         }
 
         _timeOfLastStatusPrint = System.Environment.TickCount;

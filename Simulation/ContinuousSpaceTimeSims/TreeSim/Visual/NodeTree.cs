@@ -45,7 +45,7 @@ public partial class NodeTree : NodeEntity<DataTree>
 	#region Behaviors and helpers
 	public void GrowFruit(double duration)
 	{
-		_fruitTree.GrowFruitTween(0, duration);
+		_fruitTree.GrowFruitTween(0, duration / SimulationWorld.TimeScale);
 	}
 	public void DestroyFruit()
 	{

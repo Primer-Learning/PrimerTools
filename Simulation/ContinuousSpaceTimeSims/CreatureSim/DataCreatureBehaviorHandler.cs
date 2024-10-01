@@ -45,7 +45,7 @@ public static class DataCreatureBehaviorHandler
 	public const float DefaultHungerThreshold = 2;
 	
 	// Initial population
-	public const float InitialCreatureSpeed = 20f;
+	public const float InitialCreatureSpeed = 5f;
 	public const float InitialAwarenessRadius = 3f;
 	public const float InitialMaxAge = 20;
 	
