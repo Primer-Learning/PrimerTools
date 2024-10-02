@@ -32,9 +32,8 @@ public class CreatureSim : Simulation<DataCreature>
 	protected override void CustomInitialize()
 	{
 		// TODO: Not this. See comment in CreatureBehaviorHandler
-		DataCreatureBehaviorHandler.FruitTreeSim = FruitTreeSim;
-		DataCreatureBehaviorHandler.CreatureSim = this;
-		DataCreatureBehaviorHandler.Space = PhysicsServer3D.SpaceGetDirectState(SimulationWorld.GetWorld3D().Space);
+		CreatureSimSettings.FruitTreeSim = FruitTreeSim;
+		CreatureSimSettings.CreatureSim = this;
 		
 		if (FruitTreeSim == null)
 		{
@@ -51,9 +50,9 @@ public class CreatureSim : Simulation<DataCreature>
 					0,
 					SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.Y)
 				),
-				AwarenessRadius = DataCreatureBehaviorHandler.InitialAwarenessRadius,
-				MaxSpeed = DataCreatureBehaviorHandler.InitialCreatureSpeed,
-				MaxAge = DataCreatureBehaviorHandler.InitialMaxAge
+				AwarenessRadius = CreatureSimSettings.InitialAwarenessRadius,
+				MaxSpeed = CreatureSimSettings.InitialCreatureSpeed,
+				MaxAge = CreatureSimSettings.InitialMaxAge
 			};
 
 			Registry.RegisterEntity(physicalCreature);
@@ -61,7 +60,7 @@ public class CreatureSim : Simulation<DataCreature>
 	}
 	public List<LabeledCollision> GetLabeledAndSortedCollisions(DataCreature creature)
 	{
-		var objectsInAwareness = DataCreatureBehaviorHandler.DetectCollisionsWithCreature(creature);
+		var objectsInAwareness = creature.DetectCollisionsWithCreature();
 		var labeledCollisions = new List<LabeledCollision>();
 
 		foreach (var objectData in objectsInAwareness)
@@ -117,7 +116,7 @@ public class CreatureSim : Simulation<DataCreature>
 			
 			if (!creature.Alive) continue;
 			creature.Age += timeStep;
-			if (creature.Age < DataCreatureBehaviorHandler.MaturationTime)
+			if (creature.Age < CreatureSimSettings.MaturationTime)
 			{
 				Registry.Entities[i] = creature;
 				continue;
@@ -132,19 +131,19 @@ public class CreatureSim : Simulation<DataCreature>
 			// Food detection
 			if (creature.Energy < creature.HungerThreshold)
 			{
-				var (closestFoodIndex, canEat) = DataCreatureBehaviorHandler.FindClosestFood(creature);
+				var (closestFoodIndex, canEat) = CreatureSimSettings.FindClosestFood(creature);
 				if (canEat && creature.EatingTimeLeft <= 0)
 				{
-					DataCreatureBehaviorHandler.EatFood(ref creature, closestFoodIndex, i);
+					CreatureSimSettings.EatFood(ref creature, closestFoodIndex, i);
 				}
 				else if (closestFoodIndex > -1)
 				{
-					DataCreatureBehaviorHandler.ChooseTreeDestination(ref creature, closestFoodIndex);
+					CreatureSimSettings.ChooseTreeDestination(ref creature, closestFoodIndex);
 				}
 			}
 			
 			// Reproduction
-			if (creature.Energy > DataCreatureBehaviorHandler.ReproductionEnergyThreshold)
+			if (creature.Energy > CreatureSimSettings.ReproductionEnergyThreshold)
 			{
 				var newCreature = ReproductionStrategy.Reproduce(ref creature, Registry);
 				if (newCreature.Alive)
@@ -154,14 +153,14 @@ public class CreatureSim : Simulation<DataCreature>
 			}
 
 			// Move, updating destination if needed
-			DataCreatureBehaviorHandler.UpdatePositionAndVelocity(ref creature);
+			CreatureSimSettings.UpdatePositionAndVelocity(ref creature);
 			var transformNextFrame = new Transform3D(Basis.Identity, creature.Position);
 			PhysicsServer3D.AreaSetTransform(creature.Body, transformNextFrame);
 			PhysicsServer3D.AreaSetTransform(creature.Awareness, transformNextFrame);
-			DataCreatureBehaviorHandler.SpendMovementEnergy(ref creature);
+			CreatureSimSettings.SpendMovementEnergy(ref creature);
 			
 			// Ded?
-			DataCreatureBehaviorHandler.CheckAndHandleCreatureDeath(ref creature, i);
+			CreatureSimSettings.CheckAndHandleCreatureDeath(ref creature, i);
 
 			Registry.Entities[i] = creature;
 		}

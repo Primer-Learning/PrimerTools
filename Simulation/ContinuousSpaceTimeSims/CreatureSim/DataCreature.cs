@@ -1,4 +1,5 @@
 ﻿using Godot;
+using Godot.Collections;
 
 namespace PrimerTools.Simulation;
 
@@ -25,6 +26,19 @@ public struct DataCreature : IDataEntity
 		
     private CapsuleShape3D _bodyShapeResource;
     private SphereShape3D _awarenessShapeResource;
+
+    // PhysicsServer3D.SpaceGetDirectState
+    private static PhysicsDirectSpaceState3D _space;
+
+    /// <summary>
+    /// Sets the static _space field if it hasn't been set yet. We assume all creatures are in the same space.
+    /// </summary>
+    /// <param name="world3D"></param>
+    private static void SetSpace(World3D world3D)
+    {
+        if (_space != null) return;
+        _space = PhysicsServer3D.SpaceGetDirectState(world3D.Space);
+    }
     
     public void CleanUp()
     {
@@ -36,6 +50,8 @@ public struct DataCreature : IDataEntity
 
     public void Initialize(World3D world3D)
     {
+        SetSpace(world3D);
+        
         var transform = Transform3D.Identity.Translated(Position);
 		
         // PhysicsServer3D stuff
@@ -63,6 +79,17 @@ public struct DataCreature : IDataEntity
         Velocity = Vector3.Zero;
         CurrentDestination = Position; // Will be changed immediately
         Energy = 1f;
-        HungerThreshold = DataCreatureBehaviorHandler.DefaultHungerThreshold;
+        HungerThreshold = CreatureSimSettings.DefaultHungerThreshold;
+    }
+    
+    public Array<Dictionary> DetectCollisionsWithCreature()
+    {
+        var queryParams = new PhysicsShapeQueryParameters3D();
+        queryParams.CollideWithAreas = true;
+        queryParams.ShapeRid = PhysicsServer3D.AreaGetShape(Awareness, 0);
+        queryParams.Transform = Transform3D.Identity.Translated(Position);
+
+        // Run query and print
+        return _space.IntersectShape(queryParams);
     }
 }

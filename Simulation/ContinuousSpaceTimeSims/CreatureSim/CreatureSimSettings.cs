@@ -6,24 +6,14 @@ using Godot.Collections;
 namespace PrimerTools.Simulation;
 
 [Tool]
-public static class DataCreatureBehaviorHandler
+public static class CreatureSimSettings
 {
-	public enum SexMode
-	{
-		Asexual,
-		Plurisexual,
-		Sexual
-	}
-
-	public const SexMode CurrentSexMode = SexMode.Sexual;
-
 	// TODO: Not this. There's a better way to have things talk to each other.
 	// Possibly have SimulationWorld be the hub for sims talking to each other.
 	public static FruitTreeSim FruitTreeSim;
 	public static CreatureSim CreatureSim;
 	
 	// This is less bad, but let's still think about it
-	public static PhysicsDirectSpaceState3D Space;
 	
 	#region Sim parameters
 	// Movement
@@ -46,7 +36,7 @@ public static class DataCreatureBehaviorHandler
 	
 	// Initial population
 	public const float InitialCreatureSpeed = 5f;
-	public const float InitialAwarenessRadius = 3f;
+	public const float InitialAwarenessRadius = 5f;
 	public const float InitialMaxAge = 20;
 	
 	// Mutation
@@ -185,18 +175,4 @@ public static class DataCreatureBehaviorHandler
 			CreatureDeathEvent?.Invoke(creatureIndex);
 		}
 	}
-
-	#region Helpers
-
-	public static Array<Dictionary> DetectCollisionsWithCreature(DataCreature creature)
-	{
-		var queryParams = new PhysicsShapeQueryParameters3D();
-		queryParams.CollideWithAreas = true;
-		queryParams.ShapeRid = PhysicsServer3D.AreaGetShape(creature.Awareness, 0);
-		queryParams.Transform = Transform3D.Identity.Translated(creature.Position);
-
-		// Run query and print
-		return Space.IntersectShape(queryParams);
-	}
-	#endregion
 }

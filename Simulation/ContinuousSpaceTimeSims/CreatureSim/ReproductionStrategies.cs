@@ -13,23 +13,23 @@ public class AsexualReproductionStrategy : IReproductionStrategy
 {
     public DataCreature Reproduce(ref DataCreature parentCreature, DataEntityRegistry<DataCreature> registry)
     {
-        parentCreature.Energy -= DataCreatureBehaviorHandler.ReproductionEnergyCost;
+        parentCreature.Energy -= CreatureSimSettings.ReproductionEnergyCost;
 
         var newCreature = parentCreature;
 		
-        if (SimulationWorld.Rng.RangeFloat(0, 1) < DataCreatureBehaviorHandler.MutationProbability)
+        if (SimulationWorld.Rng.RangeFloat(0, 1) < CreatureSimSettings.MutationProbability)
         {
-            newCreature.AwarenessRadius += SimulationWorld.Rng.RangeFloat(0, 1) < 0.5f ? DataCreatureBehaviorHandler.MutationIncrement : -DataCreatureBehaviorHandler.MutationIncrement;
+            newCreature.AwarenessRadius += SimulationWorld.Rng.RangeFloat(0, 1) < 0.5f ? CreatureSimSettings.MutationIncrement : -CreatureSimSettings.MutationIncrement;
             newCreature.AwarenessRadius = Mathf.Max(0, newCreature.AwarenessRadius);
         }
-        if (SimulationWorld.Rng.RangeFloat(0, 1) < DataCreatureBehaviorHandler.MutationProbability)
+        if (SimulationWorld.Rng.RangeFloat(0, 1) < CreatureSimSettings.MutationProbability)
         {
-            newCreature.MaxSpeed += SimulationWorld.Rng.RangeFloat(0, 1) < 0.5f ? DataCreatureBehaviorHandler.MutationIncrement : -DataCreatureBehaviorHandler.MutationIncrement;
+            newCreature.MaxSpeed += SimulationWorld.Rng.RangeFloat(0, 1) < 0.5f ? CreatureSimSettings.MutationIncrement : -CreatureSimSettings.MutationIncrement;
             newCreature.MaxSpeed = Mathf.Max(0, newCreature.MaxSpeed);
         }
-        if (SimulationWorld.Rng.RangeFloat(0, 1) < DataCreatureBehaviorHandler.MutationProbability)
+        if (SimulationWorld.Rng.RangeFloat(0, 1) < CreatureSimSettings.MutationProbability)
         {
-            newCreature.MaxAge += SimulationWorld.Rng.RangeFloat(0, 1) < 0.5f ? DataCreatureBehaviorHandler.MutationIncrement : -DataCreatureBehaviorHandler.MutationIncrement;
+            newCreature.MaxAge += SimulationWorld.Rng.RangeFloat(0, 1) < 0.5f ? CreatureSimSettings.MutationIncrement : -CreatureSimSettings.MutationIncrement;
             newCreature.MaxAge = Mathf.Max(0, newCreature.MaxAge);
         }
         
@@ -60,8 +60,8 @@ public class SexualReproductionStrategy : IReproductionStrategy
     {
         var parent2 = registry.Entities[parent2Index];
 		
-        parent1.Energy -= DataCreatureBehaviorHandler.ReproductionEnergyCost / 2;
-        parent2.Energy -= DataCreatureBehaviorHandler.ReproductionEnergyCost / 2;
+        parent1.Energy -= CreatureSimSettings.ReproductionEnergyCost / 2;
+        parent2.Energy -= CreatureSimSettings.ReproductionEnergyCost / 2;
 		
         var newCreature = parent1;
 
@@ -78,19 +78,19 @@ public class SexualReproductionStrategy : IReproductionStrategy
             newCreature.MaxAge = parent2.MaxAge;
         }
 		
-        if (SimulationWorld.Rng.RangeFloat(0, 1) < DataCreatureBehaviorHandler.MutationProbability)
+        if (SimulationWorld.Rng.RangeFloat(0, 1) < CreatureSimSettings.MutationProbability)
         {
-            newCreature.AwarenessRadius += SimulationWorld.Rng.RangeFloat(0, 1) < 0.5f ? DataCreatureBehaviorHandler.MutationIncrement : -DataCreatureBehaviorHandler.MutationIncrement;
+            newCreature.AwarenessRadius += SimulationWorld.Rng.RangeFloat(0, 1) < 0.5f ? CreatureSimSettings.MutationIncrement : -CreatureSimSettings.MutationIncrement;
             newCreature.AwarenessRadius = Mathf.Max(0, newCreature.AwarenessRadius);
         }
-        if (SimulationWorld.Rng.RangeFloat(0, 1) < DataCreatureBehaviorHandler.MutationProbability)
+        if (SimulationWorld.Rng.RangeFloat(0, 1) < CreatureSimSettings.MutationProbability)
         {
-            newCreature.MaxSpeed += SimulationWorld.Rng.RangeFloat(0, 1) < 0.5f ? DataCreatureBehaviorHandler.MutationIncrement : -DataCreatureBehaviorHandler.MutationIncrement;
+            newCreature.MaxSpeed += SimulationWorld.Rng.RangeFloat(0, 1) < 0.5f ? CreatureSimSettings.MutationIncrement : -CreatureSimSettings.MutationIncrement;
             newCreature.MaxSpeed = Mathf.Max(0, newCreature.MaxSpeed);
         }
-        if (SimulationWorld.Rng.RangeFloat(0, 1) < DataCreatureBehaviorHandler.MutationProbability)
+        if (SimulationWorld.Rng.RangeFloat(0, 1) < CreatureSimSettings.MutationProbability)
         {
-            newCreature.MaxAge += SimulationWorld.Rng.RangeFloat(0, 1) < 0.5f ? DataCreatureBehaviorHandler.MutationIncrement : -DataCreatureBehaviorHandler.MutationIncrement;
+            newCreature.MaxAge += SimulationWorld.Rng.RangeFloat(0, 1) < 0.5f ? CreatureSimSettings.MutationIncrement : -CreatureSimSettings.MutationIncrement;
             newCreature.MaxAge = Mathf.Max(0, newCreature.MaxAge);
         }
 
@@ -103,12 +103,12 @@ public class SexualReproductionStrategy : IReproductionStrategy
 
     private (int, bool) FindClosestPotentialMate(DataCreature creature, DataEntityRegistry<DataCreature> registry)
     {
-        var labeledCollisions = DataCreatureBehaviorHandler.CreatureSim.GetLabeledAndSortedCollisions(creature);
+        var labeledCollisions = CreatureSimSettings.CreatureSim.GetLabeledAndSortedCollisions(creature);
         var closestMate = labeledCollisions.FirstOrDefault(c => c.Type == CollisionType.Creature);
 
         if (closestMate.Type == CollisionType.Creature)
         {
-            var canMate = (closestMate.Position - creature.Position).LengthSquared() < DataCreatureBehaviorHandler.CreatureMateDistance * DataCreatureBehaviorHandler.CreatureMateDistance;
+            var canMate = (closestMate.Position - creature.Position).LengthSquared() < CreatureSimSettings.CreatureMateDistance * CreatureSimSettings.CreatureMateDistance;
             return (closestMate.Index, canMate);
         }
 
