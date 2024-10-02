@@ -2,7 +2,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Godot;
 using PrimerTools;
-using PrimerTools.Simulation;
+
+namespace PrimerTools.Simulation.Old;
 
 public enum CollisionType
 {
@@ -10,11 +11,12 @@ public enum CollisionType
 	Creature
 }
 
+
 public struct LabeledCollision
 {
 	public CollisionType Type;
 	public int Index;
-	public Vector3 Position;
+	public Vector3 Position; // Can be inferred from index and type, but convenient for now.
 }
 
 [Tool]
@@ -113,7 +115,9 @@ public class CreatureSim : Simulation<DataCreature>
 		for (var i = 0; i < Registry.Entities.Count; i++)
 		{
 			var creature = Registry.Entities[i];
-			
+
+			#region If creature is busy
+
 			if (!creature.Alive) continue;
 			creature.Age += timeStep;
 			if (creature.Age < CreatureSimSettings.MaturationTime)
@@ -127,6 +131,23 @@ public class CreatureSim : Simulation<DataCreature>
 				Registry.Entities[i] = creature;
 				continue;
 			}
+
+			#endregion
+			
+			// Gather 
+			var labeledCollisions = GetLabeledAndSortedCollisions(creature);
+			
+			// Choose action
+			// Could be move to a destination, or eat or mate
+			
+			// Perform action
+			
+			
+			
+			
+			
+			
+			
 
 			// Food detection
 			if (creature.Energy < creature.HungerThreshold)

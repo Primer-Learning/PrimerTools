@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Godot;
 
-namespace PrimerTools.Simulation;
+namespace PrimerTools.Simulation.Old;
 
 public interface IReproductionStrategy
 {

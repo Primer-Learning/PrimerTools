@@ -1,7 +1,8 @@
 ﻿using Godot;
 using Godot.Collections;
 
-namespace PrimerTools.Simulation;
+namespace PrimerTools.Simulation.Old
+{
 
 public struct DataCreature : IDataEntity
 {
@@ -92,4 +93,5 @@ public struct DataCreature : IDataEntity
         // Run query and print
         return _space.IntersectShape(queryParams);
     }
+}
 }

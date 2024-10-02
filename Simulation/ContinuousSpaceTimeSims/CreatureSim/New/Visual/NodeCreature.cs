@@ -1,9 +1,8 @@
 using Godot;
 using PrimerAssets;
-using PrimerTools;
-using PrimerTools.Simulation;
 using Blob = PrimerAssets.Blob;
 
+namespace PrimerTools.Simulation.New;
 
 public partial class NodeCreature : NodeEntity<DataCreature>
 {

@@ -3,7 +3,8 @@ using System.Linq;
 using Godot;
 using Godot.Collections;
 
-namespace PrimerTools.Simulation;
+namespace PrimerTools.Simulation.New
+{
 
 [Tool]
 public static class CreatureSimSettings
@@ -175,4 +176,5 @@ public static class CreatureSimSettings
 			CreatureDeathEvent?.Invoke(creatureIndex);
 		}
 	}
+}
 }

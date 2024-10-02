@@ -1,5 +1,4 @@
-using Godot;
-using PrimerTools.Simulation;
+namespace PrimerTools.Simulation.New;
 
 public partial class NodeCreatureManager : NodeEntityManager<DataCreature, NodeCreature>
 {

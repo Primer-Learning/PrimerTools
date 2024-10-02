@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using PrimerTools.Graph;
 using PrimerTools.Simulation;
+using PrimerTools.Simulation.New;
 
 [Tool]
 public partial class SimulationTestScene : Node3D
