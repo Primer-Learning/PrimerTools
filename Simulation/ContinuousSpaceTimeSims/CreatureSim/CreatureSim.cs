@@ -6,7 +6,12 @@ using PrimerTools.Simulation;
 [Tool]
 public class CreatureSim : Simulation<DataCreature>
 {
-	public CreatureSim(SimulationWorld simulationWorld) : base(simulationWorld) {}
+	public IReproductionStrategy ReproductionStrategy { get; private set; }
+
+	public CreatureSim(SimulationWorld simulationWorld, bool useSexualReproduction = true) : base(simulationWorld)
+	{
+		ReproductionStrategy = useSexualReproduction ? new SexualReproductionStrategy(this) : new AsexualReproductionStrategy() as IReproductionStrategy;
+	}
 
 	private FruitTreeSim FruitTreeSim => SimulationWorld.Simulations.OfType<FruitTreeSim>().FirstOrDefault();
 	
@@ -83,25 +88,10 @@ public class CreatureSim : Simulation<DataCreature>
 			// Reproduction
 			if (creature.Energy > DataCreatureBehaviorHandler.ReproductionEnergyThreshold)
 			{
-				if (DataCreatureBehaviorHandler.CurrentSexMode == DataCreatureBehaviorHandler.SexMode.Asexual)
+				var newCreature = ReproductionStrategy.Reproduce(ref creature);
+				if (newCreature.Alive)
 				{
-					var newCreature = DataCreatureBehaviorHandler.ReproduceAsexually(ref creature);
 					Registry.RegisterEntity(newCreature);
-				}
-				else
-				{
-					creature.OpenToMating = true;
-					// Look for partner
-					var (closestMateIndex, canMate) = DataCreatureBehaviorHandler.FindClosestPotentialMate(creature);
-					if (canMate && creature.MatingTimeLeft <= 0)
-					{
-						var newCreature = DataCreatureBehaviorHandler.ReproduceSexually(ref creature, closestMateIndex); 
-						Registry.RegisterEntity(newCreature);
-					}
-					else if (closestMateIndex > -1)
-					{
-						DataCreatureBehaviorHandler.ChooseMateDestination(ref creature, closestMateIndex);
-					}
 				}
 			}
 

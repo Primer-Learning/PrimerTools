@@ -41,7 +41,7 @@ public static class DataCreatureBehaviorHandler
 	private const float GlobalEnergySpendAdjustmentFactor = 0.2f;
 	private const float EnergyGainFromFood = 1f;
 	public const float ReproductionEnergyThreshold = 2f;
-	private const float ReproductionEnergyCost = 1f;
+	public const float ReproductionEnergyCost = 1f;
 	public const float DefaultHungerThreshold = 2;
 	
 	// Initial population
@@ -50,8 +50,8 @@ public static class DataCreatureBehaviorHandler
 	public const float InitialMaxAge = 20;
 	
 	// Mutation
-	private const float MutationProbability = 0.1f;
-	private const float MutationIncrement = 1f;
+	public const float MutationProbability = 0.1f;
+	public const float MutationIncrement = 1f;
 	#endregion
 	
     private static void UpdateVelocity(ref DataCreature creature)
@@ -219,75 +219,6 @@ public static class DataCreatureBehaviorHandler
 		creature.EatingTimeLeft = EatDuration;
 
 		CreatureEatEvent?.Invoke(creatureIndex, treeIndex, EatDuration / SimulationWorld.TimeScale);
-	}
-	public static DataCreature ReproduceSexually(ref DataCreature parent1, int parent2Index)
-	{
-		var parent2 = CreatureSim.Registry.Entities[parent2Index];
-		
-		parent1.Energy -= ReproductionEnergyCost / 2;
-		parent2.Energy -= ReproductionEnergyCost / 2;
-		
-		var newCreature = parent1;
-
-		if (SimulationWorld.Rng.RangeFloat(0, 1) < 0.5)
-		{
-			newCreature.AwarenessRadius = parent2.AwarenessRadius;
-		}
-		if (SimulationWorld.Rng.RangeFloat(0, 1) < 0.5)
-		{
-			newCreature.MaxSpeed = parent2.MaxSpeed;
-		}
-		if (SimulationWorld.Rng.RangeFloat(0, 1) < 0.5)
-		{
-			newCreature.MaxAge = parent2.MaxAge;
-		}
-		
-		if (SimulationWorld.Rng.RangeFloat(0, 1) < MutationProbability)
-		{
-			newCreature.AwarenessRadius += SimulationWorld.Rng.RangeFloat(0, 1) < 0.5f ? MutationIncrement : -MutationIncrement;
-			newCreature.AwarenessRadius = Mathf.Max(0, newCreature.AwarenessRadius);
-		}
-		if (SimulationWorld.Rng.RangeFloat(0, 1) < MutationProbability)
-		{
-			newCreature.MaxSpeed += SimulationWorld.Rng.RangeFloat(0, 1) < 0.5f ? MutationIncrement : -MutationIncrement;
-			newCreature.MaxSpeed = Mathf.Max(0, newCreature.MaxSpeed);
-		}
-		if (SimulationWorld.Rng.RangeFloat(0, 1) < MutationProbability)
-		{
-			newCreature.MaxAge += SimulationWorld.Rng.RangeFloat(0, 1) < 0.5f ? MutationIncrement : -MutationIncrement;
-			newCreature.MaxAge = Mathf.Max(0, newCreature.MaxAge);
-		}
-
-		parent2.OpenToMating = false;
-		parent1.OpenToMating = false;
-		CreatureSim.Registry.Entities[parent2Index] = parent2;
-		
-		return newCreature;
-	}
-	public static DataCreature ReproduceAsexually(ref DataCreature parentCreature)
-	{
-		parentCreature.Energy -= ReproductionEnergyCost;
-
-		var newCreature = parentCreature;
-		
-		if (SimulationWorld.Rng.RangeFloat(0, 1) < MutationProbability)
-		{
-			newCreature.AwarenessRadius += SimulationWorld.Rng.RangeFloat(0, 1) < 0.5f ? MutationIncrement : -MutationIncrement;
-			newCreature.AwarenessRadius = Mathf.Max(0, newCreature.AwarenessRadius);
-		}
-		if (SimulationWorld.Rng.RangeFloat(0, 1) < MutationProbability)
-		{
-			newCreature.MaxSpeed += SimulationWorld.Rng.RangeFloat(0, 1) < 0.5f ? MutationIncrement : -MutationIncrement;
-			newCreature.MaxSpeed = Mathf.Max(0, newCreature.MaxSpeed);
-		}
-		if (SimulationWorld.Rng.RangeFloat(0, 1) < MutationProbability)
-		{
-			newCreature.MaxAge += SimulationWorld.Rng.RangeFloat(0, 1) < 0.5f ? MutationIncrement : -MutationIncrement;
-			newCreature.MaxAge = Mathf.Max(0, newCreature.MaxAge);
-		}
-
-
-		return newCreature;
 	}
 
 	public static void CheckAndHandleCreatureDeath(ref DataCreature creature, int creatureIndex)
