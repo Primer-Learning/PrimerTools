@@ -1,16 +1,17 @@
 using System.Collections.Generic;
+using System.Linq;
 using Godot;
 
 namespace PrimerTools.Simulation;
 
 public interface IReproductionStrategy
 {
-    DataCreature Reproduce(ref DataCreature parent);
+    DataCreature Reproduce(ref DataCreature parent, DataEntityRegistry<DataCreature> registry);
 }
 
 public class AsexualReproductionStrategy : IReproductionStrategy
 {
-    public DataCreature Reproduce(ref DataCreature parentCreature)
+    public DataCreature Reproduce(ref DataCreature parentCreature, DataEntityRegistry<DataCreature> registry)
     {
         parentCreature.Energy -= DataCreatureBehaviorHandler.ReproductionEnergyCost;
 
@@ -31,41 +32,33 @@ public class AsexualReproductionStrategy : IReproductionStrategy
             newCreature.MaxAge += SimulationWorld.Rng.RangeFloat(0, 1) < 0.5f ? DataCreatureBehaviorHandler.MutationIncrement : -DataCreatureBehaviorHandler.MutationIncrement;
             newCreature.MaxAge = Mathf.Max(0, newCreature.MaxAge);
         }
-
-
+        
         return newCreature;
     }
 }
 
 public class SexualReproductionStrategy : IReproductionStrategy
 {
-    private readonly CreatureSim _creatureSim;
-
-    public SexualReproductionStrategy(CreatureSim creatureSim)
-    {
-        _creatureSim = creatureSim;
-    }
-
-    public DataCreature Reproduce(ref DataCreature parent)
+    public DataCreature Reproduce(ref DataCreature parent, DataEntityRegistry<DataCreature> registry)
     {
         parent.OpenToMating = true;
-        var (closestMateIndex, canMate) = DataCreatureBehaviorHandler.FindClosestPotentialMate(parent);
+        var (closestMateIndex, canMate) = FindClosestPotentialMate(parent, registry);
         if (canMate && parent.MatingTimeLeft <= 0)
         {
-            var newCreature = ReproduceSexually(ref parent, closestMateIndex);
+            var newCreature = ReproduceSexually(ref parent, closestMateIndex, registry);
             return newCreature;
         }
         else if (closestMateIndex > -1)
         {
-            DataCreatureBehaviorHandler.ChooseMateDestination(ref parent, closestMateIndex);
+            ChooseMateDestination(ref parent, closestMateIndex, registry);
         }
 
         return default;
     }
 
-    public DataCreature ReproduceSexually(ref DataCreature parent1, int parent2Index)
+    private DataCreature ReproduceSexually(ref DataCreature parent1, int parent2Index, DataEntityRegistry<DataCreature> registry)
     {
-        var parent2 = _creatureSim.Registry.Entities[parent2Index];
+        var parent2 = registry.Entities[parent2Index];
 		
         parent1.Energy -= DataCreatureBehaviorHandler.ReproductionEnergyCost / 2;
         parent2.Energy -= DataCreatureBehaviorHandler.ReproductionEnergyCost / 2;
@@ -103,9 +96,28 @@ public class SexualReproductionStrategy : IReproductionStrategy
 
         parent2.OpenToMating = false;
         parent1.OpenToMating = false;
-        _creatureSim.Registry.Entities[parent2Index] = parent2;
+        registry.Entities[parent2Index] = parent2;
 		
         return newCreature;
     }
 
+    private (int, bool) FindClosestPotentialMate(DataCreature creature, DataEntityRegistry<DataCreature> registry)
+    {
+        var labeledCollisions = DataCreatureBehaviorHandler.CreatureSim.GetLabeledAndSortedCollisions(creature);
+        var closestMate = labeledCollisions.FirstOrDefault(c => c.Type == CollisionType.Creature);
+
+        if (closestMate.Type == CollisionType.Creature)
+        {
+            var canMate = (closestMate.Position - creature.Position).LengthSquared() < DataCreatureBehaviorHandler.CreatureMateDistance * DataCreatureBehaviorHandler.CreatureMateDistance;
+            return (closestMate.Index, canMate);
+        }
+
+        return (-1, false);
+    }
+
+    private void ChooseMateDestination(ref DataCreature creature, int mateIndex, DataEntityRegistry<DataCreature> registry)
+    {
+        var mate = registry.Entities[mateIndex];
+        creature.CurrentDestination = mate.Position;
+    }
 }

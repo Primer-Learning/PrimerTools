@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Godot;
 using Godot.Collections;
 
@@ -20,7 +21,6 @@ public static class DataCreatureBehaviorHandler
 	// Possibly have SimulationWorld be the hub for sims talking to each other.
 	public static FruitTreeSim FruitTreeSim;
 	public static CreatureSim CreatureSim;
-	public static SimulationWorld SimulationWorld;
 	
 	// This is less bad, but let's still think about it
 	public static PhysicsDirectSpaceState3D Space;
@@ -30,7 +30,7 @@ public static class DataCreatureBehaviorHandler
 	private const float CreatureStepMaxLength = 10f;
 	private const float MaxAccelerationFactor = 0.1f;
 	private const float CreatureEatDistance = 2;
-	private const float CreatureMateDistance = 1;
+	public const float CreatureMateDistance = 1;
 	
 	// State-based pause durations
 	public const float EatDuration = 1.5f;
@@ -136,66 +136,20 @@ public static class DataCreatureBehaviorHandler
 		var tree = FruitTreeSim.Registry.Entities[treeIndex];
 		creature.CurrentDestination = tree.Position;
 	}
-	public static void ChooseMateDestination(ref DataCreature creature, int mateIndex)
-	{
-		var mate = CreatureSim.Registry.Entities[mateIndex];
-		creature.CurrentDestination = mate.Position;
-	}
 	public static (int, bool) FindClosestFood(DataCreature creature)
 	{
-		var objectsInAwareness = DetectCollisionsWithCreature(creature);
-		var closestFoodIndex = -1;
-		var canEat = false;
-		var closestFoodSqrDistance = float.MaxValue;
+		var labeledCollisions = CreatureSim.GetLabeledAndSortedCollisions(creature);
+		var closestFood = labeledCollisions.FirstOrDefault(c => c.Type == CollisionType.Tree);
 
-		foreach (var objectData in objectsInAwareness)
+		if (closestFood.Type == CollisionType.Tree)
 		{
-			var objectRid = (Rid)objectData["rid"];
-			if (!FruitTreeSim.Registry.EntityLookup.TryGetValue(objectRid, out var treeIndex)) continue;
-			var tree = FruitTreeSim.Registry.Entities[treeIndex];
-			if (!tree.HasFruit) continue;
-			
-			var sqrDistance = (creature.Position - tree.Position).LengthSquared();
-			if (!(sqrDistance < closestFoodSqrDistance)) continue;
-			
-			closestFoodSqrDistance = sqrDistance;
-			closestFoodIndex = treeIndex;
-			if (closestFoodSqrDistance < CreatureEatDistance * CreatureEatDistance)
-			{
-				canEat = true;
-			}
+			var canEat = (closestFood.Position - creature.Position).LengthSquared() < CreatureEatDistance * CreatureEatDistance;
+			return (closestFood.Index, canEat);
 		}
 
-		return (closestFoodIndex, canEat);
+		return (-1, false);
 	}
-	public static (int, bool) FindClosestPotentialMate(DataCreature creature)
-	{
-		var objectsInAwareness = DetectCollisionsWithCreature(creature);
-		var closestMateIndex = -1;
-		var canMate = false;
-		var closestMateSqrDistance = float.MaxValue;
-
-		foreach (var objectData in objectsInAwareness)
-		{
-			var objectRid = (Rid)objectData["rid"];
-			if (!CreatureSim.Registry.EntityLookup.TryGetValue(objectRid, out var potentialMateIndex)) continue;
-			var potentialMate = CreatureSim.Registry.Entities[potentialMateIndex];
-			if (potentialMate.Body == creature.Body) continue; // Cannot mate with self :(
-			if (!potentialMate.OpenToMating) continue;
-			
-			var sqrDistance = (creature.Position - potentialMate.Position).LengthSquared();
-			if (!(sqrDistance < closestMateSqrDistance)) continue;
-			
-			closestMateSqrDistance = sqrDistance;
-			closestMateIndex = potentialMateIndex;
-			if (closestMateSqrDistance < CreatureMateDistance * CreatureMateDistance)
-			{
-				canMate = true;
-			}
-		}
-
-		return (closestMateIndex, canMate);
-	}
+	
 	public static void SpendMovementEnergy(ref DataCreature creature)
 	{
 		var normalizedSpeed = creature.MaxSpeed / InitialCreatureSpeed;
@@ -233,7 +187,8 @@ public static class DataCreatureBehaviorHandler
 	}
 
 	#region Helpers
-	private static Array<Dictionary> DetectCollisionsWithCreature(DataCreature creature)
+
+	public static Array<Dictionary> DetectCollisionsWithCreature(DataCreature creature)
 	{
 		var queryParams = new PhysicsShapeQueryParameters3D();
 		queryParams.CollideWithAreas = true;

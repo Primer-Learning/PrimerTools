@@ -1,7 +1,21 @@
+using System.Collections.Generic;
 using System.Linq;
 using Godot;
 using PrimerTools;
 using PrimerTools.Simulation;
+
+public enum CollisionType
+{
+	Tree,
+	Creature
+}
+
+public struct LabeledCollision
+{
+	public CollisionType Type;
+	public int Index;
+	public Vector3 Position;
+}
 
 [Tool]
 public class CreatureSim : Simulation<DataCreature>
@@ -10,7 +24,7 @@ public class CreatureSim : Simulation<DataCreature>
 
 	public CreatureSim(SimulationWorld simulationWorld, bool useSexualReproduction = true) : base(simulationWorld)
 	{
-		ReproductionStrategy = useSexualReproduction ? new SexualReproductionStrategy(this) : new AsexualReproductionStrategy() as IReproductionStrategy;
+		ReproductionStrategy = useSexualReproduction ? new SexualReproductionStrategy() : new AsexualReproductionStrategy() as IReproductionStrategy;
 	}
 
 	private FruitTreeSim FruitTreeSim => SimulationWorld.Simulations.OfType<FruitTreeSim>().FirstOrDefault();
@@ -21,7 +35,6 @@ public class CreatureSim : Simulation<DataCreature>
 		DataCreatureBehaviorHandler.FruitTreeSim = FruitTreeSim;
 		DataCreatureBehaviorHandler.CreatureSim = this;
 		DataCreatureBehaviorHandler.Space = PhysicsServer3D.SpaceGetDirectState(SimulationWorld.GetWorld3D().Space);
-		DataCreatureBehaviorHandler.SimulationWorld = SimulationWorld;
 		
 		if (FruitTreeSim == null)
 		{
@@ -46,6 +59,46 @@ public class CreatureSim : Simulation<DataCreature>
 			Registry.RegisterEntity(physicalCreature);
 		}
 	}
+	public List<LabeledCollision> GetLabeledAndSortedCollisions(DataCreature creature)
+	{
+		var objectsInAwareness = DataCreatureBehaviorHandler.DetectCollisionsWithCreature(creature);
+		var labeledCollisions = new List<LabeledCollision>();
+
+		foreach (var objectData in objectsInAwareness)
+		{
+			var objectRid = (Rid)objectData["rid"];
+			if (FruitTreeSim.Registry.EntityLookup.TryGetValue(objectRid, out var treeIndex))
+			{
+				var tree = FruitTreeSim.Registry.Entities[treeIndex];
+				if (tree.HasFruit)
+				{
+					labeledCollisions.Add(new LabeledCollision
+					{
+						Type = CollisionType.Tree,
+						Index = treeIndex,
+						Position = tree.Position
+					});
+				}
+			}
+			else if (Registry.EntityLookup.TryGetValue(objectRid, out var creatureIndex))
+			{
+				var otherCreature = Registry.Entities[creatureIndex];
+				if (otherCreature.OpenToMating && otherCreature.Body != creature.Body)
+				{
+					labeledCollisions.Add(new LabeledCollision
+					{
+						Type = CollisionType.Creature,
+						Index = creatureIndex,
+						Position = otherCreature.Position
+					});
+				}
+			}
+		}
+
+		labeledCollisions.Sort((a, b) => (a.Position - creature.Position).LengthSquared().CompareTo((b.Position - creature.Position).LengthSquared()));
+		return labeledCollisions;
+	}
+
 	protected override void CustomStep()
 	{
 		const float timeStep = 1f / SimulationWorld.PhysicsStepsPerSimSecond;
@@ -53,6 +106,11 @@ public class CreatureSim : Simulation<DataCreature>
 		// Process creatures. Doing one creature at a time for now with one big struct.
 		// But eventually, it might make sense to do several loops which each work with narrower sets of data
 		// For cache locality.
+		// Idea for transitioning: Move all properties to lists in the DataEnitityRegistry. This will probably require
+		// creating subclasses for different sims. Once that's done, we can still have a DataCreature class, but instead
+		// of storing the data, DataCreature will serve as an intermediary to the registry with properties whose
+		// getters and setters read from and write to the registry. This will ensure the system keeps working while
+		// different parts of the code wean themselves off of the DataCreature idea.
 		for (var i = 0; i < Registry.Entities.Count; i++)
 		{
 			var creature = Registry.Entities[i];
@@ -88,7 +146,7 @@ public class CreatureSim : Simulation<DataCreature>
 			// Reproduction
 			if (creature.Energy > DataCreatureBehaviorHandler.ReproductionEnergyThreshold)
 			{
-				var newCreature = ReproductionStrategy.Reproduce(ref creature);
+				var newCreature = ReproductionStrategy.Reproduce(ref creature, Registry);
 				if (newCreature.Alive)
 				{
 					Registry.RegisterEntity(newCreature);

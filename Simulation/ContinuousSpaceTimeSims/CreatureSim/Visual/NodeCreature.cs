@@ -36,7 +36,7 @@ public partial class NodeCreature : NodeEntity<DataCreature>
 		var normalizedAwareness = dataCreature.AwarenessRadius / DataCreatureBehaviorHandler.InitialAwarenessRadius;
 		_blob.LeftEye.Scale = normalizedAwareness * Vector3.One;
 		_blob.RightEye.Scale = normalizedAwareness * Vector3.One;
-		this.MakeSelfAndChildrenLocal();
+		// this.MakeSelfAndChildrenLocal();
 	}
 
 	public override void Update(DataCreature dataCreature)

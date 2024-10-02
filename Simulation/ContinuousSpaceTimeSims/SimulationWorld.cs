@@ -93,13 +93,13 @@ public partial class SimulationWorld : Node3D
         if (VisualizationMode == VisualizationMode.NodeCreatures)
         {
             _treeNodeManager = new NodeTreeManager(treeSim.Registry);
-            _treeNodeManager.Name = "NodeTreeAnimationManager";
+            _treeNodeManager.Name = "NodeTreeManager";
             AddChild(_treeNodeManager);
             
             _creatureNodeManager = new NodeCreatureManager(creatureSim.Registry, _treeNodeManager);
-            _creatureNodeManager.Name = "NodeCreatureAnimationManager";
+            _creatureNodeManager.Name = "NodeCreatureManager";
             AddChild(_creatureNodeManager);
-            _creatureNodeManager.MakeSelfAndChildrenLocal();
+            // _creatureNodeManager.MakeSelfAndChildrenLocal();
         }
 
         _timeOfLastStatusPrint = System.Environment.TickCount;
