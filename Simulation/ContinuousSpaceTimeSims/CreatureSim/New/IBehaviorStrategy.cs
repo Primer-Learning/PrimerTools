@@ -6,7 +6,6 @@ namespace PrimerTools.Simulation.New
     public interface IBehaviorStrategy
     {
         IAction DetermineAction(int index, List<LabeledCollision> labeledCollisions, DataEntityRegistry<DataCreature> registry);
-        bool ShouldChooseNewDestination(int index, DataEntityRegistry<DataCreature> registry);
     }
 
     public class SimpleBehaviorStrategy : IBehaviorStrategy

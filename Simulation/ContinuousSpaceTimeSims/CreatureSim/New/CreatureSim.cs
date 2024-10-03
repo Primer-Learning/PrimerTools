@@ -23,11 +23,11 @@ public struct LabeledCollision
 public class CreatureSim : Simulation<DataCreature>
 {
 	public IReproductionStrategy ReproductionStrategy { get; private set; }
-	// private IBehaviorStrategy _behaviorStrategy;
+	private IBehaviorStrategy _behaviorStrategy;
 	public CreatureSim(SimulationWorld simulationWorld, bool useSexualReproduction = true) : base(simulationWorld)
 	{
 		ReproductionStrategy = useSexualReproduction ? new SexualReproductionStrategy() : new AsexualReproductionStrategy() as IReproductionStrategy;
-		// _behaviorStrategy = new SimpleBehaviorStrategy();
+		_behaviorStrategy = new SimpleBehaviorStrategy();
 	}
 
 	private FruitTreeSim FruitTreeSim => SimulationWorld.Simulations.OfType<FruitTreeSim>().FirstOrDefault();
@@ -123,8 +123,8 @@ public class CreatureSim : Simulation<DataCreature>
 				continue;
 			}
 
-			// var labeledCollisions = GetLabeledAndSortedCollisions(creature);
-			// var action = _behaviorStrategy.DetermineAction(i, labeledCollisions, Registry);
+			var labeledCollisions = GetLabeledAndSortedCollisions(creature);
+			var action = _behaviorStrategy.DetermineAction(i, labeledCollisions, Registry);
 
 			Registry.Entities[i] = creature;
 		}
@@ -145,11 +145,7 @@ public class CreatureSim : Simulation<DataCreature>
 		{
 			var creature = Registry.Entities[i];
 			
-			if ((creature.CurrentDestination - creature.Position).LengthSquared() <
-			    CreatureSimSettings.CreatureEatDistance * CreatureSimSettings.CreatureEatDistance)
-			{
-				creature.CurrentDestination = CreatureSimSettings.GetRandomDestination(creature.Position);
-			}
+			if (creature.CurrentDestination == creature.Position) continue;
 
 			creature.Velocity = UpdateVelocity(creature.Position, creature.CurrentDestination, creature.Velocity, creature.MaxSpeed);
 			creature.Position += creature.Velocity / SimulationWorld.PhysicsStepsPerSimSecond;
