@@ -59,6 +59,7 @@ public partial class SimulationWorld : Node3D
     #endregion
 
     public const int PhysicsStepsPerSimSecond = 60;
+    public const float TimeStep = 1f / PhysicsStepsPerSimSecond;
 
     private static Rng _rng;
     public static Rng Rng => _rng ??= new Rng(_seed == -1 ? System.Environment.TickCount : _seed);

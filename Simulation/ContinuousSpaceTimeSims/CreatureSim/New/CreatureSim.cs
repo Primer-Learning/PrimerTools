@@ -103,47 +103,48 @@ public class CreatureSim : Simulation<DataCreature>
 
 	protected override void CustomStep()
 	{
-		const float timeStep = 1f / SimulationWorld.PhysicsStepsPerSimSecond;
-		
+		// Universal updates. More than just age?
 		for (var i = 0; i < Registry.Entities.Count; i++)
 		{
 			var creature = Registry.Entities[i];
-			
-			if (!creature.Alive) continue;
-			creature.Age += timeStep;
-			if (creature.Age < CreatureSimSettings.MaturationTime)
-			{
-				Registry.Entities[i] = creature;
-				continue;
-			}
-			if (creature.EatingTimeLeft > 0)
-			{
-				creature.EatingTimeLeft -= timeStep;
-				Registry.Entities[i] = creature;
-				continue;
-			}
+			creature.Age += SimulationWorld.TimeStep;
 			Registry.Entities[i] = creature;
-
-			var labeledCollisions = GetLabeledAndSortedCollisions(creature);
-			_behaviorStrategy.DetermineAction(i, labeledCollisions, Registry);
-
 		}
 
+		UpdateIntents();
+		PerformEating();
 		PerformReproductions();
-		PerformMoveActions();
+		ProcessMoveActions();
 		PerformDeathActions();
 	}
 
+	private void UpdateIntents()
+	{
+		for (var i = 0; i < Registry.Entities.Count; i++)
+		{
+			var creature = Registry.Entities[i];
+			var labeledCollisions = GetLabeledAndSortedCollisions(creature);
+			_behaviorStrategy.DetermineAction(i, labeledCollisions, Registry);
+		}
+	}
+
+	private void PerformEating()
+	{
+		
+	}
+	
 	private void PerformReproductions()
 	{
 		
 	}
 
-	private void PerformMoveActions()
+	private void ProcessMoveActions()
 	{
 		for (var i = 0; i < Registry.Entities.Count; i++)
 		{
 			var creature = Registry.Entities[i];
+
+			if (creature.Position == creature.CurrentDestination) return;
 
 			creature.Velocity = UpdateVelocity(creature.Position, creature.CurrentDestination, creature.Velocity, creature.MaxSpeed);
 			creature.Position += creature.Velocity / SimulationWorld.PhysicsStepsPerSimSecond;
