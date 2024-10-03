@@ -129,8 +129,14 @@ public class CreatureSim : Simulation<DataCreature>
 			Registry.Entities[i] = creature;
 		}
 
+		PerformReproductions();
 		PerformMoveActions();
 		PerformDeathActions();
+	}
+
+	private void PerformReproductions()
+	{
+		
 	}
 
 	private void PerformMoveActions()
