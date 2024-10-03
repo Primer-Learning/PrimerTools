@@ -5,22 +5,26 @@ namespace PrimerTools.Simulation.New;
 
 public struct DataCreature : IDataEntity
 {
-    public Rid Body { get; set; }
+    // Checked before processing
+    public bool Alive { get; set; }
     
+    // Updated in MovementAction
+    public Rid Body { get; set; }
     public Rid Awareness;
-		
+    public Vector3 Position; // Accessed in implementations of IBehaviorHandler
+    public Vector3 Velocity;
+    public Vector3 CurrentDestination; // Accessed in implementations of IBehaviorHandler
+    
     public float AwarenessRadius;
     public float MaxSpeed;
-    public bool Alive { get; set; }
+    
     public float Age;
     public float MaxAge;
     public float Energy;
     public float HungerThreshold;
-    public Vector3 Position;
-    public Vector3 Velocity;
-    public Vector3 CurrentDestination;
     public float EatingTimeLeft;
     public float MatingTimeLeft;
+    
 
     public bool OpenToMating;
 		

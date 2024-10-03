@@ -18,9 +18,9 @@ public static class CreatureSimSettings
 	
 	#region Sim parameters
 	// Movement
-	private const float CreatureStepMaxLength = 10f;
-	private const float MaxAccelerationFactor = 0.1f;
-	private const float CreatureEatDistance = 2;
+	public const float CreatureStepMaxLength = 10f;
+	public const float MaxAccelerationFactor = 0.1f;
+	public const float CreatureEatDistance = 2;
 	public const float CreatureMateDistance = 1;
 	
 	// State-based pause durations
@@ -45,57 +45,7 @@ public static class CreatureSimSettings
 	public const float MutationIncrement = 1f;
 	#endregion
 	
-    private static void UpdateVelocity(ref DataCreature creature)
-	{
-		var desiredDisplacement = creature.CurrentDestination - creature.Position;
-		var desiredDisplacementLengthSquared = desiredDisplacement.LengthSquared();
-		
-		// If we're basically there, choose a new destination
-		if (desiredDisplacementLengthSquared < CreatureEatDistance * CreatureEatDistance)
-		{
-			ChooseDestination(ref creature);
-			desiredDisplacement = creature.CurrentDestination - creature.Position;
-			desiredDisplacementLengthSquared = desiredDisplacement.LengthSquared();
-		}
-		
-		// Calculate desired velocity
-		var desiredVelocity = desiredDisplacement * creature.MaxSpeed / Mathf.Sqrt(desiredDisplacementLengthSquared);
-		
-		// Calculate velocity change
-		var velocityChange = desiredVelocity - creature.Velocity;
-		var velocityChangeLengthSquared = velocityChange.LengthSquared();
-
-		// Calculate acceleration vector with a maximum magnitude
-		var maxAccelerationMagnitudeSquared = creature.MaxSpeed * creature.MaxSpeed * MaxAccelerationFactor * MaxAccelerationFactor;
-		Vector3 accelerationVector;
-		if (velocityChangeLengthSquared > maxAccelerationMagnitudeSquared)
-		{
-			accelerationVector =  Mathf.Sqrt(maxAccelerationMagnitudeSquared / velocityChangeLengthSquared) * velocityChange;
-		}
-		else
-		{
-			accelerationVector = velocityChange;
-		}
-
-		// Update velocity
-		creature.Velocity += accelerationVector;
-	}
-	public static void UpdatePositionAndVelocity(ref DataCreature creature)
-	{
-		UpdateVelocity(ref creature);
-
-		// Limit velocity to max speed
-		var velocityLengthSquared = creature.Velocity.LengthSquared();
-		var maxSpeedSquared = creature.MaxSpeed * creature.MaxSpeed;
-		if (velocityLengthSquared > maxSpeedSquared)
-		{
-			creature.Velocity = creature.MaxSpeed / Mathf.Sqrt(velocityLengthSquared) * creature.Velocity;
-		}
-		
-		// Update position
-		creature.Position += creature.Velocity / SimulationWorld.PhysicsStepsPerSimSecond;
-	}
-	private static void ChooseDestination(ref DataCreature creature)
+	public static Vector3 GetRandomDestination(Vector3 position)
 	{
 		Vector3 newDestination;
 		var attempts = 0;
@@ -104,24 +54,25 @@ public static class CreatureSimSettings
 		do
 		{
 			var angle = SimulationWorld.Rng.RangeFloat(1) * 2 * Mathf.Pi;
-			var displacement = Rng.RangeFloat(1) * CreatureStepMaxLength * new Vector3(
+			var displacement = SimulationWorld.Rng.RangeFloat(1) * CreatureStepMaxLength * new Vector3(
 				Mathf.Sin(angle),
 				0,
 				Mathf.Cos(angle)
 			);
-			newDestination = creature.Position + displacement;
+			newDestination = position + displacement;
 			attempts++;
 
 			if (attempts >= maxAttempts)
 			{
 				GD.PrintErr($"Failed to find a valid destination after {maxAttempts} attempts. Using current position.");
-				newDestination = creature.Position;
+				newDestination = position;
 				break;
 			}
 		} while (!SimulationWorld.IsWithinWorldBounds(newDestination));
 
-		creature.CurrentDestination = newDestination;
+		return newDestination;
 	}
+	
 	public static void ChooseTreeDestination(ref DataCreature creature, int treeIndex)
 	{
 		var tree = FruitTreeSim.Registry.Entities[treeIndex];
@@ -149,7 +100,6 @@ public static class CreatureSimSettings
 		creature.Energy -= (BaseEnergySpend + GlobalEnergySpendAdjustmentFactor * ( normalizedSpeed * normalizedSpeed + normalizedAwarenessRadius)) / SimulationWorld.PhysicsStepsPerSimSecond;
 	}
 	public static event Action<int, int, float> CreatureEatEvent; // creatureIndex, treeIndex, duration
-	public static event Action<int> CreatureDeathEvent; // creatureIndex
 
 	public static void EatFood(ref DataCreature creature, int treeIndex, int creatureIndex)
 	{
@@ -166,15 +116,6 @@ public static class CreatureSimSettings
 		CreatureEatEvent?.Invoke(creatureIndex, treeIndex, EatDuration / SimulationWorld.TimeScale);
 	}
 
-	public static void CheckAndHandleCreatureDeath(ref DataCreature creature, int creatureIndex)
-	{
-		var alive = creature.Energy > 0;
-		alive = alive && creature.Age < creature.MaxAge;
-		if (!alive)
-		{
-			creature.Alive = false;
-			CreatureDeathEvent?.Invoke(creatureIndex);
-		}
-	}
+	
 }
 }

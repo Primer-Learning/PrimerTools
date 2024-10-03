@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
@@ -11,7 +12,6 @@ public enum CollisionType
 	Creature
 }
 
-
 public struct LabeledCollision
 {
 	public CollisionType Type;
@@ -23,10 +23,11 @@ public struct LabeledCollision
 public class CreatureSim : Simulation<DataCreature>
 {
 	public IReproductionStrategy ReproductionStrategy { get; private set; }
-
+	// private IBehaviorStrategy _behaviorStrategy;
 	public CreatureSim(SimulationWorld simulationWorld, bool useSexualReproduction = true) : base(simulationWorld)
 	{
 		ReproductionStrategy = useSexualReproduction ? new SexualReproductionStrategy() : new AsexualReproductionStrategy() as IReproductionStrategy;
+		// _behaviorStrategy = new SimpleBehaviorStrategy();
 	}
 
 	private FruitTreeSim FruitTreeSim => SimulationWorld.Simulations.OfType<FruitTreeSim>().FirstOrDefault();
@@ -104,20 +105,10 @@ public class CreatureSim : Simulation<DataCreature>
 	{
 		const float timeStep = 1f / SimulationWorld.PhysicsStepsPerSimSecond;
 		
-		// Process creatures. Doing one creature at a time for now with one big struct.
-		// But eventually, it might make sense to do several loops which each work with narrower sets of data
-		// For cache locality.
-		// Idea for transitioning: Move all properties to lists in the DataEnitityRegistry. This will probably require
-		// creating subclasses for different sims. Once that's done, we can still have a DataCreature class, but instead
-		// of storing the data, DataCreature will serve as an intermediary to the registry with properties whose
-		// getters and setters read from and write to the registry. This will ensure the system keeps working while
-		// different parts of the code wean themselves off of the DataCreature idea.
 		for (var i = 0; i < Registry.Entities.Count; i++)
 		{
 			var creature = Registry.Entities[i];
-
-			#region If creature is busy
-
+			
 			if (!creature.Alive) continue;
 			creature.Age += timeStep;
 			if (creature.Age < CreatureSimSettings.MaturationTime)
@@ -132,56 +123,96 @@ public class CreatureSim : Simulation<DataCreature>
 				continue;
 			}
 
-			#endregion
-			
-			// Gather 
-			var labeledCollisions = GetLabeledAndSortedCollisions(creature);
-			
-			// Choose action
-			// Could be move to a destination, or eat or mate
-			
-			// Perform action
-			
-			
-			
-			
-			
-			
-			
+			// var labeledCollisions = GetLabeledAndSortedCollisions(creature);
+			// var action = _behaviorStrategy.DetermineAction(i, labeledCollisions, Registry);
 
-			// Food detection
-			if (creature.Energy < creature.HungerThreshold)
-			{
-				var (closestFoodIndex, canEat) = CreatureSimSettings.FindClosestFood(creature);
-				if (canEat && creature.EatingTimeLeft <= 0)
-				{
-					CreatureSimSettings.EatFood(ref creature, closestFoodIndex, i);
-				}
-				else if (closestFoodIndex > -1)
-				{
-					CreatureSimSettings.ChooseTreeDestination(ref creature, closestFoodIndex);
-				}
-			}
+			Registry.Entities[i] = creature;
+		}
+
+		PerformMoveActions();
+		PerformDeathActions();
+	}
+
+	private void PerformMoveActions()
+	{
+		for (var i = 0; i < Registry.Entities.Count; i++)
+		{
+			var creature = Registry.Entities[i];
 			
-			// Reproduction
-			if (creature.Energy > CreatureSimSettings.ReproductionEnergyThreshold)
+			if ((creature.CurrentDestination - creature.Position).LengthSquared() <
+			    CreatureSimSettings.CreatureEatDistance * CreatureSimSettings.CreatureEatDistance)
 			{
-				var newCreature = ReproductionStrategy.Reproduce(ref creature, Registry);
-				if (newCreature.Alive)
-				{
-					Registry.RegisterEntity(newCreature);
-				}
+				creature.CurrentDestination = CreatureSimSettings.GetRandomDestination(creature.Position);
 			}
 
-			// Move, updating destination if needed
-			CreatureSimSettings.UpdatePositionAndVelocity(ref creature);
+			creature.Velocity = UpdateVelocity(creature.Position, creature.CurrentDestination, creature.Velocity, creature.MaxSpeed);
+			creature.Position += creature.Velocity / SimulationWorld.PhysicsStepsPerSimSecond;
+			
 			var transformNextFrame = new Transform3D(Basis.Identity, creature.Position);
 			PhysicsServer3D.AreaSetTransform(creature.Body, transformNextFrame);
 			PhysicsServer3D.AreaSetTransform(creature.Awareness, transformNextFrame);
-			CreatureSimSettings.SpendMovementEnergy(ref creature);
 			
-			// Ded?
-			CreatureSimSettings.CheckAndHandleCreatureDeath(ref creature, i);
+			Registry.Entities[i] = creature;
+		}
+	}
+
+	private static Vector3 UpdateVelocity(Vector3 position, Vector3 destination, Vector3 currentVelocity, float maxSpeed)
+	{
+		var desiredDisplacement = destination - position;
+		var desiredDisplacementLengthSquared = desiredDisplacement.LengthSquared();
+		
+		// If we're basically there, choose a new destination
+		if (desiredDisplacementLengthSquared < CreatureSimSettings.CreatureEatDistance * CreatureSimSettings.CreatureEatDistance)
+		{
+			GD.PushWarning("Creature is already at its destination during UpdateVelocity, which shouldn't happen.");
+		}
+		
+		// Calculate desired velocity
+		var desiredVelocity = desiredDisplacement * maxSpeed / Mathf.Sqrt(desiredDisplacementLengthSquared);
+		
+		// Calculate velocity change
+		var velocityChange = desiredVelocity - currentVelocity;
+		var velocityChangeLengthSquared = velocityChange.LengthSquared();
+
+		// Calculate acceleration vector with a maximum magnitude
+		var maxAccelerationMagnitudeSquared = maxSpeed * maxSpeed * CreatureSimSettings.MaxAccelerationFactor * CreatureSimSettings.MaxAccelerationFactor;
+		Vector3 accelerationVector;
+		if (velocityChangeLengthSquared > maxAccelerationMagnitudeSquared)
+		{
+			accelerationVector =  Mathf.Sqrt(maxAccelerationMagnitudeSquared / velocityChangeLengthSquared) * velocityChange;
+		}
+		else
+		{
+			accelerationVector = velocityChange;
+		}
+
+		var newVelocity = currentVelocity + accelerationVector;
+		// Limit velocity to max speed
+		var velocityLengthSquared = newVelocity.LengthSquared();
+		var maxSpeedSquared = maxSpeed * maxSpeed;
+		if (velocityLengthSquared > maxSpeedSquared)
+		{
+			newVelocity = maxSpeed / Mathf.Sqrt(velocityLengthSquared) * newVelocity;
+		}
+
+		return newVelocity;
+	}
+	
+	public static event Action<int> CreatureDeathEvent; // creatureIndex
+
+	private void PerformDeathActions()
+	{
+		for (var i = 0; i < Registry.Entities.Count; i++)
+		{
+			var creature = Registry.Entities[i];
+			
+			var alive = creature.Energy > 0;
+			alive = alive && creature.Age < creature.MaxAge;
+			if (!alive)
+			{
+				creature.Alive = false;
+				CreatureDeathEvent?.Invoke(i);
+			}
 
 			Registry.Entities[i] = creature;
 		}
