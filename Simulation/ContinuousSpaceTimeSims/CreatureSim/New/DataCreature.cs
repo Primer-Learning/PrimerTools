@@ -1,7 +1,17 @@
-﻿using Godot;
+﻿using System;
+using Godot;
 using Godot.Collections;
 
 namespace PrimerTools.Simulation.New;
+
+[Flags]
+public enum ActionFlags
+{
+    None = 0,
+    Move = 1 << 0,
+    Eat = 1 << 1,
+    Reproduce = 1 << 2
+}
 
 public struct DataCreature : IDataEntity
 {
@@ -25,8 +35,10 @@ public struct DataCreature : IDataEntity
     public float EatingTimeLeft;
     public float MatingTimeLeft;
     
-
     public bool OpenToMating;
+    
+    // New field for action flags
+    public ActionFlags Actions;
 		
     private CapsuleShape3D _bodyShapeResource;
     private SphereShape3D _awarenessShapeResource;

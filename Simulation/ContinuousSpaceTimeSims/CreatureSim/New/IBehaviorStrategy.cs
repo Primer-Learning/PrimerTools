@@ -13,6 +13,8 @@ namespace PrimerTools.Simulation.New
         public void DetermineAction(int index, List<LabeledCollision> labeledCollisions, DataEntityRegistry<DataCreature> registry)
         {
             var creature = registry.Entities[index];
+            creature.Actions = ActionFlags.None;
+            
             if (!creature.Alive) return;
             if (creature.Age < CreatureSimSettings.MaturationTime) return;
             if (creature.EatingTimeLeft > 0)
@@ -24,6 +26,8 @@ namespace PrimerTools.Simulation.New
                 return;
             }
 
+
+            creature.Actions |= ActionFlags.Move;
             if ((creature.CurrentDestination - creature.Position).LengthSquared() <
                 CreatureSimSettings.CreatureEatDistance * CreatureSimSettings.CreatureEatDistance)
             {
