@@ -14,13 +14,11 @@ namespace PrimerTools.Simulation.New
         {
             var creature = registry.Entities[index];
             if (!creature.Alive) return;
-            if (creature.Age < CreatureSimSettings.MaturationTime)
-            {
-                registry.Entities[index] = creature;
-                return;
-            }
+            if (creature.Age < CreatureSimSettings.MaturationTime) return;
             if (creature.EatingTimeLeft > 0)
             {
+                // TODO: Get rid of EatingTimeLeft. There could be an absolute time that is compared instead.
+                // Meaning we don't have to update this manually.
                 creature.EatingTimeLeft -= SimulationWorld.TimeStep;
                 registry.Entities[index] = creature;
                 return;

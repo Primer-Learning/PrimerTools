@@ -117,7 +117,7 @@ public class CreatureSim : Simulation<DataCreature>
 		ProcessMoveActions();
 		PerformDeathActions();
 	}
-
+	
 	private void UpdateIntents()
 	{
 		for (var i = 0; i < Registry.Entities.Count; i++)
