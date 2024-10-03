@@ -5,28 +5,23 @@ namespace PrimerTools.Simulation.New
 {
     public interface IBehaviorStrategy
     {
-        IAction DetermineAction(int index, List<LabeledCollision> labeledCollisions, DataEntityRegistry<DataCreature> registry);
+        void DetermineAction(int index, List<LabeledCollision> labeledCollisions, DataEntityRegistry<DataCreature> registry);
     }
 
     public class SimpleBehaviorStrategy : IBehaviorStrategy
     {
-        public IAction DetermineAction(int index, List<LabeledCollision> labeledCollisions, DataEntityRegistry<DataCreature> registry)
+        public void DetermineAction(int index, List<LabeledCollision> labeledCollisions, DataEntityRegistry<DataCreature> registry)
         {
             var creature = registry.Entities[index];
-            
-            if (ShouldChooseNewDestination(index, registry))
-            {
-                return new MoveAction(CreatureSimSettings.GetRandomDestination(creature.Position));
-            }
-            
-            return new MoveAction();
-        }
 
-        public bool ShouldChooseNewDestination(int index, DataEntityRegistry<DataCreature> registry)
-        {
-            var creature = registry.Entities[index];
-            return (creature.CurrentDestination - creature.Position).LengthSquared() <
-                CreatureSimSettings.CreatureEatDistance * CreatureSimSettings.CreatureEatDistance;
+            if ((creature.CurrentDestination - creature.Position).LengthSquared() <
+                CreatureSimSettings.CreatureEatDistance * CreatureSimSettings.CreatureEatDistance)
+            {
+                var newDestination = CreatureSimSettings.GetRandomDestination(creature.Position);
+                creature.CurrentDestination = newDestination;
+            }
+
+            registry.Entities[index] = creature;
         }
     }
 }

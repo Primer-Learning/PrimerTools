@@ -122,11 +122,11 @@ public class CreatureSim : Simulation<DataCreature>
 				Registry.Entities[i] = creature;
 				continue;
 			}
+			Registry.Entities[i] = creature;
 
 			var labeledCollisions = GetLabeledAndSortedCollisions(creature);
-			var action = _behaviorStrategy.DetermineAction(i, labeledCollisions, Registry);
+			_behaviorStrategy.DetermineAction(i, labeledCollisions, Registry);
 
-			Registry.Entities[i] = creature;
 		}
 
 		PerformReproductions();
@@ -144,8 +144,6 @@ public class CreatureSim : Simulation<DataCreature>
 		for (var i = 0; i < Registry.Entities.Count; i++)
 		{
 			var creature = Registry.Entities[i];
-			
-			if (creature.CurrentDestination == creature.Position) continue;
 
 			creature.Velocity = UpdateVelocity(creature.Position, creature.CurrentDestination, creature.Velocity, creature.MaxSpeed);
 			creature.Position += creature.Velocity / SimulationWorld.PhysicsStepsPerSimSecond;
