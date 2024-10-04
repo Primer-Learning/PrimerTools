@@ -3,8 +3,7 @@ using System.Linq;
 using Godot;
 using Godot.Collections;
 
-namespace PrimerTools.Simulation.New
-{
+namespace PrimerTools.Simulation.New;
 
 [Tool]
 public static class CreatureSimSettings
@@ -78,19 +77,19 @@ public static class CreatureSimSettings
 		var tree = FruitTreeSim.Registry.Entities[treeIndex];
 		creature.CurrentDestination = tree.Position;
 	}
-	public static (int, bool) FindClosestFood(DataCreature creature)
-	{
-		var labeledCollisions = CreatureSim.GetLabeledAndSortedCollisions(creature);
-		var closestFood = labeledCollisions.FirstOrDefault(c => c.Type == CollisionType.Tree);
-
-		if (closestFood.Type == CollisionType.Tree)
-		{
-			var canEat = (closestFood.Position - creature.Position).LengthSquared() < CreatureEatDistance * CreatureEatDistance;
-			return (closestFood.Index, canEat);
-		}
-
-		return (-1, false);
-	}
+	// public static (int, bool) FindClosestFood(DataCreature creature)
+	// {
+	// 	var labeledCollisions = CreatureSim.GetLabeledAndSortedCollisions(creature);
+	// 	var closestFood = labeledCollisions.FirstOrDefault(c => c.Type == CollisionType.Tree);
+	//
+	// 	if (closestFood.Type == CollisionType.Tree)
+	// 	{
+	// 		var canEat = (closestFood.Position - creature.Position).LengthSquared() < CreatureEatDistance * CreatureEatDistance;
+	// 		return (closestFood.Index, canEat);
+	// 	}
+	//
+	// 	return (-1, false);
+	// }
 	
 	public static void SpendMovementEnergy(ref DataCreature creature)
 	{
@@ -101,10 +100,10 @@ public static class CreatureSimSettings
 	}
 	public static event Action<int, int, float> CreatureEatEvent; // creatureIndex, treeIndex, duration
 
-	public static void EatFood(ref DataCreature creature, int treeIndex, int creatureIndex)
+	public static DataCreature EatFood(DataCreature creature, int treeIndex, int creatureIndex)
 	{
 		var tree = FruitTreeSim.Registry.Entities[treeIndex];
-		if (!tree.HasFruit) return;
+		if (!tree.HasFruit) return creature;
 		
 		tree.HasFruit = false;
 		tree.FruitGrowthProgress = 0;
@@ -112,10 +111,10 @@ public static class CreatureSimSettings
 		
 		creature.Energy += EnergyGainFromFood;
 		creature.EatingTimeLeft = EatDuration;
-
 		CreatureEatEvent?.Invoke(creatureIndex, treeIndex, EatDuration / SimulationWorld.TimeScale);
+		return creature;
 	}
 
 	
 }
-}
+

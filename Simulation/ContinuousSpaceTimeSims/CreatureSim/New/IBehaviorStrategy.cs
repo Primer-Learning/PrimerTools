@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Godot;
 
 namespace PrimerTools.Simulation.New
@@ -26,13 +27,37 @@ namespace PrimerTools.Simulation.New
                 return;
             }
 
+            // When this block is commented out, the movement works properly
+            LabeledCollision closestFood;
+            if (creature.Energy < creature.HungerThreshold)
+            {
+                closestFood = labeledCollisions.FirstOrDefault(c => c.Type == CollisionType.Tree);
+                if (closestFood.Type == CollisionType.Tree)
+                {
+                    if ((closestFood.Position - creature.Position).LengthSquared() <
+                        CreatureSimSettings.CreatureEatDistance * CreatureSimSettings.CreatureEatDistance
+                        && creature.EatingTimeLeft <= 0)
+                    {
+                        creature = CreatureSimSettings.EatFood(creature, closestFood.Index, index);
+                        registry.Entities[index] = creature;
+                        return;
+                    }
+            
+                    creature.CurrentDestination = closestFood.Position;
+                    creature.Actions |= ActionFlags.Move;
+                    return;
+                }
+            }
+            
+            // LabeledCollision closestMate;
+            // if (creature.Energy < creature.HungerThreshold) closestFood = labeledCollisions.FirstOrDefault(c => c.Type == CollisionType.Tree);
+            
 
             creature.Actions |= ActionFlags.Move;
             if ((creature.CurrentDestination - creature.Position).LengthSquared() <
                 CreatureSimSettings.CreatureEatDistance * CreatureSimSettings.CreatureEatDistance)
             {
-                var newDestination = CreatureSimSettings.GetRandomDestination(creature.Position);
-                creature.CurrentDestination = newDestination;
+                creature.CurrentDestination = CreatureSimSettings.GetRandomDestination(creature.Position);
             }
 
             registry.Entities[index] = creature;
