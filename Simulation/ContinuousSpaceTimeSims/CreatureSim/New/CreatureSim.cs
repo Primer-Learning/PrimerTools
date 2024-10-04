@@ -152,6 +152,7 @@ public class CreatureSim : Simulation<DataCreature>
 			var transformNextFrame = new Transform3D(Basis.Identity, creature.Position);
 			PhysicsServer3D.AreaSetTransform(creature.Body, transformNextFrame);
 			PhysicsServer3D.AreaSetTransform(creature.Awareness, transformNextFrame);
+			CreatureSimSettings.SpendMovementEnergy(ref creature);
 			
 			Registry.Entities[i] = creature;
 		}
@@ -208,7 +209,7 @@ public class CreatureSim : Simulation<DataCreature>
 			var creature = Registry.Entities[i];
 			
 			var alive = creature.Energy > 0;
-			alive = alive && creature.Age < creature.MaxAge;
+			// alive = alive && creature.Age < creature.MaxAge;
 			if (!alive)
 			{
 				creature.Alive = false;

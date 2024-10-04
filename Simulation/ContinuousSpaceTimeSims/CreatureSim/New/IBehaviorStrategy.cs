@@ -28,6 +28,7 @@ namespace PrimerTools.Simulation.New
             }
 
             // When this block is commented out, the movement works properly
+            // 
             LabeledCollision closestFood;
             if (creature.Energy < creature.HungerThreshold)
             {
@@ -45,6 +46,7 @@ namespace PrimerTools.Simulation.New
             
                     creature.CurrentDestination = closestFood.Position;
                     creature.Actions |= ActionFlags.Move;
+                    registry.Entities[index] = creature;
                     return;
                 }
             }
@@ -59,7 +61,6 @@ namespace PrimerTools.Simulation.New
             {
                 creature.CurrentDestination = CreatureSimSettings.GetRandomDestination(creature.Position);
             }
-
             registry.Entities[index] = creature;
         }
     }
