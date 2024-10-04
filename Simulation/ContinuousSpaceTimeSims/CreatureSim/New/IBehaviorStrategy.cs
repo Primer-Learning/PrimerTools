@@ -26,9 +26,7 @@ namespace PrimerTools.Simulation.New
                 registry.Entities[index] = creature;
                 return;
             }
-
-            // When this block is commented out, the movement works properly
-            // 
+            
             LabeledCollision closestFood;
             if (creature.Energy < creature.HungerThreshold)
             {

@@ -144,7 +144,7 @@ public class CreatureSim : Simulation<DataCreature>
 		{
 			var creature = Registry.Entities[i];
 
-			if (!creature.Actions.HasFlag(ActionFlags.Move)) return;
+			if (!creature.Actions.HasFlag(ActionFlags.Move)) continue;
 
 			creature.Velocity = UpdateVelocity(creature.Position, creature.CurrentDestination, creature.Velocity, creature.MaxSpeed);
 			creature.Position += creature.Velocity / SimulationWorld.PhysicsStepsPerSimSecond;
