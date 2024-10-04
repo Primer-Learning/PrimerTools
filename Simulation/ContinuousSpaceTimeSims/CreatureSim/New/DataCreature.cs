@@ -32,6 +32,7 @@ public struct DataCreature : IDataEntity
     public float MaxAge;
     public float Energy;
     public float HungerThreshold;
+    public int FoodTargetIndex;
     public float EatingTimeLeft;
     public float MatingTimeLeft;
     
@@ -96,6 +97,7 @@ public struct DataCreature : IDataEntity
         CurrentDestination = Position; // Will be changed immediately
         Energy = 1f;
         HungerThreshold = CreatureSimSettings.DefaultHungerThreshold;
+        FoodTargetIndex = -1;
     }
     
     public Array<Dictionary> DetectCollisionsWithCreature()

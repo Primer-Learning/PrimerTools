@@ -131,6 +131,16 @@ public class CreatureSim : Simulation<DataCreature>
 	private void PerformEating()
 	{
 		
+		for (var i = 0; i < Registry.Entities.Count; i++)
+		{
+			var creature = Registry.Entities[i];
+			if (!creature.Actions.HasFlag(ActionFlags.Eat)) continue;
+
+			// TODO: Move this method into this class
+			creature = CreatureSimSettings.EatFood(creature, creature.FoodTargetIndex, i);
+			
+			Registry.Entities[i] = creature;
+		}
 	}
 	
 	private void PerformReproductions()

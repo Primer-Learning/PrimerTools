@@ -37,7 +37,8 @@ namespace PrimerTools.Simulation.New
                         CreatureSimSettings.CreatureEatDistance * CreatureSimSettings.CreatureEatDistance
                         && creature.EatingTimeLeft <= 0)
                     {
-                        creature = CreatureSimSettings.EatFood(creature, closestFood.Index, index);
+                        creature.FoodTargetIndex = closestFood.Index;
+                        creature.Actions |= ActionFlags.Eat;
                         registry.Entities[index] = creature;
                         return;
                     }
