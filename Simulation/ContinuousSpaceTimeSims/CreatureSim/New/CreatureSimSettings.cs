@@ -32,7 +32,8 @@ public static class CreatureSimSettings
 	private const float EnergyGainFromFood = 1f;
 	public const float ReproductionEnergyThreshold = 2f;
 	public const float ReproductionEnergyCost = 1f;
-	public const float DefaultHungerThreshold = 2;
+	public const float DefaultHungerThreshold = 4;
+	public const float ReproductionDuration = 1;
 	
 	// Initial population
 	public const float InitialCreatureSpeed = 5f;

@@ -35,8 +35,8 @@ public struct DataCreature : IDataEntity
     public int FoodTargetIndex;
     public float EatingTimeLeft;
     public float MatingTimeLeft;
-    
-    public bool OpenToMating;
+
+    public bool OpenToMating => Energy > CreatureSimSettings.ReproductionEnergyThreshold && MatingTimeLeft <= 0;
     
     // New field for action flags
     public ActionFlags Actions;
@@ -104,6 +104,8 @@ public struct DataCreature : IDataEntity
     {
         var queryParams = new PhysicsShapeQueryParameters3D();
         queryParams.CollideWithAreas = true;
+        queryParams.CollideWithBodies = false;
+        queryParams.Exclude = new Array<Rid>() { Body };
         queryParams.ShapeRid = PhysicsServer3D.AreaGetShape(Awareness, 0);
         queryParams.Transform = Transform3D.Identity.Translated(Position);
 

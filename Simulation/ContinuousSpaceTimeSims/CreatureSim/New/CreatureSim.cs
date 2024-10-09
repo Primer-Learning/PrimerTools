@@ -63,6 +63,9 @@ public class CreatureSim : Simulation<DataCreature>
 	}
 	public List<LabeledCollision> GetLabeledAndSortedCollisions(DataCreature creature)
 	{
+		// TODO: Put areas on a separate collision layer and mask the collisions so they don't look at each other
+		// Just a small optimization
+		
 		var objectsInAwareness = creature.DetectCollisionsWithCreature();
 		var labeledCollisions = new List<LabeledCollision>();
 
@@ -72,6 +75,8 @@ public class CreatureSim : Simulation<DataCreature>
 			if (FruitTreeSim.Registry.EntityLookup.TryGetValue(objectRid, out var treeIndex))
 			{
 				var tree = FruitTreeSim.Registry.Entities[treeIndex];
+				// TODO: Remove this check? This function should just report collisions, and the 
+				// creature can decide if it cares about fruit or openness to mating.
 				if (tree.HasFruit)
 				{
 					labeledCollisions.Add(new LabeledCollision
@@ -85,7 +90,10 @@ public class CreatureSim : Simulation<DataCreature>
 			else if (Registry.EntityLookup.TryGetValue(objectRid, out var creatureIndex))
 			{
 				var otherCreature = Registry.Entities[creatureIndex];
-				if (otherCreature.OpenToMating && otherCreature.Body != creature.Body)
+				// TODO: Remove the OpenToMating check? This function should just report collisions, and the 
+				// creature can decide if it cares about fruit or openness to mating.
+				
+				if (otherCreature.OpenToMating)
 				{
 					labeledCollisions.Add(new LabeledCollision
 					{
@@ -112,6 +120,7 @@ public class CreatureSim : Simulation<DataCreature>
 		}
 
 		UpdateIntents();
+		
 		PerformEating();
 		PerformReproductions();
 		ProcessMoveActions();
@@ -124,13 +133,12 @@ public class CreatureSim : Simulation<DataCreature>
 		{
 			var creature = Registry.Entities[i];
 			var labeledCollisions = GetLabeledAndSortedCollisions(creature);
-			_behaviorStrategy.DetermineAction(i, labeledCollisions, Registry);
+			_behaviorStrategy.DetermineAction(i, labeledCollisions, Registry, ReproductionStrategy);
 		}
 	}
 
 	private void PerformEating()
 	{
-		
 		for (var i = 0; i < Registry.Entities.Count; i++)
 		{
 			var creature = Registry.Entities[i];

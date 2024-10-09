@@ -1,17 +1,23 @@
-using System.Collections.Generic;
 using System.Linq;
 using Godot;
+using Microsoft.Win32;
 
 namespace PrimerTools.Simulation.New;
 
 public interface IReproductionStrategy
 {
-    DataCreature Reproduce(ref DataCreature parent, DataEntityRegistry<DataCreature> registry);
+    public int FindMateIndex(int creatureIndex, DataEntityRegistry<DataCreature> registry);
+    public DataCreature Reproduce(DataCreature parent1, DataCreature parent2);
 }
 
 public class AsexualReproductionStrategy : IReproductionStrategy
 {
-    public DataCreature Reproduce(ref DataCreature parentCreature, DataEntityRegistry<DataCreature> registry)
+    public int FindMateIndex(int creatureIndex, DataEntityRegistry<DataCreature> registry)
+    {
+        return creatureIndex;
+    }
+    
+    public DataCreature Reproduce(DataCreature parentCreature, DataCreature parent2)
     {
         parentCreature.Energy -= CreatureSimSettings.ReproductionEnergyCost;
 
@@ -39,32 +45,24 @@ public class AsexualReproductionStrategy : IReproductionStrategy
 
 public class SexualReproductionStrategy : IReproductionStrategy
 {
-    public DataCreature Reproduce(ref DataCreature parent, DataEntityRegistry<DataCreature> registry)
+    public int FindMateIndex(int creatureIndex, DataEntityRegistry<DataCreature> registry)
     {
-        parent.OpenToMating = true;
-        var (closestMateIndex, canMate) = FindClosestPotentialMate(parent, registry);
-        if (canMate && parent.MatingTimeLeft <= 0)
-        {
-            var newCreature = ReproduceSexually(ref parent, closestMateIndex, registry);
-            return newCreature;
-        }
-        else if (closestMateIndex > -1)
-        {
-            ChooseMateDestination(ref parent, closestMateIndex, registry);
-        }
+        var parent = registry.Entities[creatureIndex]; 
+        var labeledCollisions = CreatureSimSettings.CreatureSim.GetLabeledAndSortedCollisions(parent)
+            .Where(c => c.Type == CollisionType.Creature).ToArray();
 
-        return default;
+        if (labeledCollisions.Length == 0) return -1;
+        
+        var closestMate = labeledCollisions.First();
+        return closestMate.Index;
     }
 
-    private DataCreature ReproduceSexually(ref DataCreature parent1, int parent2Index, DataEntityRegistry<DataCreature> registry)
+    public DataCreature Reproduce(DataCreature parent1, DataCreature parent2)
     {
-        var parent2 = registry.Entities[parent2Index];
-		
-        parent1.Energy -= CreatureSimSettings.ReproductionEnergyCost / 2;
-        parent2.Energy -= CreatureSimSettings.ReproductionEnergyCost / 2;
-		
+        // Start by copying parent1 
         var newCreature = parent1;
 
+        // Flip coins to see if we inherit from parent 2
         if (SimulationWorld.Rng.RangeFloat(0, 1) < 0.5)
         {
             newCreature.AwarenessRadius = parent2.AwarenessRadius;
@@ -78,6 +76,7 @@ public class SexualReproductionStrategy : IReproductionStrategy
             newCreature.MaxAge = parent2.MaxAge;
         }
 		
+        // Check for mutations
         if (SimulationWorld.Rng.RangeFloat(0, 1) < CreatureSimSettings.MutationProbability)
         {
             newCreature.AwarenessRadius += SimulationWorld.Rng.RangeFloat(0, 1) < 0.5f ? CreatureSimSettings.MutationIncrement : -CreatureSimSettings.MutationIncrement;
@@ -93,31 +92,7 @@ public class SexualReproductionStrategy : IReproductionStrategy
             newCreature.MaxAge += SimulationWorld.Rng.RangeFloat(0, 1) < 0.5f ? CreatureSimSettings.MutationIncrement : -CreatureSimSettings.MutationIncrement;
             newCreature.MaxAge = Mathf.Max(0, newCreature.MaxAge);
         }
-
-        parent2.OpenToMating = false;
-        parent1.OpenToMating = false;
-        registry.Entities[parent2Index] = parent2;
-		
+        
         return newCreature;
-    }
-
-    private (int, bool) FindClosestPotentialMate(DataCreature creature, DataEntityRegistry<DataCreature> registry)
-    {
-        var labeledCollisions = CreatureSimSettings.CreatureSim.GetLabeledAndSortedCollisions(creature);
-        var closestMate = labeledCollisions.FirstOrDefault(c => c.Type == CollisionType.Creature);
-
-        if (closestMate.Type == CollisionType.Creature)
-        {
-            var canMate = (closestMate.Position - creature.Position).LengthSquared() < CreatureSimSettings.CreatureMateDistance * CreatureSimSettings.CreatureMateDistance;
-            return (closestMate.Index, canMate);
-        }
-
-        return (-1, false);
-    }
-
-    private void ChooseMateDestination(ref DataCreature creature, int mateIndex, DataEntityRegistry<DataCreature> registry)
-    {
-        var mate = registry.Entities[mateIndex];
-        creature.CurrentDestination = mate.Position;
     }
 }
