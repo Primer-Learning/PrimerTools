@@ -19,19 +19,22 @@ public class ReproductionStrategy
     }
 }
 
-public static class ReproductionStrategies
+public static class MateSelectionStrategies
 {
     public static int FindFirstAvailableMate(int creatureIndex, List<LabeledCollision> labeledCollisions)
     {
         var mateCollisions = labeledCollisions.Where(c => c.Type == CollisionType.Creature).ToList();
         return mateCollisions.Any() ? mateCollisions.First().Index : -1;
     }
-
     public static int AsexualFindMate(int creatureIndex, List<LabeledCollision> labeledCollisions)
     {
         return creatureIndex;
     }
+}
 
+public static class ReproductionStrategies
+{
+    // TODO: Make these only accept genomes, once those exist
     public static DataCreature AsexualReproduce(DataCreature parent1, DataCreature parent2)
     {
         parent1.Energy -= CreatureSimSettings.ReproductionEnergyCost;

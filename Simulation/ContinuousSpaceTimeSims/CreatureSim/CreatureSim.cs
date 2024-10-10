@@ -27,10 +27,10 @@ public class CreatureSim : Simulation<DataCreature>
 	public CreatureSim(SimulationWorld simulationWorld, bool useSexualReproduction = true) : base(simulationWorld)
 	{
 		ReproductionStrategy = useSexualReproduction ? new ReproductionStrategy(
-			ReproductionStrategies.FindFirstAvailableMate,
+			MateSelectionStrategies.FindFirstAvailableMate,
 			ReproductionStrategies.SexualReproduce
 		) : new ReproductionStrategy(
-			ReproductionStrategies.AsexualFindMate,
+			MateSelectionStrategies.AsexualFindMate,
 			ReproductionStrategies.AsexualReproduce
 		);
 		_behaviorStrategy = new SimpleBehaviorStrategy();
