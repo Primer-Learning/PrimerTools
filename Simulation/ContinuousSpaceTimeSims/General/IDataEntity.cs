@@ -3,7 +3,7 @@ using Godot;
 
 namespace PrimerTools.Simulation;
 
-public interface IDataEntity
+public interface IDataEntity : IEquatable<IDataEntity>
 {
     // Body serves as a unique ID for lookup dictionaries
     // It currently exists in all implementations of IEntity, so no reason not to use it for now.
@@ -12,4 +12,14 @@ public interface IDataEntity
     public bool Alive { get; set; }
     public void CleanUp();
     public void Initialize(World3D world3D);
+    
+    bool IEquatable<IDataEntity>.Equals(IDataEntity other)
+    {
+        if (other is null) return false;
+        return Body == other.Body;
+    }
+    
+    bool Equals(object obj) => obj is IDataEntity other && Equals(other);
+    
+    int GetHashCode() => Body.GetHashCode();
 }
