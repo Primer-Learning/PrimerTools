@@ -6,13 +6,13 @@ namespace PrimerTools.Simulation.New;
 
 public interface IReproductionStrategy
 {
-    public int FindMateIndex(int creatureIndex, DataEntityRegistry<DataCreature> registry, List<LabeledCollision> labeledCollisions);
+    public int FindMateIndex(int creatureIndex, List<LabeledCollision> labeledCollisions);
     public DataCreature Reproduce(DataCreature parent1, DataCreature parent2);
 }
 
 public class AsexualReproductionStrategy : IReproductionStrategy
 {
-    public int FindMateIndex(int creatureIndex, DataEntityRegistry<DataCreature> registry, List<LabeledCollision> labeledCollisions)
+    public int FindMateIndex(int creatureIndex, List<LabeledCollision> labeledCollisions)
     {
         return creatureIndex;
     }
@@ -45,9 +45,8 @@ public class AsexualReproductionStrategy : IReproductionStrategy
 
 public class SexualReproductionStrategy : IReproductionStrategy
 {
-    public int FindMateIndex(int creatureIndex, DataEntityRegistry<DataCreature> registry, List<LabeledCollision> labeledCollisions)
+    public int FindMateIndex(int creatureIndex, List<LabeledCollision> labeledCollisions)
     {
-        var parent = registry.Entities[creatureIndex]; 
         labeledCollisions = labeledCollisions
             .Where(c => c.Type == CollisionType.Creature).ToList();
 

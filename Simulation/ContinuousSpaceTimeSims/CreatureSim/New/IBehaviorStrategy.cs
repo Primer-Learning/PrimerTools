@@ -1,7 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
-using System.Xml.Schema;
 using Godot;
 
 namespace PrimerTools.Simulation.New
@@ -31,7 +29,7 @@ namespace PrimerTools.Simulation.New
             
             if (creature.OpenToMating)
             {
-                var mateIndex = reproductionStrategy.FindMateIndex(index, registry, labeledCollisions);
+                var mateIndex = reproductionStrategy.FindMateIndex(index, labeledCollisions);
                 if (mateIndex != -1)
                 {
                     var mate = registry.Entities[mateIndex];
