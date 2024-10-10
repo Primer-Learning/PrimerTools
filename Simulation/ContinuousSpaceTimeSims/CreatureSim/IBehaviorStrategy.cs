@@ -16,6 +16,7 @@ namespace PrimerTools.Simulation.New
             var creature = registry.Entities[index];
             creature.Actions = ActionFlags.None;
             
+            // Do-nothing conditions 
             if (!creature.Alive) return;
             if (creature.Age < CreatureSimSettings.MaturationTime) return;
             if (creature.EatingTimeLeft > 0)
@@ -26,7 +27,20 @@ namespace PrimerTools.Simulation.New
                 registry.Entities[index] = creature;
                 return;
             }
+            if (creature.MatingTimeLeft > 0)
+            {
+                creature.MatingTimeLeft = Mathf.Max(0, creature.MatingTimeLeft - SimulationWorld.TimeStep);
+                registry.Entities[index] = creature;
+                return;
+            }
             
+            // PLAN
+            // Separate finding a mate and reproduction
+            // finding just needs creature position and labeledCollisions
+            // labeledcollisions could potentially be pre-separated by type. Or maybe not. Who cares?
+            // Reproduction just needs creatures, or genomes later            
+            
+            // Check for mating
             if (creature.OpenToMating)
             {
                 var mateIndex = reproductionStrategy.FindMateIndex(index, labeledCollisions);
@@ -56,6 +70,7 @@ namespace PrimerTools.Simulation.New
                 }
             }
 
+            // Check for eating
             if (creature.Energy < creature.HungerThreshold)
             {
                 var closestFood = labeledCollisions.FirstOrDefault(c => c.Type == CollisionType.Tree);
@@ -75,13 +90,6 @@ namespace PrimerTools.Simulation.New
                     registry.Entities[index] = creature;
                     return;
                 }
-            }
-
-            if (creature.MatingTimeLeft > 0)
-            {
-                creature.MatingTimeLeft = Mathf.Max(0, creature.MatingTimeLeft - SimulationWorld.TimeStep);
-                registry.Entities[index] = creature;
-                return;
             }
 
             creature.Actions |= ActionFlags.Move;
