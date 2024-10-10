@@ -22,11 +22,17 @@ public struct LabeledCollision
 [Tool]
 public class CreatureSim : Simulation<DataCreature>
 {
-	public IReproductionStrategy ReproductionStrategy { get; private set; }
+	public ReproductionStrategy ReproductionStrategy { get; private set; }
 	private IBehaviorStrategy _behaviorStrategy;
 	public CreatureSim(SimulationWorld simulationWorld, bool useSexualReproduction = true) : base(simulationWorld)
 	{
-		ReproductionStrategy = useSexualReproduction ? new SexualReproductionStrategy() : new AsexualReproductionStrategy() as IReproductionStrategy;
+		ReproductionStrategy = useSexualReproduction ? new ReproductionStrategy(
+			ReproductionStrategies.FindFirstAvailableMate,
+			ReproductionStrategies.SexualReproduce
+		) : new ReproductionStrategy(
+			ReproductionStrategies.AsexualFindMate,
+			ReproductionStrategies.AsexualReproduce
+		);
 		_behaviorStrategy = new SimpleBehaviorStrategy();
 	}
 

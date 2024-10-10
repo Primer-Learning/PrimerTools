@@ -6,12 +6,12 @@ namespace PrimerTools.Simulation.New
 {
     public interface IBehaviorStrategy
     {
-        void DetermineAction(int index, List<LabeledCollision> labeledCollisions, DataEntityRegistry<DataCreature> registry, IReproductionStrategy reproductionStrategy);
+        void DetermineAction(int index, List<LabeledCollision> labeledCollisions, DataEntityRegistry<DataCreature> registry, ReproductionStrategy reproductionStrategy);
     }
 
     public class SimpleBehaviorStrategy : IBehaviorStrategy
     {
-        public void DetermineAction(int index, List<LabeledCollision> labeledCollisions, DataEntityRegistry<DataCreature> registry, IReproductionStrategy reproductionStrategy)
+        public void DetermineAction(int index, List<LabeledCollision> labeledCollisions, DataEntityRegistry<DataCreature> registry, ReproductionStrategy reproductionStrategy)
         {
             var creature = registry.Entities[index];
             creature.Actions = ActionFlags.None;
@@ -34,25 +34,16 @@ namespace PrimerTools.Simulation.New
                 return;
             }
             
-            // PLAN
-            // Separate finding a mate and reproduction
-            // finding just needs creature position and labeledCollisions
-            // labeledcollisions could potentially be pre-separated by type. Or maybe not. Who cares?
-            // Reproduction just needs creatures, or genomes later            
-            
             // Check for mating
             if (creature.OpenToMating)
             {
-                var mateIndex = reproductionStrategy.FindMateIndex(index, labeledCollisions);
+                var mateIndex = reproductionStrategy.FindMate(index, labeledCollisions);
                 if (mateIndex != -1)
                 {
                     var mate = registry.Entities[mateIndex];
 
                     if ((mate.Position - creature.Position).IsLengthLessThan(CreatureSimSettings.CreatureMateDistance))
                     {
-                        // TODO: Move this to the batch processing method
-                        // Or perhaps not? Since the context of who the mate is will be lost.
-
                         mate.MatingTimeLeft += CreatureSimSettings.ReproductionDuration;
                         creature.MatingTimeLeft += CreatureSimSettings.ReproductionDuration;
                         mate.Energy -= CreatureSimSettings.ReproductionEnergyCost / 2;
