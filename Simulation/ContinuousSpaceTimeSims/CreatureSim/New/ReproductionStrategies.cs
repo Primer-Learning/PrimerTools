@@ -1,18 +1,18 @@
+using System.Collections.Generic;
 using System.Linq;
 using Godot;
-using Microsoft.Win32;
 
 namespace PrimerTools.Simulation.New;
 
 public interface IReproductionStrategy
 {
-    public int FindMateIndex(int creatureIndex, DataEntityRegistry<DataCreature> registry);
+    public int FindMateIndex(int creatureIndex, DataEntityRegistry<DataCreature> registry, List<LabeledCollision> labeledCollisions);
     public DataCreature Reproduce(DataCreature parent1, DataCreature parent2);
 }
 
 public class AsexualReproductionStrategy : IReproductionStrategy
 {
-    public int FindMateIndex(int creatureIndex, DataEntityRegistry<DataCreature> registry)
+    public int FindMateIndex(int creatureIndex, DataEntityRegistry<DataCreature> registry, List<LabeledCollision> labeledCollisions)
     {
         return creatureIndex;
     }
@@ -45,13 +45,13 @@ public class AsexualReproductionStrategy : IReproductionStrategy
 
 public class SexualReproductionStrategy : IReproductionStrategy
 {
-    public int FindMateIndex(int creatureIndex, DataEntityRegistry<DataCreature> registry)
+    public int FindMateIndex(int creatureIndex, DataEntityRegistry<DataCreature> registry, List<LabeledCollision> labeledCollisions)
     {
         var parent = registry.Entities[creatureIndex]; 
-        var labeledCollisions = CreatureSimSettings.CreatureSim.GetLabeledAndSortedCollisions(parent)
-            .Where(c => c.Type == CollisionType.Creature).ToArray();
+        labeledCollisions = labeledCollisions
+            .Where(c => c.Type == CollisionType.Creature).ToList();
 
-        if (labeledCollisions.Length == 0) return -1;
+        if (!labeledCollisions.Any()) return -1;
         
         var closestMate = labeledCollisions.First();
         return closestMate.Index;

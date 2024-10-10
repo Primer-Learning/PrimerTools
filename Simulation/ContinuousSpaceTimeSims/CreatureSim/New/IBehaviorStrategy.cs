@@ -31,7 +31,7 @@ namespace PrimerTools.Simulation.New
             
             if (creature.OpenToMating)
             {
-                var mateIndex = reproductionStrategy.FindMateIndex(index, registry);
+                var mateIndex = reproductionStrategy.FindMateIndex(index, registry, labeledCollisions);
                 if (mateIndex != -1)
                 {
                     var mate = registry.Entities[mateIndex];
