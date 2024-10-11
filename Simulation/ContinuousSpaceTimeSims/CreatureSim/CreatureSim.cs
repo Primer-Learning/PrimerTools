@@ -123,24 +123,12 @@ public class CreatureSim : Simulation<DataCreature>
 			Registry.Entities[i] = creature;
 		}
 
-		UpdateIntents();
-		
-		PerformEating();
-		PerformReproductions();
-		ProcessMoveActions();
-		PerformDeathActions();
-	}
-	
-	private void UpdateIntents()
-	{
 		for (var i = 0; i < Registry.Entities.Count; i++)
 		{
 			var creature = Registry.Entities[i];
 			var labeledCollisions = GetLabeledAndSortedCollisions(creature);
 			
 			// _behaviorStrategy.DetermineAction(i, labeledCollisions, Registry, ReproductionStrategy);
-			
-			
 			
             creature.Actions = ActionFlags.None;
             
@@ -219,10 +207,7 @@ public class CreatureSim : Simulation<DataCreature>
             }
             Registry.Entities[i] = creature;
 		}
-	}
-
-	private void PerformEating()
-	{
+		
 		for (var i = 0; i < Registry.Entities.Count; i++)
 		{
 			var creature = Registry.Entities[i];
@@ -233,15 +218,6 @@ public class CreatureSim : Simulation<DataCreature>
 			
 			Registry.Entities[i] = creature;
 		}
-	}
-	
-	private void PerformReproductions()
-	{
-		
-	}
-
-	private void ProcessMoveActions()
-	{
 		for (var i = 0; i < Registry.Entities.Count; i++)
 		{
 			var creature = Registry.Entities[i];
@@ -256,6 +232,21 @@ public class CreatureSim : Simulation<DataCreature>
 			PhysicsServer3D.AreaSetTransform(creature.Awareness, transformNextFrame);
 			CreatureSimSettings.SpendMovementEnergy(ref creature);
 			
+			Registry.Entities[i] = creature;
+		}
+		
+		for (var i = 0; i < Registry.Entities.Count; i++)
+		{
+			var creature = Registry.Entities[i];
+		
+			var alive = creature.Energy > 0;
+			alive = alive && creature.Age < creature.MaxAge;
+			if (!alive)
+			{
+				creature.Alive = false;
+				CreatureDeathEvent?.Invoke(i);
+			}
+
 			Registry.Entities[i] = creature;
 		}
 	}
@@ -301,24 +292,5 @@ public class CreatureSim : Simulation<DataCreature>
 
 		return newVelocity;
 	}
-	
 	public static event Action<int> CreatureDeathEvent; // creatureIndex
-
-	private void PerformDeathActions()
-	{
-		for (var i = 0; i < Registry.Entities.Count; i++)
-		{
-			var creature = Registry.Entities[i];
-			
-			var alive = creature.Energy > 0;
-			alive = alive && creature.Age < creature.MaxAge;
-			if (!alive)
-			{
-				creature.Alive = false;
-				CreatureDeathEvent?.Invoke(i);
-			}
-
-			Registry.Entities[i] = creature;
-		}
-	}
 }
