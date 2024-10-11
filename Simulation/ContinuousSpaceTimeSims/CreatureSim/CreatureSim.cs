@@ -23,7 +23,6 @@ public struct LabeledCollision
 public class CreatureSim : Simulation<DataCreature>
 {
 	public ReproductionStrategy ReproductionStrategy { get; private set; }
-	private IBehaviorStrategy _behaviorStrategy;
 	public CreatureSim(SimulationWorld simulationWorld, bool useSexualReproduction = true) : base(simulationWorld)
 	{
 		ReproductionStrategy = useSexualReproduction ? new ReproductionStrategy(
@@ -33,7 +32,6 @@ public class CreatureSim : Simulation<DataCreature>
 			MateSelectionStrategies.AsexualFindMate,
 			ReproductionStrategies.AsexualReproduce
 		);
-		_behaviorStrategy = new SimpleBehaviorStrategy();
 	}
 
 	private FruitTreeSim FruitTreeSim => SimulationWorld.Simulations.OfType<FruitTreeSim>().FirstOrDefault();
@@ -139,7 +137,87 @@ public class CreatureSim : Simulation<DataCreature>
 		{
 			var creature = Registry.Entities[i];
 			var labeledCollisions = GetLabeledAndSortedCollisions(creature);
-			_behaviorStrategy.DetermineAction(i, labeledCollisions, Registry, ReproductionStrategy);
+			
+			// _behaviorStrategy.DetermineAction(i, labeledCollisions, Registry, ReproductionStrategy);
+			
+			
+			
+            creature.Actions = ActionFlags.None;
+            
+            // Do-nothing conditions 
+            if (!creature.Alive) continue;
+            if (creature.Age < CreatureSimSettings.MaturationTime) continue;
+            if (creature.EatingTimeLeft > 0)
+            {
+                // TODO: Get rid of EatingTimeLeft. There could be an absolute time that is compared instead.
+                // Meaning we don't have to update this manually.
+                creature.EatingTimeLeft -= SimulationWorld.TimeStep;
+                Registry.Entities[i] = creature;
+                continue;
+            }
+            if (creature.MatingTimeLeft > 0)
+            {
+                creature.MatingTimeLeft = Mathf.Max(0, creature.MatingTimeLeft - SimulationWorld.TimeStep);
+                Registry.Entities[i] = creature;
+                continue;
+            }
+            
+            // Check for mating
+            if (creature.OpenToMating)
+            {
+                var mateIndex = ReproductionStrategy.FindMate(i, labeledCollisions);
+                if (mateIndex != -1)
+                {
+                    var mate = Registry.Entities[mateIndex];
+
+                    if ((mate.Position - creature.Position).IsLengthLessThan(CreatureSimSettings.CreatureMateDistance))
+                    {
+                        mate.MatingTimeLeft += CreatureSimSettings.ReproductionDuration;
+                        creature.MatingTimeLeft += CreatureSimSettings.ReproductionDuration;
+                        mate.Energy -= CreatureSimSettings.ReproductionEnergyCost / 2;
+                        creature.Energy -= CreatureSimSettings.ReproductionEnergyCost / 2;
+                        Registry.RegisterEntity(ReproductionStrategy.Reproduce(creature, mate));
+                        Registry.Entities[i] = creature;
+                        Registry.Entities[mateIndex] = mate;
+                        continue;
+                    }
+
+                    creature.CurrentDestination = mate.Position;
+                    creature.Actions |= ActionFlags.Move;
+                    Registry.Entities[i] = creature;
+                    continue;
+                }
+            }
+
+            // Check for eating
+            if (creature.Energy < creature.HungerThreshold)
+            {
+                var closestFood = labeledCollisions.FirstOrDefault(c => c.Type == CollisionType.Tree);
+                if (closestFood.Type == CollisionType.Tree)
+                {
+                    if ((closestFood.Position - creature.Position).IsLengthLessThan(CreatureSimSettings.CreatureEatDistance)
+                        && creature.EatingTimeLeft <= 0)
+                    {
+                        creature.FoodTargetIndex = closestFood.Index;
+                        creature.Actions |= ActionFlags.Eat;
+                        Registry.Entities[i] = creature;
+                        continue;
+                    }
+            
+                    creature.CurrentDestination = closestFood.Position;
+                    creature.Actions |= ActionFlags.Move;
+                    Registry.Entities[i] = creature;
+                    continue;
+                }
+            }
+
+            creature.Actions |= ActionFlags.Move;
+            if ((creature.CurrentDestination - creature.Position).LengthSquared() <
+                CreatureSimSettings.CreatureEatDistance * CreatureSimSettings.CreatureEatDistance)
+            {
+                creature.CurrentDestination = CreatureSimSettings.GetRandomDestination(creature.Position);
+            }
+            Registry.Entities[i] = creature;
 		}
 	}
 
@@ -233,7 +311,7 @@ public class CreatureSim : Simulation<DataCreature>
 			var creature = Registry.Entities[i];
 			
 			var alive = creature.Energy > 0;
-			// alive = alive && creature.Age < creature.MaxAge;
+			alive = alive && creature.Age < creature.MaxAge;
 			if (!alive)
 			{
 				creature.Alive = false;
