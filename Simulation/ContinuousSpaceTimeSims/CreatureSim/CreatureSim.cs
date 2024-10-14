@@ -177,7 +177,8 @@ public class CreatureSim : Simulation<DataCreature>
                     }
             
                     creature.CurrentDestination = mate.Position;
-                    creature.Actions |= ActionFlags.Move;
+                    // creature.Actions |= ActionFlags.Move;
+                    PerformMovement(ref creature);
                     Registry.Entities[i] = creature;
                     continue;
                 }
@@ -200,53 +201,31 @@ public class CreatureSim : Simulation<DataCreature>
                 if (closestFood.Type != CollisionType.None)
                 {
 	                creature.CurrentDestination = closestFood.Position;
-	                creature.Actions |= ActionFlags.Move;
+	                // creature.Actions |= ActionFlags.Move;
+	                PerformMovement(ref creature);
 	                Registry.Entities[i] = creature;
 	                continue;
                 }
             }
 
-            creature.Actions |= ActionFlags.Move;
+            // creature.Actions |= ActionFlags.Move;
             if ((creature.CurrentDestination - creature.Position).LengthSquared() <
                 CreatureSimSettings.CreatureEatDistance * CreatureSimSettings.CreatureEatDistance)
             {
                 creature.CurrentDestination = CreatureSimSettings.GetRandomDestination(creature.Position);
             }
+            PerformMovement(ref creature);
+            
+            // Process deaths
+            var alive = creature.Energy > 0;
+            // alive = alive && creature.Age < creature.MaxAge;
+            if (!alive)
+            {
+	            creature.Alive = false;
+	            CreatureDeathEvent?.Invoke(i);
+            }
+            
             Registry.Entities[i] = creature;
-		}
-		
-		// Do movements
-		for (var i = 0; i < Registry.Entities.Count; i++)
-		{
-			var creature = Registry.Entities[i];
-
-			if (!creature.Actions.HasFlag(ActionFlags.Move)) continue;
-
-			creature.Velocity = UpdateVelocity(creature.Position, creature.CurrentDestination, creature.Velocity, creature.MaxSpeed);
-			creature.Position += creature.Velocity / SimulationWorld.PhysicsStepsPerSimSecond;
-			
-			var transformNextFrame = new Transform3D(Basis.Identity, creature.Position);
-			PhysicsServer3D.AreaSetTransform(creature.Body, transformNextFrame);
-			PhysicsServer3D.AreaSetTransform(creature.Awareness, transformNextFrame);
-			CreatureSimSettings.SpendMovementEnergy(ref creature);
-			
-			Registry.Entities[i] = creature;
-		}
-		
-		// Process deaths
-		for (var i = 0; i < Registry.Entities.Count; i++)
-		{
-			var creature = Registry.Entities[i];
-		
-			var alive = creature.Energy > 0;
-			// alive = alive && creature.Age < creature.MaxAge;
-			if (!alive)
-			{
-				creature.Alive = false;
-				CreatureDeathEvent?.Invoke(i);
-			}
-
-			Registry.Entities[i] = creature;
 		}
 	}
 
@@ -291,6 +270,16 @@ public class CreatureSim : Simulation<DataCreature>
 		}
 
 		return newVelocity;
+	}
+
+	private static void PerformMovement(ref DataCreature creature)
+	{
+		creature.Velocity = UpdateVelocity(creature.Position, creature.CurrentDestination, creature.Velocity, creature.MaxSpeed);
+		creature.Position += creature.Velocity / SimulationWorld.PhysicsStepsPerSimSecond;
+		var transformNextFrame = new Transform3D(Basis.Identity, creature.Position);
+		PhysicsServer3D.AreaSetTransform(creature.Body, transformNextFrame);
+		PhysicsServer3D.AreaSetTransform(creature.Awareness, transformNextFrame);
+		CreatureSimSettings.SpendMovementEnergy(ref creature);
 	}
 	public static event Action<int> CreatureDeathEvent; // creatureIndex
 }
