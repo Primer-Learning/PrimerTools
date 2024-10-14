@@ -1,8 +1,6 @@
-﻿using System;
-using Godot;
+﻿namespace PrimerTools.Simulation;
 
-namespace PrimerTools.Simulation;
-
+// TODO: Make this not static, and make it an object that gets fed to CreatureSim
 public static class CreatureSimSettings
 {
 	#region Sim parameters
@@ -34,5 +32,8 @@ public static class CreatureSimSettings
 	public const float MutationProbability = 0.1f;
 	public const float MutationIncrement = 1f;
 	#endregion
+
+	public static FindMateDelegate FindMate = MateSelectionStrategies.FindFirstAvailableMate;
+	public static ReproduceDelegate Reproduce = ReproductionStrategies.SexualReproduce;
 }
 

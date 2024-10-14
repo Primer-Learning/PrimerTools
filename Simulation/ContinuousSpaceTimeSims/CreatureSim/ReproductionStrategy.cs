@@ -7,18 +7,6 @@ namespace PrimerTools.Simulation;
 public delegate int FindMateDelegate(int creatureIndex, IEnumerable<int> labeledCollisions);
 public delegate DataCreature ReproduceDelegate(DataCreature parent1, DataCreature parent2);
 
-public class ReproductionStrategy
-{
-    public FindMateDelegate FindMate { get; }
-    public ReproduceDelegate Reproduce { get; }
-
-    public ReproductionStrategy(FindMateDelegate findMate, ReproduceDelegate reproduce)
-    {
-        FindMate = findMate;
-        Reproduce = reproduce;
-    }
-}
-
 public static class MateSelectionStrategies
 {
     public static int FindFirstAvailableMate(int creatureIndex, IEnumerable<int> labeledCollisions)

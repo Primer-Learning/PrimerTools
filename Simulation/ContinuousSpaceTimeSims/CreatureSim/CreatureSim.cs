@@ -8,17 +8,7 @@ namespace PrimerTools.Simulation;
 [Tool]
 public class CreatureSim : Simulation<DataCreature>
 {
-	public ReproductionStrategy ReproductionStrategy { get; private set; }
-	public CreatureSim(SimulationWorld simulationWorld, bool useSexualReproduction = true) : base(simulationWorld)
-	{
-		ReproductionStrategy = useSexualReproduction ? new ReproductionStrategy(
-			MateSelectionStrategies.FindFirstAvailableMate,
-			ReproductionStrategies.SexualReproduce
-		) : new ReproductionStrategy(
-			MateSelectionStrategies.AsexualFindMate,
-			ReproductionStrategies.AsexualReproduce
-		);
-	}
+	public CreatureSim(SimulationWorld simulationWorld) : base(simulationWorld) {}
 
 	private FruitTreeSim FruitTreeSim => SimulationWorld.Simulations.OfType<FruitTreeSim>().FirstOrDefault();
 	
@@ -89,7 +79,7 @@ public class CreatureSim : Simulation<DataCreature>
             // Check for mating
             if (creature.OpenToMating)
             {
-                var mateIndex = ReproductionStrategy.FindMate(i, creatureCollisions);
+                var mateIndex = CreatureSimSettings.FindMate(i, creatureCollisions);
                 if (mateIndex != -1)
                 {
                     var mate = Registry.Entities[mateIndex];
@@ -100,7 +90,7 @@ public class CreatureSim : Simulation<DataCreature>
                         creature.MatingTimeLeft += CreatureSimSettings.ReproductionDuration;
                         mate.Energy -= CreatureSimSettings.ReproductionEnergyCost / 2;
                         creature.Energy -= CreatureSimSettings.ReproductionEnergyCost / 2;
-                        Registry.RegisterEntity(ReproductionStrategy.Reproduce(creature, mate));
+                        Registry.RegisterEntity(CreatureSimSettings.Reproduce(creature, mate));
                         Registry.Entities[i] = creature;
                         Registry.Entities[mateIndex] = mate;
                         continue;
