@@ -9,7 +9,7 @@ namespace PrimerTools.Simulation;
 [Tool]
 public class CreatureSim : Simulation<DataCreature>
 {
-	private CreatureSimSettings _settings;
+	private readonly CreatureSimSettings _settings;
 	public CreatureSim(SimulationWorld simulationWorld, CreatureSimSettings settings) : base(simulationWorld)
 	{
 		_settings = settings;
@@ -24,23 +24,19 @@ public class CreatureSim : Simulation<DataCreature>
 			GD.PrintErr("TreeSim not found. Not initializing creature sim because they will all starve to death immediately. You monster.");
 			return;
 		}
-		
-		for (var i = 0; i < InitialEntityCount; i++)
-		{
-			var physicalCreature = new DataCreature
-			{
-				Position = new Vector3(
-					simulationWorld.Rng.RangeFloat(simulationWorld.WorldDimensions.X),
-					0,
-					simulationWorld.Rng.RangeFloat(simulationWorld.WorldDimensions.Y)
-				),
-				AwarenessRadius = CreatureSimSettings.InitialAwarenessRadius,
-				MaxSpeed = CreatureSimSettings.InitialCreatureSpeed,
-				MaxAge = CreatureSimSettings.InitialMaxAge
-			};
-			physicalCreature.CurrentDestination = physicalCreature.Position;
 
-			Registry.RegisterEntity(physicalCreature);
+		foreach (var creature in _settings.InitializePopulation(InitialEntityCount, _settings))
+		{
+			var position = new Vector3(
+				simulationWorld.Rng.RangeFloat(simulationWorld.WorldDimensions.X),
+				0,
+				simulationWorld.Rng.RangeFloat(simulationWorld.WorldDimensions.Y)
+			);
+			var mutableVersion = creature;
+			mutableVersion.Position = position;
+			mutableVersion.CurrentDestination = position;
+			
+			Registry.RegisterEntity(mutableVersion);
 		}
 	}
 
@@ -137,7 +133,7 @@ public class CreatureSim : Simulation<DataCreature>
             
             // Process deaths
             var alive = creature.Energy > 0;
-            // alive = alive && creature.Age < creature.MaxAge;
+            alive = alive && creature.Age < creature.MaxAge;
             if (!alive)
             {
 	            creature.Alive = false;
@@ -297,8 +293,8 @@ public class CreatureSim : Simulation<DataCreature>
 	}
 	private static void SpendMovementEnergy(ref DataCreature creature)
 	{
-		var normalizedSpeed = creature.MaxSpeed / CreatureSimSettings.InitialCreatureSpeed;
-		var normalizedAwarenessRadius = creature.AwarenessRadius / CreatureSimSettings.InitialAwarenessRadius;
+		var normalizedSpeed = creature.MaxSpeed / CreatureSimSettings.ReferenceCreatureSpeed;
+		var normalizedAwarenessRadius = creature.AwarenessRadius / CreatureSimSettings.ReferenceAwarenessRadius;
 		
 		creature.Energy -= (CreatureSimSettings.BaseEnergySpend + CreatureSimSettings.GlobalEnergySpendAdjustmentFactor * ( normalizedSpeed * normalizedSpeed + normalizedAwarenessRadius)) / SimulationWorld.PhysicsStepsPerSimSecond;
 	}

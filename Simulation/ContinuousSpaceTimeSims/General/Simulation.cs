@@ -16,7 +16,6 @@ public abstract class Simulation<TDataEntity> : ISimulation
     #region Simulation
     protected readonly SimulationWorld simulationWorld;
     public readonly DataEntityRegistry<TDataEntity> Registry;
-    // public NodeEntityManager<TDataEntity, TNodeEntity> EntityManager;
 
     private bool _initialized;
     private bool _running;

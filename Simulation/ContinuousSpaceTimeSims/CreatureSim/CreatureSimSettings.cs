@@ -28,9 +28,9 @@ public class CreatureSimSettings
 	public const float ReproductionDuration = 1;
 	
 	// Initial population
-	public const float InitialCreatureSpeed = 5f;
-	public const float InitialAwarenessRadius = 5f;
-	public const float InitialMaxAge = 20;
+	public const float ReferenceCreatureSpeed = 5f;
+	public const float ReferenceAwarenessRadius = 5f;
+	public const float ReferenceMaxAge = 20;
 	
 	// Mutation
 	public const float MutationProbability = 0.1f;
@@ -39,4 +39,7 @@ public class CreatureSimSettings
 
 	public FindMateDelegate FindMate = MateSelectionStrategies.FindFirstAvailableMate;
 	public ReproduceDelegate Reproduce = ReproductionStrategies.SexualReproduce;
+
+	public InitialPopulationGeneratorDelegate InitializePopulation =
+		InitialPopulationGeneration.AllDefaultsInitialPopulation;
 }

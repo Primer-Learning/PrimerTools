@@ -92,7 +92,8 @@ public partial class SimulationWorld : Node3D
         var creatureSimSettings = new CreatureSimSettings
         {
             FindMate = MateSelectionStrategies.FindFirstAvailableMate,
-            Reproduce = ReproductionStrategies.SexualReproduce
+            Reproduce = ReproductionStrategies.SexualReproduce,
+            InitializePopulation = InitialPopulationGeneration.FlatMaxAgeDistribution
         };
         var creatureSim = new CreatureSim(this, creatureSimSettings);
         Simulations.Add(creatureSim);
