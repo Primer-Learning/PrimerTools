@@ -19,13 +19,13 @@ public struct DataTree : IDataEntity
         PhysicsServer3D.FreeRid(Body);
     }
 
-    public void Initialize(World3D world3D)
+    public void Initialize(Rid space)
     {
         var transform = Transform3D.Identity.Translated(Position);
 
         // PhysicsServer3D setup
         var bodyArea = PhysicsServer3D.AreaCreate();
-        PhysicsServer3D.AreaSetSpace(bodyArea, world3D.Space);
+        PhysicsServer3D.AreaSetSpace(bodyArea,space);
         PhysicsServer3D.AreaSetTransform(bodyArea, transform);
         var bodyShape = new SphereShape3D();
         bodyShape.Radius = 1.0f;

@@ -23,7 +23,7 @@ public class DataEntityRegistry<T> where T : IDataEntity
 
 	public void RegisterEntity(T entity)
 	{
-		entity.Initialize(_world3D);
+		entity.Initialize(_world3D.Space);
 		EntityLookup.Add(entity.Body, Entities.Count);
 		Entities.Add(entity);
 		

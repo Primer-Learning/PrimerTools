@@ -11,7 +11,7 @@ public interface IDataEntity : IEquatable<IDataEntity>
     public Rid Body { get; set; }
     public bool Alive { get; set; }
     public void CleanUp();
-    public void Initialize(World3D world3D);
+    public void Initialize(Rid space);
     
     bool IEquatable<IDataEntity>.Equals(IDataEntity other)
     {

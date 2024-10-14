@@ -64,13 +64,13 @@ public struct DataCreature : IDataEntity
         _awarenessShapeResource?.Dispose();
     }
 
-    public void Initialize(World3D world3D)
+    public void Initialize(Rid space)
     {
         var transform = Transform3D.Identity.Translated(Position);
 		
         // PhysicsServer3D stuff
         var bodyArea = PhysicsServer3D.AreaCreate();
-        PhysicsServer3D.AreaSetSpace(bodyArea, world3D.Space);
+        PhysicsServer3D.AreaSetSpace(bodyArea, space);
         PhysicsServer3D.AreaSetTransform(bodyArea, transform);
         var bodyShape = new CapsuleShape3D();
         bodyShape.Height = 1;
@@ -78,7 +78,7 @@ public struct DataCreature : IDataEntity
         PhysicsServer3D.AreaAddShape(bodyArea, bodyShape.GetRid());
 		
         var awarenessArea = PhysicsServer3D.AreaCreate();
-        PhysicsServer3D.AreaSetSpace(awarenessArea, world3D.Space);
+        PhysicsServer3D.AreaSetSpace(awarenessArea, space);
         PhysicsServer3D.AreaSetTransform(awarenessArea, transform);
         var awarenessShape = new SphereShape3D();
         awarenessShape.Radius = AwarenessRadius;
@@ -97,4 +97,3 @@ public struct DataCreature : IDataEntity
         FoodTargetIndex = -1;
     }
 }
-
