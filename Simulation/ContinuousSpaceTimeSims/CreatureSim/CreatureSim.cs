@@ -45,10 +45,6 @@ public class CreatureSim : Simulation<DataCreature>
 	
 	protected override void CustomInitialize()
 	{
-		// TODO: Not this. See comment in CreatureBehaviorHandler
-		CreatureSimSettings.FruitTreeSim = FruitTreeSim;
-		CreatureSimSettings.CreatureSim = this;
-		
 		if (FruitTreeSim == null)
 		{
 			GD.PrintErr("TreeSim not found. Not initializing creature sim because they will all starve to death immediately. You monster.");
@@ -72,53 +68,6 @@ public class CreatureSim : Simulation<DataCreature>
 
 			Registry.RegisterEntity(physicalCreature);
 		}
-	}
-	public List<LabeledCollision> GetLabeledAndSortedCollisions(DataCreature creature)
-	{
-		// TODO: Put areas on a separate collision layer and mask the collisions so they don't look at each other
-		// Just a small optimization
-		
-		var objectsInAwareness = creature.DetectCollisionsWithCreature();
-		var labeledCollisions = new List<LabeledCollision>();
-
-		foreach (var objectData in objectsInAwareness)
-		{
-			var objectRid = (Rid)objectData["rid"];
-			if (FruitTreeSim.Registry.EntityLookup.TryGetValue(objectRid, out var treeIndex))
-			{
-				var tree = FruitTreeSim.Registry.Entities[treeIndex];
-				// TODO: Remove this check? This function should just report collisions, and the 
-				// creature can decide if it cares about fruit or openness to mating.
-				if (tree.HasFruit)
-				{
-					labeledCollisions.Add(new LabeledCollision
-					{
-						Type = CollisionType.Tree,
-						Index = treeIndex,
-						Position = tree.Position
-					});
-				}
-			}
-			else if (Registry.EntityLookup.TryGetValue(objectRid, out var creatureIndex))
-			{
-				var otherCreature = Registry.Entities[creatureIndex];
-				// TODO: Remove the OpenToMating check? This function should just report collisions, and the 
-				// creature can decide if it cares about fruit or openness to mating.
-				
-				if (otherCreature.OpenToMating)
-				{
-					labeledCollisions.Add(new LabeledCollision
-					{
-						Type = CollisionType.Creature,
-						Index = creatureIndex,
-						Position = otherCreature.Position
-					});
-				}
-			}
-		}
-
-		labeledCollisions.Sort((a, b) => (a.Position - creature.Position).LengthSquared().CompareTo((b.Position - creature.Position).LengthSquared()));
-		return labeledCollisions;
 	}
 
 	protected override void CustomStep()
@@ -193,7 +142,9 @@ public class CreatureSim : Simulation<DataCreature>
                 {
                     creature.FoodTargetIndex = closestFood.Index;
                     creature.Actions |= ActionFlags.Eat;
-                    creature = CreatureSimSettings.EatFood(creature, creature.FoodTargetIndex, i);
+                    var tree = FruitTreeSim.Registry.Entities[creature.FoodTargetIndex];
+                    creature = CreatureSimSettings.EatFood(creature, ref tree, i);
+                    FruitTreeSim.Registry.Entities[creature.FoodTargetIndex] = tree;
                     Registry.Entities[i] = creature;
                     continue;
                 }
@@ -227,6 +178,54 @@ public class CreatureSim : Simulation<DataCreature>
             
             Registry.Entities[i] = creature;
 		}
+	}
+	
+	public List<LabeledCollision> GetLabeledAndSortedCollisions(DataCreature creature)
+	{
+		// TODO: Put areas on a separate collision layer and mask the collisions so they don't look at each other
+		// Just a small optimization
+		
+		var objectsInAwareness = creature.DetectCollisionsWithCreature();
+		var labeledCollisions = new List<LabeledCollision>();
+
+		foreach (var objectData in objectsInAwareness)
+		{
+			var objectRid = (Rid)objectData["rid"];
+			if (FruitTreeSim.Registry.EntityLookup.TryGetValue(objectRid, out var treeIndex))
+			{
+				var tree = FruitTreeSim.Registry.Entities[treeIndex];
+				// TODO: Remove this check? This function should just report collisions, and the 
+				// creature can decide if it cares about fruit or openness to mating.
+				if (tree.HasFruit)
+				{
+					labeledCollisions.Add(new LabeledCollision
+					{
+						Type = CollisionType.Tree,
+						Index = treeIndex,
+						Position = tree.Position
+					});
+				}
+			}
+			else if (Registry.EntityLookup.TryGetValue(objectRid, out var creatureIndex))
+			{
+				var otherCreature = Registry.Entities[creatureIndex];
+				// TODO: Remove the OpenToMating check? This function should just report collisions, and the 
+				// creature can decide if it cares about fruit or openness to mating.
+				
+				if (otherCreature.OpenToMating)
+				{
+					labeledCollisions.Add(new LabeledCollision
+					{
+						Type = CollisionType.Creature,
+						Index = creatureIndex,
+						Position = otherCreature.Position
+					});
+				}
+			}
+		}
+
+		labeledCollisions.Sort((a, b) => (a.Position - creature.Position).LengthSquared().CompareTo((b.Position - creature.Position).LengthSquared()));
+		return labeledCollisions;
 	}
 
 	private static Vector3 UpdateVelocity(Vector3 position, Vector3 destination, Vector3 currentVelocity, float maxSpeed)

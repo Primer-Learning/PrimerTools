@@ -1,3 +1,5 @@
+using Godot;
+
 namespace PrimerTools.Simulation.New;
 
 public partial class NodeCreatureManager : NodeEntityManager<DataCreature, NodeCreature>
@@ -12,10 +14,10 @@ public partial class NodeCreatureManager : NodeEntityManager<DataCreature, NodeC
         CreatureSim.CreatureDeathEvent += OnCreatureDeath;
     }
 
-    private void OnCreatureEat(int creatureIndex, int treeIndex, float duration)
+    private void OnCreatureEat(int creatureIndex, Rid treeID, float duration)
     {
         NodeEntities[creatureIndex].Eat(
-            _fruitTreeManager.NodeEntities[treeIndex]?.GetFruit(),
+            _fruitTreeManager.GetNodeEntityByDataID(treeID)?.GetFruit(),
             duration
         );
     }

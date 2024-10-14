@@ -1,20 +1,11 @@
 ﻿using System;
-using System.Linq;
 using Godot;
-using Godot.Collections;
 
 namespace PrimerTools.Simulation;
 
 [Tool]
 public static class CreatureSimSettings
 {
-	// TODO: Not this. There's a better way to have things talk to each other.
-	// Possibly have SimulationWorld be the hub for sims talking to each other.
-	public static FruitTreeSim FruitTreeSim;
-	public static CreatureSim CreatureSim;
-	
-	// This is less bad, but let's still think about it
-	
 	#region Sim parameters
 	// Movement
 	public const float CreatureStepMaxLength = 10f;
@@ -73,25 +64,6 @@ public static class CreatureSimSettings
 		return newDestination;
 	}
 	
-	public static void ChooseTreeDestination(ref DataCreature creature, int treeIndex)
-	{
-		var tree = FruitTreeSim.Registry.Entities[treeIndex];
-		creature.CurrentDestination = tree.Position;
-	}
-	// public static (int, bool) FindClosestFood(DataCreature creature)
-	// {
-	// 	var labeledCollisions = CreatureSim.GetLabeledAndSortedCollisions(creature);
-	// 	var closestFood = labeledCollisions.FirstOrDefault(c => c.Type == CollisionType.Tree);
-	//
-	// 	if (closestFood.Type == CollisionType.Tree)
-	// 	{
-	// 		var canEat = (closestFood.Position - creature.Position).LengthSquared() < CreatureEatDistance * CreatureEatDistance;
-	// 		return (closestFood.Index, canEat);
-	// 	}
-	//
-	// 	return (-1, false);
-	// }
-	
 	public static void SpendMovementEnergy(ref DataCreature creature)
 	{
 		var normalizedSpeed = creature.MaxSpeed / InitialCreatureSpeed;
@@ -99,23 +71,21 @@ public static class CreatureSimSettings
 		
 		creature.Energy -= (BaseEnergySpend + GlobalEnergySpendAdjustmentFactor * ( normalizedSpeed * normalizedSpeed + normalizedAwarenessRadius)) / SimulationWorld.PhysicsStepsPerSimSecond;
 	}
-	public static event Action<int, int, float> CreatureEatEvent; // creatureIndex, treeIndex, duration
+	public static event Action<int, Rid, float> CreatureEatEvent; // creatureIndex, treeIndex, duration
 
-	public static DataCreature EatFood(DataCreature creature, int treeIndex, int creatureIndex)
+	public static DataCreature EatFood(DataCreature creature, ref DataTree tree, int creatureIndex)
 	{
-		var tree = FruitTreeSim.Registry.Entities[treeIndex];
+		// var tree = FruitTreeSim.Registry.Entities[treeIndex];
 		if (!tree.HasFruit) return creature;
 		
 		tree.HasFruit = false;
 		tree.FruitGrowthProgress = 0;
-		FruitTreeSim.Registry.Entities[treeIndex] = tree;
+		// FruitTreeSim.Registry.Entities[treeIndex] = tree;
 		
 		creature.Energy += EnergyGainFromFood;
 		creature.EatingTimeLeft = EatDuration;
-		CreatureEatEvent?.Invoke(creatureIndex, treeIndex, EatDuration / SimulationWorld.TimeScale);
+		CreatureEatEvent?.Invoke(creatureIndex, tree.Body, EatDuration / SimulationWorld.TimeScale);
 		return creature;
 	}
-
-	
 }
 

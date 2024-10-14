@@ -32,6 +32,12 @@ public partial class NodeEntityManager<TDataEntity, TNodeEntity> : Node3D
         // GetChild(index).QueueFree();
     }
 
+    public TNodeEntity GetNodeEntityByDataID(Rid rid)
+    {
+        var index = _dataEntityRegistry.EntityLookup[rid];
+        return NodeEntities[index];
+    }
+
     private void Reset()
     {
         foreach (var child in NodeEntities)
