@@ -124,6 +124,7 @@ public class CreatureSim : Simulation<DataCreature>
                 }
             }
 
+            // Random movement from here
             if ((creature.CurrentDestination - creature.Position).LengthSquared() <
                 CreatureSimSettings.CreatureEatDistance * CreatureSimSettings.CreatureEatDistance)
             {
@@ -229,12 +230,6 @@ public class CreatureSim : Simulation<DataCreature>
 		if (destination == Vector3.Zero) GD.Print("Moving to the origin");
 		var desiredDisplacement = destination - position;
 		var desiredDisplacementLengthSquared = desiredDisplacement.LengthSquared();
-		
-		// If we're basically there, choose a new destination
-		if (desiredDisplacementLengthSquared < CreatureSimSettings.CreatureEatDistance * CreatureSimSettings.CreatureEatDistance)
-		{
-			GD.PushWarning("Creature is already at its destination during UpdateVelocity, which shouldn't happen.");
-		}
 		
 		// Calculate desired velocity
 		var desiredVelocity = desiredDisplacement * maxSpeed / Mathf.Sqrt(desiredDisplacementLengthSquared);

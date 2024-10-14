@@ -93,7 +93,7 @@ public partial class SimulationWorld : Node3D
         {
             FindMate = MateSelectionStrategies.FindFirstAvailableMate,
             Reproduce = ReproductionStrategies.SexualReproduce,
-            InitializePopulation = InitialPopulationGeneration.FlatMaxAgeDistribution
+            InitializePopulation = InitialPopulationGeneration.AllDefaultsInitialPopulation
         };
         var creatureSim = new CreatureSim(this, creatureSimSettings);
         Simulations.Add(creatureSim);
@@ -161,16 +161,18 @@ public partial class SimulationWorld : Node3D
         return position.X >= 0 && position.X <= _worldDimension.X &&
                position.Z >= 0 && position.Z <= _worldDimension.Y;
     }
-    public Vector3 GetRandomDestination(Vector3 position, float maxDistance)
+    public Vector3 GetRandomDestination(Vector3 position, float maxDistance, float minDistance = 0)
     {
         Vector3 newDestination;
         var attempts = 0;
         const int maxAttempts = 100;
+        
+        if (minDistance > maxDistance) PrimerGD.PushWarningWithStackTrace("minDistance is greater than maxDistance, ya dummy" );
 
         do
         {
             var angle = _rng.RangeFloat(1) * 2 * Mathf.Pi;
-            var displacement = _rng.RangeFloat(1) * maxDistance * new Vector3(
+            var displacement = _rng.RangeFloat(minDistance, maxDistance) * new Vector3(
                 Mathf.Sin(angle),
                 0,
                 Mathf.Cos(angle)
