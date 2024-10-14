@@ -125,5 +125,13 @@ public struct DataCreature : IDataEntity
         // Run query and print
         return _space.IntersectShape(queryParams);
     }
+    
+    public void SpendMovementEnergy()
+    {
+        var normalizedSpeed = MaxSpeed / CreatureSimSettings.InitialCreatureSpeed;
+        var normalizedAwarenessRadius = AwarenessRadius / CreatureSimSettings.InitialAwarenessRadius;
+		
+        Energy -= (CreatureSimSettings.BaseEnergySpend + CreatureSimSettings.GlobalEnergySpendAdjustmentFactor * ( normalizedSpeed * normalizedSpeed + normalizedAwarenessRadius)) / SimulationWorld.PhysicsStepsPerSimSecond;
+    }
 }
 

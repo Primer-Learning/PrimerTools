@@ -10,7 +10,7 @@ public partial class NodeCreatureManager : NodeEntityManager<DataCreature, NodeC
         : base(dataEntityRegistry)
     {
         _fruitTreeManager = fruitTreeManager;
-        CreatureSimSettings.CreatureEatEvent += OnCreatureEat;
+        CreatureSim.CreatureEatEvent += OnCreatureEat;
         CreatureSim.CreatureDeathEvent += OnCreatureDeath;
     }
 
@@ -30,7 +30,7 @@ public partial class NodeCreatureManager : NodeEntityManager<DataCreature, NodeC
     public override void _ExitTree()
     {
         base._ExitTree();
-        CreatureSimSettings.CreatureEatEvent -= OnCreatureEat;
+        CreatureSim.CreatureEatEvent -= OnCreatureEat;
         CreatureSim.CreatureDeathEvent -= OnCreatureDeath;
     }
 }

@@ -124,7 +124,7 @@ public class CreatureSim : Simulation<DataCreature>
                     creature.FoodTargetIndex = closestFood.Index;
                     creature.Actions |= ActionFlags.Eat;
                     var tree = FruitTreeSim.Registry.Entities[creature.FoodTargetIndex];
-                    creature = CreatureSimSettings.EatFood(creature, ref tree, i);
+                    creature = EatFood(creature, ref tree, i);
                     FruitTreeSim.Registry.Entities[creature.FoodTargetIndex] = tree;
                     Registry.Entities[i] = creature;
                     continue;
@@ -280,7 +280,24 @@ public class CreatureSim : Simulation<DataCreature>
 		var transformNextFrame = new Transform3D(Basis.Identity, creature.Position);
 		PhysicsServer3D.AreaSetTransform(creature.Body, transformNextFrame);
 		PhysicsServer3D.AreaSetTransform(creature.Awareness, transformNextFrame);
-		CreatureSimSettings.SpendMovementEnergy(ref creature);
+		creature.SpendMovementEnergy();
 	}
 	public static event Action<int> CreatureDeathEvent; // creatureIndex
+	
+	public static event Action<int, Rid, float> CreatureEatEvent; // creatureIndex, treeIndex, duration
+
+	public static DataCreature EatFood(DataCreature creature, ref DataTree tree, int creatureIndex)
+	{
+		// var tree = FruitTreeSim.Registry.Entities[treeIndex];
+		if (!tree.HasFruit) return creature;
+		
+		tree.HasFruit = false;
+		tree.FruitGrowthProgress = 0;
+		// FruitTreeSim.Registry.Entities[treeIndex] = tree;
+		
+		creature.Energy += CreatureSimSettings.EnergyGainFromFood;
+		creature.EatingTimeLeft = CreatureSimSettings.EatDuration;
+		CreatureEatEvent?.Invoke(creatureIndex, tree.Body, CreatureSimSettings.EatDuration / SimulationWorld.TimeScale);
+		return creature;
+	}
 }

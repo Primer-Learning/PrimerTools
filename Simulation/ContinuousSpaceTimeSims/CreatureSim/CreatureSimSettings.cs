@@ -3,7 +3,6 @@ using Godot;
 
 namespace PrimerTools.Simulation;
 
-[Tool]
 public static class CreatureSimSettings
 {
 	#region Sim parameters
@@ -18,9 +17,9 @@ public static class CreatureSimSettings
 	public const float MaturationTime = 2f;
 	
 	// Energy
-	private const float BaseEnergySpend = 0.1f;
-	private const float GlobalEnergySpendAdjustmentFactor = 0.2f;
-	private const float EnergyGainFromFood = 1f;
+	public const float BaseEnergySpend = 0.1f;
+	public const float GlobalEnergySpendAdjustmentFactor = 0.2f;
+	public const float EnergyGainFromFood = 1f;
 	public const float ReproductionEnergyThreshold = 2f;
 	public const float ReproductionEnergyCost = 1f;
 	public const float DefaultHungerThreshold = 4;
@@ -35,29 +34,5 @@ public static class CreatureSimSettings
 	public const float MutationProbability = 0.1f;
 	public const float MutationIncrement = 1f;
 	#endregion
-	
-	public static void SpendMovementEnergy(ref DataCreature creature)
-	{
-		var normalizedSpeed = creature.MaxSpeed / InitialCreatureSpeed;
-		var normalizedAwarenessRadius = creature.AwarenessRadius / InitialAwarenessRadius;
-		
-		creature.Energy -= (BaseEnergySpend + GlobalEnergySpendAdjustmentFactor * ( normalizedSpeed * normalizedSpeed + normalizedAwarenessRadius)) / SimulationWorld.PhysicsStepsPerSimSecond;
-	}
-	public static event Action<int, Rid, float> CreatureEatEvent; // creatureIndex, treeIndex, duration
-
-	public static DataCreature EatFood(DataCreature creature, ref DataTree tree, int creatureIndex)
-	{
-		// var tree = FruitTreeSim.Registry.Entities[treeIndex];
-		if (!tree.HasFruit) return creature;
-		
-		tree.HasFruit = false;
-		tree.FruitGrowthProgress = 0;
-		// FruitTreeSim.Registry.Entities[treeIndex] = tree;
-		
-		creature.Energy += EnergyGainFromFood;
-		creature.EatingTimeLeft = EatDuration;
-		CreatureEatEvent?.Invoke(creatureIndex, tree.Body, EatDuration / SimulationWorld.TimeScale);
-		return creature;
-	}
 }
 
