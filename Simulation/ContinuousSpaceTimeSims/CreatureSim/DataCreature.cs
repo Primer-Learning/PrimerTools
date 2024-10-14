@@ -3,21 +3,10 @@ using Godot;
 
 namespace PrimerTools.Simulation;
 
-[Flags]
-public enum ActionFlags
-{
-    None = 0,
-    Move = 1 << 0,
-    Eat = 1 << 1,
-    Reproduce = 1 << 2
-}
-
 public struct DataCreature : IDataEntity
 {
-    // Checked before processing
     public bool Alive { get; set; }
     
-    // Updated in MovementAction
     public Rid Body { get; set; }
     public Rid Awareness;
     public Vector3 Position;
@@ -49,9 +38,6 @@ public struct DataCreature : IDataEntity
     public float MatingTimeLeft;
 
     public bool OpenToMating => Energy > CreatureSimSettings.ReproductionEnergyThreshold && MatingTimeLeft <= 0;
-    
-    // New field for action flags
-    public ActionFlags Actions;
 		
     private CapsuleShape3D _bodyShapeResource;
     private SphereShape3D _awarenessShapeResource;

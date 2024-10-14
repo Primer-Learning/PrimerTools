@@ -58,10 +58,6 @@ public class CreatureSim : Simulation<DataCreature>
 		{
 			var creature = Registry.Entities[i];
 			var labeledCollisions = GetLabeledAndSortedCollisions(creature);
-			var treeCollisions = labeledCollisions.Where(x => x.Type == CollisionType.Tree).Select(x => x.Index);
-			var creatureCollisions = labeledCollisions.Where(x => x.Type == CollisionType.Creature).Select(x => x.Index);
-			
-            creature.Actions = ActionFlags.None;
             
             // Do-nothing conditions 
             if (!creature.Alive) continue;
@@ -84,6 +80,7 @@ public class CreatureSim : Simulation<DataCreature>
             // Check for mating
             if (creature.OpenToMating)
             {
+	            var creatureCollisions = labeledCollisions.Where(x => x.Type == CollisionType.Creature).Select(x => x.Index);
                 var mateIndex = _settings.FindMate(i, creatureCollisions);
                 if (mateIndex != -1)
                 {
@@ -102,8 +99,6 @@ public class CreatureSim : Simulation<DataCreature>
                     }
             
                     creature.CurrentDestination = mate.Position;
-                    // creature.Actions |= ActionFlags.Move;
-                    PerformMovement(ref creature);
                     Registry.Entities[i] = creature;
                     continue;
                 }
@@ -117,7 +112,6 @@ public class CreatureSim : Simulation<DataCreature>
                     && creature.EatingTimeLeft <= 0)
                 {
                     creature.FoodTargetIndex = closestFood.Index;
-                    creature.Actions |= ActionFlags.Eat;
                     var tree = FruitTreeSim.Registry.Entities[creature.FoodTargetIndex];
                     creature = EatFood(creature, ref tree, i);
                     FruitTreeSim.Registry.Entities[creature.FoodTargetIndex] = tree;
@@ -128,14 +122,12 @@ public class CreatureSim : Simulation<DataCreature>
                 if (closestFood.Type != CollisionType.None)
                 {
 	                creature.CurrentDestination = closestFood.Position;
-	                // creature.Actions |= ActionFlags.Move;
 	                PerformMovement(ref creature);
 	                Registry.Entities[i] = creature;
 	                continue;
                 }
             }
 
-            // creature.Actions |= ActionFlags.Move;
             if ((creature.CurrentDestination - creature.Position).LengthSquared() <
                 CreatureSimSettings.CreatureEatDistance * CreatureSimSettings.CreatureEatDistance)
             {
@@ -156,7 +148,6 @@ public class CreatureSim : Simulation<DataCreature>
 		}
 	}
 	
-	// TODO: Extract all this collision stuff. It could be used in TreeSim or other sims.
 	#region Collision handling
 	private enum CollisionType
 	{
@@ -185,8 +176,7 @@ public class CreatureSim : Simulation<DataCreature>
 		queryParams.Exclude = new Array<Rid>() { creature.Body };
 		queryParams.ShapeRid = PhysicsServer3D.AreaGetShape(creature.Awareness, 0);
 		queryParams.Transform = Transform3D.Identity.Translated(creature.Position);
-
-		// Run query and print
+		
 		return PhysicsServer3D.SpaceGetDirectState(Registry.World3D.Space).IntersectShape(queryParams);
 	}
 	private List<LabeledCollision> GetLabeledAndSortedCollisions(DataCreature creature)
@@ -291,7 +281,7 @@ public class CreatureSim : Simulation<DataCreature>
 	}
 	public static event Action<int> CreatureDeathEvent; // creatureIndex
 	
-	public static event Action<int, Rid, float> CreatureEatEvent; // creatureIndex, treeIndex, duration
+	public static event Action<int, Rid, float> CreatureEatEvent; // creatureIndex, treeBodyRid, duration
 
 	public static DataCreature EatFood(DataCreature creature, ref DataTree tree, int creatureIndex)
 	{
