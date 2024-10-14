@@ -151,6 +151,33 @@ public partial class SimulationWorld : Node3D
         return position.X >= 0 && position.X <= _worldDimension.X &&
                position.Z >= 0 && position.Z <= _worldDimension.Y;
     }
+    public static Vector3 GetRandomDestination(Vector3 position, float maxDistance)
+    {
+        Vector3 newDestination;
+        var attempts = 0;
+        const int maxAttempts = 100;
+
+        do
+        {
+            var angle = SimulationWorld.Rng.RangeFloat(1) * 2 * Mathf.Pi;
+            var displacement = SimulationWorld.Rng.RangeFloat(1) * maxDistance * new Vector3(
+                Mathf.Sin(angle),
+                0,
+                Mathf.Cos(angle)
+            );
+            newDestination = position + displacement;
+            attempts++;
+
+            if (attempts >= maxAttempts)
+            {
+                GD.PrintErr($"Failed to find a valid destination after {maxAttempts} attempts. Using current position.");
+                newDestination = position;
+                break;
+            }
+        } while (!IsWithinWorldBounds(newDestination));
+
+        return newDestination;
+    }
 }
 
 

@@ -144,7 +144,7 @@ public class CreatureSim : Simulation<DataCreature>
             if ((creature.CurrentDestination - creature.Position).LengthSquared() <
                 CreatureSimSettings.CreatureEatDistance * CreatureSimSettings.CreatureEatDistance)
             {
-                creature.CurrentDestination = CreatureSimSettings.GetRandomDestination(creature.Position);
+                creature.CurrentDestination = SimulationWorld.GetRandomDestination(creature.Position, CreatureSimSettings.CreatureStepMaxLength);
             }
             PerformMovement(ref creature);
             

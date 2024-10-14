@@ -36,34 +36,6 @@ public static class CreatureSimSettings
 	public const float MutationIncrement = 1f;
 	#endregion
 	
-	public static Vector3 GetRandomDestination(Vector3 position)
-	{
-		Vector3 newDestination;
-		var attempts = 0;
-		const int maxAttempts = 100;
-
-		do
-		{
-			var angle = SimulationWorld.Rng.RangeFloat(1) * 2 * Mathf.Pi;
-			var displacement = SimulationWorld.Rng.RangeFloat(1) * CreatureStepMaxLength * new Vector3(
-				Mathf.Sin(angle),
-				0,
-				Mathf.Cos(angle)
-			);
-			newDestination = position + displacement;
-			attempts++;
-
-			if (attempts >= maxAttempts)
-			{
-				GD.PrintErr($"Failed to find a valid destination after {maxAttempts} attempts. Using current position.");
-				newDestination = position;
-				break;
-			}
-		} while (!SimulationWorld.IsWithinWorldBounds(newDestination));
-
-		return newDestination;
-	}
-	
 	public static void SpendMovementEnergy(ref DataCreature creature)
 	{
 		var normalizedSpeed = creature.MaxSpeed / InitialCreatureSpeed;
