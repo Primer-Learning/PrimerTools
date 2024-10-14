@@ -87,8 +87,16 @@ public partial class SimulationWorld : Node3D
         _ground.Scale = new Vector3(WorldDimensions.Y, (WorldDimensions.X + WorldDimensions.Y) / 2, WorldDimensions.X);
         
         Simulations.Clear();
-        var creatureSim = new CreatureSim(this);
+        
+        // TODO: Put this in SimulationTestScene, since it's really a setting for SimulationWorld.
+        var creatureSimSettings = new CreatureSimSettings
+        {
+            FindMate = MateSelectionStrategies.FindFirstAvailableMate,
+            Reproduce = ReproductionStrategies.SexualReproduce
+        };
+        var creatureSim = new CreatureSim(this, creatureSimSettings);
         Simulations.Add(creatureSim);
+        
         var treeSim = new FruitTreeSim(this);
         Simulations.Add(treeSim);
         

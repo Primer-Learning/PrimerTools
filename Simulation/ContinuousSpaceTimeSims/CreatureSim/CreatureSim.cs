@@ -8,7 +8,11 @@ namespace PrimerTools.Simulation;
 [Tool]
 public class CreatureSim : Simulation<DataCreature>
 {
-	public CreatureSim(SimulationWorld simulationWorld) : base(simulationWorld) {}
+	private CreatureSimSettings _settings;
+	public CreatureSim(SimulationWorld simulationWorld, CreatureSimSettings settings) : base(simulationWorld)
+	{
+		_settings = settings;
+	}
 
 	private FruitTreeSim FruitTreeSim => SimulationWorld.Simulations.OfType<FruitTreeSim>().FirstOrDefault();
 	
@@ -79,7 +83,7 @@ public class CreatureSim : Simulation<DataCreature>
             // Check for mating
             if (creature.OpenToMating)
             {
-                var mateIndex = CreatureSimSettings.FindMate(i, creatureCollisions);
+                var mateIndex = _settings.FindMate(i, creatureCollisions);
                 if (mateIndex != -1)
                 {
                     var mate = Registry.Entities[mateIndex];
@@ -90,7 +94,7 @@ public class CreatureSim : Simulation<DataCreature>
                         creature.MatingTimeLeft += CreatureSimSettings.ReproductionDuration;
                         mate.Energy -= CreatureSimSettings.ReproductionEnergyCost / 2;
                         creature.Energy -= CreatureSimSettings.ReproductionEnergyCost / 2;
-                        Registry.RegisterEntity(CreatureSimSettings.Reproduce(creature, mate));
+                        Registry.RegisterEntity(_settings.Reproduce(creature, mate));
                         Registry.Entities[i] = creature;
                         Registry.Entities[mateIndex] = mate;
                         continue;

@@ -113,6 +113,7 @@ public struct DataCreature : IDataEntity
         FoodTargetIndex = -1;
     }
     
+    // TODO: Move this to CreatureSim. This will also mean _space doesn't need to be tracked in DataCreature.
     public Array<Dictionary> DetectCollisionsWithCreature()
     {
         var queryParams = new PhysicsShapeQueryParameters3D();
@@ -126,6 +127,7 @@ public struct DataCreature : IDataEntity
         return _space.IntersectShape(queryParams);
     }
     
+    // TODO: Move this back to CreatureSim. It needs to reference Initial values, which are not properties of the creature.
     public void SpendMovementEnergy()
     {
         var normalizedSpeed = MaxSpeed / CreatureSimSettings.InitialCreatureSpeed;

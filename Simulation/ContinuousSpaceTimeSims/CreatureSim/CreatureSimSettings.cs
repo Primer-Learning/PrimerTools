@@ -1,8 +1,12 @@
 ﻿namespace PrimerTools.Simulation;
 
-// TODO: Make this not static, and make it an object that gets fed to CreatureSim
-public static class CreatureSimSettings
+public class CreatureSimSettings
 {
+	// Three categories
+	// 1. Always constant (const)
+	// 2. Can vary between sims but not between creatures.
+	// 3. Can vary between creatures and is subject to mutation (doesn't belong here)
+	
 	#region Sim parameters
 	// Movement
 	public const float CreatureStepMaxLength = 10f;
@@ -33,7 +37,6 @@ public static class CreatureSimSettings
 	public const float MutationIncrement = 1f;
 	#endregion
 
-	public static FindMateDelegate FindMate = MateSelectionStrategies.FindFirstAvailableMate;
-	public static ReproduceDelegate Reproduce = ReproductionStrategies.SexualReproduce;
+	public FindMateDelegate FindMate = MateSelectionStrategies.FindFirstAvailableMate;
+	public ReproduceDelegate Reproduce = ReproductionStrategies.SexualReproduce;
 }
-
