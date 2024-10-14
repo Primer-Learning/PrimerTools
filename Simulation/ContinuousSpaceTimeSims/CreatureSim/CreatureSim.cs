@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
+using Godot.Collections;
 
 namespace PrimerTools.Simulation;
 
@@ -176,12 +177,24 @@ public class CreatureSim : Simulation<DataCreature>
 			Type = CollisionType.None;
 		}
 	}
+	public Array<Dictionary> DetectCollisionsWithCreature(DataCreature creature)
+	{
+		var queryParams = new PhysicsShapeQueryParameters3D();
+		queryParams.CollideWithAreas = true;
+		queryParams.CollideWithBodies = false;
+		queryParams.Exclude = new Array<Rid>() { creature.Body };
+		queryParams.ShapeRid = PhysicsServer3D.AreaGetShape(creature.Awareness, 0);
+		queryParams.Transform = Transform3D.Identity.Translated(creature.Position);
+
+		// Run query and print
+		return PhysicsServer3D.SpaceGetDirectState(Registry.World3D.Space).IntersectShape(queryParams);
+	}
 	private List<LabeledCollision> GetLabeledAndSortedCollisions(DataCreature creature)
 	{
 		// TODO: Put areas on a separate collision layer and mask the collisions so they don't look at each other
 		// Just a small optimization
 		
-		var objectsInAwareness = creature.DetectCollisionsWithCreature();
+		var objectsInAwareness = DetectCollisionsWithCreature(creature);
 		var labeledCollisions = new List<LabeledCollision>();
 
 		foreach (var objectData in objectsInAwareness)
@@ -274,7 +287,7 @@ public class CreatureSim : Simulation<DataCreature>
 		var transformNextFrame = new Transform3D(Basis.Identity, creature.Position);
 		PhysicsServer3D.AreaSetTransform(creature.Body, transformNextFrame);
 		PhysicsServer3D.AreaSetTransform(creature.Awareness, transformNextFrame);
-		creature.SpendMovementEnergy();
+		SpendMovementEnergy(ref creature);
 	}
 	public static event Action<int> CreatureDeathEvent; // creatureIndex
 	
@@ -293,5 +306,13 @@ public class CreatureSim : Simulation<DataCreature>
 		creature.EatingTimeLeft = CreatureSimSettings.EatDuration;
 		CreatureEatEvent?.Invoke(creatureIndex, tree.Body, CreatureSimSettings.EatDuration / SimulationWorld.TimeScale);
 		return creature;
+	}
+	
+	private static void SpendMovementEnergy(ref DataCreature creature)
+	{
+		var normalizedSpeed = creature.MaxSpeed / CreatureSimSettings.InitialCreatureSpeed;
+		var normalizedAwarenessRadius = creature.AwarenessRadius / CreatureSimSettings.InitialAwarenessRadius;
+		
+		creature.Energy -= (CreatureSimSettings.BaseEnergySpend + CreatureSimSettings.GlobalEnergySpendAdjustmentFactor * ( normalizedSpeed * normalizedSpeed + normalizedAwarenessRadius)) / SimulationWorld.PhysicsStepsPerSimSecond;
 	}
 }

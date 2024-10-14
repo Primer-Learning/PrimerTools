@@ -6,7 +6,9 @@ namespace PrimerTools.Simulation;
 
 public class DataEntityRegistry<T> where T : IDataEntity
 {
-	private World3D _world3D;
+	private readonly World3D _world3D;
+	public World3D World3D => _world3D;
+
 	public DataEntityRegistry(World3D world3D)
 	{
 		_world3D = world3D;
