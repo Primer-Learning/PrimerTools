@@ -95,6 +95,7 @@ public class CreatureSim : Simulation<DataCreature>
                     }
             
                     creature.CurrentDestination = mate.Position;
+                    PerformMovement(ref creature);
                     Registry.Entities[i] = creature;
                     continue;
                 }
