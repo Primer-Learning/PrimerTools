@@ -5,7 +5,7 @@ using Godot;
 namespace PrimerTools.Simulation;
 
 public delegate int FindMateDelegate(int creatureIndex, IEnumerable<int> labeledCollisions);
-public delegate DataCreature ReproduceDelegate(DataCreature parent1, DataCreature parent2);
+public delegate DataCreature ReproduceDelegate(DataCreature parent1, DataCreature parent2, Rng rng);
 
 public static class MateSelectionStrategies
 {
@@ -28,43 +28,43 @@ public static class ReproductionStrategies
         parent1.Energy -= CreatureSimSettings.ReproductionEnergyCost;
         var newCreature = parent1;
         
-        MutateCreature(ref newCreature);
+        MutateCreature(ref newCreature, null);
         
         return newCreature;
     }
 
-    public static DataCreature SexualReproduce(DataCreature parent1, DataCreature parent2)
+    public static DataCreature SexualReproduce(DataCreature parent1, DataCreature parent2, Rng rng)
     {
         var newCreature = parent1;
 
         // Inherit traits
-        if (SimulationWorld.Rng.RangeFloat(0, 1) < 0.5)
+        if (rng.RangeFloat(0, 1) < 0.5)
             newCreature.AwarenessRadius = parent2.AwarenessRadius;
-        if (SimulationWorld.Rng.RangeFloat(0, 1) < 0.5)
+        if (rng.RangeFloat(0, 1) < 0.5)
             newCreature.MaxSpeed = parent2.MaxSpeed;
-        if (SimulationWorld.Rng.RangeFloat(0, 1) < 0.5)
+        if (rng.RangeFloat(0, 1) < 0.5)
             newCreature.MaxAge = parent2.MaxAge;
 
-        MutateCreature(ref newCreature);
+        MutateCreature(ref newCreature, rng);
         
         return newCreature;
     }
 
-    private static void MutateCreature(ref DataCreature creature)
+    private static void MutateCreature(ref DataCreature creature, Rng rng)
     {
-        if (SimulationWorld.Rng.RangeFloat(0, 1) < CreatureSimSettings.MutationProbability)
+        if (rng.RangeFloat(0, 1) < CreatureSimSettings.MutationProbability)
         {
-            creature.AwarenessRadius += SimulationWorld.Rng.RangeFloat(0, 1) < 0.5f ? CreatureSimSettings.MutationIncrement : -CreatureSimSettings.MutationIncrement;
+            creature.AwarenessRadius += rng.RangeFloat(0, 1) < 0.5f ? CreatureSimSettings.MutationIncrement : -CreatureSimSettings.MutationIncrement;
             creature.AwarenessRadius = Mathf.Max(0, creature.AwarenessRadius);
         }
-        if (SimulationWorld.Rng.RangeFloat(0, 1) < CreatureSimSettings.MutationProbability)
+        if (rng.RangeFloat(0, 1) < CreatureSimSettings.MutationProbability)
         {
-            creature.MaxSpeed += SimulationWorld.Rng.RangeFloat(0, 1) < 0.5f ? CreatureSimSettings.MutationIncrement : -CreatureSimSettings.MutationIncrement;
+            creature.MaxSpeed += rng.RangeFloat(0, 1) < 0.5f ? CreatureSimSettings.MutationIncrement : -CreatureSimSettings.MutationIncrement;
             creature.MaxSpeed = Mathf.Max(0, creature.MaxSpeed);
         }
-        if (SimulationWorld.Rng.RangeFloat(0, 1) < CreatureSimSettings.MutationProbability)
+        if (rng.RangeFloat(0, 1) < CreatureSimSettings.MutationProbability)
         {
-            creature.MaxAge += SimulationWorld.Rng.RangeFloat(0, 1) < 0.5f ? CreatureSimSettings.MutationIncrement : -CreatureSimSettings.MutationIncrement;
+            creature.MaxAge += rng.RangeFloat(0, 1) < 0.5f ? CreatureSimSettings.MutationIncrement : -CreatureSimSettings.MutationIncrement;
             creature.MaxAge = Mathf.Max(0, creature.MaxAge);
         }
     }

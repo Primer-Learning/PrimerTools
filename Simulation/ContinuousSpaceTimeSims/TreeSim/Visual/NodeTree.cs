@@ -1,8 +1,14 @@
 using Godot;
+using PrimerTools;
 using PrimerTools.Simulation;
 
 public partial class NodeTree : NodeEntity<DataTree>
 {
+	// Lazy thing. Gives visual trees an rng object for rotating mangoes.
+	// Could pass the simulation world rng if we wanted to couple these to the results
+	// Probably no need.
+	public static Rng NodeTreeRng = new Rng(0);
+	
 	private FruitTree _fruitTree;
 	
 	#region Core methods
@@ -10,7 +16,7 @@ public partial class NodeTree : NodeEntity<DataTree>
 	{
 		base._Ready();
 		_fruitTree = FruitTree.CreateInstance();
-		_fruitTree.Rng = SimulationWorld.Rng;
+		_fruitTree.Rng = NodeTreeRng;
 		AddChild(_fruitTree);
 	}
 	public override void Initialize(DataTree dataTree)
@@ -27,14 +33,14 @@ public partial class NodeTree : NodeEntity<DataTree>
 			return;
 		}
                 
-		if (dataTree.FruitGrowthProgress > FruitTreeBehaviorHandler.NodeFruitGrowthDelay && this is
+		if (dataTree.FruitGrowthProgress > FruitTreeSimSettings.NodeFruitGrowthDelay && this is
 		    {
 			    HasFruit: false
 		    })
 		{
-			GrowFruit(FruitTreeBehaviorHandler.FruitGrowthTime - FruitTreeBehaviorHandler.NodeFruitGrowthDelay);
+			GrowFruit(FruitTreeSimSettings.FruitGrowthTime - FruitTreeSimSettings.NodeFruitGrowthDelay);
 		}
-		Scale = Vector3.One * Mathf.Min(1, dataTree.Age / FruitTreeBehaviorHandler.TreeMaturationTime);
+		Scale = Vector3.One * Mathf.Min(1, dataTree.Age / FruitTreeSimSettings.TreeMaturationTime);
 	}
 	private void Death()
 	{

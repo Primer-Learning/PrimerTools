@@ -15,7 +15,7 @@ public class CreatureSim : Simulation<DataCreature>
 		_settings = settings;
 	}
 
-	private FruitTreeSim FruitTreeSim => SimulationWorld.Simulations.OfType<FruitTreeSim>().FirstOrDefault();
+	private FruitTreeSim FruitTreeSim => simulationWorld.Simulations.OfType<FruitTreeSim>().FirstOrDefault();
 	
 	protected override void CustomInitialize()
 	{
@@ -30,9 +30,9 @@ public class CreatureSim : Simulation<DataCreature>
 			var physicalCreature = new DataCreature
 			{
 				Position = new Vector3(
-					SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.X),
+					simulationWorld.Rng.RangeFloat(simulationWorld.WorldDimensions.X),
 					0,
-					SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.Y)
+					simulationWorld.Rng.RangeFloat(simulationWorld.WorldDimensions.Y)
 				),
 				AwarenessRadius = CreatureSimSettings.InitialAwarenessRadius,
 				MaxSpeed = CreatureSimSettings.InitialCreatureSpeed,
@@ -92,7 +92,7 @@ public class CreatureSim : Simulation<DataCreature>
                         creature.MatingTimeLeft += CreatureSimSettings.ReproductionDuration;
                         mate.Energy -= CreatureSimSettings.ReproductionEnergyCost / 2;
                         creature.Energy -= CreatureSimSettings.ReproductionEnergyCost / 2;
-                        Registry.RegisterEntity(_settings.Reproduce(creature, mate));
+                        Registry.RegisterEntity(_settings.Reproduce(creature, mate, simulationWorld.Rng));
                         Registry.Entities[i] = creature;
                         Registry.Entities[mateIndex] = mate;
                         continue;
@@ -131,7 +131,7 @@ public class CreatureSim : Simulation<DataCreature>
             if ((creature.CurrentDestination - creature.Position).LengthSquared() <
                 CreatureSimSettings.CreatureEatDistance * CreatureSimSettings.CreatureEatDistance)
             {
-                creature.CurrentDestination = SimulationWorld.GetRandomDestination(creature.Position, CreatureSimSettings.CreatureStepMaxLength);
+                creature.CurrentDestination = simulationWorld.GetRandomDestination(creature.Position, CreatureSimSettings.CreatureStepMaxLength);
             }
             PerformMovement(ref creature);
             
@@ -280,10 +280,8 @@ public class CreatureSim : Simulation<DataCreature>
 		SpendMovementEnergy(ref creature);
 	}
 	public static event Action<int> CreatureDeathEvent; // creatureIndex
-	
 	public static event Action<int, Rid, float> CreatureEatEvent; // creatureIndex, treeBodyRid, duration
-
-	public static DataCreature EatFood(DataCreature creature, ref DataTree tree, int creatureIndex)
+	private static DataCreature EatFood(DataCreature creature, ref DataTree tree, int creatureIndex)
 	{
 		// var tree = FruitTreeSim.Registry.Entities[treeIndex];
 		if (!tree.HasFruit) return creature;
@@ -297,7 +295,6 @@ public class CreatureSim : Simulation<DataCreature>
 		CreatureEatEvent?.Invoke(creatureIndex, tree.Body, CreatureSimSettings.EatDuration / SimulationWorld.TimeScale);
 		return creature;
 	}
-	
 	private static void SpendMovementEnergy(ref DataCreature creature)
 	{
 		var normalizedSpeed = creature.MaxSpeed / CreatureSimSettings.InitialCreatureSpeed;

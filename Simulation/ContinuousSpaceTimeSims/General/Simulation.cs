@@ -9,12 +9,12 @@ public abstract class Simulation<TDataEntity> : ISimulation
     
     protected Simulation(SimulationWorld simulationWorld)
     {
-        SimulationWorld = simulationWorld;
-        Registry = new DataEntityRegistry<TDataEntity>(SimulationWorld.World3D);
+        this.simulationWorld = simulationWorld;
+        Registry = new DataEntityRegistry<TDataEntity>(simulationWorld.World3D);
     }
 
     #region Simulation
-    protected readonly SimulationWorld SimulationWorld;
+    protected readonly SimulationWorld simulationWorld;
     public readonly DataEntityRegistry<TDataEntity> Registry;
     // public NodeEntityManager<TDataEntity, TNodeEntity> EntityManager;
 

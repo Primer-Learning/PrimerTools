@@ -61,8 +61,8 @@ public partial class SimulationWorld : Node3D
     public const int PhysicsStepsPerSimSecond = 60;
     public const float TimeStep = 1f / PhysicsStepsPerSimSecond;
 
-    private static Rng _rng;
-    public static Rng Rng => _rng ??= new Rng(_seed == -1 ? System.Environment.TickCount : _seed);
+    private Rng _rng;
+    public Rng Rng => _rng ??= new Rng(_seed == -1 ? System.Environment.TickCount : _seed);
     public World3D World3D => GetWorld3D();
     public readonly List<ISimulation> Simulations = new();
     private NodeCreatureManager _creatureNodeManager;
@@ -159,7 +159,7 @@ public partial class SimulationWorld : Node3D
         return position.X >= 0 && position.X <= _worldDimension.X &&
                position.Z >= 0 && position.Z <= _worldDimension.Y;
     }
-    public static Vector3 GetRandomDestination(Vector3 position, float maxDistance)
+    public Vector3 GetRandomDestination(Vector3 position, float maxDistance)
     {
         Vector3 newDestination;
         var attempts = 0;
@@ -167,8 +167,8 @@ public partial class SimulationWorld : Node3D
 
         do
         {
-            var angle = SimulationWorld.Rng.RangeFloat(1) * 2 * Mathf.Pi;
-            var displacement = SimulationWorld.Rng.RangeFloat(1) * maxDistance * new Vector3(
+            var angle = _rng.RangeFloat(1) * 2 * Mathf.Pi;
+            var displacement = _rng.RangeFloat(1) * maxDistance * new Vector3(
                 Mathf.Sin(angle),
                 0,
                 Mathf.Cos(angle)
