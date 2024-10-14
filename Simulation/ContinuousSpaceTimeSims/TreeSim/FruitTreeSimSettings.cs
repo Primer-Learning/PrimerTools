@@ -1,5 +1,5 @@
 namespace PrimerTools.Simulation;
-public static class FruitTreeSimSettings
+public class FruitTreeSimSettings
 {
     #region Simulation Parameters
     public const float MaxTreeSpawnRadius = 5f;

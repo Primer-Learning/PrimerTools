@@ -96,8 +96,9 @@ public partial class SimulationWorld : Node3D
         };
         var creatureSim = new CreatureSim(this, creatureSimSettings);
         Simulations.Add(creatureSim);
-        
-        var treeSim = new FruitTreeSim(this);
+
+        var fruitTreeSimSettings = new FruitTreeSimSettings();
+        var treeSim = new FruitTreeSim(this, fruitTreeSimSettings);
         Simulations.Add(treeSim);
         
         if (VisualizationMode == VisualizationMode.NodeCreatures)

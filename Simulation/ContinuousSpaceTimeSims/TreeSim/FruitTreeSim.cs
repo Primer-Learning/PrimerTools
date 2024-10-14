@@ -7,7 +7,12 @@ using PrimerTools.Simulation;
 [Tool]
 public class FruitTreeSim : Simulation<DataTree>
 {
-    public FruitTreeSim(SimulationWorld simulationWorld) : base(simulationWorld) {}
+    private FruitTreeSimSettings _settings;
+
+    public FruitTreeSim(SimulationWorld simulationWorld, FruitTreeSimSettings settings) : base(simulationWorld)
+    {
+        _settings = settings;
+    }
     public enum SimMode
     {
         TreeGrowth,
