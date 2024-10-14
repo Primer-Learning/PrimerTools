@@ -3,7 +3,7 @@ using System.Linq;
 using Godot;
 using Godot.Collections;
 
-namespace PrimerTools.Simulation.New;
+namespace PrimerTools.Simulation;
 
 [Tool]
 public static class CreatureSimSettings
@@ -20,7 +20,7 @@ public static class CreatureSimSettings
 	public const float CreatureStepMaxLength = 10f;
 	public const float MaxAccelerationFactor = 0.1f;
 	public const float CreatureEatDistance = 2;
-	public const float CreatureMateDistance = 1;
+	public const float CreatureMateDistance = 2;
 	
 	// State-based pause durations
 	public const float EatDuration = 1.5f;

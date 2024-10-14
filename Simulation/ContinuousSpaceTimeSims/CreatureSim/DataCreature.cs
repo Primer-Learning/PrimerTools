@@ -2,7 +2,7 @@
 using Godot;
 using Godot.Collections;
 
-namespace PrimerTools.Simulation.New;
+namespace PrimerTools.Simulation;
 
 [Flags]
 public enum ActionFlags
@@ -21,9 +21,22 @@ public struct DataCreature : IDataEntity
     // Updated in MovementAction
     public Rid Body { get; set; }
     public Rid Awareness;
-    public Vector3 Position; // Accessed in implementations of IBehaviorHandler
+    public Vector3 Position;
     public Vector3 Velocity;
-    public Vector3 CurrentDestination; // Accessed in implementations of IBehaviorHandler
+
+    private Vector3 _currentDestination;
+    public Vector3 CurrentDestination
+    {
+        get => _currentDestination;
+        set
+        {
+            _currentDestination = value;
+            if (value == Vector3.Zero)
+            {
+                PrimerGD.PushWarningWithStackTrace("Current destination is the origin");
+            } 
+        }
+    }
     
     public float AwarenessRadius;
     public float MaxSpeed;

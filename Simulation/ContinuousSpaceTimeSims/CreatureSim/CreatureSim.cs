@@ -2,12 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
-using PrimerTools;
 
-namespace PrimerTools.Simulation.New;
+namespace PrimerTools.Simulation;
 
 public enum CollisionType
 {
+	None,
 	Tree,
 	Creature
 }
@@ -16,7 +16,14 @@ public struct LabeledCollision
 {
 	public CollisionType Type;
 	public int Index;
-	public Vector3 Position; // Can be inferred from index and type, but convenient for now.
+	public Vector3 Position;
+
+	public LabeledCollision()
+	{
+		Index = -1;
+		Position = default;
+		Type = CollisionType.None;
+	}
 }
 
 [Tool]
@@ -61,6 +68,7 @@ public class CreatureSim : Simulation<DataCreature>
 				MaxSpeed = CreatureSimSettings.InitialCreatureSpeed,
 				MaxAge = CreatureSimSettings.InitialMaxAge
 			};
+			physicalCreature.CurrentDestination = physicalCreature.Position;
 
 			Registry.RegisterEntity(physicalCreature);
 		}
@@ -128,8 +136,6 @@ public class CreatureSim : Simulation<DataCreature>
 			var creature = Registry.Entities[i];
 			var labeledCollisions = GetLabeledAndSortedCollisions(creature);
 			
-			// _behaviorStrategy.DetermineAction(i, labeledCollisions, Registry, ReproductionStrategy);
-			
             creature.Actions = ActionFlags.None;
             
             // Do-nothing conditions 
@@ -157,7 +163,7 @@ public class CreatureSim : Simulation<DataCreature>
                 if (mateIndex != -1)
                 {
                     var mate = Registry.Entities[mateIndex];
-
+            
                     if ((mate.Position - creature.Position).IsLengthLessThan(CreatureSimSettings.CreatureMateDistance))
                     {
                         mate.MatingTimeLeft += CreatureSimSettings.ReproductionDuration;
@@ -169,7 +175,7 @@ public class CreatureSim : Simulation<DataCreature>
                         Registry.Entities[mateIndex] = mate;
                         continue;
                     }
-
+            
                     creature.CurrentDestination = mate.Position;
                     creature.Actions |= ActionFlags.Move;
                     Registry.Entities[i] = creature;
@@ -181,21 +187,21 @@ public class CreatureSim : Simulation<DataCreature>
             if (creature.Energy < creature.HungerThreshold)
             {
                 var closestFood = labeledCollisions.FirstOrDefault(c => c.Type == CollisionType.Tree);
-                if (closestFood.Type == CollisionType.Tree)
+                if ((closestFood.Position - creature.Position).IsLengthLessThan(CreatureSimSettings.CreatureEatDistance)
+                    && creature.EatingTimeLeft <= 0)
                 {
-                    if ((closestFood.Position - creature.Position).IsLengthLessThan(CreatureSimSettings.CreatureEatDistance)
-                        && creature.EatingTimeLeft <= 0)
-                    {
-                        creature.FoodTargetIndex = closestFood.Index;
-                        creature.Actions |= ActionFlags.Eat;
-                        Registry.Entities[i] = creature;
-                        continue;
-                    }
-            
-                    creature.CurrentDestination = closestFood.Position;
-                    creature.Actions |= ActionFlags.Move;
+                    creature.FoodTargetIndex = closestFood.Index;
+                    creature.Actions |= ActionFlags.Eat;
                     Registry.Entities[i] = creature;
                     continue;
+                }
+                
+                if (closestFood.Type != CollisionType.None)
+                {
+	                creature.CurrentDestination = closestFood.Position;
+	                creature.Actions |= ActionFlags.Move;
+	                Registry.Entities[i] = creature;
+	                continue;
                 }
             }
 
@@ -208,6 +214,7 @@ public class CreatureSim : Simulation<DataCreature>
             Registry.Entities[i] = creature;
 		}
 		
+		// Do eats
 		for (var i = 0; i < Registry.Entities.Count; i++)
 		{
 			var creature = Registry.Entities[i];
@@ -218,6 +225,8 @@ public class CreatureSim : Simulation<DataCreature>
 			
 			Registry.Entities[i] = creature;
 		}
+		
+		// Do movements
 		for (var i = 0; i < Registry.Entities.Count; i++)
 		{
 			var creature = Registry.Entities[i];
@@ -235,12 +244,13 @@ public class CreatureSim : Simulation<DataCreature>
 			Registry.Entities[i] = creature;
 		}
 		
+		// Process deaths
 		for (var i = 0; i < Registry.Entities.Count; i++)
 		{
 			var creature = Registry.Entities[i];
 		
 			var alive = creature.Energy > 0;
-			alive = alive && creature.Age < creature.MaxAge;
+			// alive = alive && creature.Age < creature.MaxAge;
 			if (!alive)
 			{
 				creature.Alive = false;
@@ -253,6 +263,7 @@ public class CreatureSim : Simulation<DataCreature>
 
 	private static Vector3 UpdateVelocity(Vector3 position, Vector3 destination, Vector3 currentVelocity, float maxSpeed)
 	{
+		if (destination == Vector3.Zero) GD.Print("Moving to the origin");
 		var desiredDisplacement = destination - position;
 		var desiredDisplacementLengthSquared = desiredDisplacement.LengthSquared();
 		

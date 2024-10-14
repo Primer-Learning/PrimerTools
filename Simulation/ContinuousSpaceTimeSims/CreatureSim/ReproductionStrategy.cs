@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Godot;
 
-namespace PrimerTools.Simulation.New;
+namespace PrimerTools.Simulation;
 
 public delegate int FindMateDelegate(int creatureIndex, List<LabeledCollision> labeledCollisions);
 public delegate DataCreature ReproduceDelegate(DataCreature parent1, DataCreature parent2);
