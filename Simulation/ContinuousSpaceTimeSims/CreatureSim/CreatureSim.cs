@@ -5,27 +5,6 @@ using Godot;
 
 namespace PrimerTools.Simulation;
 
-public enum CollisionType
-{
-	None,
-	Tree,
-	Creature
-}
-
-public struct LabeledCollision
-{
-	public CollisionType Type;
-	public int Index;
-	public Vector3 Position;
-
-	public LabeledCollision()
-	{
-		Index = -1;
-		Position = default;
-		Type = CollisionType.None;
-	}
-}
-
 [Tool]
 public class CreatureSim : Simulation<DataCreature>
 {
@@ -84,6 +63,8 @@ public class CreatureSim : Simulation<DataCreature>
 		{
 			var creature = Registry.Entities[i];
 			var labeledCollisions = GetLabeledAndSortedCollisions(creature);
+			var treeCollisions = labeledCollisions.Where(x => x.Type == CollisionType.Tree).Select(x => x.Index);
+			var creatureCollisions = labeledCollisions.Where(x => x.Type == CollisionType.Creature).Select(x => x.Index);
 			
             creature.Actions = ActionFlags.None;
             
@@ -108,7 +89,7 @@ public class CreatureSim : Simulation<DataCreature>
             // Check for mating
             if (creature.OpenToMating)
             {
-                var mateIndex = ReproductionStrategy.FindMate(i, labeledCollisions);
+                var mateIndex = ReproductionStrategy.FindMate(i, creatureCollisions);
                 if (mateIndex != -1)
                 {
                     var mate = Registry.Entities[mateIndex];
@@ -180,7 +161,28 @@ public class CreatureSim : Simulation<DataCreature>
 		}
 	}
 	
-	public List<LabeledCollision> GetLabeledAndSortedCollisions(DataCreature creature)
+	// TODO: Extract all this collision stuff. It could be used in TreeSim or other sims.
+	#region Collision handling
+	private enum CollisionType
+	{
+		None,
+		Tree,
+		Creature
+	}
+	private struct LabeledCollision
+	{
+		public CollisionType Type;
+		public int Index;
+		public Vector3 Position;
+
+		public LabeledCollision()
+		{
+			Index = -1;
+			Position = default;
+			Type = CollisionType.None;
+		}
+	}
+	private List<LabeledCollision> GetLabeledAndSortedCollisions(DataCreature creature)
 	{
 		// TODO: Put areas on a separate collision layer and mask the collisions so they don't look at each other
 		// Just a small optimization
@@ -227,7 +229,8 @@ public class CreatureSim : Simulation<DataCreature>
 		labeledCollisions.Sort((a, b) => (a.Position - creature.Position).LengthSquared().CompareTo((b.Position - creature.Position).LengthSquared()));
 		return labeledCollisions;
 	}
-
+	#endregion
+	
 	private static Vector3 UpdateVelocity(Vector3 position, Vector3 destination, Vector3 currentVelocity, float maxSpeed)
 	{
 		if (destination == Vector3.Zero) GD.Print("Moving to the origin");
@@ -270,7 +273,6 @@ public class CreatureSim : Simulation<DataCreature>
 
 		return newVelocity;
 	}
-
 	private static void PerformMovement(ref DataCreature creature)
 	{
 		creature.Velocity = UpdateVelocity(creature.Position, creature.CurrentDestination, creature.Velocity, creature.MaxSpeed);

@@ -4,7 +4,7 @@ using Godot;
 
 namespace PrimerTools.Simulation;
 
-public delegate int FindMateDelegate(int creatureIndex, List<LabeledCollision> labeledCollisions);
+public delegate int FindMateDelegate(int creatureIndex, IEnumerable<int> labeledCollisions);
 public delegate DataCreature ReproduceDelegate(DataCreature parent1, DataCreature parent2);
 
 public class ReproductionStrategy
@@ -21,12 +21,12 @@ public class ReproductionStrategy
 
 public static class MateSelectionStrategies
 {
-    public static int FindFirstAvailableMate(int creatureIndex, List<LabeledCollision> labeledCollisions)
+    public static int FindFirstAvailableMate(int creatureIndex, IEnumerable<int> labeledCollisions)
     {
-        var mateCollisions = labeledCollisions.Where(c => c.Type == CollisionType.Creature).ToList();
-        return mateCollisions.Any() ? mateCollisions.First().Index : -1;
+        var collisions = labeledCollisions as int[] ?? labeledCollisions.ToArray();
+        return collisions.Any() ? collisions.First() : -1;
     }
-    public static int AsexualFindMate(int creatureIndex, List<LabeledCollision> labeledCollisions)
+    public static int AsexualFindMate(int creatureIndex, IEnumerable<int> labeledCollisions)
     {
         return creatureIndex;
     }
