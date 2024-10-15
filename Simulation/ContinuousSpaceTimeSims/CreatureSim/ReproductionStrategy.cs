@@ -49,7 +49,7 @@ public static class ReproductionStrategies
                     rng.RangeFloat(0, 1) < 0.5 ? floatTrait1.Alleles[0] : floatTrait2.Alleles[0]
                 };
 
-                newGenome.AddTrait(new Trait<float>(traitName, newAlleles, floatTrait1.ExpressionMechanism, floatTrait1.MutationMechanism));
+                newGenome.AddTrait(new Trait<float>(traitName, newAlleles, floatTrait1.ExpressionMechanism, floatTrait1.MutationIncrement));
             }
             // Add more type checks for other trait types
         }
@@ -69,7 +69,7 @@ public static class ReproductionStrategies
             {
                 if (rng.RangeFloat(0, 1) < CreatureSimSettings.MutationProbability)
                 {
-                    floatTrait.Mutate();
+                    floatTrait.Mutate(rng);
                 }
             }
             // Add more type checks for other trait types
