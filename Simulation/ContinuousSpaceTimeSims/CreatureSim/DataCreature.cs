@@ -26,11 +26,14 @@ public struct DataCreature : IDataEntity
         }
     }
     
-    public float AwarenessRadius;
-    public float MaxSpeed;
+    public Genome Genome { get; set; }
+    
+    // Properties to easily access expressed trait values
+    public float MaxSpeed => Genome.GetTrait<float>("MaxSpeed").ExpressedValue;
+    public float AwarenessRadius => Genome.GetTrait<float>("AwarenessRadius").ExpressedValue;
+    public float MaxAge => Genome.GetTrait<float>("MaxAge").ExpressedValue;
     
     public float Age;
-    public float MaxAge;
     public float Energy;
     public float HungerThreshold;
     public int FoodTargetIndex;

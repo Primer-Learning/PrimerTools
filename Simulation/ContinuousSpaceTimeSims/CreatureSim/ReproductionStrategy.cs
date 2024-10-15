@@ -35,37 +35,44 @@ public static class ReproductionStrategies
 
     public static DataCreature SexualReproduce(DataCreature parent1, DataCreature parent2, Rng rng)
     {
-        var newCreature = parent1;
+        var newGenome = new Genome();
 
-        // Inherit traits
-        if (rng.RangeFloat(0, 1) < 0.5)
-            newCreature.AwarenessRadius = parent2.AwarenessRadius;
-        if (rng.RangeFloat(0, 1) < 0.5)
-            newCreature.MaxSpeed = parent2.MaxSpeed;
-        if (rng.RangeFloat(0, 1) < 0.5)
-            newCreature.MaxAge = parent2.MaxAge;
+        foreach (var traitName in parent1.Genome.Traits.Keys)
+        {
+            var trait1 = parent1.Genome.Traits[traitName];
+            var trait2 = parent2.Genome.Traits[traitName];
 
+            if (trait1 is Trait<float> floatTrait1 && trait2 is Trait<float> floatTrait2)
+            {
+                var newAlleles = new List<float> 
+                {
+                    rng.RangeFloat(0, 1) < 0.5 ? floatTrait1.Alleles[0] : floatTrait2.Alleles[0]
+                };
+
+                newGenome.AddTrait(new Trait<float>(traitName, newAlleles, floatTrait1.ExpressionMechanism, floatTrait1.MutationMechanism));
+            }
+            // Add more type checks for other trait types
+        }
+
+        var newCreature = new DataCreature { Genome = newGenome };
         MutateCreature(ref newCreature, rng);
+        
         
         return newCreature;
     }
 
     private static void MutateCreature(ref DataCreature creature, Rng rng)
     {
-        if (rng.RangeFloat(0, 1) < CreatureSimSettings.MutationProbability)
+        foreach (var trait in creature.Genome.Traits.Values)
         {
-            creature.AwarenessRadius += rng.RangeFloat(0, 1) < 0.5f ? CreatureSimSettings.MutationIncrement : -CreatureSimSettings.MutationIncrement;
-            creature.AwarenessRadius = Mathf.Max(0, creature.AwarenessRadius);
-        }
-        if (rng.RangeFloat(0, 1) < CreatureSimSettings.MutationProbability)
-        {
-            creature.MaxSpeed += rng.RangeFloat(0, 1) < 0.5f ? CreatureSimSettings.MutationIncrement : -CreatureSimSettings.MutationIncrement;
-            creature.MaxSpeed = Mathf.Max(0, creature.MaxSpeed);
-        }
-        if (rng.RangeFloat(0, 1) < CreatureSimSettings.MutationProbability)
-        {
-            creature.MaxAge += rng.RangeFloat(0, 1) < 0.5f ? CreatureSimSettings.MutationIncrement : -CreatureSimSettings.MutationIncrement;
-            creature.MaxAge = Mathf.Max(0, creature.MaxAge);
+            if (trait is Trait<float> floatTrait)
+            {
+                if (rng.RangeFloat(0, 1) < CreatureSimSettings.MutationProbability)
+                {
+                    floatTrait.Mutate();
+                }
+            }
+            // Add more type checks for other trait types
         }
     }
 }
