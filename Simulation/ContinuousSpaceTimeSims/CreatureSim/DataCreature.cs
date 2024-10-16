@@ -11,20 +11,7 @@ public struct DataCreature : IDataEntity
     public Rid Awareness;
     public Vector3 Position;
     public Vector3 Velocity;
-
-    private Vector3 _currentDestination;
-    public Vector3 CurrentDestination
-    {
-        get => _currentDestination;
-        set
-        {
-            _currentDestination = value;
-            if (value == Vector3.Zero)
-            {
-                PrimerGD.PushWarningWithStackTrace("Current destination is the origin");
-            } 
-        }
-    }
+    public Vector3 CurrentDestination;
     
     public Genome Genome { get; set; }
     
