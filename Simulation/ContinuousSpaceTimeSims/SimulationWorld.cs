@@ -114,12 +114,13 @@ public partial class SimulationWorld : Node3D
             // _creatureNodeManager.MakeSelfAndChildrenLocal();
         }
 
-        _timeOfLastStatusPrint = System.Environment.TickCount;
+        _realTimeOfLastStatusPrint = System.Environment.TickCount;
     }
 
-    private int _timeOfLastStatusPrint;
+    private int _realTimeOfLastStatusPrint;
     private int _stepsSinceLastStatusPrint;
-    [Export] private int _statusPrintStepInterval;
+    [Export] private float _statusPrintSimTimeInterval;
+    // [Export] private int _statusPrintStepInterval;
     private int _totalPhysicsSteps;
     public override void _PhysicsProcess(double delta)
     {
@@ -129,17 +130,17 @@ public partial class SimulationWorld : Node3D
             simulation.Step();
         }
 
-        if (_statusPrintStepInterval == 0) return;
+        if (_statusPrintSimTimeInterval == 0) return;
         _totalPhysicsSteps++;
         _stepsSinceLastStatusPrint++;
 
-        if (_stepsSinceLastStatusPrint >= _statusPrintStepInterval)
+        if ((float)_stepsSinceLastStatusPrint / PhysicsStepsPerSimSecond >= _statusPrintSimTimeInterval)
         {
             var currentTime = System.Environment.TickCount;
-            var differenceInSeconds = (currentTime - _timeOfLastStatusPrint) / 1000f; 
-            GD.Print($"{_stepsSinceLastStatusPrint} steps in {differenceInSeconds} seconds");
+            var differenceInSeconds = (currentTime - _realTimeOfLastStatusPrint) / 1000f; 
+            GD.Print($"{_statusPrintSimTimeInterval} sim seconds in {differenceInSeconds} real seconds");
             _stepsSinceLastStatusPrint = 0;
-            _timeOfLastStatusPrint = currentTime;
+            _realTimeOfLastStatusPrint = currentTime;
         }
     }
     
