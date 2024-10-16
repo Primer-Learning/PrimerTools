@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using Godot;
 
 namespace PrimerTools.Simulation;
 
@@ -14,20 +13,32 @@ public static class InitialPopulationGeneration
         {
             var genome = new Genome();
             
-            genome.AddTrait(new Trait<float>("MaxSpeed", 
-                new List<float> { CreatureSimSettings.ReferenceCreatureSpeed },
-                alleles => alleles[0], // Haploid expression
-                1));
+            genome.AddTrait(
+                new Trait<float>(
+                    "MaxSpeed", 
+                    new List<float> { CreatureSimSettings.ReferenceCreatureSpeed, CreatureSimSettings.ReferenceCreatureSpeed },
+                    ExpressionMechanisms.Float.Codominant,
+                    1
+                )
+            );
 
-            genome.AddTrait(new Trait<float>("AwarenessRadius", 
-                new List<float> { CreatureSimSettings.ReferenceAwarenessRadius },
-                alleles => alleles[0],
-                1));
+            genome.AddTrait(
+                new Trait<float>(
+                    "AwarenessRadius", 
+                    new List<float> { CreatureSimSettings.ReferenceAwarenessRadius, CreatureSimSettings.ReferenceAwarenessRadius},
+                    ExpressionMechanisms.Float.Codominant,
+                    1
+                )
+            );
 
-            genome.AddTrait(new Trait<float>("MaxAge", 
-                new List<float> { CreatureSimSettings.ReferenceMaxAge },
-                alleles => alleles[0],
-                1));
+            genome.AddTrait(
+                new Trait<float>(
+                    "MaxAge", 
+                    new List<float> { CreatureSimSettings.ReferenceMaxAge, CreatureSimSettings.ReferenceMaxAge },
+                    ExpressionMechanisms.Float.Codominant,
+                    1
+                )
+            );
 
             creatures[i] = new DataCreature { Genome = genome };
         }

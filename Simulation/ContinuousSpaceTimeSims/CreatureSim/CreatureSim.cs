@@ -89,7 +89,7 @@ public class CreatureSim : Simulation<DataCreature>
                         mate.Energy -= CreatureSimSettings.ReproductionEnergyCost / 2;
                         creature.Energy -= CreatureSimSettings.ReproductionEnergyCost / 2;
 
-                        var offspring = _settings.Reproduce(creature, mate, simulationWorld.Rng);
+                        var offspring = _settings.Reproduce(creature.Genome, mate.Genome, simulationWorld.Rng);
                         offspring.Position = (mate.Position + creature.Position) / 2;
                         Registry.RegisterEntity(offspring);
                         Registry.Entities[i] = creature;
