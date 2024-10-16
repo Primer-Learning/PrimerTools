@@ -87,7 +87,7 @@ public partial class SimulationTestScene : Node3D
 		thisGraph.XAxis.TicStep = 20;
 		
 		thisGraph.YAxis.length = 30;
-		thisGraph.YAxis.Max = 50;
+		thisGraph.YAxis.Max = 20;
 		thisGraph.YAxis.TicStep = 10;
 		
 		thisGraph.ZAxis.length = 0;
@@ -102,6 +102,7 @@ public partial class SimulationTestScene : Node3D
 		GraphParent.AddChild(periodicPlotter);
 		periodicPlotter.Name = "Periodic plotter";
 		
+		// TODO: Potentially delete this and replace it with parts from DataFetchMethods.cs
 		// Curve
 		//
 		// var curve = thisGraph.AddCurvePlot2D();
@@ -122,10 +123,19 @@ public partial class SimulationTestScene : Node3D
 		// periodicPlotter.Curve = curve;
 		
 		// Bar plot
+
+		var creatureDeathAges = new List<float>();
+		CreatureSim.CreatureDeathEvent += (int index) =>
+		{
+			creatureDeathAges.Add(CreatureSim.Registry.Entities[index].Age);
+		};
+		
 		var barPlot = thisGraph.AddBarPlot();
 		barPlot.DataFetchMethod = () =>
 		{
-			var values = CreatureSim.Registry.Entities.Select(x => x.MaxAge).ToList();
+			// Old max age plotting
+			// var values = CreatureSim.Registry.Entities.Select(x => x.MaxAge).ToList();
+			var values = creatureDeathAges;
 			var binWidth = 1;
 
 			if (values.Count == 0) return new List<float>();
