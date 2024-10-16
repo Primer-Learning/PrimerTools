@@ -33,23 +33,30 @@ public static class ReproductionStrategies
     public static DataCreature SexualReproduce(Genome genome1, Genome genome2, Rng rng)
     {
         var newGenome = new Genome();
+        var parentGenomes = new[] { genome1.Clone(), genome2.Clone() };
 
         foreach (var traitName in genome1.Traits.Keys)
         {
+            // Randomizing which parent shares its chromosome first makes this work for haploid
+            // Also any odd ploidies, but I would want to look up actual mechanisms to model that.
+            var currentParentIndex = rng.RangeInt(0, 2);
+            
             var trait1 = genome1.Traits[traitName];
             var trait2 = genome2.Traits[traitName];
 
             if (trait1 is Trait<float> floatTrait1 && trait2 is Trait<float> floatTrait2)
             {
-                var newAlleles = new List<float>(); 
+                var newAlleles = new List<float>();
                 for (var i = 0; i < floatTrait1.Alleles.Count; i++)
                 {
-                    newAlleles.Add(rng.RangeFloat(0, 1) < 0.5 ? floatTrait1.Alleles[i] : floatTrait2.Alleles[i]);
+                    var parentTrait = parentGenomes[currentParentIndex].Traits[traitName] as Trait<float>;
+                    newAlleles.Add(parentTrait.Alleles.RandomItem(rng));
+                    currentParentIndex = 1 - currentParentIndex; // Switch to the other parent
                 }
 
                 newGenome.AddTrait(new Trait<float>(traitName, newAlleles, floatTrait1.ExpressionMechanism, floatTrait1.MutationIncrement));
             }
-            // Add more type checks for other trait types
+            // Add more type checks for other trait types as needed
         }
 
         MutateCreature(newGenome, rng);
