@@ -86,17 +86,20 @@ public partial class NodeCreature : NodeEntity<DataCreature>
 	};
 	public static Color ColorFromSpeed(float speed)
 	{
-		// TODO: Improve this algorithm
-		var normalizedSpeed = speed / CreatureSimSettings.ReferenceCreatureSpeed;
-		normalizedSpeed /= 2; // Make the color range vary from zero speed to twice the initial speed
+		// Map the speed to a number between 0 and 1, with the reference speed mapping to 0.5
+		var normalizedSpeed = speed / CreatureSimSettings.ReferenceCreatureSpeed / 2;
+		normalizedSpeed = Mathf.Clamp(normalizedSpeed, 0, 1);
 
-		var numSpaces = normalizedSpeed * (_speedColors.Length - 1); // Map the speed to a range that spans the colors
-		var intSpaces = (int)numSpaces; // int
-		var extra = numSpaces % 1; // fraction
+		if (normalizedSpeed <= 0) return _speedColors[0];
+		if (normalizedSpeed >= 1) return _speedColors[^1];
+
+		var adjustedT = normalizedSpeed * (_speedColors.Length - 1);
+		var index = (int)adjustedT;
+		var fraction = adjustedT - index;
 
 		return PrimerColor.MixColorsByWeight(
-			new [] {_speedColors[intSpaces], _speedColors[intSpaces + 1]},
-			new [] { 1 - extra, extra}
+			new[] { _speedColors[index], _speedColors[index + 1] },
+			new[] { 1 - fraction, fraction }
 		);
 	}
 	
