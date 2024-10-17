@@ -25,6 +25,7 @@ public struct DataTree : IDataEntity
 
         // PhysicsServer3D setup
         var bodyArea = PhysicsServer3D.AreaCreate();
+        PhysicsServer3D.AreaSetCollisionLayer(bodyArea, 1);
         PhysicsServer3D.AreaSetSpace(bodyArea,space);
         PhysicsServer3D.AreaSetTransform(bodyArea, transform);
         var bodyShape = new SphereShape3D();

@@ -52,6 +52,7 @@ public struct DataCreature : IDataEntity
         bodyShape.Height = 1;
         bodyShape.Radius = 0.25f;
         PhysicsServer3D.AreaAddShape(bodyArea, bodyShape.GetRid());
+        PhysicsServer3D.AreaSetCollisionLayer(bodyArea, 1);
 		
         var awarenessArea = PhysicsServer3D.AreaCreate();
         PhysicsServer3D.AreaSetSpace(awarenessArea, space);
@@ -59,6 +60,8 @@ public struct DataCreature : IDataEntity
         var awarenessShape = new SphereShape3D();
         awarenessShape.Radius = AwarenessRadius;
         PhysicsServer3D.AreaAddShape(awarenessArea, awarenessShape.GetRid());
+        PhysicsServer3D.AreaSetCollisionLayer(awarenessArea, 2);
+        PhysicsServer3D.AreaSetCollisionMask(awarenessArea, 1);
 
         Body = bodyArea;
         Awareness = awarenessArea;
