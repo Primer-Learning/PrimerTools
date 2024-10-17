@@ -9,7 +9,7 @@ public class FruitTreeSimSettings
 
     public static float TreeMaturationTime = 1f;
     public const float TreeSpawnInterval = 0.4f;
-    public static float FruitGrowthTime = 4f;
+    public static float FruitGrowthTime = 6f;
     public const float NodeFruitGrowthDelay = 2f;
 
     public const float SaplingDeathProbabilityBase = 0.001f;
