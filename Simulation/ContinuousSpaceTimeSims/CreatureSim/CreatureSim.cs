@@ -53,7 +53,7 @@ public class CreatureSim : Simulation<DataCreature>
 		for (var i = 0; i < Registry.Entities.Count; i++)
 		{
 			var creature = Registry.Entities[i];
-			var labeledCollisions = GetLabeledAndSortedCollisions(creature);
+			var labeledCollisions = GetLabeledCollisions(creature);
             
             // Do-nothing conditions 
             if (!creature.Alive) continue;
@@ -76,8 +76,8 @@ public class CreatureSim : Simulation<DataCreature>
             // Check for mating
             if (creature.OpenToMating)
             {
-	            var creatureCollisions = labeledCollisions.Where(x => x.Type == CollisionType.Creature).Select(x => x.Index);
-                var mateIndex = _settings.FindMate(i, creatureCollisions);
+	            var creatureCollisions = labeledCollisions.Where(x => x.Type == CollisionType.Creature);
+                var mateIndex = _settings.FindMate(i, creatureCollisions, creature.Position);
                 if (mateIndex != -1)
                 {
                     var mate = Registry.Entities[mateIndex];
@@ -107,7 +107,11 @@ public class CreatureSim : Simulation<DataCreature>
             // Check for eating
             if (creature.Energy < creature.HungerThreshold)
             {
-                var closestFood = labeledCollisions.FirstOrDefault(c => c.Type == CollisionType.Tree);
+	            var foods = labeledCollisions
+		            .Where(c => c.Type == CollisionType.Tree).ToArray();
+	            var closestFood = foods.Length > 0
+		            ? foods.MinBy(c => (c.Position - creature.Position).LengthSquared())
+		            : default;
                 if ((closestFood.Position - creature.Position).IsLengthLessThan(CreatureSimSettings.CreatureEatDistance)
                     && creature.EatingTimeLeft <= 0)
                 {
@@ -150,13 +154,13 @@ public class CreatureSim : Simulation<DataCreature>
 	}
 	
 	#region Collision handling
-	private enum CollisionType
+	public enum CollisionType
 	{
 		None,
 		Tree,
 		Creature
 	}
-	private struct LabeledCollision
+	public struct LabeledCollision
 	{
 		public CollisionType Type;
 		public int Index;
@@ -180,11 +184,8 @@ public class CreatureSim : Simulation<DataCreature>
 		
 		return PhysicsServer3D.SpaceGetDirectState(Registry.World3D.Space).IntersectShape(queryParams);
 	}
-	private List<LabeledCollision> GetLabeledAndSortedCollisions(DataCreature creature)
+	private List<LabeledCollision> GetLabeledCollisions(DataCreature creature)
 	{
-		// TODO: Put areas on a separate collision layer and mask the collisions so they don't look at each other
-		// Just a small optimization
-		
 		var objectsInAwareness = DetectCollisionsWithCreature(creature);
 		var labeledCollisions = new List<LabeledCollision>();
 
@@ -224,7 +225,6 @@ public class CreatureSim : Simulation<DataCreature>
 			}
 		}
 
-		labeledCollisions.Sort((a, b) => (a.Position - creature.Position).LengthSquared().CompareTo((b.Position - creature.Position).LengthSquared()));
 		return labeledCollisions;
 	}
 	#endregion

@@ -4,17 +4,25 @@ using Godot;
 
 namespace PrimerTools.Simulation;
 
-public delegate int FindMateDelegate(int creatureIndex, IEnumerable<int> labeledCollisions);
+public delegate int FindMateDelegate(int creatureIndex, IEnumerable<CreatureSim.LabeledCollision> labeledCollisions, Vector3
+    creaturePosition);
 public delegate DataCreature ReproduceDelegate(Genome genome1, Genome genome2, Rng rng);
 
 public static class MateSelectionStrategies
 {
-    public static int FindFirstAvailableMate(int creatureIndex, IEnumerable<int> labeledCollisions)
+    public static int FindFirstAvailableMate(int creatureIndex, IEnumerable<CreatureSim.LabeledCollision> labeledCollisions,
+        Vector3 creaturePosition)
     {
-        var collisions = labeledCollisions as int[] ?? labeledCollisions.ToArray();
-        return collisions.Any() ? collisions.First() : -1;
+        
+        return labeledCollisions
+            .Where(c => c.Type == CreatureSim.CollisionType.Creature)
+            .OrderBy(c => (c.Position - creaturePosition).LengthSquared())
+            .Select(c => c.Index)
+            .FirstOrDefault(-1);
     }
-    public static int AsexualFindMate(int creatureIndex, IEnumerable<int> labeledCollisions)
+
+    public static int AsexualFindMate(int creatureIndex, IEnumerable<CreatureSim.LabeledCollision> labeledCollisions, Vector3
+        creaturePosition)
     {
         return creatureIndex;
     }
