@@ -21,7 +21,8 @@ public class CreatureSimSettings
 	// Energy
 	public const float BaseEnergySpend = 0.1f;
 	public const float GlobalEnergySpendAdjustmentFactor = 0.2f;
-	public const float EnergyGainFromFood = 1f;
+	public const float MinEnergyGainFromFood = 0.5f;
+	public const float MaxEnergyGainFromFood = 1.5f;
 	public const float ReproductionEnergyThreshold = 2f;
 	public const float ReproductionEnergyCost = 1f;
 	public const float DefaultHungerThreshold = 4;

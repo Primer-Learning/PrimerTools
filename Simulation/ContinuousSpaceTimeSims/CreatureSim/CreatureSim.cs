@@ -277,7 +277,7 @@ public class CreatureSim : Simulation<DataCreature>
 	}
 	public static event Action<int> CreatureDeathEvent; // creatureIndex
 	public static event Action<int, Rid, float> CreatureEatEvent; // creatureIndex, treeBodyRid, duration
-	private static DataCreature EatFood(DataCreature creature, ref DataTree tree, int creatureIndex)
+	private DataCreature EatFood(DataCreature creature, ref DataTree tree, int creatureIndex)
 	{
 		// var tree = FruitTreeSim.Registry.Entities[treeIndex];
 		if (!tree.HasFruit) return creature;
@@ -286,7 +286,7 @@ public class CreatureSim : Simulation<DataCreature>
 		tree.FruitGrowthProgress = 0;
 		// FruitTreeSim.Registry.Entities[treeIndex] = tree;
 		
-		creature.Energy += CreatureSimSettings.EnergyGainFromFood;
+		creature.Energy += simulationWorld.Rng.RangeFloat(CreatureSimSettings.MinEnergyGainFromFood, CreatureSimSettings.MaxEnergyGainFromFood);
 		creature.EatingTimeLeft = CreatureSimSettings.EatDuration;
 		CreatureEatEvent?.Invoke(creatureIndex, tree.Body, CreatureSimSettings.EatDuration / SimulationWorld.TimeScale);
 		return creature;
