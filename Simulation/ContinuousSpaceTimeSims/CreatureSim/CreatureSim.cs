@@ -53,7 +53,6 @@ public class CreatureSim : Simulation<DataCreature>
 		for (var i = 0; i < Registry.Entities.Count; i++)
 		{
 			var creature = Registry.Entities[i];
-			var labeledCollisions = GetLabeledCollisions(creature);
             
             // Do-nothing conditions 
             if (!creature.Alive) continue;
@@ -72,6 +71,8 @@ public class CreatureSim : Simulation<DataCreature>
                 Registry.Entities[i] = creature;
                 continue;
             }
+            
+            var labeledCollisions = GetLabeledCollisions(creature);
             
             // Check for mating
             if (creature.OpenToMating)
