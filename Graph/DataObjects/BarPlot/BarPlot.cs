@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using Godot;
 using PrimerAssets;
@@ -26,16 +25,16 @@ public partial class BarPlot : Node3D, IPrimerGraphData
     // private List<Tuple<float, float, float>> renderedRectProperties = new();
     
     public List<float> Data;
-    public delegate List<float> DataFetch();
+    public delegate float[] DataFetch();
     public DataFetch DataFetchMethod = () =>
     {
         PrimerGD.PrintWithStackTrace("Data fetch method not assigned. Returning empty list.");
-        return new List<float>();
+        return Array.Empty<float>();
     };
 
     public void FetchData()
     {
-        Data = DataFetchMethod();
+        Data = DataFetchMethod().ToList();
     }
 
     private List<Tuple<float, float, float>> DataAsRectProperties()

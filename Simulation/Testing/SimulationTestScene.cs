@@ -86,13 +86,18 @@ public partial class SimulationTestScene : Node3D
 		thisGraph.XAxis.Max = 40;
 		thisGraph.XAxis.TicStep = 20;
 		
-		thisGraph.YAxis.length = 30;
-		thisGraph.YAxis.Max = 20;
-		thisGraph.YAxis.TicStep = 10;
+		thisGraph.YAxis.length = 50;
+		
+		// TODO: Give periodic plotter the option of automatically adjusting ranges 
+		thisGraph.YAxis.Max = 1f;
+		thisGraph.YAxis.TicStep = 0.2f;
+		
+		// thisGraph.YAxis.Max = 40f;
+		// thisGraph.YAxis.TicStep = 10f;
 		
 		thisGraph.ZAxis.length = 0;
 
-		var thisChonk = 25;
+		const int thisChonk = 25;
 		thisGraph.XAxis.Chonk = thisChonk;
 		thisGraph.YAxis.Chonk = thisChonk;
 		thisGraph.ZAxis.Chonk = thisChonk;
@@ -102,62 +107,53 @@ public partial class SimulationTestScene : Node3D
 		GraphParent.AddChild(periodicPlotter);
 		periodicPlotter.Name = "Periodic plotter";
 		
-		// TODO: Potentially delete this and replace it with parts from DataFetchMethods.cs
 		// Curve
-		//
 		// var curve = thisGraph.AddCurvePlot2D();
 		// curve.Width = 200;
-		//
-		// curve.DataFetchMethod = () =>
-		// {
-		// 	var dataList = curve.GetData().ToList();
-		// 	
-		// 	// Creature count
-		// 	// dataList.Add( new Vector3(dataList.Count, CreatureSim.Registry.Entities.Count(x => x.Alive), 0) );
-		// 	
-		// 	// Average age
-		// 	dataList.Add( new Vector3(dataList.Count, CreatureSim.Registry.Entities.Average(x => x.Age), 0) );
-		// 	
-		// 	return dataList;
-		// };
+		// curve.DataFetchMethod = CurvePlot2DUtilities.AppendAverageProperty<DataCreature>(
+		// 	() => CreatureSim.Registry.Entities,
+		// 	curve,
+		// 	x => x.MaxAge
+		// );
+		// curve.DataFetchMethod = CurvePlot2DUtilities.AppendCount(() => CreatureSim.Registry.Entities, curve);
 		// periodicPlotter.Curve = curve;
 		
 		// Bar plot
-
-		var creatureDeathAges = new List<float>();
-		CreatureSim.CreatureDeathEvent += (int index) =>
-		{
-			creatureDeathAges.Add(CreatureSim.Registry.Entities[index].Age);
-		};
-		
 		var barPlot = thisGraph.AddBarPlot();
-		barPlot.DataFetchMethod = () =>
-		{
-			// Old max age plotting
-			// var values = CreatureSim.Registry.Entities.Select(x => x.MaxAge).ToList();
-			var values = creatureDeathAges;
-			var binWidth = 1;
+		
+		// Cumulative death/survival plotting
+		// var creatureDeathAges = new List<float>();
+		// CreatureSim.CreatureDeathEvent += (int index) =>
+		// {
+		// 	creatureDeathAges.Add(CreatureSim.Registry.Entities[index].Age);
+		// };
+		//
+		// barPlot.DataFetchMethod = () =>
+		// {
+		// 	// Old max age plotting
+		// 	// var values = CreatureSim.Registry.Entities.Select(x => x.MaxAge).ToList();
+		// 	
+		// 	var histogram = BarDataUtilities.MakeHistogram(creatureDeathAges, 1);
+		// 	
+		// 	// Normalize
+		// 	var floatHistogram = histogram.Select(x => x / creatureDeathAges.Count).ToArray();
+		//
+		// 	var transformedHistogram = new List<float>();
+		// 	var survival = 1f;
+		// 	foreach (var val in floatHistogram)
+		// 	{
+		// 		survival -= val;
+		// 		transformedHistogram.Add(survival);
+		// 	}
+		// 	
+		// 	return transformedHistogram.ToArray();
+		// };
 
-			if (values.Count == 0) return new List<float>();
-
-			var maxValue = values.Max();
-			var numBins = Mathf.CeilToInt(maxValue / binWidth);
-			var histogram = new List<float>(new float[numBins]);
-
-			foreach (var value in values)
-			{
-				if (value == 0)
-				{
-					histogram[0]++;
-					continue;
-				}
-
-				var binIndex = Mathf.CeilToInt(value / binWidth) - 1;
-				histogram[binIndex]++;
-			}
-
-			return histogram;
-		};
+		// Max age histogram
+		barPlot.DataFetchMethod = BarDataUtilities.NormalizedPropertyHistogram(() => CreatureSim.Registry.Entities, x => x.MaxAge);
+		// TODO: Get this to actually count alleles. Could allow it to take delegate returning an array of floats instead of just a single float
+		// barPlot.DataFetchMethod = BarDataUtilities.NormalizedPropertyHistogram(() => CreatureSim.Registry.Entities, x => x.Genome.GetTrait<float>("MaxAge").Alleles /*...*/);
+		
 		periodicPlotter.BarPlot = barPlot;
 	}
 
