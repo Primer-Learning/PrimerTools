@@ -30,7 +30,14 @@ public partial class SimulationTestScene : Node3D
 				{
 					GD.Print("Continuing sim");
 					SimulationWorld.Running = true;
-					if (PeriodicPlotter != null) PeriodicPlotter.Plotting = true;
+					if (PeriodicPlotter != null)
+					{
+						PeriodicPlotter.Plotting = true;
+					}
+					if (PeriodicPlotter2 != null)
+					{
+						PeriodicPlotter2.Plotting = true;
+					}
 				}
 			}
 			else if (_running)
@@ -38,6 +45,7 @@ public partial class SimulationTestScene : Node3D
 				GD.Print("Pausing");
 				SimulationWorld.Running = false;
 				if (PeriodicPlotter != null) PeriodicPlotter.Plotting = false;
+				if (PeriodicPlotter2 != null) PeriodicPlotter2.Plotting = false;
 			}
 			_running = value;
 		}
@@ -71,6 +79,7 @@ public partial class SimulationTestScene : Node3D
 	
 	private Node3D GraphParent => GetNode<Node3D>("GraphParent");
 	private PeriodicPlotter PeriodicPlotter => GraphParent.GetNodeOrNull<PeriodicPlotter>("Periodic plotter");
+	private PeriodicPlotter PeriodicPlotter2 => GraphParent.GetNodeOrNull<PeriodicPlotter>("Periodic plotter2");
 	
 	private void CreatePlot()
 	{
@@ -80,6 +89,7 @@ public partial class SimulationTestScene : Node3D
 		}
 		
 		var thisGraph = Graph.CreateInstance();
+		thisGraph.Name = "Graph1";
 		GraphParent.AddChild(thisGraph);
 		// thisGraph.Owner = GetTree().EditedSceneRoot;
 		thisGraph.XAxis.length = 60;
@@ -155,6 +165,74 @@ public partial class SimulationTestScene : Node3D
 		// barPlot.DataFetchMethod = BarDataUtilities.NormalizedPropertyHistogram(() => CreatureSim.Registry.Entities, x => x.Genome.GetTrait<float>("MaxAge").Alleles /*...*/);
 		
 		periodicPlotter.BarPlot = barPlot;
+		
+		
+		//
+		// Second graph
+		//
+		
+		var thisGraph2 = Graph.CreateInstance();
+		thisGraph2.Name = "Graph2";
+		GraphParent.AddChild(thisGraph2);
+		// thisGraph2.Owner = GetTree().EditedSceneRoot;
+		thisGraph2.XAxis.length = 60;
+		thisGraph2.XAxis.Max = 40;
+		thisGraph2.XAxis.TicStep = 20;
+		thisGraph2.Position = Vector3.Right * 90;
+		
+		thisGraph2.YAxis.length = 50;
+		
+		// TODO: Give periodic plotter the option of automatically adjusting ranges 
+		thisGraph2.YAxis.Max = 1f;
+		thisGraph2.YAxis.TicStep = 0.2f;
+		
+		// thisGraph.YAxis.Max = 40f;
+		// thisGraph.YAxis.TicStep = 10f;
+		
+		thisGraph2.ZAxis.length = 0;
+
+		thisGraph2.XAxis.Chonk = thisChonk;
+		thisGraph2.YAxis.Chonk = thisChonk;
+		thisGraph2.ZAxis.Chonk = thisChonk;
+		thisGraph2.Transition();
+
+		var periodicPlotter2 = new PeriodicPlotter();
+		GraphParent.AddChild(periodicPlotter2);
+		periodicPlotter2.Name = "Periodic plotter2";
+		
+		// Bar plot
+		var barPlot2 = thisGraph2.AddBarPlot();
+		
+		// Cumulative death/survival plotting
+		var creatureDeathAges = new List<float>();
+		CreatureSim.CreatureDeathEvent += (int index) =>
+		{
+			var age = CreatureSim.Registry.Entities[index].Age;
+			if (age > 40) GD.Print($"Ohp creature lived to be {age}.");
+			creatureDeathAges.Add(age);
+			// if (creatureDeathAges.Count > 1000) creatureDeathAges.RemoveAt(0);
+		};
+		
+		barPlot2.DataFetchMethod = () =>
+		{
+			var histogram = BarDataUtilities.MakeHistogram(creatureDeathAges, 1);
+			
+			// Normalize
+			histogram = histogram.Select(x => x / creatureDeathAges.Count).ToArray();
+		
+			// Transform to cumulative survival
+			var transformedHistogram = new List<float>();
+			var survival = 1f;
+			foreach (var val in histogram)
+			{
+				survival -= val;
+				transformedHistogram.Add(survival);
+			}
+			
+			return transformedHistogram.ToArray();
+		};
+		
+		periodicPlotter2.BarPlot = barPlot2;
 	}
 
 	private async Task RunSimSequence()
@@ -191,6 +269,7 @@ public partial class SimulationTestScene : Node3D
 		CreatureSim.InitialEntityCount = _initialCreatureCount;
 		CreatureSim.Initialize();
 		if (PeriodicPlotter != null) PeriodicPlotter.Plotting = true;
+		if (PeriodicPlotter2 != null) PeriodicPlotter2.Plotting = true;
 	}
 
 	public override void _Ready()

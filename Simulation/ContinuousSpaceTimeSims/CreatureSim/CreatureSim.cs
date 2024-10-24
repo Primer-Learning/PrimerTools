@@ -54,8 +54,19 @@ public class CreatureSim : Simulation<DataCreature>
 		{
 			var creature = Registry.Entities[i];
             
-            // Do-nothing conditions 
             if (!creature.Alive) continue;
+            // Process deaths
+            var alive = creature.Energy > 0;
+            alive = alive && creature.Age < creature.MaxAge;
+            if (!alive)
+            {
+	            creature.Alive = false;
+	            CreatureDeathEvent?.Invoke(i);
+	            Registry.Entities[i] = creature;
+	            continue;
+            }
+            
+            // Do-nothing conditions 
             if (creature.Age < CreatureSimSettings.MaturationTime) continue;
             if (creature.EatingTimeLeft > 0)
             {
@@ -140,15 +151,6 @@ public class CreatureSim : Simulation<DataCreature>
                 creature.CurrentDestination = simulationWorld.GetRandomDestination(creature.Position, CreatureSimSettings.CreatureStepMaxLength);
             }
             PerformMovement(ref creature);
-            
-            // Process deaths
-            var alive = creature.Energy > 0;
-            alive = alive && creature.Age < creature.MaxAge;
-            if (!alive)
-            {
-	            creature.Alive = false;
-	            CreatureDeathEvent?.Invoke(i);
-            }
             
             Registry.Entities[i] = creature;
 		}
