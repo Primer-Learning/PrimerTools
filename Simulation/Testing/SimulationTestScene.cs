@@ -211,10 +211,9 @@ public partial class SimulationTestScene : Node3D
 		
 		// Cumulative death/survival plotting
 		var creatureDeathAges = new List<float>();
-		CreatureSim.CreatureDeathEvent += (int index) =>
+		CreatureSim.CreatureDeathEvent += index =>
 		{
 			var age = CreatureSim.Registry.Entities[index].Age;
-			if (age > 40) GD.Print($"Ohp creature lived to be {age}.");
 			creatureDeathAges.Add(age);
 			// if (creatureDeathAges.Count > 1000) creatureDeathAges.RemoveAt(0);
 		};

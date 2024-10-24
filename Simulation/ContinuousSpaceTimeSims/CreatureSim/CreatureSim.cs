@@ -57,7 +57,21 @@ public class CreatureSim : Simulation<DataCreature>
             if (!creature.Alive) continue;
             // Process deaths
             var alive = creature.Energy > 0;
-            alive = alive && creature.Age < creature.MaxAge;
+            
+            // Check for death from deleterious mutations
+            foreach (var trait in creature.Genome.Traits.Values)
+            {
+                if (trait is DeleteriousTrait deleteriousTrait)
+                {
+                    if (deleteriousTrait.CheckForDeath(creature.Age, simulationWorld.Rng))
+                    {
+	                    GD.Print($"Creature died of deleterious mutation {deleteriousTrait.Id} with onset age {deleteriousTrait.ActivationAge} and severity {deleteriousTrait.MortalityRate}");
+                        alive = false;
+                        break;
+                    }
+                }
+            }
+
             if (!alive)
             {
 	            creature.Alive = false;

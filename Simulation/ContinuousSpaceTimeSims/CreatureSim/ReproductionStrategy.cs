@@ -43,17 +43,15 @@ public static class ReproductionStrategies
         var newGenome = new Genome();
         var parentGenomes = new[] { genome1.Clone(), genome2.Clone() };
 
-        foreach (var traitName in genome1.Traits.Keys)
+        // Handle standard float traits
+        foreach (var traitName in genome1.Traits.Keys.Intersect(genome2.Traits.Keys))
         {
-            // Randomizing which parent shares its chromosome first makes this work for haploid
-            // Also any odd ploidies, but I would want to look up actual mechanisms to model that.
-            var currentParentIndex = rng.RangeInt(0, 2);
-            
             var trait1 = genome1.Traits[traitName];
             var trait2 = genome2.Traits[traitName];
 
             if (trait1 is Trait<float> floatTrait1 && trait2 is Trait<float> floatTrait2)
             {
+                var currentParentIndex = rng.RangeInt(0, 2);
                 var newAlleles = new List<float>();
                 for (var i = 0; i < floatTrait1.Alleles.Count; i++)
                 {
@@ -64,26 +62,74 @@ public static class ReproductionStrategies
 
                 newGenome.AddTrait(new Trait<float>(traitName, newAlleles, floatTrait1.ExpressionMechanism, floatTrait1.MutationIncrement));
             }
-            // Add more type checks for other trait types as needed
+        }
+
+        // Handle deleterious traits from both parents
+        var allDeleteriousTraits = genome1.Traits.Values
+            .Concat(genome2.Traits.Values)
+            .OfType<DeleteriousTrait>()
+            .GroupBy(t => t.Id)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        foreach (var (id, traits) in allDeleteriousTraits)
+        {
+            if (traits.Count == 2) // Both parents have the trait
+            {
+                var parent1Trait = traits[0];
+                var parent2Trait = traits[1];
+                
+                var newAlleles = new List<bool>
+                {
+                    parent1Trait.Alleles[rng.RangeInt(0, 2)],
+                    parent2Trait.Alleles[rng.RangeInt(0, 2)]
+                };
+                
+                newGenome.AddTrait(new DeleteriousTrait(
+                    id,
+                    newAlleles,
+                    parent1Trait.ActivationAge,
+                    parent1Trait.MortalityRate
+                ));
+            }
+            else // Only one parent has the trait
+            {
+                var parentTrait = traits[0];
+                var newAlleles = new List<bool>
+                {
+                    parentTrait.Alleles[rng.RangeInt(0, 2)],
+                    false // Wild-type allele from the other parent
+                };
+                
+                newGenome.AddTrait(new DeleteriousTrait(
+                    id,
+                    newAlleles,
+                    parentTrait.ActivationAge,
+                    parentTrait.MortalityRate
+                ));
+            }
         }
 
         MutateCreature(newGenome, rng);
-        var newCreature = new DataCreature { Genome = newGenome };
-        return newCreature;
+
+        return new DataCreature { Genome = newGenome };
     }
 
     private static void MutateCreature(Genome genome, Rng rng)
     {
         foreach (var trait in genome.Traits.Values)
         {
-            if (trait is Trait<float> floatTrait)
+            if (rng.RangeFloat(0, 1) < CreatureSimSettings.MutationProbability)
             {
-                if (rng.RangeFloat(0, 1) < CreatureSimSettings.MutationProbability)
+                if (trait is Trait<float> floatTrait)
                 {
                     floatTrait.Mutate(rng);
                 }
             }
-            // Add more type checks for other trait types
+        }
+        // Possibly add new deleterious mutation
+        if (rng.RangeFloat(0, 1) < CreatureSimSettings.DeleteriousMutationRate)
+        {
+            genome.AddTrait(DeleteriousTrait.CreateNew(rng));
         }
     }
 }

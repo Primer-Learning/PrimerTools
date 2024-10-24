@@ -12,6 +12,58 @@ public static class ExpressionMechanisms
         public static Func<List<float>, float> LowDominant => alleles => alleles.Min();
         public static Func<List<float>, float> Codominant => alleles => alleles.Average();
     }
+
+    public static class Bool
+    {
+        public static Func<List<bool>, bool> Dominant => alleles => alleles.Any(a => a);
+        public static Func<List<bool>, bool> Recessive => alleles => alleles.All(a => a);
+    }
+}
+
+public class DeleteriousTrait : Trait<bool>
+{
+    public Guid Id { get; }
+    public float ActivationAge { get; }
+    public float MortalityRate { get; }
+
+    public DeleteriousTrait(Guid id, List<bool> alleles, float activationAge, float mortalityRate) 
+        : base($"Deleterious_{id}", alleles, ExpressionMechanisms.Bool.Dominant, false)
+    {
+        if (alleles.Count != 2)
+            throw new ArgumentException("DeleteriousTrait must be diploid (exactly 2 alleles)", nameof(alleles));
+            
+        Id = id;
+        ActivationAge = activationAge;
+        MortalityRate = mortalityRate;
+    }
+
+    public bool IsExpressed => ExpressedValue;
+
+    public bool CheckForDeath(float age, Rng rng)
+    {
+        if (!IsExpressed || age < ActivationAge) return false;
+        return rng.RangeFloat(0, 1) < (MortalityRate / SimulationWorld.PhysicsStepsPerSimSecond);
+    }
+
+    public static DeleteriousTrait CreateNew(Rng rng)
+    {
+        return new DeleteriousTrait(
+            Guid.NewGuid(),
+            new List<bool> { true, false }, // New mutations start heterozygous
+            activationAge: rng.RangeFloat(1f, 100f),
+            mortalityRate: rng.RangeFloat(0.01f, 1f)
+        );
+    }
+
+    public override Trait Clone()
+    {
+        return new DeleteriousTrait(
+            Id,
+            new List<bool>(Alleles),
+            ActivationAge,
+            MortalityRate
+        );
+    }
 }
 
 public abstract class Trait
@@ -50,6 +102,12 @@ public class Trait<T> : Trait
             allele += rng.RangeFloat(0, 1) < 0.5f ? -increment : increment;
             allele = Math.Max(0, allele);
             Alleles[0] = (T)(object)allele;
+        }
+        else if (typeof(T) == typeof(bool))
+        {
+            var index = rng.RangeInt(0, Alleles.Count);
+            var currentValue = (bool)(object)Alleles[index];
+            Alleles[index] = (T)(object)(!currentValue);
         }
         // Add more type-specific mutation logic here if needed
     }
