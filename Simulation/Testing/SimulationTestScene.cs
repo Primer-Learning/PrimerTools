@@ -38,6 +38,10 @@ public partial class SimulationTestScene : Node3D
 					{
 						PeriodicPlotter2.Plotting = true;
 					}
+					if (PeriodicPlotter3 != null)
+					{
+						PeriodicPlotter3.Plotting = true;
+					}
 				}
 			}
 			else if (_running)
@@ -46,6 +50,7 @@ public partial class SimulationTestScene : Node3D
 				SimulationWorld.Running = false;
 				if (PeriodicPlotter != null) PeriodicPlotter.Plotting = false;
 				if (PeriodicPlotter2 != null) PeriodicPlotter2.Plotting = false;
+				if (PeriodicPlotter3 != null) PeriodicPlotter3.Plotting = false;
 			}
 			_running = value;
 		}
@@ -80,6 +85,7 @@ public partial class SimulationTestScene : Node3D
 	private Node3D GraphParent => GetNode<Node3D>("GraphParent");
 	private PeriodicPlotter PeriodicPlotter => GraphParent.GetNodeOrNull<PeriodicPlotter>("Periodic plotter");
 	private PeriodicPlotter PeriodicPlotter2 => GraphParent.GetNodeOrNull<PeriodicPlotter>("Periodic plotter2");
+	private PeriodicPlotter PeriodicPlotter3 => GraphParent.GetNodeOrNull<PeriodicPlotter>("Periodic plotter3");
 	
 	private void CreatePlot()
 	{
@@ -233,6 +239,78 @@ public partial class SimulationTestScene : Node3D
 		};
 		
 		periodicPlotter2.BarPlot = barPlot2;
+		
+		
+		
+		
+		//
+		// Third graph
+		//
+		
+		var thisGraph3 = Graph.CreateInstance();
+		thisGraph3.Name = "Graph3";
+		GraphParent.AddChild(thisGraph3);
+		// thisGraph3.Owner = GetTree().EditedSceneRoot;
+		thisGraph3.XAxis.length = 60;
+		thisGraph3.XAxis.Max = 40;
+		thisGraph3.XAxis.TicStep = 20;
+		thisGraph3.Position = Vector3.Right * 180;
+		
+		thisGraph3.YAxis.length = 50;
+		
+		thisGraph3.YAxis.Max = 1f;
+		thisGraph3.YAxis.TicStep = 0.2f;
+		
+		// thisGraph.YAxis.Max = 40f;
+		// thisGraph.YAxis.TicStep = 10f;
+		
+		thisGraph3.ZAxis.length = 0;
+
+		thisGraph3.XAxis.Chonk = thisChonk;
+		thisGraph3.YAxis.Chonk = thisChonk;
+		thisGraph3.ZAxis.Chonk = thisChonk;
+		thisGraph3.Transition();
+
+		var periodicPlotter3 = new PeriodicPlotter();
+		GraphParent.AddChild(periodicPlotter3);
+		periodicPlotter3.Name = "Periodic plotter2";
+		
+		// Bar plot
+		var barPlot3 = thisGraph3.AddBarPlot();
+		
+		barPlot3.DataFetchMethod = () =>
+		{
+			var histogram = BarDataUtilities.MakeHistogram(creatureDeathAges, 1);
+			
+			// Normalize
+			histogram = histogram.Select(x => x / creatureDeathAges.Count).ToArray();
+		
+			// Transform to cumulative survival
+			var transformedHistogram = new List<float>();
+			var survival = 1f;
+			foreach (var val in histogram)
+			{
+				survival -= val;
+				transformedHistogram.Add(survival);
+			}
+			
+			// Transform to death probability at age, given survival to that age
+			var evenMoreTransformedHistogram = new List<float>();
+			for (var i = 0; i < transformedHistogram.Count; i++)
+			{
+				if (i == 0) evenMoreTransformedHistogram.Add(0);
+				else
+				{
+					var value = transformedHistogram[i];
+					var prevValue = transformedHistogram[i - 1];
+					evenMoreTransformedHistogram.Add(1 - value / prevValue);
+				}
+			}
+			
+			return evenMoreTransformedHistogram.ToArray();
+		};
+		
+		periodicPlotter3.BarPlot = barPlot3;
 	}
 
 	private async Task RunSimSequence()
@@ -270,6 +348,7 @@ public partial class SimulationTestScene : Node3D
 		CreatureSim.Initialize();
 		if (PeriodicPlotter != null) PeriodicPlotter.Plotting = true;
 		if (PeriodicPlotter2 != null) PeriodicPlotter2.Plotting = true;
+		if (PeriodicPlotter3 != null) PeriodicPlotter3.Plotting = true;
 	}
 
 	public override void _Ready()

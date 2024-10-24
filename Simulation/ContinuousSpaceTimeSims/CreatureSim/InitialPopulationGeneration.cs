@@ -34,7 +34,7 @@ public static class InitialPopulationGeneration
             genome.AddTrait(
                 new Trait<float>(
                     "MaxAge", 
-                    new List<float> { i, i },
+                    new List<float> { i % 40, i % 40 },
                     ExpressionMechanisms.Float.Codominant,
                     0
                 )
