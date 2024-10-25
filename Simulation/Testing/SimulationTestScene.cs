@@ -137,9 +137,25 @@ public partial class SimulationTestScene : Node3D
 		// periodicPlotter.Curve = curve;
 		
 		// Bar plot
-		var barPlot = thisGraph.AddBarPlot3D();
+		var barPlot3D = thisGraph.AddBarPlot3D();
+		barPlot3D.DataFetchMethod = BarData3DUtilities.PropertyHistogram2D(
+			() => CreatureSim.Registry.Entities,
+			creature =>
+			{
+				var deleteriousMutationProperties = new List<(float, float)>();
+				foreach (var trait in creature.Genome.Traits.Values)
+				{
+					if (trait is DeleteriousTrait deleteriousTrait)
+					{
+						deleteriousMutationProperties.Add((deleteriousTrait.ActivationAge, deleteriousTrait.MortalityRate * 100));
+					}
+				}
 		
-		periodicPlotter.BarPlot3D = barPlot;
+				return deleteriousMutationProperties;
+			}
+		);
+		
+		periodicPlotter.BarPlot3D = barPlot3D;
 		
 		//
 		// Second graph
@@ -210,9 +226,6 @@ public partial class SimulationTestScene : Node3D
 		};
 		
 		periodicPlotter2.BarPlot = barPlot2;
-		
-		
-		
 		
 		//
 		// Third graph

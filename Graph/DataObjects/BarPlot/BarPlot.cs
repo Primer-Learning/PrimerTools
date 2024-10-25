@@ -105,6 +105,8 @@ public partial class BarPlot : Node3D, IPrimerGraphData
     {
         var rectProperties = DataAsRectProperties();
 
+        if (!rectProperties.Any()) return null;
+
         var tween = CreateTween();
         tween.SetParallel();
         

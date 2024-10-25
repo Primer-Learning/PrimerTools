@@ -43,4 +43,29 @@ public static class BarDataUtilities
             return histogram.Select(x => x / sum).ToArray();
         };
     }
+
+    public static BarPlot.DataFetch PropertyHistogramMulti<T>(
+        Func<IEnumerable<T>> dataSourceGetter, 
+        Func<T, IEnumerable<float>> propertySelector, 
+        float binWidth = 1)
+    {
+        return () => MakeHistogram(
+            dataSourceGetter().SelectMany(propertySelector),
+            binWidth);
+    }
+
+    public static BarPlot.DataFetch NormalizedPropertyHistogramMulti<T>(
+        Func<IEnumerable<T>> dataSourceGetter, 
+        Func<T, IEnumerable<float>> propertySelector, 
+        float binWidth = 1)
+    {
+        return () =>
+        {
+            var histogram = MakeHistogram(
+                dataSourceGetter().SelectMany(propertySelector),
+                binWidth);
+            var sum = histogram.Sum();
+            return histogram.Select(x => x / sum).ToArray();
+        };
+    }
 }

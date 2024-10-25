@@ -9,8 +9,8 @@ namespace PrimerTools.Graph;
 public partial class BarPlot3D : Node3D, IPrimerGraphData
 {
     private int BinsX => _data.GetLength(0);
-    private int BinsY => _data.GetLength(0);
-    private float[,] _data;
+    private int BinsY => _data.GetLength(1);
+    private float[,] _data = new float[0, 0];
     
     public delegate Vector3 Transformation(Vector3 inputPoint);
     public Transformation TransformPointFromDataSpaceToPositionSpace = point => point;
@@ -119,8 +119,12 @@ public partial class BarPlot3D : Node3D, IPrimerGraphData
 
     public Tween TweenTransition(double duration = AnimationUtilities.DefaultDuration)
     {
+        if (_data.GetLength(0) == 0) return null;
+        
         var tween = CreateTween();
         tween.SetParallel();
+
+        // GD.Print($"Data dimensions: {_data.GetLength(0)} by {_data.GetLength(1)}");
         
         for (var x = 0; x < BinsX; x++)
         for (var y = 0; y < BinsY; y++)
@@ -142,7 +146,7 @@ public partial class BarPlot3D : Node3D, IPrimerGraphData
                 duration
             );
         }
-
+        
         return tween;
     }
 

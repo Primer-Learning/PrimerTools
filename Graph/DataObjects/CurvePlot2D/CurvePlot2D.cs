@@ -209,6 +209,8 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
     /// <summary>
     /// Creates a tween that will transition the curve to the latest data. The returned tween will usually not be needed,
     /// but it's there if you want to chain things or whatever.
+    /// TODO: It currently only works if one data point has been added. If it needs to work with zero or more than one,
+    /// we'll need to add that.
     /// </summary>
     /// <param name="duration"></param>
     /// <returns></returns>
