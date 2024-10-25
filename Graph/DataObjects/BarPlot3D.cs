@@ -11,7 +11,7 @@ public partial class BarPlot3D : Node3D, IPrimerGraphData
     private int BinsX => _data.GetLength(0);
     private int BinsY => _data.GetLength(0);
     private float[,] _data;
-    private Node3D[,] _bars;
+    // private Node3D[,] _bars;
     
     public delegate Vector3 Transformation(Vector3 inputPoint);
     public Transformation TransformPointFromDataSpaceToPositionSpace = point => point;
@@ -32,7 +32,7 @@ public partial class BarPlot3D : Node3D, IPrimerGraphData
         }
         
         _data = DataFetchMethod();
-        _bars = new Node3D[BinsX, BinsY];
+        // _bars = new Node3D[BinsX, BinsY];
     }
 
     private Node3D CreateBar(int x, int y)
@@ -53,18 +53,26 @@ public partial class BarPlot3D : Node3D, IPrimerGraphData
         return bar;
     }
 
-    private void EnsureBarExists(int x, int y)
+    private Node3D GetBar(int x, int y)
     {
-        if (_bars[x, y] != null) return;
+        return GetNodeOrNull<Node3D>($"Bar {x}, {y}");
+    }
+    
+    private Node3D EnsureBarExists(int x, int y)
+    {
+        var bar = GetBar(x, y);
         
-        var bar = CreateBar(x, y);
-        _bars[x, y] = bar;
+        if (bar != null) return bar;
         
+        bar = CreateBar(x, y);
+         
         // Set initial material
         var meshInstance = bar.GetNode<MeshInstance3D>("MeshInstance3D");
         var material = new StandardMaterial3D();
         material.AlbedoColor = Colors[(x + y) % Colors.Length];
         meshInstance.Mesh.SurfaceSetMaterial(0, material);
+
+        return bar;
     }
 
     public Animation Transition(double duration = AnimationUtilities.DefaultDuration)
@@ -74,8 +82,8 @@ public partial class BarPlot3D : Node3D, IPrimerGraphData
         for (var x = 0; x < BinsX; x++)
         for (var y = 0; y < BinsY; y++)
         {
-            EnsureBarExists(x, y);
-            var bar = _bars[x, y];
+            var bar = EnsureBarExists(x, y);
+            // var bar = _bars[x, y];
             
             // Position the bar
             var targetPosition = new Vector3(
@@ -97,6 +105,46 @@ public partial class BarPlot3D : Node3D, IPrimerGraphData
         return animations.RunInParallel().WithDuration(duration);
     }
 
+    public Tween TweenTransition(double duration = AnimationUtilities.DefaultDuration)
+    {
+        var tween = CreateTween();
+        tween.SetParallel();
+        
+        for (var x = 0; x < BinsX; x++)
+        for (var y = 0; y < BinsY; y++)
+        {
+            var bar = EnsureBarExists(x, y);
+            
+            // Position the bar
+            var targetPosition = new Vector3(
+                (x + 0.5f) * BarWidth,
+                0, // Center of bar
+                (y + 0.5f) * BarDepth
+            );
+            tween.TweenProperty(
+                bar,
+                "position",
+                TransformPointFromDataSpaceToPositionSpace(targetPosition),
+                duration
+            );
+            
+            // Scale the bar
+            var targetScale = new Vector3(
+                BarWidth,
+                Math.Max(_data[x, y], 0.001f), // Ensure some minimum height
+                BarDepth
+            );
+            tween.TweenProperty(
+                bar,
+                "scale",
+                TransformPointFromDataSpaceToPositionSpace(targetScale),
+                duration
+            );
+        }
+
+        return tween;
+    }
+
     public Animation Disappear()
     {
         var animations = new List<Animation>();
@@ -104,8 +152,9 @@ public partial class BarPlot3D : Node3D, IPrimerGraphData
         for (var x = 0; x < BinsX; x++)
         for (var y = 0; y < BinsY; y++)
         {
-            if (_bars[x, y] == null) continue;
-            animations.Add(_bars[x, y].ScaleTo(Vector3.Zero));
+            var bar = GetBar(x, y);
+            if (bar == null) continue;
+            animations.Add(bar.ScaleTo(Vector3.Zero));
         }
 
         return animations.RunInParallel();
