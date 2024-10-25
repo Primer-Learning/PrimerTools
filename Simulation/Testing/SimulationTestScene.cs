@@ -99,7 +99,7 @@ public partial class SimulationTestScene : Node3D
 		GraphParent.AddChild(thisGraph);
 		// thisGraph.Owner = GetTree().EditedSceneRoot;
 		thisGraph.XAxis.length = 60;
-		thisGraph.XAxis.Max = 40;
+		thisGraph.XAxis.Max = 100;
 		thisGraph.XAxis.TicStep = 20;
 		
 		thisGraph.YAxis.length = 50;
@@ -111,7 +111,9 @@ public partial class SimulationTestScene : Node3D
 		// thisGraph.YAxis.Max = 40f;
 		// thisGraph.YAxis.TicStep = 10f;
 		
-		thisGraph.ZAxis.length = 0;
+		thisGraph.ZAxis.length = 60;
+		thisGraph.ZAxis.Max = 100;
+		thisGraph.ZAxis.TicStep = 20;
 
 		const int thisChonk = 25;
 		thisGraph.XAxis.Chonk = thisChonk;
@@ -135,43 +137,9 @@ public partial class SimulationTestScene : Node3D
 		// periodicPlotter.Curve = curve;
 		
 		// Bar plot
-		var barPlot = thisGraph.AddBarPlot();
+		var barPlot = thisGraph.AddBarPlot3D();
 		
-		// Cumulative death/survival plotting
-		// var creatureDeathAges = new List<float>();
-		// CreatureSim.CreatureDeathEvent += (int index) =>
-		// {
-		// 	creatureDeathAges.Add(CreatureSim.Registry.Entities[index].Age);
-		// };
-		//
-		// barPlot.DataFetchMethod = () =>
-		// {
-		// 	// Old max age plotting
-		// 	// var values = CreatureSim.Registry.Entities.Select(x => x.MaxAge).ToList();
-		// 	
-		// 	var histogram = BarDataUtilities.MakeHistogram(creatureDeathAges, 1);
-		// 	
-		// 	// Normalize
-		// 	var floatHistogram = histogram.Select(x => x / creatureDeathAges.Count).ToArray();
-		//
-		// 	var transformedHistogram = new List<float>();
-		// 	var survival = 1f;
-		// 	foreach (var val in floatHistogram)
-		// 	{
-		// 		survival -= val;
-		// 		transformedHistogram.Add(survival);
-		// 	}
-		// 	
-		// 	return transformedHistogram.ToArray();
-		// };
-
-		// Max age histogram
-		barPlot.DataFetchMethod = BarDataUtilities.NormalizedPropertyHistogram(() => CreatureSim.Registry.Entities, x => x.MaxAge);
-		// TODO: Get this to actually count alleles. Could allow it to take delegate returning an array of floats instead of just a single float
-		// barPlot.DataFetchMethod = BarDataUtilities.NormalizedPropertyHistogram(() => CreatureSim.Registry.Entities, x => x.Genome.GetTrait<float>("MaxAge").Alleles /*...*/);
-		
-		periodicPlotter.BarPlot = barPlot;
-		
+		periodicPlotter.BarPlot3D = barPlot;
 		
 		//
 		// Second graph
@@ -208,6 +176,10 @@ public partial class SimulationTestScene : Node3D
 		
 		// Bar plot
 		var barPlot2 = thisGraph2.AddBarPlot();
+		// Max age histogram
+		// barPlot.DataFetchMethod = BarDataUtilities.NormalizedPropertyHistogram(() => CreatureSim.Registry.Entities, x => x.MaxAge);
+		// TODO: Get this to actually count alleles. Could allow it to take delegate returning an array of floats instead of just a single float
+		// barPlot.DataFetchMethod = BarDataUtilities.NormalizedPropertyHistogram(() => CreatureSim.Registry.Entities, x => x.Genome.GetTrait<float>("MaxAge").Alleles /*...*/);
 		
 		// Cumulative death/survival plotting
 		var creatureDeathAges = new List<float>();

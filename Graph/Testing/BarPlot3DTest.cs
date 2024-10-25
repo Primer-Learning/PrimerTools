@@ -70,7 +70,6 @@ public partial class BarPlot3DTest : Node3D
         datas.Add(data2);
 
         var index = 0;
-        GD.Print(_run);
         while (_run)
         {
             barPlot.DataFetchMethod = () => datas[index++ % datas.Count];

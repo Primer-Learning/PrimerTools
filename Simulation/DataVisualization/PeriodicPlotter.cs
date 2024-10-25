@@ -5,6 +5,7 @@ public partial class PeriodicPlotter : Node
 {
     public CurvePlot2D Curve;
     public BarPlot BarPlot;
+    public BarPlot3D BarPlot3D;
 
     [Export] public bool Plotting;
     [Export] private float _plottingInterval = 1;
@@ -22,6 +23,7 @@ public partial class PeriodicPlotter : Node
     {
         if (Curve != null)
         {
+            // TODO: Delete the numPoints lines and test. This method could probably just iterate through IPrimerData
             var numPoints = Curve.GetData().Length;
             Curve.FetchData();
             if (numPoints == Curve.GetData().Length) return;
@@ -32,6 +34,12 @@ public partial class PeriodicPlotter : Node
         {
             BarPlot.FetchData();
             BarPlot.TweenTransition(1);
+        }
+
+        if (BarPlot3D != null)
+        {
+            BarPlot3D.FetchData();
+            BarPlot3D.TweenTransition(1);
         }
     }
 }
