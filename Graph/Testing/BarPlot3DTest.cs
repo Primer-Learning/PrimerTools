@@ -45,12 +45,16 @@ public partial class BarPlot3DTest : Node3D
         graph.XAxis.Max = 3;
         graph.YAxis.Max = 5;
         graph.ZAxis.Max = 3;
+
+        graph.XAxis.TicStep = 1;
+        graph.YAxis.TicStep = 1;
+        graph.ZAxis.TicStep = 1;
         
         // Create the bar plot
-        var barPlot = new BarPlot3D(3, 3); // 3x3 grid
-        graph.AddChild(barPlot);
         graph.Owner = GetTree().EditedSceneRoot;
-        barPlot.Owner = GetTree().EditedSceneRoot;
+        var barPlot = graph.AddBarPlot3D();
+        // var barPlot = new BarPlot3D(3, 3); // 3x3 grid
+        // graph.AddChild(barPlot);
         
         // Create sample data (9 values for 3x3 grid)
         var data = new float[3, 3]
@@ -63,9 +67,9 @@ public partial class BarPlot3DTest : Node3D
         // // Assign data and transition
         barPlot.DataFetchMethod = () => data;
         barPlot.FetchData();
-        barPlot.Transition();
+        // barPlot.Transition();
         
         // Initial graph setup
-        // graph.Transition();
+        graph.Transition();
     }
 }

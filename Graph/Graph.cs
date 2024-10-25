@@ -191,9 +191,19 @@ public partial class Graph : Node3D
     //     return area;
     // }
     
-    public BarPlot AddBarPlot(string name = "Bar Plot")
+    public BarPlot AddBarPlot(string name = "BarPlot")
     {
         var barPlot = new BarPlot();
+        barPlot.TransformPointFromDataSpaceToPositionSpace = DataSpaceToPositionSpace;
+        AddChild(barPlot);
+        barPlot.Owner = GetTree().EditedSceneRoot;
+        barPlot.Name = name;
+        return barPlot;
+    }
+
+    public BarPlot3D AddBarPlot3D(string name = "BarPlot3D")
+    {
+        var barPlot = new BarPlot3D();
         barPlot.TransformPointFromDataSpaceToPositionSpace = DataSpaceToPositionSpace;
         AddChild(barPlot);
         barPlot.Owner = GetTree().EditedSceneRoot;

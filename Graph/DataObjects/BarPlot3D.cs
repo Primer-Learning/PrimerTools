@@ -8,10 +8,13 @@ namespace PrimerTools.Graph;
 
 public partial class BarPlot3D : Node3D, IPrimerGraphData
 {
-    public int BinsX { get; }
-    public int BinsY { get; }
+    private int BinsX => _data.GetLength(0);
+    private int BinsY => _data.GetLength(0);
     private float[,] _data;
     private Node3D[,] _bars;
+    
+    public delegate Vector3 Transformation(Vector3 inputPoint);
+    public Transformation TransformPointFromDataSpaceToPositionSpace = point => point;
     
     public delegate float[,] DataFetch();
     public DataFetch DataFetchMethod;
@@ -19,16 +22,6 @@ public partial class BarPlot3D : Node3D, IPrimerGraphData
     public Color[] Colors = PrimerColor.Rainbow.ToArray();
     public float BarWidth { get; set; } = 1;
     public float BarDepth { get; set; } = 1;
-
-    public BarPlot3D(int binsX = 10, int binsY = 10, string name = null)
-    {
-        BinsX = binsX;
-        BinsY = binsY;
-        _data = new float[BinsX, BinsY];
-        _bars = new Node3D[BinsX, BinsY];
-        
-        if (name == null) Name = "BarPlot3D";
-    }
 
     public void FetchData()
     {
@@ -39,6 +32,7 @@ public partial class BarPlot3D : Node3D, IPrimerGraphData
         }
         
         _data = DataFetchMethod();
+        _bars = new Node3D[BinsX, BinsY];
     }
 
     private Node3D CreateBar(int x, int y)
@@ -52,8 +46,9 @@ public partial class BarPlot3D : Node3D, IPrimerGraphData
         bar.MakeSelfAndChildrenLocal();
         
         var boxMesh = new BoxMesh();
-        boxMesh.Size = Vector3.One; // Will be scaled to actual size
+        boxMesh.Size = Vector3.One;
         meshInstance.Mesh = boxMesh;
+        meshInstance.Position = Vector3.Up * 0.5f; // Put the base of the bar at the parent's pivot point 
         
         return bar;
     }
@@ -84,19 +79,19 @@ public partial class BarPlot3D : Node3D, IPrimerGraphData
             
             // Position the bar
             var targetPosition = new Vector3(
-                x * BarWidth,
-                _data[x, y] / 2, // Center of bar
-                y * BarDepth
+                (x + 0.5f) * BarWidth,
+                0, // Center of bar
+                (y + 0.5f) * BarDepth
             );
-            animations.Add(bar.MoveTo(targetPosition));
+            animations.Add(bar.MoveTo(TransformPointFromDataSpaceToPositionSpace(targetPosition)));
             
             // Scale the bar
             var targetScale = new Vector3(
-                BarWidth * 0.9f, // Slight gap between bars
+                BarWidth,
                 Math.Max(_data[x, y], 0.001f), // Ensure some minimum height
-                BarDepth * 0.9f
+                BarDepth
             );
-            animations.Add(bar.ScaleTo(targetScale));
+            animations.Add(bar.ScaleTo(TransformPointFromDataSpaceToPositionSpace(targetScale)));
         }
 
         return animations.RunInParallel().WithDuration(duration);
