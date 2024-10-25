@@ -11,7 +11,6 @@ public partial class BarPlot3D : Node3D, IPrimerGraphData
     private int BinsX => _data.GetLength(0);
     private int BinsY => _data.GetLength(0);
     private float[,] _data;
-    // private Node3D[,] _bars;
     
     public delegate Vector3 Transformation(Vector3 inputPoint);
     public Transformation TransformPointFromDataSpaceToPositionSpace = point => point;
@@ -32,7 +31,6 @@ public partial class BarPlot3D : Node3D, IPrimerGraphData
         }
         
         _data = DataFetchMethod();
-        // _bars = new Node3D[BinsX, BinsY];
     }
 
     private Node3D CreateBar(int x, int y)
@@ -50,12 +48,37 @@ public partial class BarPlot3D : Node3D, IPrimerGraphData
         meshInstance.Mesh = boxMesh;
         meshInstance.Position = Vector3.Up * 0.5f; // Put the base of the bar at the parent's pivot point 
         
+        bar.Position = CalculateBarPosition(x, y);
+        bar.Scale = CalculateBarScale(0);
+        
         return bar;
     }
 
     private Node3D GetBar(int x, int y)
     {
         return GetNodeOrNull<Node3D>($"Bar {x}, {y}");
+    }
+
+    private Vector3 CalculateBarPosition(int x, int y)
+    {
+        return TransformPointFromDataSpaceToPositionSpace(
+            new Vector3(
+                x + 0.5f,
+                0,
+                y + 0.5f
+            )
+        );
+    }
+
+    private Vector3 CalculateBarScale(float data)
+    {
+        return TransformPointFromDataSpaceToPositionSpace(
+            new Vector3(
+                BarWidth,
+                Math.Max(data, 0.001f), // Ensure some minimum height
+                BarDepth
+            )
+        );
     }
     
     private Node3D EnsureBarExists(int x, int y)
@@ -65,13 +88,13 @@ public partial class BarPlot3D : Node3D, IPrimerGraphData
         if (bar != null) return bar;
         
         bar = CreateBar(x, y);
-         
+
         // Set initial material
         var meshInstance = bar.GetNode<MeshInstance3D>("MeshInstance3D");
         var material = new StandardMaterial3D();
         material.AlbedoColor = Colors[(x + y) % Colors.Length];
         meshInstance.Mesh.SurfaceSetMaterial(0, material);
-
+        
         return bar;
     }
 
@@ -83,23 +106,12 @@ public partial class BarPlot3D : Node3D, IPrimerGraphData
         for (var y = 0; y < BinsY; y++)
         {
             var bar = EnsureBarExists(x, y);
-            // var bar = _bars[x, y];
             
             // Position the bar
-            var targetPosition = new Vector3(
-                (x + 0.5f) * BarWidth,
-                0, // Center of bar
-                (y + 0.5f) * BarDepth
-            );
-            animations.Add(bar.MoveTo(TransformPointFromDataSpaceToPositionSpace(targetPosition)));
+            animations.Add(bar.MoveTo(CalculateBarPosition(x, y)));
             
             // Scale the bar
-            var targetScale = new Vector3(
-                BarWidth,
-                Math.Max(_data[x, y], 0.001f), // Ensure some minimum height
-                BarDepth
-            );
-            animations.Add(bar.ScaleTo(TransformPointFromDataSpaceToPositionSpace(targetScale)));
+            animations.Add(bar.ScaleTo(CalculateBarScale(_data[x, y])));
         }
 
         return animations.RunInParallel().WithDuration(duration);
@@ -116,28 +128,17 @@ public partial class BarPlot3D : Node3D, IPrimerGraphData
             var bar = EnsureBarExists(x, y);
             
             // Position the bar
-            var targetPosition = new Vector3(
-                (x + 0.5f) * BarWidth,
-                0, // Center of bar
-                (y + 0.5f) * BarDepth
-            );
             tween.TweenProperty(
                 bar,
                 "position",
-                TransformPointFromDataSpaceToPositionSpace(targetPosition),
+                CalculateBarPosition(x, y),
                 duration
             );
-            
             // Scale the bar
-            var targetScale = new Vector3(
-                BarWidth,
-                Math.Max(_data[x, y], 0.001f), // Ensure some minimum height
-                BarDepth
-            );
             tween.TweenProperty(
                 bar,
                 "scale",
-                TransformPointFromDataSpaceToPositionSpace(targetScale),
+                CalculateBarScale(_data[x, y]),
                 duration
             );
         }

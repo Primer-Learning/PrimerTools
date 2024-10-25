@@ -1,31 +1,136 @@
-[gd_scene load_steps=3 format=3 uid="uid://qxi8e6os6d7d"]
+[gd_scene load_steps=22 format=3 uid="uid://qxi8e6os6d7d"]
 
 [ext_resource type="Script" path="res://addons/PrimerTools/Graph/Testing/BarPlot3DTest.cs" id="1_c1oyf"]
 [ext_resource type="Script" path="res://addons/PrimerTools/Graph/Graph.cs" id="2_qawl7"]
+[ext_resource type="Script" path="res://addons/PrimerTools/Graph/DataObjects/BarPlot3D.cs" id="3_mk8ns"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_iogiy"]
+albedo_color = Color(0.839216, 0.231373, 0.313726, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_2pxp7"]
+material = SubResource("StandardMaterial3D_iogiy")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_01k8d"]
+albedo_color = Color(1, 0.580392, 0, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_7ujkp"]
+material = SubResource("StandardMaterial3D_01k8d")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_iy38u"]
+albedo_color = Color(0.905882, 0.886275, 0.278431, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_vuojl"]
+material = SubResource("StandardMaterial3D_iy38u")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_itq4f"]
+albedo_color = Color(1, 0.580392, 0, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_37pmh"]
+material = SubResource("StandardMaterial3D_itq4f")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qvnqo"]
+albedo_color = Color(0.905882, 0.886275, 0.278431, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_jjnbh"]
+material = SubResource("StandardMaterial3D_qvnqo")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_jfpb4"]
+albedo_color = Color(0.411765, 0.560784, 0.247059, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_wt1mq"]
+material = SubResource("StandardMaterial3D_jfpb4")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_g3wxw"]
+albedo_color = Color(0.905882, 0.886275, 0.278431, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_1gl5y"]
+material = SubResource("StandardMaterial3D_g3wxw")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5t4nr"]
+albedo_color = Color(0.411765, 0.560784, 0.247059, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_1phl6"]
+material = SubResource("StandardMaterial3D_5t4nr")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_du7rx"]
+albedo_color = Color(0.243137, 0.494118, 0.627451, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_r6arn"]
+material = SubResource("StandardMaterial3D_du7rx")
 
 [node name="Node3D" type="Node3D"]
 
 [node name="BarPlot3dTestScene" type="Node3D" parent="."]
 script = ExtResource("1_c1oyf")
-Run = true
-_run = true
 
-[node name="Graph2" type="Node3D" parent="BarPlot3dTestScene"]
+[node name="Graph" type="Node3D" parent="BarPlot3dTestScene"]
 script = ExtResource("2_qawl7")
-transitionTicsAllTogether = false
-XAxisLabel = ""
-YAxisLabel = ""
-_transitionTicsAllTogether = false
-XAxisAlignment = 1
-XAxisLabelOffset = 1.0
-XAxisLabelScale = 1.0
-xAxisLabel = ""
-xAxisLatexNode = null
-YAxisAlignment = 1
-YAxisLabelOffset = 1.0
-YAxisLabelScale = 1.0
-yAxisLabel = ""
-yAxisLatexNode = null
+
+[node name="BarPlot3D" type="Node3D" parent="BarPlot3dTestScene/Graph"]
+script = ExtResource("3_mk8ns")
+
+[node name="Bar 0, 0" type="Node3D" parent="BarPlot3dTestScene/Graph/BarPlot3D"]
+transform = Transform3D(3.2, 0, 0, 0, 1.92, 0, 0, 0, 3.2, 1.6, 0, 1.6)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="BarPlot3dTestScene/Graph/BarPlot3D/Bar 0, 0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("BoxMesh_2pxp7")
+
+[node name="Bar 0, 1" type="Node3D" parent="BarPlot3dTestScene/Graph/BarPlot3D"]
+transform = Transform3D(3.2, 0, 0, 0, 3.84, 0, 0, 0, 3.2, 1.6, 0, 4.8)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="BarPlot3dTestScene/Graph/BarPlot3D/Bar 0, 1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("BoxMesh_7ujkp")
+
+[node name="Bar 0, 2" type="Node3D" parent="BarPlot3dTestScene/Graph/BarPlot3D"]
+transform = Transform3D(3.2, 0, 0, 0, 5.76, 0, 0, 0, 3.2, 1.6, 0, 8)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="BarPlot3dTestScene/Graph/BarPlot3D/Bar 0, 2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("BoxMesh_vuojl")
+
+[node name="Bar 1, 0" type="Node3D" parent="BarPlot3dTestScene/Graph/BarPlot3D"]
+transform = Transform3D(3.2, 0, 0, 0, 3.84, 0, 0, 0, 3.2, 4.8, 0, 1.6)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="BarPlot3dTestScene/Graph/BarPlot3D/Bar 1, 0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("BoxMesh_37pmh")
+
+[node name="Bar 1, 1" type="Node3D" parent="BarPlot3dTestScene/Graph/BarPlot3D"]
+transform = Transform3D(3.2, 0, 0, 0, 7.68, 0, 0, 0, 3.2, 4.8, 0, 4.8)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="BarPlot3dTestScene/Graph/BarPlot3D/Bar 1, 1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("BoxMesh_jjnbh")
+
+[node name="Bar 1, 2" type="Node3D" parent="BarPlot3dTestScene/Graph/BarPlot3D"]
+transform = Transform3D(3.2, 0, 0, 0, 3.84, 0, 0, 0, 3.2, 4.8, 0, 8)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="BarPlot3dTestScene/Graph/BarPlot3D/Bar 1, 2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("BoxMesh_wt1mq")
+
+[node name="Bar 2, 0" type="Node3D" parent="BarPlot3dTestScene/Graph/BarPlot3D"]
+transform = Transform3D(3.2, 0, 0, 0, 5.76, 0, 0, 0, 3.2, 8, 0, 1.6)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="BarPlot3dTestScene/Graph/BarPlot3D/Bar 2, 0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("BoxMesh_1gl5y")
+
+[node name="Bar 2, 1" type="Node3D" parent="BarPlot3dTestScene/Graph/BarPlot3D"]
+transform = Transform3D(3.2, 0, 0, 0, 1.92, 0, 0, 0, 3.2, 8, 0, 4.8)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="BarPlot3dTestScene/Graph/BarPlot3D/Bar 2, 1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("BoxMesh_1phl6")
+
+[node name="Bar 2, 2" type="Node3D" parent="BarPlot3dTestScene/Graph/BarPlot3D"]
+transform = Transform3D(3.2, 0, 0, 0, 3.84, 0, 0, 0, 3.2, 8, 0, 8)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="BarPlot3dTestScene/Graph/BarPlot3D/Bar 2, 2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("BoxMesh_r6arn")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.669157, 0.743121, 0, -0.743121, 0.669157, 0, 4.3273, 6.67447)
+transform = Transform3D(0.571358, -0.60988, 0.549178, 4.20897e-09, 0.669157, 0.743121, -0.820701, -0.424588, 0.382328, 0, 22.836, 6.67447)
