@@ -72,6 +72,16 @@ public class CreatureSim : Simulation<DataCreature>
                 }
             }
 
+            // // Deaths from antagonistic pleiotropy
+            if (creature.Genome.GetTrait<bool>("Antagonistic Pleiotropy Speed").ExpressedValue && creature.Age > CreatureSimSettings.MaturationTime)
+            {
+	            if (simulationWorld.Rng.rand.NextDouble() < 0.02 / SimulationWorld.PhysicsStepsPerSimSecond)
+	            {
+		            GD.Print("Death from antagonistic pleiotropy aging");
+		            alive = false;
+	            }
+            }
+
             if (!alive)
             {
 	            creature.Alive = false;
@@ -284,7 +294,7 @@ public class CreatureSim : Simulation<DataCreature>
 	}
 	private static void PerformMovement(ref DataCreature creature)
 	{
-		creature.Velocity = UpdateVelocity(creature.Position, creature.CurrentDestination, creature.Velocity, creature.MaxSpeed);
+		creature.Velocity = UpdateVelocity(creature.Position, creature.CurrentDestination, creature.Velocity, creature.AdjustedSpeed);
 		creature.Position += creature.Velocity / SimulationWorld.PhysicsStepsPerSimSecond;
 		var transformNextFrame = new Transform3D(Basis.Identity, creature.Position);
 		PhysicsServer3D.AreaSetTransform(creature.Body, transformNextFrame);

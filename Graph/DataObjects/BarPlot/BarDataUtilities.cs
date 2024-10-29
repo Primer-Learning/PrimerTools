@@ -44,7 +44,7 @@ public static class BarDataUtilities
         };
     }
 
-    public static BarPlot.DataFetch PropertyHistogramMulti<T>(
+    public static BarPlot.DataFetch PropertyHistogram<T>(
         Func<IEnumerable<T>> dataSourceGetter, 
         Func<T, IEnumerable<float>> propertySelector, 
         float binWidth = 1)
@@ -54,7 +54,7 @@ public static class BarDataUtilities
             binWidth);
     }
 
-    public static BarPlot.DataFetch NormalizedPropertyHistogramMulti<T>(
+    public static BarPlot.DataFetch NormalizedPropertyHistogram<T>(
         Func<IEnumerable<T>> dataSourceGetter, 
         Func<T, IEnumerable<float>> propertySelector, 
         float binWidth = 1)

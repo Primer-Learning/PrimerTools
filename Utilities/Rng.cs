@@ -62,6 +62,7 @@ namespace PrimerTools
     // Methods are declared as extension methods so calling on null rngs falls back on static rng with a warning.
     public static class RngExtensions
     {
+        private static bool hasWarned = false;
         public static int RangeInt(this Rng rng, int maxExclusive) => RangeInt(rng, 0, maxExclusive);
 
         public static int RangeInt(this Rng rng, int minInclusive, int maxExclusive)
@@ -69,7 +70,11 @@ namespace PrimerTools
             var rand = rng?.rand;
             
             if (rand != null) return rand.Next(minInclusive, maxExclusive);
-            GD.Print("No Rng given, using static rng. If you did this on purpose, use Rng.RangeInt() directly. Otherwise, check that you're passing an the Rng object you want.");
+            if (!hasWarned)
+            {
+                GD.Print("No Rng given, using static rng. If you did this on purpose, use Rng.RangeInt() directly. Otherwise, check that you're passing an the Rng object you want.");
+                hasWarned = true;
+            }
             return Rng.RangeInt(minInclusive, maxExclusive);
         }
 
@@ -80,7 +85,11 @@ namespace PrimerTools
             var rand = rng?.rand;
 
             if (rand != null) return (float)(rand.NextDouble() * (maxExclusive - minInclusive) + minInclusive);
-            GD.Print("No Rng given, using static rng. If you did this on purpose, use Rng.RangeFloat() directly. Otherwise, check that you're passing an the Rng object you want.");
+            if (!hasWarned)
+            {
+                GD.Print("No Rng given, using static rng. If you did this on purpose, use Rng.RangeInt() directly. Otherwise, check that you're passing an the Rng object you want.");
+                hasWarned = true;
+            }
             return Rng.RangeFloat(minInclusive, maxExclusive);
         }
     }

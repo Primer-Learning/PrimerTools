@@ -31,12 +31,30 @@ public static class InitialPopulationGeneration
                 )
             );
 
+            // genome.AddTrait(
+            //     new Trait<float>(
+            //         "MaxAge", 
+            //         new List<float> { i % 40, i % 40 },
+            //         ExpressionMechanisms.Float.Codominant,
+            //         0
+            //     )
+            // );
+            
+            // genome.AddTrait(
+            //     new Trait<float>(
+            //         "MaxReproductionAge", 
+            //         new List<float> { 20, 20 },
+            //         ExpressionMechanisms.Float.Codominant,
+            //         0
+            //     )
+            // );
+
             genome.AddTrait(
-                new Trait<float>(
-                    "MaxAge", 
-                    new List<float> { i % 40, i % 40 },
-                    ExpressionMechanisms.Float.Codominant,
-                    0
+                new Trait<bool>(
+                    "Antagonistic Pleiotropy Speed", 
+                    new List<bool> { true, false },
+                    ExpressionMechanisms.Bool.Codominant,
+                    mutationIncrement: false
                 )
             );
 

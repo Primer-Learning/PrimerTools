@@ -136,27 +136,38 @@ public partial class SimulationTestScene : Node3D
 		// curve.DataFetchMethod = CurvePlot2DUtilities.AppendCount(() => CreatureSim.Registry.Entities, curve);
 		// periodicPlotter.Curve = curve;
 		
-		// Bar plot
-		var barPlot3D = thisGraph.AddBarPlot3D();
-		barPlot3D.DataFetchMethod = BarData3DUtilities.PropertyHistogram2D(
+		// Deleterious mutation bar plot
+		// var barPlot3D = thisGraph.AddBarPlot3D();
+		// barPlot3D.DataFetchMethod = BarData3DUtilities.PropertyHistogram2D(
+		// 	() => CreatureSim.Registry.Entities,
+		// 	creature =>
+		// 	{
+		// 		var deleteriousMutationProperties = new List<(float, float)>();
+		// 		foreach (var trait in creature.Genome.Traits.Values)
+		// 		{
+		// 			if (trait is DeleteriousTrait deleteriousTrait && deleteriousTrait.Alleles.Any(x => x)) // Deleterious trait is true
+		// 			{
+		// 				deleteriousMutationProperties.Add((deleteriousTrait.ActivationAge, deleteriousTrait.MortalityRate * 100));
+		// 			}
+		// 		}
+		//
+		// 		return deleteriousMutationProperties;
+		// 	},
+		// 	new Histogram2DOptions{AdjustmentMethod = Histogram2DOptions.AdjustmentMethodType.PerCapita}
+		// );
+		//
+		// periodicPlotter.BarPlot3D = barPlot3D;
+
+		var barPlot = thisGraph.AddBarPlot();
+		barPlot.DataFetchMethod = BarDataUtilities.NormalizedPropertyHistogram(
 			() => CreatureSim.Registry.Entities,
 			creature =>
 			{
-				var deleteriousMutationProperties = new List<(float, float)>();
-				foreach (var trait in creature.Genome.Traits.Values)
-				{
-					if (trait is DeleteriousTrait deleteriousTrait && deleteriousTrait.Alleles.Any(x => x)) // Deleterious trait is true
-					{
-						deleteriousMutationProperties.Add((deleteriousTrait.ActivationAge, deleteriousTrait.MortalityRate * 100));
-					}
-				}
-		
-				return deleteriousMutationProperties;
-			},
-			new Histogram2DOptions{AdjustmentMethod = Histogram2DOptions.AdjustmentMethodType.PerCapita}
+				var alleles = creature.Genome.GetTrait<bool>("Antagonistic Pleiotropy Speed").Alleles;
+				return alleles.Select(x => x ? 20f : 10f);
+			}
 		);
-		
-		periodicPlotter.BarPlot3D = barPlot3D;
+		periodicPlotter.BarPlot = barPlot;
 		
 		//
 		// Second graph

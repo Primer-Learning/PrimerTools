@@ -36,7 +36,7 @@ public class CreatureSimSettings
 	// Mutation
 	public const float MutationProbability = 0.1f;
 	public const float MutationIncrement = 1f;
-	public const float DeleteriousMutationRate = 1f;
+	public const float DeleteriousMutationRate = 0f;
 	#endregion
 
 	public FindMateDelegate FindMate = MateSelectionStrategies.FindFirstAvailableMate;

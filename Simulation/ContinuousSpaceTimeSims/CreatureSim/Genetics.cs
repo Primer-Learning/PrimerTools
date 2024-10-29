@@ -17,6 +17,16 @@ public static class ExpressionMechanisms
     {
         public static Func<List<bool>, bool> Dominant => alleles => alleles.Any(a => a);
         public static Func<List<bool>, bool> Recessive => alleles => alleles.All(a => a);
+        
+        // Could add a Codominant that takes a random value when expressed. But that is complicated.
+        // What rng object to use? If we want consistency across sims, we should pass an rng object or use a static one
+        // that lives in SimulationWorld or something.
+        // Passing one messes up the delegate signature. Could always pass an rng object, which is usually unneeded.
+        // A static one might be a good idea, but there currently isn't one, since I wanted to reserve the ability to 
+        // run more than one sim at a time. But perhaps that's silly.
+        
+        // Just using the default static one for now, which 
+        public static Func<List<bool>, bool> Codominant => alleles => alleles.RandomItem(null);
     }
 }
 
@@ -37,11 +47,9 @@ public class DeleteriousTrait : Trait<bool>
         MortalityRate = mortalityRate;
     }
 
-    public bool IsExpressed => ExpressedValue;
-
     public bool CheckForDeath(float age, Rng rng)
     {
-        if (!IsExpressed || age < ActivationAge) return false;
+        if (!ExpressedValue || age < ActivationAge) return false;
         return rng.rand.NextDouble() < MortalityRate / SimulationWorld.PhysicsStepsPerSimSecond;
     }
 
@@ -103,7 +111,7 @@ public class Trait<T> : Trait
             allele = Math.Max(0, allele);
             Alleles[0] = (T)(object)allele;
         }
-        else if (typeof(T) == typeof(bool))
+        else if (typeof(T) == typeof(bool) && (bool)(object)MutationIncrement)
         {
             var index = rng.RangeInt(0, Alleles.Count);
             var currentValue = (bool)(object)Alleles[index];
@@ -151,7 +159,9 @@ public class Genome
 
     public Trait<T> GetTrait<T>(string name)
     {
-        return (Trait<T>)Traits[name];
+        Traits.TryGetValue(name, out var theTrait);
+        return (Trait<T>)theTrait;
+        // return (Trait<T>)Traits[name];
     }
 
     public Genome Clone()

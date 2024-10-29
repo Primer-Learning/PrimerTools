@@ -13,7 +13,6 @@ public static class MateSelectionStrategies
     public static int FindFirstAvailableMate(int creatureIndex, IEnumerable<CreatureSim.LabeledCollision> labeledCollisions,
         Vector3 creaturePosition)
     {
-        
         return labeledCollisions
             .Where(c => c.Type == CreatureSim.CollisionType.Creature)
             .OrderBy(c => (c.Position - creaturePosition).LengthSquared())
@@ -43,7 +42,8 @@ public static class ReproductionStrategies
         var newGenome = new Genome();
         var parentGenomes = new[] { genome1.Clone(), genome2.Clone() };
 
-        // Handle standard float traits
+        // Handle standard float and bool traits
+        // These are traits every creature has
         foreach (var traitName in genome1.Traits.Keys.Intersect(genome2.Traits.Keys))
         {
             var trait1 = genome1.Traits[traitName];
@@ -61,6 +61,20 @@ public static class ReproductionStrategies
                 }
 
                 newGenome.AddTrait(new Trait<float>(traitName, newAlleles, floatTrait1.ExpressionMechanism, floatTrait1.MutationIncrement));
+            }
+            
+            if (trait1 is Trait<bool> boolTrait1 && trait2 is Trait<bool> boolTrait2)
+            {
+                var currentParentIndex = rng.RangeInt(0, 2);
+                var newAlleles = new List<bool>();
+                for (var i = 0; i < boolTrait1.Alleles.Count; i++)
+                {
+                    var parentTrait = parentGenomes[currentParentIndex].Traits[traitName] as Trait<bool>;
+                    newAlleles.Add(parentTrait.Alleles.RandomItem(rng));
+                    currentParentIndex = 1 - currentParentIndex; // Switch to the other parent
+                }
+
+                newGenome.AddTrait(new Trait<bool>(traitName, newAlleles, boolTrait1.ExpressionMechanism, boolTrait1.MutationIncrement));
             }
         }
 

@@ -17,6 +17,17 @@ public struct DataCreature : IDataEntity
     
     // Properties to easily access expressed trait values
     public float MaxSpeed => Genome.GetTrait<float>("MaxSpeed").ExpressedValue;
+    public float AdjustedSpeed
+    {
+        get
+        {
+            var antagonisticPleiotropy = Genome.GetTrait<bool>("Antagonistic Pleiotropy Speed");
+            var factor = 1f;
+            if (antagonisticPleiotropy is { ExpressedValue: true }) factor = 2f;
+            return MaxSpeed * factor;
+        }
+    }
+        
     public float AwarenessRadius => Genome.GetTrait<float>("AwarenessRadius").ExpressedValue;
     public float MaxAge => Genome.GetTrait<float>("MaxAge").ExpressedValue;
     
@@ -27,8 +38,19 @@ public struct DataCreature : IDataEntity
     public float EatingTimeLeft;
     public float MatingTimeLeft;
 
-    public bool OpenToMating => Energy > CreatureSimSettings.ReproductionEnergyThreshold && MatingTimeLeft <= 0;
-		
+    public bool OpenToMating
+    {
+        get
+        {
+            if (Energy < CreatureSimSettings.ReproductionEnergyThreshold) return false;
+            if (MatingTimeLeft > 0) return false;
+            var maxReproductionAge = Genome.GetTrait<float>("MaxReproductionAge");
+            if (maxReproductionAge != null && Age > maxReproductionAge.ExpressedValue) return false;
+            
+            return true;
+        }
+    }
+    
     private CapsuleShape3D _bodyShapeResource;
     private SphereShape3D _awarenessShapeResource;
     
