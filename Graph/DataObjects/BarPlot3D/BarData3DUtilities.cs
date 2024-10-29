@@ -7,7 +7,14 @@ namespace PrimerTools.Graph;
 
 public class Histogram2DOptions
 {
-    public bool Normalize { get; set; }
+    public enum AdjustmentMethodType
+    {
+        None,
+        Normalize,
+        PerCapita
+    }
+
+    public AdjustmentMethodType AdjustmentMethod { get; set; } = AdjustmentMethodType.None;
     public float BinWidthX { get; set; } = 1;
     public float BinWidthY { get; set; } = 1;
 }
@@ -60,6 +67,35 @@ public static class BarData3DUtilities
         return normalized;
     }
 
+    private static float[,] PerCapitaAdjustment(float[,] histogram, int total)
+    {
+        var adjusted = new float[histogram.GetLength(0), histogram.GetLength(1)];
+        for (var x = 0; x < histogram.GetLength(0); x++)
+        for (var y = 0; y < histogram.GetLength(1); y++)
+            adjusted[x, y] = histogram[x, y] / total;
+
+        return adjusted;
+    }
+
+    private static float[,] ApplyAdjustment<T>(float[,] histogram, Func<IEnumerable<T>> dataSourceGetter, Histogram2DOptions options)
+    {
+        switch (options.AdjustmentMethod)
+        {
+            case Histogram2DOptions.AdjustmentMethodType.Normalize:
+                histogram = NormalizeHistogram(histogram);
+                break;
+            case Histogram2DOptions.AdjustmentMethodType.PerCapita:
+                histogram = PerCapitaAdjustment(histogram, dataSourceGetter().Count());
+                break;
+            case Histogram2DOptions.AdjustmentMethodType.None:
+                break;
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+
+        return histogram;
+    }
+
     public static BarPlot3D.DataFetch PropertyHistogram2D<T>(
         Func<IEnumerable<T>> dataSourceGetter,
         Func<T, (float x, float y)> propertySelector,
@@ -73,7 +109,7 @@ public static class BarData3DUtilities
                 dataSourceGetter().Select(propertySelector),
                 options);
 
-            return options.Normalize ? NormalizeHistogram(histogram) : histogram;
+            return ApplyAdjustment(histogram, dataSourceGetter, options);
         };
     }
 
@@ -89,8 +125,8 @@ public static class BarData3DUtilities
             var histogram = MakeHistogram2D(
                 dataSourceGetter().SelectMany(propertySelector),
                 options);
-
-            return options.Normalize ? NormalizeHistogram(histogram) : histogram;
+            
+            return ApplyAdjustment(histogram, dataSourceGetter, options);
         };
     }
 }

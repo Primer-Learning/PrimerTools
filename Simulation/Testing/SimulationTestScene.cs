@@ -145,14 +145,15 @@ public partial class SimulationTestScene : Node3D
 				var deleteriousMutationProperties = new List<(float, float)>();
 				foreach (var trait in creature.Genome.Traits.Values)
 				{
-					if (trait is DeleteriousTrait deleteriousTrait)
+					if (trait is DeleteriousTrait deleteriousTrait && deleteriousTrait.Alleles.Any(x => x)) // Deleterious trait is true
 					{
 						deleteriousMutationProperties.Add((deleteriousTrait.ActivationAge, deleteriousTrait.MortalityRate * 100));
 					}
 				}
 		
 				return deleteriousMutationProperties;
-			}
+			},
+			new Histogram2DOptions{AdjustmentMethod = Histogram2DOptions.AdjustmentMethodType.PerCapita}
 		);
 		
 		periodicPlotter.BarPlot3D = barPlot3D;

@@ -42,7 +42,7 @@ public class DeleteriousTrait : Trait<bool>
     public bool CheckForDeath(float age, Rng rng)
     {
         if (!IsExpressed || age < ActivationAge) return false;
-        return rng.RangeFloat(0, 1) < (MortalityRate / SimulationWorld.PhysicsStepsPerSimSecond);
+        return rng.rand.NextDouble() < MortalityRate / SimulationWorld.PhysicsStepsPerSimSecond;
     }
 
     public static DeleteriousTrait CreateNew(Rng rng)

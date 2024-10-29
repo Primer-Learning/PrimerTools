@@ -68,6 +68,7 @@ public static class ReproductionStrategies
         var allDeleteriousTraits = genome1.Traits.Values
             .Concat(genome2.Traits.Values)
             .OfType<DeleteriousTrait>()
+            .Where(x => x.Alleles.Any(v => v))
             .GroupBy(t => t.Id)
             .ToDictionary(g => g.Key, g => g.ToList());
 
