@@ -2,10 +2,10 @@
 
 namespace PrimerTools.Simulation;
 
-public delegate DataCreature[] InitialPopulationGeneratorDelegate(int numCreatures, CreatureSimSettings settings);
+public delegate DataCreature[] InitialPopulationGeneratorDelegate(int numCreatures, CreatureSimSettings settings, Rng rng);
 public static class InitialPopulationGeneration
 {
-    public static DataCreature[] AllDefaultsInitialPopulation(int numCreatures, CreatureSimSettings settings)
+    public static DataCreature[] AllDefaultsInitialPopulation(int numCreatures, CreatureSimSettings settings, Rng rng = null)
     {
         var creatures = new DataCreature[numCreatures];
 
@@ -31,32 +31,33 @@ public static class InitialPopulationGeneration
                 )
             );
 
-            // genome.AddTrait(
-            //     new Trait<float>(
-            //         "MaxAge", 
-            //         new List<float> { i % 40, i % 40 },
-            //         ExpressionMechanisms.Float.Codominant,
-            //         0
-            //     )
-            // );
+            var maxAgeOptions = new float[] {20f, 40f, float.MaxValue};
+            genome.AddTrait(
+                new Trait<float>(
+                    "MaxAge", 
+                    new List<float> { maxAgeOptions.RandomItem(rng) },
+                    ExpressionMechanisms.Float.Codominant,
+                    0
+                )
+            );
             
             // genome.AddTrait(
             //     new Trait<float>(
             //         "MaxReproductionAge", 
-            //         new List<float> { 20, 20 },
+            //         new List<float> { 40, 40 },
             //         ExpressionMechanisms.Float.Codominant,
             //         0
             //     )
             // );
 
-            genome.AddTrait(
-                new Trait<bool>(
-                    "Antagonistic Pleiotropy Speed", 
-                    new List<bool> { true, false },
-                    ExpressionMechanisms.Bool.Codominant,
-                    mutationIncrement: false
-                )
-            );
+            // genome.AddTrait(
+            //     new Trait<bool>(
+            //         "Antagonistic Pleiotropy Speed", 
+            //         new List<bool> { true, false },
+            //         alleles => alleles.RandomItem(rng),
+            //         mutationIncrement: false
+            //     )
+            // );
 
             creatures[i] = new DataCreature { Genome = genome };
         }

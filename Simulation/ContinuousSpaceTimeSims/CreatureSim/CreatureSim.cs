@@ -25,7 +25,7 @@ public class CreatureSim : Simulation<DataCreature>
 			return;
 		}
 
-		foreach (var creature in _settings.InitializePopulation(InitialEntityCount, _settings))
+		foreach (var creature in _settings.InitializePopulation(InitialEntityCount, _settings, simulationWorld.Rng))
 		{
 			var position = new Vector3(
 				simulationWorld.Rng.RangeFloat(simulationWorld.WorldDimensions.X),
@@ -58,6 +58,13 @@ public class CreatureSim : Simulation<DataCreature>
             // Process deaths
             var alive = creature.Energy > 0;
             
+            // Check for deaths from max age trait
+            var maxAgeTrait = creature.Genome.GetTrait<float>("MaxAge");
+            if (maxAgeTrait != null && maxAgeTrait.ExpressedValue < creature.Age)
+            {
+	            alive = false;
+            }
+            
             // Check for death from deleterious mutations
             foreach (var trait in creature.Genome.Traits.Values)
             {
@@ -72,16 +79,18 @@ public class CreatureSim : Simulation<DataCreature>
                 }
             }
 
-            // // Deaths from antagonistic pleiotropy
-            if (creature.Genome.GetTrait<bool>("Antagonistic Pleiotropy Speed").ExpressedValue && creature.Age > CreatureSimSettings.MaturationTime)
+            // Deaths from antagonistic pleiotropy
+            var apTrait = creature.Genome.GetTrait<bool>("Antagonistic Pleiotropy Speed");
+            if (apTrait is { ExpressedValue: true } && creature.Age > CreatureSimSettings.MaturationTime)
             {
-	            if (simulationWorld.Rng.rand.NextDouble() < 0.02 / SimulationWorld.PhysicsStepsPerSimSecond)
+	            if (simulationWorld.Rng.rand.NextDouble() < 0.05 / SimulationWorld.PhysicsStepsPerSimSecond)
 	            {
 		            GD.Print("Death from antagonistic pleiotropy aging");
 		            alive = false;
 	            }
             }
 
+            // Could really do this after each check
             if (!alive)
             {
 	            creature.Alive = false;

@@ -159,12 +159,26 @@ public partial class SimulationTestScene : Node3D
 		// periodicPlotter.BarPlot3D = barPlot3D;
 
 		var barPlot = thisGraph.AddBarPlot();
+		// barPlot.DataFetchMethod = BarDataUtilities.NormalizedPropertyHistogram(
+		// 	() => CreatureSim.Registry.Entities,
+		// 	creature =>
+		// 	{
+		// 		var alleles = creature.Genome.GetTrait<bool>("Antagonistic Pleiotropy Speed").Alleles;
+		// 		return alleles.Select(x => x ? 20f : 10f);
+		// 	}
+		// );
 		barPlot.DataFetchMethod = BarDataUtilities.NormalizedPropertyHistogram(
 			() => CreatureSim.Registry.Entities,
 			creature =>
 			{
-				var alleles = creature.Genome.GetTrait<bool>("Antagonistic Pleiotropy Speed").Alleles;
-				return alleles.Select(x => x ? 20f : 10f);
+				var alleles = creature.Genome.GetTrait<float>("MaxAge").Alleles;
+				return alleles.Select(x =>
+					{
+						if (x <= 20) return 10f;
+						if (x <= 40) return 20f;
+						return 30f;
+					} // Hacky custom binning to the float.MaxValue "no max" doesn't mess up the histogram
+				);
 			}
 		);
 		periodicPlotter.BarPlot = barPlot;

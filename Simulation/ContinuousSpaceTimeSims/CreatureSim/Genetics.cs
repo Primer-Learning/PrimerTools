@@ -18,14 +18,17 @@ public static class ExpressionMechanisms
         public static Func<List<bool>, bool> Dominant => alleles => alleles.Any(a => a);
         public static Func<List<bool>, bool> Recessive => alleles => alleles.All(a => a);
         
-        // Could add a Codominant that takes a random value when expressed. But that is complicated.
+        // If you want Codominant that takes a random value when expressed, best to just do that with a lambda
+        // when defining the trait.
+        
+        // Implementing that here is complicated.
         // What rng object to use? If we want consistency across sims, we should pass an rng object or use a static one
         // that lives in SimulationWorld or something.
         // Passing one messes up the delegate signature. Could always pass an rng object, which is usually unneeded.
         // A static one might be a good idea, but there currently isn't one, since I wanted to reserve the ability to 
         // run more than one sim at a time. But perhaps that's silly.
         
-        // Just using the default static one for now, which 
+        // Just using the default static one, which doesn't accomplish consistency and prints a warning.
         public static Func<List<bool>, bool> Codominant => alleles => alleles.RandomItem(null);
     }
 }
