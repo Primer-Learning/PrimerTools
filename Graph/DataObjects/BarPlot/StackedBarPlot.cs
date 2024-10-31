@@ -38,18 +38,18 @@ public partial class StackedBarPlot : Node3D, IPrimerGraphData
     {
         var result = new List<List<Tuple<float, float, float>>>();
         
-        // For each stack position
-        for (var i = 0; i < Data[0].Count; i++)
+        // For each stack
+        for (var stackIndex = 0; stackIndex < Data.Count; stackIndex++)
         {
             var stackSegments = new List<Tuple<float, float, float>>();
             
             // For each segment in the stack
-            for (var j = 0; j < Data.Count; j++)
+            for (var segmentIndex = 0; segmentIndex < Data[stackIndex].Count; segmentIndex++)
             {
-                var value = Data[j][i];
+                var value = Data[stackIndex][segmentIndex];
                 stackSegments.Add(
                     new Tuple<float, float, float>(
-                        TransformPointFromDataSpaceToPositionSpace(new Vector3(i + _offset, 0, 0)).X,
+                        TransformPointFromDataSpaceToPositionSpace(new Vector3(stackIndex + _offset, 0, 0)).X,
                         TransformPointFromDataSpaceToPositionSpace(new Vector3(0, value, 0)).Y,
                         TransformPointFromDataSpaceToPositionSpace(new Vector3(_barWidth, 0, 0)).X
                     )

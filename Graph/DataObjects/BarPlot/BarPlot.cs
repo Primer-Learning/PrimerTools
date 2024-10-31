@@ -24,7 +24,7 @@ public partial class BarPlot : Node3D, IPrimerGraphData
     
     // private List<Tuple<float, float, float>> renderedRectProperties = new();
     
-    public List<float> Data;
+    private List<float> Data;
     public delegate float[] DataFetch();
     public DataFetch DataFetchMethod = () =>
     {

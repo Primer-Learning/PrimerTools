@@ -52,16 +52,20 @@ public partial class StackedBarPlotTest : Node3D
         // Create sample data sets
         var data1 = new List<List<float>>
         {
-            new() { 1.0f, 2.0f, 3.0f, 2.0f, 1.0f }, // First stack segment
-            new() { 2.0f, 1.0f, 2.0f, 3.0f, 2.0f }, // Second stack segment
-            new() { 1.0f, 2.0f, 1.0f, 1.0f, 1.0f }  // Third stack segment
+            new List<float> { 1.0f, 2.0f, 3.0f }, // First stack (bottom to top)
+            new List<float> { 2.0f, 1.0f, 2.0f }, // Second stack
+            new List<float> { 1.0f, 2.0f, 1.0f }, // Third stack
+            new List<float> { 3.0f, 1.0f, 2.0f }, // Fourth stack
+            new List<float> { 2.0f, 2.0f, 1.0f }  // Fifth stack
         };
         
         var data2 = new List<List<float>>
         {
-            new() { 2.0f, 1.0f, 2.0f, 1.0f, 2.0f },
-            new() { 1.0f, 2.0f, 4.0f, 2.0f, 1.0f },
-            new() { 2.0f, 1.0f, 1.0f, 1.0f, 2.0f }
+            new List<float> { 2.0f, 1.0f, 1.0f }, // First stack (bottom to top)
+            new List<float> { 1.0f, 3.0f, 1.0f }, // Second stack
+            new List<float> { 2.0f, 2.0f, 2.0f }, // Third stack
+            new List<float> { 1.0f, 2.0f, 3.0f }, // Fourth stack
+            new List<float> { 2.0f, 1.0f, 2.0f }  // Fifth stack
         };
 
         var datas = new List<List<List<float>>> { data1, data2 };
