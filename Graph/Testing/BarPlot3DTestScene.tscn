@@ -4,133 +4,133 @@
 [ext_resource type="Script" path="res://addons/PrimerTools/Graph/Graph.cs" id="2_qawl7"]
 [ext_resource type="Script" path="res://addons/PrimerTools/Graph/DataObjects/BarPlot3D/BarPlot3D.cs" id="3_mk8ns"]
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kw1qi"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_3k5p2"]
 albedo_color = Color(0.839216, 0.231373, 0.313726, 1)
 
-[sub_resource type="BoxMesh" id="BoxMesh_k6721"]
-material = SubResource("StandardMaterial3D_kw1qi")
+[sub_resource type="BoxMesh" id="BoxMesh_hx1mp"]
+material = SubResource("StandardMaterial3D_3k5p2")
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_mhrks"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_dy3p5"]
 albedo_color = Color(1, 0.580392, 0, 1)
 
-[sub_resource type="BoxMesh" id="BoxMesh_aveim"]
-material = SubResource("StandardMaterial3D_mhrks")
+[sub_resource type="BoxMesh" id="BoxMesh_20etp"]
+material = SubResource("StandardMaterial3D_dy3p5")
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_3tygh"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_bmc8f"]
 albedo_color = Color(0.905882, 0.886275, 0.278431, 1)
 
-[sub_resource type="BoxMesh" id="BoxMesh_nahc0"]
-material = SubResource("StandardMaterial3D_3tygh")
+[sub_resource type="BoxMesh" id="BoxMesh_8m4gf"]
+material = SubResource("StandardMaterial3D_bmc8f")
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_sv4vx"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ecxal"]
 albedo_color = Color(1, 0.580392, 0, 1)
 
-[sub_resource type="BoxMesh" id="BoxMesh_6noi8"]
-material = SubResource("StandardMaterial3D_sv4vx")
+[sub_resource type="BoxMesh" id="BoxMesh_fielm"]
+material = SubResource("StandardMaterial3D_ecxal")
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_mpa77"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_sj2jc"]
 albedo_color = Color(0.905882, 0.886275, 0.278431, 1)
 
-[sub_resource type="BoxMesh" id="BoxMesh_xigac"]
-material = SubResource("StandardMaterial3D_mpa77")
+[sub_resource type="BoxMesh" id="BoxMesh_dph3o"]
+material = SubResource("StandardMaterial3D_sj2jc")
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5chit"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_w3uvc"]
 albedo_color = Color(0.411765, 0.560784, 0.247059, 1)
 
-[sub_resource type="BoxMesh" id="BoxMesh_owsur"]
-material = SubResource("StandardMaterial3D_5chit")
+[sub_resource type="BoxMesh" id="BoxMesh_poq8v"]
+material = SubResource("StandardMaterial3D_w3uvc")
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_7kboo"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_o007i"]
 albedo_color = Color(0.905882, 0.886275, 0.278431, 1)
 
-[sub_resource type="BoxMesh" id="BoxMesh_6lnff"]
-material = SubResource("StandardMaterial3D_7kboo")
+[sub_resource type="BoxMesh" id="BoxMesh_qoajv"]
+material = SubResource("StandardMaterial3D_o007i")
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_trw1t"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xh2lg"]
 albedo_color = Color(0.411765, 0.560784, 0.247059, 1)
 
-[sub_resource type="BoxMesh" id="BoxMesh_tn2cs"]
-material = SubResource("StandardMaterial3D_trw1t")
+[sub_resource type="BoxMesh" id="BoxMesh_drtrp"]
+material = SubResource("StandardMaterial3D_xh2lg")
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cwsh2"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_upr5x"]
 albedo_color = Color(0.243137, 0.494118, 0.627451, 1)
 
-[sub_resource type="BoxMesh" id="BoxMesh_6qssn"]
-material = SubResource("StandardMaterial3D_cwsh2")
+[sub_resource type="BoxMesh" id="BoxMesh_pho5k"]
+material = SubResource("StandardMaterial3D_upr5x")
 
-[node name="Node3D" type="Node3D"]
+[node name="BarPlot3dTestScene" type="Node3D"]
 
-[node name="BarPlot3dTestScene" type="Node3D" parent="."]
+[node name="BarPlot3DTestScript" type="Node3D" parent="."]
 script = ExtResource("1_c1oyf")
 
-[node name="Graph" type="Node3D" parent="BarPlot3dTestScene"]
+[node name="Graph" type="Node3D" parent="BarPlot3DTestScript"]
 script = ExtResource("2_qawl7")
 
-[node name="BarPlot3D" type="Node3D" parent="BarPlot3dTestScene/Graph"]
+[node name="BarPlot3D" type="Node3D" parent="BarPlot3DTestScript/Graph"]
 script = ExtResource("3_mk8ns")
 
-[node name="Bar 0, 0" type="Node3D" parent="BarPlot3dTestScene/Graph/BarPlot3D"]
+[node name="Bar 0, 0" type="Node3D" parent="BarPlot3DTestScript/Graph/BarPlot3D"]
 transform = Transform3D(3.2, 0, 0, 0, 1.92, 0, 0, 0, 3.2, 1.6, 0, 1.6)
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="BarPlot3dTestScene/Graph/BarPlot3D/Bar 0, 0"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="BarPlot3DTestScript/Graph/BarPlot3D/Bar 0, 0"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
-mesh = SubResource("BoxMesh_k6721")
+mesh = SubResource("BoxMesh_hx1mp")
 
-[node name="Bar 0, 1" type="Node3D" parent="BarPlot3dTestScene/Graph/BarPlot3D"]
+[node name="Bar 0, 1" type="Node3D" parent="BarPlot3DTestScript/Graph/BarPlot3D"]
 transform = Transform3D(3.2, 0, 0, 0, 3.84, 0, 0, 0, 3.2, 1.6, 0, 4.8)
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="BarPlot3dTestScene/Graph/BarPlot3D/Bar 0, 1"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="BarPlot3DTestScript/Graph/BarPlot3D/Bar 0, 1"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
-mesh = SubResource("BoxMesh_aveim")
+mesh = SubResource("BoxMesh_20etp")
 
-[node name="Bar 0, 2" type="Node3D" parent="BarPlot3dTestScene/Graph/BarPlot3D"]
+[node name="Bar 0, 2" type="Node3D" parent="BarPlot3DTestScript/Graph/BarPlot3D"]
 transform = Transform3D(3.2, 0, 0, 0, 5.76, 0, 0, 0, 3.2, 1.6, 0, 8)
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="BarPlot3dTestScene/Graph/BarPlot3D/Bar 0, 2"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="BarPlot3DTestScript/Graph/BarPlot3D/Bar 0, 2"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
-mesh = SubResource("BoxMesh_nahc0")
+mesh = SubResource("BoxMesh_8m4gf")
 
-[node name="Bar 1, 0" type="Node3D" parent="BarPlot3dTestScene/Graph/BarPlot3D"]
+[node name="Bar 1, 0" type="Node3D" parent="BarPlot3DTestScript/Graph/BarPlot3D"]
 transform = Transform3D(3.2, 0, 0, 0, 3.84, 0, 0, 0, 3.2, 4.8, 0, 1.6)
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="BarPlot3dTestScene/Graph/BarPlot3D/Bar 1, 0"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="BarPlot3DTestScript/Graph/BarPlot3D/Bar 1, 0"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
-mesh = SubResource("BoxMesh_6noi8")
+mesh = SubResource("BoxMesh_fielm")
 
-[node name="Bar 1, 1" type="Node3D" parent="BarPlot3dTestScene/Graph/BarPlot3D"]
+[node name="Bar 1, 1" type="Node3D" parent="BarPlot3DTestScript/Graph/BarPlot3D"]
 transform = Transform3D(3.2, 0, 0, 0, 7.68, 0, 0, 0, 3.2, 4.8, 0, 4.8)
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="BarPlot3dTestScene/Graph/BarPlot3D/Bar 1, 1"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="BarPlot3DTestScript/Graph/BarPlot3D/Bar 1, 1"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
-mesh = SubResource("BoxMesh_xigac")
+mesh = SubResource("BoxMesh_dph3o")
 
-[node name="Bar 1, 2" type="Node3D" parent="BarPlot3dTestScene/Graph/BarPlot3D"]
+[node name="Bar 1, 2" type="Node3D" parent="BarPlot3DTestScript/Graph/BarPlot3D"]
 transform = Transform3D(3.2, 0, 0, 0, 3.84, 0, 0, 0, 3.2, 4.8, 0, 8)
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="BarPlot3dTestScene/Graph/BarPlot3D/Bar 1, 2"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="BarPlot3DTestScript/Graph/BarPlot3D/Bar 1, 2"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
-mesh = SubResource("BoxMesh_owsur")
+mesh = SubResource("BoxMesh_poq8v")
 
-[node name="Bar 2, 0" type="Node3D" parent="BarPlot3dTestScene/Graph/BarPlot3D"]
+[node name="Bar 2, 0" type="Node3D" parent="BarPlot3DTestScript/Graph/BarPlot3D"]
 transform = Transform3D(3.2, 0, 0, 0, 5.76, 0, 0, 0, 3.2, 8, 0, 1.6)
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="BarPlot3dTestScene/Graph/BarPlot3D/Bar 2, 0"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="BarPlot3DTestScript/Graph/BarPlot3D/Bar 2, 0"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
-mesh = SubResource("BoxMesh_6lnff")
+mesh = SubResource("BoxMesh_qoajv")
 
-[node name="Bar 2, 1" type="Node3D" parent="BarPlot3dTestScene/Graph/BarPlot3D"]
+[node name="Bar 2, 1" type="Node3D" parent="BarPlot3DTestScript/Graph/BarPlot3D"]
 transform = Transform3D(3.2, 0, 0, 0, 1.92, 0, 0, 0, 3.2, 8, 0, 4.8)
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="BarPlot3dTestScene/Graph/BarPlot3D/Bar 2, 1"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="BarPlot3DTestScript/Graph/BarPlot3D/Bar 2, 1"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
-mesh = SubResource("BoxMesh_tn2cs")
+mesh = SubResource("BoxMesh_drtrp")
 
-[node name="Bar 2, 2" type="Node3D" parent="BarPlot3dTestScene/Graph/BarPlot3D"]
+[node name="Bar 2, 2" type="Node3D" parent="BarPlot3DTestScript/Graph/BarPlot3D"]
 transform = Transform3D(3.2, 0, 0, 0, 3.84, 0, 0, 0, 3.2, 8, 0, 8)
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="BarPlot3dTestScene/Graph/BarPlot3D/Bar 2, 2"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="BarPlot3DTestScript/Graph/BarPlot3D/Bar 2, 2"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
-mesh = SubResource("BoxMesh_6qssn")
+mesh = SubResource("BoxMesh_pho5k")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.571358, -0.60988, 0.549178, 4.20897e-09, 0.669157, 0.743121, -0.820701, -0.424588, 0.382328, 0, 22.836, 6.67447)

@@ -1,0 +1,16 @@
+[gd_scene load_steps=3 format=3 uid="uid://bsm68n5h77ofs"]
+
+[ext_resource type="Script" path="res://addons/PrimerTools/Graph/Testing/StackedBarPlotTest.cs" id="1_w7lqy"]
+[ext_resource type="Script" path="res://addons/PrimerTools/Graph/Graph.cs" id="2_i6uqj"]
+
+[node name="StackedBarPlotTestScene" type="Node3D"]
+
+[node name="StackedBarPlotTestScript" type="Node3D" parent="."]
+script = ExtResource("1_w7lqy")
+Run = true
+
+[node name="Graph2" type="Node3D" parent="StackedBarPlotTestScript"]
+script = ExtResource("2_i6uqj")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.869616, 0.493729, 0, -0.493729, 0.869616, 0, 14.41, 6.35957)

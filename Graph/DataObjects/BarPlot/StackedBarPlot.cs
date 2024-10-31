@@ -13,7 +13,6 @@ public partial class StackedBarPlot : Node3D, IPrimerGraphData
     
     public bool ShowValuesOnBars = false;
     public float BarLabelScaleFactor = 1;
-    public float BarLabelVerticalOffset = 0.5f;
     public string BarLabelPrefix = "";
     public string BarLabelSuffix = "";
     public int BarLabelDecimalPlaces = 0;
@@ -43,7 +42,6 @@ public partial class StackedBarPlot : Node3D, IPrimerGraphData
         for (var i = 0; i < Data[0].Count; i++)
         {
             var stackSegments = new List<Tuple<float, float, float>>();
-            var cumulativeHeight = 0f;
             
             // For each segment in the stack
             for (var j = 0; j < Data.Count; j++)
@@ -56,7 +54,6 @@ public partial class StackedBarPlot : Node3D, IPrimerGraphData
                         TransformPointFromDataSpaceToPositionSpace(new Vector3(_barWidth, 0, 0)).X
                     )
                 );
-                cumulativeHeight += value;
             }
             result.Add(stackSegments);
         }
@@ -109,8 +106,8 @@ public partial class StackedBarPlot : Node3D, IPrimerGraphData
                     
                     var targetLabelPos = new Vector3(
                         segment.Item1,
-                        cumulativeHeight + segmentHeight + BarLabelVerticalOffset * parentGraphSize.Y / 10,
-                        0
+                        cumulativeHeight + segmentHeight / 2, // Center vertically in bar segment
+                        0.01f
                     );
                     tween.TweenProperty(theLabel, "position", targetLabelPos, duration);
                 
@@ -170,8 +167,8 @@ public partial class StackedBarPlot : Node3D, IPrimerGraphData
                     
                     var targetLabelPos = new Vector3(
                         segment.Item1,
-                        cumulativeHeight + segmentHeight + BarLabelVerticalOffset * parentGraphSize.Y / 10,
-                        0
+                        cumulativeHeight + segmentHeight * parentGraphSize.Y / 10,
+                        0.01f
                     );
                     animations.Add(theLabel.MoveTo(targetLabelPos));
                 
@@ -214,11 +211,11 @@ public partial class StackedBarPlot : Node3D, IPrimerGraphData
             label.latex = 0.ToString();
             label.Name = $"Label {stackIndex} {segmentIndex}";
             label.HorizontalAlignment = LatexNode.HorizontalAlignmentOptions.Center;
-            label.VerticalAlignment = LatexNode.VerticalAlignmentOptions.Bottom;
+            label.VerticalAlignment = LatexNode.VerticalAlignmentOptions.Center;
             label.UpdateCharacters();
             AddChild(label);
             label.Owner = GetTree().EditedSceneRoot;
-            label.Position = bar.Position + Vector3.Up * BarLabelVerticalOffset * parentGraphSize.Y / 10;
+            label.Position = bar.Position + Vector3.Up * parentGraphSize.Y / 10;
             label.Scale = Vector3.Zero;
         }
 

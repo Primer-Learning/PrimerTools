@@ -210,6 +210,16 @@ public partial class Graph : Node3D
         barPlot.Name = name;
         return barPlot;
     }
+
+    public StackedBarPlot AddStackedBarPlot(string name = "StackedBarPlot")
+    {
+        var stackedBarPlot = new StackedBarPlot();
+        stackedBarPlot.TransformPointFromDataSpaceToPositionSpace = DataSpaceToPositionSpace;
+        AddChild(stackedBarPlot);
+        stackedBarPlot.Owner = GetTree().EditedSceneRoot;
+        stackedBarPlot.Name = name;
+        return stackedBarPlot;
+    }
     
     public Vector3 DataSpaceToPositionSpace(Vector3 point)
     {
