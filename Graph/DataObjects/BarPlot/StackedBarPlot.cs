@@ -119,7 +119,7 @@ public partial class StackedBarPlot : Node3D, IPrimerGraphData
                     theLabel.DecimalPlacesToShow = BarLabelDecimalPlaces;
                     
                     tween.TweenProperty(theLabel, "NumericalExpression", 
-                        Mathf.RoundToInt(Data[segmentIndex][stackIndex]), duration);
+                        Mathf.RoundToInt(Data[stackIndex][segmentIndex]), duration);
                 }
 
                 cumulativeHeight += segmentHeight;
@@ -179,7 +179,7 @@ public partial class StackedBarPlot : Node3D, IPrimerGraphData
                     theLabel.numberPrefix = BarLabelPrefix;
                     theLabel.DecimalPlacesToShow = BarLabelDecimalPlaces;
                     
-                    animations.Add(theLabel.AnimateNumericalExpression(Mathf.RoundToInt(Data[segmentIndex][stackIndex])));
+                    animations.Add(theLabel.AnimateNumericalExpression(Mathf.RoundToInt(Data[stackIndex][segmentIndex])));
                 }
 
                 cumulativeHeight += segmentHeight;
