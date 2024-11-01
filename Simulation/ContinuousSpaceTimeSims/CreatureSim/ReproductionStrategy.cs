@@ -133,7 +133,7 @@ public static class ReproductionStrategies
     {
         foreach (var trait in genome.Traits.Values)
         {
-            if (rng.RangeFloat(0, 1) < CreatureSimSettings.MutationProbability)
+            if (rng.RangeFloat(0, 1) < CreatureSimSettings.Instance.MutationProbability)
             {
                 if (trait is Trait<float> floatTrait)
                 {
@@ -142,7 +142,7 @@ public static class ReproductionStrategies
             }
         }
         // Possibly add new deleterious mutation
-        if (rng.RangeFloat(0, 1) < CreatureSimSettings.DeleteriousMutationRate)
+        if (rng.RangeFloat(0, 1) < CreatureSimSettings.Instance.DeleteriousMutationRate)
         {
             genome.AddTrait(DeleteriousTrait.CreateNew(rng));
         }

@@ -96,13 +96,12 @@ public partial class SimulationWorld : Node3D
         Simulations.Clear();
         
         // TODO: Put this in SimulationTestScene, since it's really a setting for SimulationWorld.
-        var creatureSimSettings = new CreatureSimSettings
-        {
-            FindMate = MateSelectionStrategies.FindFirstAvailableMate,
-            Reproduce = ReproductionStrategies.SexualReproduce,
-            InitializePopulation = InitialPopulationGeneration.WorkingInitialPopulationThatChangesALot
-        };
-        var creatureSim = new CreatureSim(this, creatureSimSettings);
+
+        CreatureSimSettings.Instance.FindMate = MateSelectionStrategies.FindFirstAvailableMate;
+        CreatureSimSettings.Instance.Reproduce = ReproductionStrategies.SexualReproduce;
+        CreatureSimSettings.Instance.InitializePopulation =
+            InitialPopulationGeneration.WorkingInitialPopulationThatChangesALot;
+        var creatureSim = new CreatureSim(this);
         Simulations.Add(creatureSim);
 
         var fruitTreeSimSettings = new FruitTreeSimSettings();

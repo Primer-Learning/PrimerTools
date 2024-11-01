@@ -42,7 +42,7 @@ public struct DataCreature : IDataEntity
     {
         get
         {
-            if (Energy < CreatureSimSettings.ReproductionEnergyThreshold) return false;
+            if (Energy < CreatureSimSettings.Instance.ReproductionEnergyThreshold) return false;
             if (MatingTimeLeft > 0) return false;
             var maxReproductionAge = Genome.GetTrait<float>("MaxReproductionAge");
             if (maxReproductionAge != null && Age > maxReproductionAge.ExpressedValue) return false;
@@ -94,7 +94,7 @@ public struct DataCreature : IDataEntity
         Velocity = Vector3.Zero;
         CurrentDestination = Position; // Will be changed immediately
         Energy = 1f;
-        HungerThreshold = CreatureSimSettings.DefaultHungerThreshold;
+        HungerThreshold = CreatureSimSettings.Instance.DefaultHungerThreshold;
         FoodTargetIndex = -1;
     }
 }

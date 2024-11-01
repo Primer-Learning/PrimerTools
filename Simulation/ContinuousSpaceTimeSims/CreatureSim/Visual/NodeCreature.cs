@@ -32,7 +32,7 @@ public partial class NodeCreature : NodeEntity<DataCreature>
 		}
 		
 		_blob.SetColor(ColorFromSpeed(dataCreature.MaxSpeed));
-		var normalizedAwareness = dataCreature.AwarenessRadius / CreatureSimSettings.ReferenceAwarenessRadius;
+		var normalizedAwareness = dataCreature.AwarenessRadius / CreatureSimSettings.Instance.ReferenceAwarenessRadius;
 		_blob.LeftEye.Scale = normalizedAwareness * Vector3.One;
 		_blob.RightEye.Scale = normalizedAwareness * Vector3.One;
 		// this.MakeSelfAndChildrenLocal();
@@ -45,7 +45,7 @@ public partial class NodeCreature : NodeEntity<DataCreature>
 	
 	public void UpdateTransform(DataCreature dataCreature)
 	{
-		var scaleFactor = Mathf.Min(1, dataCreature.Age / CreatureSimSettings.MaturationTime);
+		var scaleFactor = Mathf.Min(1, dataCreature.Age / CreatureSimSettings.Instance.MaturationTime);
 		Scale = scaleFactor * Vector3.One;
         
 		if (dataCreature.EatingTimeLeft > 0) return;
@@ -87,7 +87,7 @@ public partial class NodeCreature : NodeEntity<DataCreature>
 	public static Color ColorFromSpeed(float speed)
 	{
 		// Map the speed to a number between 0 and 1, with the reference speed mapping to 0.5
-		var normalizedSpeed = speed / CreatureSimSettings.ReferenceCreatureSpeed / 2;
+		var normalizedSpeed = speed / CreatureSimSettings.Instance.ReferenceCreatureSpeed / 2;
 		normalizedSpeed = Mathf.Clamp(normalizedSpeed, 0, 1);
 
 		if (normalizedSpeed <= 0) return _speedColors[0];

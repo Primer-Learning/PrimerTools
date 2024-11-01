@@ -9,11 +9,7 @@ namespace PrimerTools.Simulation;
 [Tool]
 public class CreatureSim : Simulation<DataCreature>
 {
-	private readonly CreatureSimSettings _settings;
-	public CreatureSim(SimulationWorld simulationWorld, CreatureSimSettings settings) : base(simulationWorld)
-	{
-		_settings = settings;
-	}
+	public CreatureSim(SimulationWorld simulationWorld) : base(simulationWorld) {}
 
 	private FruitTreeSim FruitTreeSim => simulationWorld.Simulations.OfType<FruitTreeSim>().FirstOrDefault();
 	
@@ -25,7 +21,7 @@ public class CreatureSim : Simulation<DataCreature>
 			return;
 		}
 
-		foreach (var creature in _settings.InitializePopulation(InitialEntityCount, _settings, simulationWorld.Rng))
+		foreach (var creature in CreatureSimSettings.Instance.InitializePopulation(InitialEntityCount, CreatureSimSettings.Instance, simulationWorld.Rng))
 		{
 			var position = new Vector3(
 				simulationWorld.Rng.RangeFloat(simulationWorld.WorldDimensions.X),
@@ -81,7 +77,7 @@ public class CreatureSim : Simulation<DataCreature>
 
             // Deaths from antagonistic pleiotropy
             var apTrait = creature.Genome.GetTrait<bool>("Antagonistic Pleiotropy Speed");
-            if (apTrait is { ExpressedValue: true } && creature.Age > CreatureSimSettings.MaturationTime)
+            if (apTrait is { ExpressedValue: true } && creature.Age > CreatureSimSettings.Instance.MaturationTime)
             {
 	            if (simulationWorld.Rng.rand.NextDouble() < 0.05 / SimulationWorld.PhysicsStepsPerSimSecond)
 	            {
@@ -100,7 +96,7 @@ public class CreatureSim : Simulation<DataCreature>
             }
             
             // Do-nothing conditions 
-            if (creature.Age < CreatureSimSettings.MaturationTime) continue;
+            if (creature.Age < CreatureSimSettings.Instance.MaturationTime) continue;
             if (creature.EatingTimeLeft > 0)
             {
                 // TODO: Get rid of EatingTimeLeft. There could be an absolute time that is compared instead.
@@ -122,19 +118,19 @@ public class CreatureSim : Simulation<DataCreature>
             if (creature.OpenToMating)
             {
 	            var creatureCollisions = labeledCollisions.Where(x => x.Type == CollisionType.Creature);
-                var mateIndex = _settings.FindMate(i, creatureCollisions, creature.Position);
+                var mateIndex = CreatureSimSettings.Instance.FindMate(i, creatureCollisions, creature.Position);
                 if (mateIndex != -1)
                 {
                     var mate = Registry.Entities[mateIndex];
             
-                    if ((mate.Position - creature.Position).IsLengthLessThan(CreatureSimSettings.CreatureMateDistance))
+                    if ((mate.Position - creature.Position).IsLengthLessThan(CreatureSimSettings.Instance.CreatureMateDistance))
                     {
-                        mate.MatingTimeLeft += CreatureSimSettings.ReproductionDuration;
-                        creature.MatingTimeLeft += CreatureSimSettings.ReproductionDuration;
-                        mate.Energy -= CreatureSimSettings.ReproductionEnergyCost / 2;
-                        creature.Energy -= CreatureSimSettings.ReproductionEnergyCost / 2;
+                        mate.MatingTimeLeft += CreatureSimSettings.Instance.ReproductionDuration;
+                        creature.MatingTimeLeft += CreatureSimSettings.Instance.ReproductionDuration;
+                        mate.Energy -= CreatureSimSettings.Instance.ReproductionEnergyCost / 2;
+                        creature.Energy -= CreatureSimSettings.Instance.ReproductionEnergyCost / 2;
 
-                        var offspring = _settings.Reproduce(creature.Genome, mate.Genome, simulationWorld.Rng);
+                        var offspring = CreatureSimSettings.Instance.Reproduce(creature.Genome, mate.Genome, simulationWorld.Rng);
                         offspring.Position = (mate.Position + creature.Position) / 2;
                         Registry.RegisterEntity(offspring);
                         Registry.Entities[i] = creature;
@@ -157,7 +153,7 @@ public class CreatureSim : Simulation<DataCreature>
 	            var closestFood = foods.Length > 0
 		            ? foods.MinBy(c => (c.Position - creature.Position).LengthSquared())
 		            : default;
-                if ((closestFood.Position - creature.Position).IsLengthLessThan(CreatureSimSettings.CreatureEatDistance)
+                if ((closestFood.Position - creature.Position).IsLengthLessThan(CreatureSimSettings.Instance.CreatureEatDistance)
                     && creature.EatingTimeLeft <= 0)
                 {
                     creature.FoodTargetIndex = closestFood.Index;
@@ -179,9 +175,9 @@ public class CreatureSim : Simulation<DataCreature>
 
             // Random movement from here
             if ((creature.CurrentDestination - creature.Position).LengthSquared() <
-                CreatureSimSettings.CreatureEatDistance * CreatureSimSettings.CreatureEatDistance)
+                CreatureSimSettings.Instance.CreatureEatDistance * CreatureSimSettings.Instance.CreatureEatDistance)
             {
-                creature.CurrentDestination = simulationWorld.GetRandomDestination(creature.Position, CreatureSimSettings.CreatureStepMaxLength);
+                creature.CurrentDestination = simulationWorld.GetRandomDestination(creature.Position, CreatureSimSettings.Instance.CreatureStepMaxLength);
             }
             PerformMovement(ref creature);
             
@@ -279,7 +275,7 @@ public class CreatureSim : Simulation<DataCreature>
 		var velocityChangeLengthSquared = velocityChange.LengthSquared();
 
 		// Calculate acceleration vector with a maximum magnitude
-		var maxAccelerationMagnitudeSquared = maxSpeed * maxSpeed * CreatureSimSettings.MaxAccelerationFactor * CreatureSimSettings.MaxAccelerationFactor;
+		var maxAccelerationMagnitudeSquared = maxSpeed * maxSpeed * CreatureSimSettings.Instance.MaxAccelerationFactor * CreatureSimSettings.Instance.MaxAccelerationFactor;
 		Vector3 accelerationVector;
 		if (velocityChangeLengthSquared > maxAccelerationMagnitudeSquared)
 		{
@@ -321,16 +317,16 @@ public class CreatureSim : Simulation<DataCreature>
 		tree.FruitGrowthProgress = 0;
 		// FruitTreeSim.Registry.Entities[treeIndex] = tree;
 		
-		creature.Energy += simulationWorld.Rng.RangeFloat(CreatureSimSettings.MinEnergyGainFromFood, CreatureSimSettings.MaxEnergyGainFromFood);
-		creature.EatingTimeLeft = CreatureSimSettings.EatDuration;
-		CreatureEatEvent?.Invoke(creatureIndex, tree.Body, CreatureSimSettings.EatDuration / SimulationWorld.TimeScale);
+		creature.Energy += simulationWorld.Rng.RangeFloat(CreatureSimSettings.Instance.MinEnergyGainFromFood, CreatureSimSettings.Instance.MaxEnergyGainFromFood);
+		creature.EatingTimeLeft = CreatureSimSettings.Instance.EatDuration;
+		CreatureEatEvent?.Invoke(creatureIndex, tree.Body, CreatureSimSettings.Instance.EatDuration / SimulationWorld.TimeScale);
 		return creature;
 	}
 	private static void SpendMovementEnergy(ref DataCreature creature)
 	{
-		var normalizedSpeed = creature.MaxSpeed / CreatureSimSettings.ReferenceCreatureSpeed;
-		var normalizedAwarenessRadius = creature.AwarenessRadius / CreatureSimSettings.ReferenceAwarenessRadius;
+		var normalizedSpeed = creature.MaxSpeed / CreatureSimSettings.Instance.ReferenceCreatureSpeed;
+		var normalizedAwarenessRadius = creature.AwarenessRadius / CreatureSimSettings.Instance.ReferenceAwarenessRadius;
 		
-		creature.Energy -= (CreatureSimSettings.BaseEnergySpend + CreatureSimSettings.GlobalEnergySpendAdjustmentFactor * ( normalizedSpeed * normalizedSpeed + normalizedAwarenessRadius)) / SimulationWorld.PhysicsStepsPerSimSecond;
+		creature.Energy -= (CreatureSimSettings.Instance.BaseEnergySpend + CreatureSimSettings.Instance.GlobalEnergySpendAdjustmentFactor * ( normalizedSpeed * normalizedSpeed + normalizedAwarenessRadius)) / SimulationWorld.PhysicsStepsPerSimSecond;
 	}
 }

@@ -16,7 +16,7 @@ public static class InitialPopulationGeneration
             genome.AddTrait(
                 new Trait<float>(
                     "MaxSpeed", 
-                    new List<float> { CreatureSimSettings.ReferenceCreatureSpeed, CreatureSimSettings.ReferenceCreatureSpeed },
+                    new List<float> { CreatureSimSettings.Instance.ReferenceCreatureSpeed, CreatureSimSettings.Instance.ReferenceCreatureSpeed },
                     ExpressionMechanisms.Float.Codominant,
                     1
                 )
@@ -25,7 +25,7 @@ public static class InitialPopulationGeneration
             genome.AddTrait(
                 new Trait<float>(
                     "AwarenessRadius", 
-                    new List<float> { CreatureSimSettings.ReferenceAwarenessRadius, CreatureSimSettings.ReferenceAwarenessRadius},
+                    new List<float> { CreatureSimSettings.Instance.ReferenceAwarenessRadius, CreatureSimSettings.Instance.ReferenceAwarenessRadius},
                     ExpressionMechanisms.Float.Codominant,
                     1
                 )
@@ -76,7 +76,7 @@ public static class InitialPopulationGeneration
             genome.AddTrait(
                 new Trait<float>(
                     "MaxSpeed", 
-                    new List<float> { CreatureSimSettings.ReferenceCreatureSpeed, CreatureSimSettings.ReferenceCreatureSpeed },
+                    new List<float> { CreatureSimSettings.Instance.ReferenceCreatureSpeed, CreatureSimSettings.Instance.ReferenceCreatureSpeed },
                     ExpressionMechanisms.Float.Codominant,
                     1
                 )
@@ -85,7 +85,7 @@ public static class InitialPopulationGeneration
             genome.AddTrait(
                 new Trait<float>(
                     "AwarenessRadius", 
-                    new List<float> { CreatureSimSettings.ReferenceAwarenessRadius, CreatureSimSettings.ReferenceAwarenessRadius},
+                    new List<float> { CreatureSimSettings.Instance.ReferenceAwarenessRadius, CreatureSimSettings.Instance.ReferenceAwarenessRadius},
                     ExpressionMechanisms.Float.Codominant,
                     1
                 )
