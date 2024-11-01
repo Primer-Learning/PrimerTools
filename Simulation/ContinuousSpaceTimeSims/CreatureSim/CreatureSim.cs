@@ -21,7 +21,7 @@ public class CreatureSim : Simulation<DataCreature>
 			return;
 		}
 
-		foreach (var creature in CreatureSimSettings.Instance.InitializePopulation(InitialEntityCount, CreatureSimSettings.Instance, simulationWorld.Rng))
+		foreach (var creature in CreatureSimSettings.Instance.InitializePopulation(InitialEntityCount, simulationWorld.Rng))
 		{
 			var position = new Vector3(
 				simulationWorld.Rng.RangeFloat(simulationWorld.WorldDimensions.X),

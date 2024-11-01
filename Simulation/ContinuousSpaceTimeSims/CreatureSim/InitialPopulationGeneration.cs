@@ -2,10 +2,10 @@
 
 namespace PrimerTools.Simulation;
 
-public delegate DataCreature[] InitialPopulationGeneratorDelegate(int numCreatures, CreatureSimSettings settings, Rng rng);
+public delegate DataCreature[] InitialPopulationGeneratorDelegate(int numCreatures, Rng rng);
 public static class InitialPopulationGeneration
 {
-    public static DataCreature[] WorkingInitialPopulationThatChangesALot(int numCreatures, CreatureSimSettings settings, Rng rng = null)
+    public static DataCreature[] WorkingInitialPopulationThatChangesALot(int numCreatures, Rng rng = null)
     {
         var creatures = new DataCreature[numCreatures];
 
@@ -65,7 +65,7 @@ public static class InitialPopulationGeneration
         return creatures;
     }
     
-    public static DataCreature[] DefaultSpeedAndAwarenessDiploid(int numCreatures, CreatureSimSettings settings, Rng rng = null)
+    public static DataCreature[] DefaultSpeedAndAwarenessDiploid(int numCreatures, Rng rng = null)
     {
         var creatures = new DataCreature[numCreatures];
 
