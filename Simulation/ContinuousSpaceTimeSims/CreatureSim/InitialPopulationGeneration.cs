@@ -5,7 +5,7 @@ namespace PrimerTools.Simulation;
 public delegate DataCreature[] InitialPopulationGeneratorDelegate(int numCreatures, CreatureSimSettings settings, Rng rng);
 public static class InitialPopulationGeneration
 {
-    public static DataCreature[] AllDefaultsInitialPopulation(int numCreatures, CreatureSimSettings settings, Rng rng = null)
+    public static DataCreature[] WorkingInitialPopulationThatChangesALot(int numCreatures, CreatureSimSettings settings, Rng rng = null)
     {
         var creatures = new DataCreature[numCreatures];
 
@@ -58,6 +58,38 @@ public static class InitialPopulationGeneration
             //         mutationIncrement: false
             //     )
             // );
+
+            creatures[i] = new DataCreature { Genome = genome };
+        }
+        
+        return creatures;
+    }
+    
+    public static DataCreature[] DefaultSpeedAndAwarenessDiploid(int numCreatures, CreatureSimSettings settings, Rng rng = null)
+    {
+        var creatures = new DataCreature[numCreatures];
+
+        for (var i = 0; i < numCreatures; i++)
+        {
+            var genome = new Genome();
+            
+            genome.AddTrait(
+                new Trait<float>(
+                    "MaxSpeed", 
+                    new List<float> { CreatureSimSettings.ReferenceCreatureSpeed, CreatureSimSettings.ReferenceCreatureSpeed },
+                    ExpressionMechanisms.Float.Codominant,
+                    1
+                )
+            );
+
+            genome.AddTrait(
+                new Trait<float>(
+                    "AwarenessRadius", 
+                    new List<float> { CreatureSimSettings.ReferenceAwarenessRadius, CreatureSimSettings.ReferenceAwarenessRadius},
+                    ExpressionMechanisms.Float.Codominant,
+                    1
+                )
+            );
 
             creatures[i] = new DataCreature { Genome = genome };
         }

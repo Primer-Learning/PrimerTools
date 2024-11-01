@@ -100,7 +100,7 @@ public partial class SimulationWorld : Node3D
         {
             FindMate = MateSelectionStrategies.FindFirstAvailableMate,
             Reproduce = ReproductionStrategies.SexualReproduce,
-            InitializePopulation = InitialPopulationGeneration.AllDefaultsInitialPopulation
+            InitializePopulation = InitialPopulationGeneration.WorkingInitialPopulationThatChangesALot
         };
         var creatureSim = new CreatureSim(this, creatureSimSettings);
         Simulations.Add(creatureSim);

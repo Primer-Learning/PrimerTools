@@ -3,8 +3,8 @@
 public class CreatureSimSettings
 {
 	// Three categories
-	// 1. Always constant (const)
-	// 2. Can vary between sims but not between creatures.
+	// 1. Always constant (const/static)
+	// 2. Can vary between sims but not between creatures (instance vars)
 	// 3. Can vary between creatures and is subject to mutation (doesn't belong here)
 	
 	#region Sim parameters
@@ -38,10 +38,10 @@ public class CreatureSimSettings
 	public const float MutationIncrement = 1f;
 	public const float DeleteriousMutationRate = 0f;
 	#endregion
-
+	
+	// Instance vars
 	public FindMateDelegate FindMate = MateSelectionStrategies.FindFirstAvailableMate;
 	public ReproduceDelegate Reproduce = ReproductionStrategies.SexualReproduce;
-
 	public InitialPopulationGeneratorDelegate InitializePopulation =
-		InitialPopulationGeneration.AllDefaultsInitialPopulation;
+		InitialPopulationGeneration.WorkingInitialPopulationThatChangesALot;
 }
