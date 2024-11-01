@@ -33,7 +33,12 @@ public partial class PointData : Node3D, IPrimerGraphData
             pointObjects[i] = (data[i], pointObjects[i].node);
         }
     }
-    
+
+    public void FetchData()
+    {
+        throw new System.NotImplementedException();
+    }
+
     public Animation Transition(double duration)
     {
         var transitionAnimations = new List<Animation>();
@@ -43,6 +48,11 @@ public partial class PointData : Node3D, IPrimerGraphData
         }
 
         return transitionAnimations.RunInParallel();
+    }
+
+    public Tween TweenTransition(double duration)
+    {
+        throw new System.NotImplementedException();
     }
 
     public Animation Disappear()

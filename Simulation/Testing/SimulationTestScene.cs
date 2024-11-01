@@ -63,7 +63,7 @@ public partial class SimulationTestScene : Node3D
 			if (value)
 			{
 				GD.Print("Resetting");
-				SimulationWorld.ResetSimulations();
+				SimulationWorld.Reset();
 				SimulationWorld.Running = false;
 				
 				foreach (var child in GraphParent.GetChildren())
@@ -83,9 +83,9 @@ public partial class SimulationTestScene : Node3D
 	[Export] private int _initialTreeCount = 10;
 	
 	private Node3D GraphParent => GetNode<Node3D>("GraphParent");
-	private PeriodicPlotter PeriodicPlotter => GraphParent.GetNodeOrNull<PeriodicPlotter>("Periodic plotter");
-	private PeriodicPlotter PeriodicPlotter2 => GraphParent.GetNodeOrNull<PeriodicPlotter>("Periodic plotter2");
-	private PeriodicPlotter PeriodicPlotter3 => GraphParent.GetNodeOrNull<PeriodicPlotter>("Periodic plotter3");
+	private PeriodicPlotter PeriodicPlotter => GraphParent.GetNodeOrNull<PeriodicPlotter>("Graph1/Periodic plotter");
+	private PeriodicPlotter PeriodicPlotter2 => GraphParent.GetNodeOrNull<PeriodicPlotter>("Graph2/Periodic plotter2");
+	private PeriodicPlotter PeriodicPlotter3 => GraphParent.GetNodeOrNull<PeriodicPlotter>("Graph3/Periodic plotter3");
 	
 	private void CreatePlot()
 	{
@@ -122,7 +122,8 @@ public partial class SimulationTestScene : Node3D
 		thisGraph.Transition();
 
 		var periodicPlotter = new PeriodicPlotter();
-		GraphParent.AddChild(periodicPlotter);
+		thisGraph.AddChild(periodicPlotter);
+		periodicPlotter.graph = thisGraph;
 		periodicPlotter.Name = "Periodic plotter";
 		
 		// Curve
@@ -181,7 +182,6 @@ public partial class SimulationTestScene : Node3D
 				);
 			}
 		);
-		periodicPlotter.BarPlot = barPlot;
 		
 		//
 		// Second graph
@@ -213,7 +213,8 @@ public partial class SimulationTestScene : Node3D
 		thisGraph2.Transition();
 
 		var periodicPlotter2 = new PeriodicPlotter();
-		GraphParent.AddChild(periodicPlotter2);
+		thisGraph2.AddChild(periodicPlotter2);
+		periodicPlotter2.graph = thisGraph2;
 		periodicPlotter2.Name = "Periodic plotter2";
 		
 		// Bar plot
@@ -251,8 +252,6 @@ public partial class SimulationTestScene : Node3D
 			return transformedHistogram.ToArray();
 		};
 		
-		periodicPlotter2.BarPlot = barPlot2;
-		
 		//
 		// Third graph
 		//
@@ -282,8 +281,9 @@ public partial class SimulationTestScene : Node3D
 		thisGraph3.Transition();
 
 		var periodicPlotter3 = new PeriodicPlotter();
-		GraphParent.AddChild(periodicPlotter3);
-		periodicPlotter3.Name = "Periodic plotter2";
+		thisGraph3.AddChild(periodicPlotter3);
+		periodicPlotter3.graph = thisGraph3;
+		periodicPlotter3.Name = "Periodic plotter3";
 		
 		// Bar plot
 		var barPlot3 = thisGraph3.AddBarPlot();
@@ -319,12 +319,11 @@ public partial class SimulationTestScene : Node3D
 			
 			return evenMoreTransformedHistogram.ToArray();
 		};
-		
-		periodicPlotter3.BarPlot = barPlot3;
 	}
 
 	private async Task RunSimSequence()
 	{
+		GD.Print("sin seqarositen");
 		// TODO: Figure out an actual good approach to time and step counts
 		// Step counts are important for consistent results. But timing is important for perception.
 		// Probably always set timings in terms of total steps.

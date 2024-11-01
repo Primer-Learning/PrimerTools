@@ -1,14 +1,13 @@
-﻿using Godot;
+﻿using System.Linq;
+using Godot;
 using PrimerTools.Graph;
 
 public partial class PeriodicPlotter : Node
 {
-    public CurvePlot2D Curve;
-    public BarPlot BarPlot;
-    public BarPlot3D BarPlot3D;
+    public Graph graph;
 
     [Export] public bool Plotting;
-    [Export] private float _plottingInterval = 1;
+    [Export] private double _plottingInterval = 1;
     private double _timeSinceLastPlot;
     public override void _Process(double delta)
     {
@@ -21,25 +20,10 @@ public partial class PeriodicPlotter : Node
     
     private void PlotData()
     {
-        if (Curve != null)
+        foreach (var dataPlotter in graph.GetChildren().OfType<IPrimerGraphData>())
         {
-            // TODO: Delete the numPoints lines and test. This method could probably just iterate through IPrimerData
-            var numPoints = Curve.GetData().Length;
-            Curve.FetchData();
-            if (numPoints == Curve.GetData().Length) return;
-            Curve.TweenTransition(1);
-        }
-
-        if (BarPlot != null)
-        {
-            BarPlot.FetchData();
-            BarPlot.TweenTransition(1);
-        }
-
-        if (BarPlot3D != null)
-        {
-            BarPlot3D.FetchData();
-            BarPlot3D.TweenTransition(1);
+            dataPlotter.FetchData();
+            dataPlotter.TweenTransition(_plottingInterval);
         }
     }
 }

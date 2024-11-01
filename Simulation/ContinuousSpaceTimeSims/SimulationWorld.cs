@@ -13,6 +13,8 @@ public enum VisualizationMode
 [Tool]
 public partial class SimulationWorld : Node3D
 {
+    PackedScene _groundScene = ResourceLoader.Load<PackedScene>("res://addons/PrimerAssets/Organized/Ground/round_ground.tscn");
+    
     #region Editor controls
     public bool Running;
     [Export] public VisualizationMode VisualizationMode = VisualizationMode.NodeCreatures;
@@ -25,7 +27,7 @@ public partial class SimulationWorld : Node3D
         set => _worldDimension = value;
     }
 
-    [Export] private Node3D _ground; 
+    public Node3D Ground; 
 
     private static float _timeScale = 1;
     public static float TimeScale
@@ -68,7 +70,7 @@ public partial class SimulationWorld : Node3D
     private NodeCreatureManager _creatureNodeManager;
     private NodeTreeManager _treeNodeManager;
 
-    public void ResetSimulations()
+    public void Reset()
     {
         Running = false;
 	    foreach (var simulation in Simulations)
@@ -84,7 +86,12 @@ public partial class SimulationWorld : Node3D
     {
         PhysicsServer3D.SetActive(true);
         Engine.PhysicsTicksPerSecond = (int) (_timeScale * 60);
-        _ground.Scale = new Vector3(WorldDimensions.Y, (WorldDimensions.X + WorldDimensions.Y) / 2, WorldDimensions.X);
+
+        if (Ground != null && IsInstanceValid(Ground)) Ground.Free();
+        Ground = _groundScene.Instantiate<Node3D>();
+        AddChild(Ground);
+        Ground.Name = "Ground";
+        Ground.Scale = new Vector3(WorldDimensions.Y, (WorldDimensions.X + WorldDimensions.Y) / 2, WorldDimensions.X);
         
         Simulations.Clear();
         
@@ -120,7 +127,6 @@ public partial class SimulationWorld : Node3D
     private int _realTimeOfLastStatusPrint;
     private int _stepsSinceLastStatusPrint;
     [Export] private float _statusPrintSimTimeInterval;
-    // [Export] private int _statusPrintStepInterval;
     private int _totalPhysicsSteps;
     public override void _PhysicsProcess(double delta)
     {
