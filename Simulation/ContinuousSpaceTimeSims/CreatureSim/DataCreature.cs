@@ -94,7 +94,7 @@ public struct DataCreature : IDataEntity
         Velocity = Vector3.Zero;
         CurrentDestination = Position; // Will be changed immediately
         Energy = 1f;
-        HungerThreshold = CreatureSimSettings.Instance.DefaultHungerThreshold;
+        HungerThreshold = CreatureSimSettings.Instance.HungerThreshold;
         FoodTargetIndex = -1;
     }
 }
