@@ -45,6 +45,7 @@ public partial class NodeTree : NodeEntity<DataTree>
 	private void Death()
 	{
 		Visible = false;
+		QueueFree();
 	}
 	#endregion
 

@@ -33,7 +33,6 @@ public struct DataTree : IDataEntity
         PhysicsServer3D.AreaAddShape(bodyArea, bodyShape.GetRid());
         
         Body = bodyArea;
-        Age = 0;
         IsMature = false;
         TimeSinceLastSpawn = 0;
         BodyShapeResource = bodyShape;

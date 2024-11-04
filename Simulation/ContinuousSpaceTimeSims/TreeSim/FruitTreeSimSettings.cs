@@ -1,6 +1,12 @@
+
 namespace PrimerTools.Simulation;
 public class FruitTreeSimSettings
 {
+    #region Distribution Save/Load
+    public string TreeDistributionPath { get; set; }
+    public bool LoadTreeDistribution => !string.IsNullOrEmpty(TreeDistributionPath);
+    #endregion
+    
     #region Simulation Parameters
     public const float MaxTreeSpawnRadius = 5f;
     public const float MinTreeSpawnRadius = 1f;

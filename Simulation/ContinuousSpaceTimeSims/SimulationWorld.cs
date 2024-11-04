@@ -37,6 +37,7 @@ public partial class SimulationWorld : Node3D
         {
             _timeScale = value;
             Engine.PhysicsTicksPerSecond = (int)(value * 60);
+            Engine.MaxPhysicsStepsPerFrame = (int)(value * 60);
         }
     }
 
@@ -81,6 +82,7 @@ public partial class SimulationWorld : Node3D
         _creatureNodeManager = null;
         _treeNodeManager?.QueueFree();
         _treeNodeManager = null;
+        Ground?.QueueFree();
     }
     public void Initialize()
     {
@@ -95,12 +97,6 @@ public partial class SimulationWorld : Node3D
         
         Simulations.Clear();
         
-        // TODO: Put this in SimulationTestScene, since it's really a setting for SimulationWorld.
-
-        CreatureSimSettings.Instance.FindMate = MateSelectionStrategies.FindFirstAvailableMate;
-        CreatureSimSettings.Instance.Reproduce = ReproductionStrategies.SexualReproduce;
-        CreatureSimSettings.Instance.InitializePopulation =
-            InitialPopulationGeneration.WorkingInitialPopulationThatChangesALot;
         var creatureSim = new CreatureSim(this);
         Simulations.Add(creatureSim);
 

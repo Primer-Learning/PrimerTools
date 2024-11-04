@@ -323,7 +323,6 @@ public partial class SimulationTestScene : Node3D
 
 	private async Task RunSimSequence()
 	{
-		GD.Print("sin seqarositen");
 		// TODO: Figure out an actual good approach to time and step counts
 		// Step counts are important for consistent results. But timing is important for perception.
 		// Probably always set timings in terms of total steps.
@@ -335,6 +334,12 @@ public partial class SimulationTestScene : Node3D
 		
 		var originalTimeScale = SimulationWorld.TimeScale;
 		SimulationWorld.TimeScale = 2;
+		
+		CreatureSimSettings.Instance.FindMate = MateSelectionStrategies.FindFirstAvailableMate;
+		CreatureSimSettings.Instance.Reproduce = ReproductionStrategies.SexualReproduce;
+		CreatureSimSettings.Instance.InitializePopulation =
+			InitialPopulationGeneration.WorkingInitialPopulationThatChangesALot;
+		
 		SimulationWorld.Initialize();
 		SimulationWorld.Running = true;
 		
@@ -345,6 +350,7 @@ public partial class SimulationTestScene : Node3D
 		const ulong treeGrowthStepGoal = 300;
 		
 		while (Engine.GetPhysicsFrames() < startPhysicsFrame + treeGrowthStepGoal) await Task.Delay(100);
+		// FruitTreeSim.SaveTreeDistribution();
 		while (!_running) await Task.Delay(100);
 		
 		SimulationWorld.TimeScale = originalTimeScale;

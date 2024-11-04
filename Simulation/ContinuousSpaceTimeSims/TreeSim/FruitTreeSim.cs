@@ -1,6 +1,9 @@
 using System;
 using Godot;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text.Json;
 using PrimerTools;
 using PrimerTools.Simulation;
 
@@ -22,6 +25,13 @@ public class FruitTreeSim : Simulation<DataTree>
 
     protected override void CustomInitialize()
     {
+        GD.Print("initialize trees");
+        if (_settings.LoadTreeDistribution)
+        {
+            LoadTreeDistribution();
+            return;
+        }
+
         for (var i = 0; i < InitialEntityCount; i++)
         {
             var physicalTree = new DataTree
@@ -191,4 +201,67 @@ public class FruitTreeSim : Simulation<DataTree>
             return parent.Position + offset;
         }
         #endregion
+
+    public void SaveTreeDistribution(string filePath = "")
+    {
+        if (string.IsNullOrEmpty(filePath))
+        {
+            // Get the project root path
+            var projectPath = ProjectSettings.GlobalizePath("res://");
+            var saveDir = Path.Combine(projectPath, "addons", "PrimerTools", "Simulation", "ContinuousSpaceTimeSims", "TreeSim", "Saved Tree Distributions");
+            // Create directory if it doesn't exist
+            Directory.CreateDirectory(saveDir);
+            
+            filePath = Path.Combine(saveDir, $"tree_distribution_{DateTime.Now:yyyyMMdd_HHmmss}.json");
+        }
+
+        GD.Print(simulationWorld.WorldDimensions);
+        var treesToSave = Registry.Entities
+            .Where(tree => tree.Alive)
+            .Select(tree => new TreeDistributionData.TreeData(tree))
+            .ToList();
+        
+        var distribution = new TreeDistributionData
+        {
+            // WorldDimensions = simulationWorld.WorldDimensions,
+            Trees = treesToSave
+        };
+        
+        var jsonString = JsonSerializer.Serialize(distribution);
+        File.WriteAllText(filePath, jsonString);
+    }
+
+    private void LoadTreeDistribution()
+    {
+        var projectPath = ProjectSettings.GlobalizePath("res://");
+        var path = Path.Combine(projectPath, _settings.TreeDistributionPath);
+        if (!File.Exists(path))
+        {
+            GD.PrintErr($"Tree distribution file not found: {_settings.TreeDistributionPath}");
+            return;
+        }
+        
+        var jsonString = File.ReadAllText(path);
+        
+        var distribution = JsonSerializer.Deserialize<TreeDistributionData>(jsonString);
+        
+        if (distribution == null || distribution.Trees == null || !distribution.Trees.Any())
+        {
+            GD.PrintErr("Failed to deserialize tree distribution or no trees found");
+            return;
+        }
+
+        Registry.Reset();
+        
+        foreach (var treeData in distribution.Trees)
+        {
+            var tree = new DataTree
+            {
+                Position = treeData.Position,
+                Age = treeData.Age,
+                IsMature = treeData.IsMature,
+            };
+            Registry.RegisterEntity(tree);
+        }
+    }
 }
