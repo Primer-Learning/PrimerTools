@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Godot;
 using PrimerTools.Simulation.New;
 
@@ -13,7 +14,10 @@ public enum VisualizationMode
 [Tool]
 public partial class SimulationWorld : Node3D
 {
-    PackedScene _groundScene = ResourceLoader.Load<PackedScene>("res://addons/PrimerAssets/Organized/Ground/round_ground.tscn");
+    private PackedScene _groundScene = ResourceLoader.Load<PackedScene>("res://addons/PrimerAssets/Organized/Ground/round_ground.tscn");
+    
+    public CreatureSim CreatureSim => Simulations.OfType<CreatureSim>().FirstOrDefault();
+    public FruitTreeSim FruitTreeSim => Simulations.OfType<FruitTreeSim>().FirstOrDefault();
     
     #region Editor controls
     public bool Running;
@@ -84,8 +88,10 @@ public partial class SimulationWorld : Node3D
         _treeNodeManager = null;
         Ground?.QueueFree();
     }
-    public void Initialize()
+    public void Initialize(params ISimulation[] simulations)
     {
+        if (simulations.Length == 0) GD.PrintErr("No simulations added to SimulationWorld.");
+        
         PhysicsServer3D.SetActive(true);
         Engine.PhysicsTicksPerSecond = (int) (_timeScale * 60);
 
@@ -96,24 +102,27 @@ public partial class SimulationWorld : Node3D
         Ground.Scale = new Vector3(WorldDimensions.Y, (WorldDimensions.X + WorldDimensions.Y) / 2, WorldDimensions.X);
         
         Simulations.Clear();
-        
-        var creatureSim = new CreatureSim(this);
-        Simulations.Add(creatureSim);
 
-        var fruitTreeSimSettings = new FruitTreeSimSettings();
-        var treeSim = new FruitTreeSim(this, fruitTreeSimSettings);
-        Simulations.Add(treeSim);
-        
-        if (VisualizationMode == VisualizationMode.NodeCreatures)
+        foreach (var sim in simulations)
         {
-            _treeNodeManager = new NodeTreeManager(treeSim.Registry);
-            _treeNodeManager.Name = "NodeTreeManager";
-            AddChild(_treeNodeManager);
-            
-            _creatureNodeManager = new NodeCreatureManager(creatureSim.Registry, _treeNodeManager);
-            _creatureNodeManager.Name = "NodeCreatureManager";
-            AddChild(_creatureNodeManager);
-            // _creatureNodeManager.MakeSelfAndChildrenLocal();
+            Simulations.Add(sim);
+
+            if (VisualizationMode == VisualizationMode.NodeCreatures)
+            {
+                switch (sim)
+                {
+                    case FruitTreeSim treeSim:
+                        _treeNodeManager = new NodeTreeManager(treeSim.Registry);
+                        _treeNodeManager.Name = "NodeTreeManager";
+                        AddChild(_treeNodeManager);
+                        break;
+                    case CreatureSim creatureSim:
+                        _creatureNodeManager = new NodeCreatureManager(creatureSim.Registry);
+                        _creatureNodeManager.Name = "NodeCreatureManager";
+                        AddChild(_creatureNodeManager);
+                        break;
+                }
+            }
         }
 
         _realTimeOfLastStatusPrint = System.Environment.TickCount;

@@ -1,23 +1,35 @@
+using System.Linq;
 using Godot;
 
 namespace PrimerTools.Simulation.New;
 
 public partial class NodeCreatureManager : NodeEntityManager<DataCreature, NodeCreature>
 {
-    private NodeTreeManager _fruitTreeManager;
-
-    public NodeCreatureManager(DataEntityRegistry<DataCreature> dataEntityRegistry, NodeTreeManager fruitTreeManager) 
+    public NodeCreatureManager(DataEntityRegistry<DataCreature> dataEntityRegistry) 
         : base(dataEntityRegistry)
     {
-        _fruitTreeManager = fruitTreeManager;
         CreatureSim.CreatureEatEvent += OnCreatureEat;
         CreatureSim.CreatureDeathEvent += OnCreatureDeath;
+    }
+
+    private NodeTreeManager _nodeTreeManager;
+
+    private NodeTreeManager NodeTreeManager
+    {
+        get
+        {
+            if (_nodeTreeManager == null)
+            {
+                _nodeTreeManager = GetParent().GetChildren().OfType<NodeTreeManager>().FirstOrDefault();
+            }
+            return _nodeTreeManager;
+        }
     }
 
     private void OnCreatureEat(int creatureIndex, Rid treeID, float duration)
     {
         NodeEntities[creatureIndex].Eat(
-            _fruitTreeManager.GetNodeEntityByDataID(treeID)?.GetFruit(),
+            NodeTreeManager?.GetNodeEntityByDataID(treeID)?.GetFruit(),
             duration
         );
     }

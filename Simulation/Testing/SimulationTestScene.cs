@@ -9,8 +9,6 @@ using PrimerTools.Simulation;
 public partial class SimulationTestScene : Node3D
 {
 	private SimulationWorld SimulationWorld => GetNode<SimulationWorld>("SimulationWorld");
-	private CreatureSim CreatureSim => SimulationWorld.Simulations.OfType<CreatureSim>().FirstOrDefault();
-	private FruitTreeSim FruitTreeSim => SimulationWorld.Simulations.OfType<FruitTreeSim>().FirstOrDefault();
 	
 	private bool _newSim = true;
 	private bool _running;
@@ -169,7 +167,7 @@ public partial class SimulationTestScene : Node3D
 		// 	}
 		// );
 		barPlot.DataFetchMethod = BarDataUtilities.NormalizedPropertyHistogram(
-			() => CreatureSim.Registry.Entities,
+			() => SimulationWorld.CreatureSim.Registry.Entities,
 			creature =>
 			{
 				var alleles = creature.Genome.GetTrait<float>("MaxAge").Alleles;
@@ -228,7 +226,7 @@ public partial class SimulationTestScene : Node3D
 		var creatureDeathAges = new List<float>();
 		CreatureSim.CreatureDeathEvent += index =>
 		{
-			var age = CreatureSim.Registry.Entities[index].Age;
+			var age = SimulationWorld.CreatureSim.Registry.Entities[index].Age;
 			creatureDeathAges.Add(age);
 			// if (creatureDeathAges.Count > 1000) creatureDeathAges.RemoveAt(0);
 		};
@@ -339,13 +337,21 @@ public partial class SimulationTestScene : Node3D
 		CreatureSimSettings.Instance.Reproduce = ReproductionStrategies.SexualReproduce;
 		CreatureSimSettings.Instance.InitializePopulation =
 			InitialPopulationGeneration.WorkingInitialPopulationThatChangesALot;
-		
-		SimulationWorld.Initialize();
+		var creatureSim = new CreatureSim(SimulationWorld)
+		{
+			InitialEntityCount = _initialCreatureCount
+		};
+
+		var fruitTreeSimSettings = new FruitTreeSimSettings();
+		var fruitTreeSim = new FruitTreeSim(SimulationWorld, fruitTreeSimSettings)
+		{
+			Mode = FruitTreeSim.SimMode.TreeGrowth,
+			InitialEntityCount = _initialTreeCount
+		};
+
+		SimulationWorld.Initialize(creatureSim, fruitTreeSim);
 		SimulationWorld.Running = true;
-		
-		FruitTreeSim.Mode = FruitTreeSim.SimMode.TreeGrowth;
-		FruitTreeSim.InitialEntityCount = _initialTreeCount;
-		FruitTreeSim.Initialize();
+		fruitTreeSim.Initialize();
 
 		const ulong treeGrowthStepGoal = 300;
 		
@@ -355,12 +361,12 @@ public partial class SimulationTestScene : Node3D
 		
 		SimulationWorld.TimeScale = originalTimeScale;
 
-		FruitTreeSim.Mode = FruitTreeSim.SimMode.FruitGrowth;
+		fruitTreeSim.Mode = FruitTreeSim.SimMode.FruitGrowth;
 
 		await Task.Delay(3000);
-
-		CreatureSim.InitialEntityCount = _initialCreatureCount;
-		CreatureSim.Initialize();
+		
+		
+		creatureSim.Initialize();
 		if (PeriodicPlotter != null) PeriodicPlotter.Plotting = true;
 		if (PeriodicPlotter2 != null) PeriodicPlotter2.Plotting = true;
 		if (PeriodicPlotter3 != null) PeriodicPlotter3.Plotting = true;

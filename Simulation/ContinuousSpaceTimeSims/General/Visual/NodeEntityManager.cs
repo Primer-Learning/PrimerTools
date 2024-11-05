@@ -8,14 +8,14 @@ public partial class NodeEntityManager<TDataEntity, TNodeEntity> : Node3D
     where TNodeEntity : NodeEntity<TDataEntity>, new()
 {
     public readonly List<TNodeEntity> NodeEntities = new();
-    private readonly DataEntityRegistry<TDataEntity> _dataEntityRegistry;
+    protected readonly DataEntityRegistry<TDataEntity> DataEntityRegistry;
     
     public NodeEntityManager(DataEntityRegistry<TDataEntity> dataEntityRegistry)
     {
-        _dataEntityRegistry = dataEntityRegistry;
-        _dataEntityRegistry.EntityRegistered += RegisterEntity;
-        _dataEntityRegistry.EntityUnregistered += RemoveEntity;
-        _dataEntityRegistry.ResetEvent += Reset;
+        DataEntityRegistry = dataEntityRegistry;
+        DataEntityRegistry.EntityRegistered += RegisterEntity;
+        DataEntityRegistry.EntityUnregistered += RemoveEntity;
+        DataEntityRegistry.ResetEvent += Reset;
     }
     
     private void RegisterEntity(TDataEntity dataEntity)
@@ -34,7 +34,7 @@ public partial class NodeEntityManager<TDataEntity, TNodeEntity> : Node3D
 
     public TNodeEntity GetNodeEntityByDataID(Rid rid)
     {
-        var index = _dataEntityRegistry.EntityLookup[rid];
+        var index = DataEntityRegistry.EntityLookup[rid];
         return NodeEntities[index];
     }
 
@@ -49,11 +49,11 @@ public partial class NodeEntityManager<TDataEntity, TNodeEntity> : Node3D
     
     public void VisualProcess(double delta)
     {
-        if (_dataEntityRegistry == null) return;
+        if (DataEntityRegistry == null) return;
 
-        for (var i = 0; i < _dataEntityRegistry.Entities.Count; i++)
+        for (var i = 0; i < DataEntityRegistry.Entities.Count; i++)
         {
-            NodeEntities[i].Update(_dataEntityRegistry.Entities[i]);
+            NodeEntities[i].Update(DataEntityRegistry.Entities[i]);
         }
     }
     

@@ -21,7 +21,7 @@ public partial class NodeTree : NodeEntity<DataTree>
 	}
 	public override void Initialize(DataTree dataTree)
 	{
-		Scale = Vector3.One * 0.5f; // Start as a sapling
+		Scale = Vector3.Zero;
 		Position = dataTree.Position;
 		Name = "Tree";
 	}
@@ -40,8 +40,27 @@ public partial class NodeTree : NodeEntity<DataTree>
 		{
 			GrowFruit(FruitTreeSimSettings.FruitGrowthTime - FruitTreeSimSettings.NodeFruitGrowthDelay);
 		}
-		Scale = Vector3.One * Mathf.Min(1, dataTree.Age / FruitTreeSimSettings.TreeMaturationTime);
+
+		Scale = ScaleFromAge(dataTree.Age);
 	}
+
+	public static Vector3 ScaleFromAge(float age)
+	{
+		return Vector3.One * Mathf.Min(1, age / FruitTreeSimSettings.TreeMaturationTime);
+	}
+
+	public Tween TweenToCorrectScale(float age, float duration)
+	{
+		var tween = CreateTween();
+		tween.TweenProperty(
+			this,
+			"scale",
+			ScaleFromAge(age),
+			duration
+		);
+		return tween;
+	}
+	
 	private void Death()
 	{
 		Visible = false;
