@@ -9,6 +9,7 @@ public partial class NodeTreeManager : NodeEntityManager<DataTree, NodeTree>
     
     public NodeTreeManager(DataEntityRegistry<DataTree> dataEntityRegistry) 
         : base(dataEntityRegistry) {}
+    public NodeTreeManager(){}
 
     /// <summary>
     /// Meant for manual animation of the forest growth from a saved forest.

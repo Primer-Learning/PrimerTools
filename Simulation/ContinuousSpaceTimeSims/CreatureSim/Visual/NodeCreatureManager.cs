@@ -11,6 +11,7 @@ public partial class NodeCreatureManager : NodeEntityManager<DataCreature, NodeC
         CreatureSim.CreatureEatEvent += OnCreatureEat;
         CreatureSim.CreatureDeathEvent += OnCreatureDeath;
     }
+    public NodeCreatureManager(){}
 
     private NodeTreeManager _nodeTreeManager;
 

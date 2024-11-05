@@ -9,6 +9,8 @@ public partial class NodeEntityManager<TDataEntity, TNodeEntity> : Node3D
 {
     public readonly List<TNodeEntity> NodeEntities = new();
     protected readonly DataEntityRegistry<TDataEntity> DataEntityRegistry;
+
+    public NodeEntityManager(){}
     
     public NodeEntityManager(DataEntityRegistry<TDataEntity> dataEntityRegistry)
     {
