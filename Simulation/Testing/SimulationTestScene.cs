@@ -353,10 +353,10 @@ public partial class SimulationTestScene : Node3D
 		SimulationWorld.Running = true;
 		fruitTreeSim.Initialize();
 
-		const ulong treeGrowthStepGoal = 300;
+		const ulong treeGrowthStepGoal = 500;
 		
 		while (Engine.GetPhysicsFrames() < startPhysicsFrame + treeGrowthStepGoal) await Task.Delay(100);
-		// FruitTreeSim.SaveTreeDistribution();
+		fruitTreeSim.SaveTreeDistribution();
 		while (!_running) await Task.Delay(100);
 		
 		SimulationWorld.TimeScale = originalTimeScale;
