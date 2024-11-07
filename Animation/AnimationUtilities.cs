@@ -142,6 +142,20 @@ public static class AnimationUtilities
         animation.Length = (float)duration;
         return animation;
     }
+
+    public static Animation MethodCall<TNode>(this TNode nodeWithMethod, string methodName, Godot.Collections.Array args) where TNode : Node
+    {
+        var animation = new Animation();
+        animation.AddTrack(Animation.TrackType.Method);
+        animation.TrackSetPath(0, nodeWithMethod.GetPath());
+        var methodCall = new Godot.Collections.Dictionary
+        {
+            {"method", methodName},
+            {"args", args} // No arguments to the method
+        };
+        animation.TrackInsertKey(0, 0, methodCall);
+        return animation;
+    }
     public static Animation MoveTo(this Node3D node, Vector3 destination, float stopDistance = 0, double duration = DefaultDuration, bool global = false)
     {
         var difference = global
@@ -155,6 +169,7 @@ public static class AnimationUtilities
         return node.AnimateValue(destination, propertyPath, duration);
     }
 
+    
     public static Animation MoveBy(this Node3D node, Vector3 displacement, double duration = DefaultDuration,
         bool global = false)
     {
