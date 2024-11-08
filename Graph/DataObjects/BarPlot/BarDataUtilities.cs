@@ -7,7 +7,12 @@ namespace PrimerTools.Graph;
 
 public static class BarDataUtilities
 {
-    public static float[] MakeHistogram(IEnumerable<float> dataToBin, float binWidth)
+    public static float[] Normalized(this float[] histogram)
+    {
+        var sum = histogram.Sum();
+        return histogram.Select(x => x / sum).ToArray();
+    }
+    public static float[] MakeHistogram(IEnumerable<float> dataToBin, float binWidth = 1)
     {
         var toBin = dataToBin as float[] ?? dataToBin.ToArray();
         if (!toBin.Any()) return Array.Empty<float>();
@@ -36,12 +41,7 @@ public static class BarDataUtilities
     }
     public static BarPlot.DataFetch NormalizedPropertyHistogram<T>(Func<IEnumerable<T>> dataSourceGetter, Func<T, float> propertySelector, float binWidth = 1) 
     {
-        return () =>
-        {
-            var histogram = MakeHistogram(dataSourceGetter().Select(propertySelector).ToArray(), binWidth);
-            var sum = histogram.Sum();
-            return histogram.Select(x => x / sum).ToArray();
-        };
+        return () => MakeHistogram(dataSourceGetter().Select(propertySelector).ToArray(), binWidth).Normalized();
     }
 
     public static BarPlot.DataFetch PropertyHistogram<T>(
@@ -49,9 +49,7 @@ public static class BarDataUtilities
         Func<T, IEnumerable<float>> propertySelector, 
         float binWidth = 1)
     {
-        return () => MakeHistogram(
-            dataSourceGetter().SelectMany(propertySelector),
-            binWidth);
+        return () => MakeHistogram(dataSourceGetter().SelectMany(propertySelector), binWidth);
     }
 
     public static BarPlot.DataFetch NormalizedPropertyHistogram<T>(
@@ -59,13 +57,6 @@ public static class BarDataUtilities
         Func<T, IEnumerable<float>> propertySelector, 
         float binWidth = 1)
     {
-        return () =>
-        {
-            var histogram = MakeHistogram(
-                dataSourceGetter().SelectMany(propertySelector),
-                binWidth);
-            var sum = histogram.Sum();
-            return histogram.Select(x => x / sum).ToArray();
-        };
+        return () => MakeHistogram(dataSourceGetter().SelectMany(propertySelector), binWidth).Normalized();
     }
 }
