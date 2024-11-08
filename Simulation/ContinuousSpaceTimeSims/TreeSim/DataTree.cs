@@ -7,7 +7,7 @@ public struct DataTree : IDataEntity
     public Rid Body { get; set; }
     public Vector3 Position;
     public float Age;
-    public bool IsMature;
+    public bool IsMature => Age >= FruitTreeSimSettings.TreeMaturationTime;
     public float TimeSinceLastSpawn;
     public SphereShape3D BodyShapeResource;
     public bool Alive { get; set; }
@@ -33,7 +33,6 @@ public struct DataTree : IDataEntity
         PhysicsServer3D.AreaAddShape(bodyArea, bodyShape.GetRid());
         
         Body = bodyArea;
-        IsMature = false;
         TimeSinceLastSpawn = 0;
         BodyShapeResource = bodyShape;
         Alive = true;

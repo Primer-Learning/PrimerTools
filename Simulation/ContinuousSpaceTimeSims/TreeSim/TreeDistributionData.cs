@@ -16,7 +16,6 @@ public class TreeDistributionData
         public float PositionY { get; set; }
         public float PositionZ { get; set; }
         public float Age { get; set; }
-        public bool IsMature { get; set; }
         public Vector3 Position => new Vector3(PositionX, PositionY, PositionZ);
         public TreeData(DataTree tree)
         {
@@ -24,7 +23,6 @@ public class TreeDistributionData
             PositionY = tree.Position.Y;
             PositionZ = tree.Position.Z;
             Age = tree.Age;
-            IsMature = tree.IsMature;
         }
     }
 }

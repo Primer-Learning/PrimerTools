@@ -166,7 +166,7 @@ public partial class SimulationTestScene : Node3D
 		// 		return alleles.Select(x => x ? 20f : 10f);
 		// 	}
 		// );
-		barPlot.DataFetchMethod = BarDataUtilities.NormalizedPropertyHistogram(
+		barPlot.DataFetchMethod = BarDataUtilities.PropertyHistogram(
 			() => SimulationWorld.CreatureSim.Registry.Entities,
 			creature =>
 			{

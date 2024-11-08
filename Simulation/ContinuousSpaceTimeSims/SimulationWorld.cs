@@ -20,7 +20,18 @@ public partial class SimulationWorld : Node3D
     public FruitTreeSim FruitTreeSim => Simulations.OfType<FruitTreeSim>().FirstOrDefault();
     
     #region Editor controls
-    public bool Running;
+
+    private bool _running;
+
+    public bool Running
+    {
+        get => _running;
+        set
+        {
+            _running = value;
+            // GD.Print($"SimulationWorld running : {value}");
+        }
+    }
     [Export] public VisualizationMode VisualizationMode = VisualizationMode.NodeCreatures;
     
     private static Vector2 _worldDimension = Vector2.One * 50;
@@ -100,6 +111,7 @@ public partial class SimulationWorld : Node3D
         AddChild(Ground);
         Ground.Name = "Ground";
         Ground.Scale = new Vector3(WorldDimensions.Y, (WorldDimensions.X + WorldDimensions.Y) / 2, WorldDimensions.X);
+        Ground.Position = new Vector3(WorldDimensions.Y / 2, 0, WorldDimensions.X / 2);
         
         Simulations.Clear();
 
