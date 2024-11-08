@@ -51,6 +51,15 @@ public abstract partial class AnimationSequence : AnimationPlayer
 			_run = true;
 		}
 	}
+	[Export] private bool ResetButton
+	{
+		get => false;
+		set {
+			if (value) {
+				Reset();
+			}
+		}
+	}
 	
 	[Export] private bool makeSingleClip;
 	[Export] private bool makeChildrenLocal;
