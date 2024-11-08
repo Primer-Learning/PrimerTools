@@ -115,11 +115,11 @@ public static class AnimationUtilities
         animation.Length = (float) duration;
         return animation;
     }
-    public static Animation AnimateBool<TNode>(this TNode node, bool value, string propertyPath, bool resetAtEnd = false, double duration = DefaultDuration) where TNode : Node
+    public static Animation AnimateBool<TNode>(this TNode node, bool value, string propertyPath, bool resetAtEnd = false, double resetDelay = DefaultDuration) where TNode : Node
     {
         var originalValue = node.Get(propertyPath);
         
-        if (duration == 0) duration = resetAtEnd 
+        if (resetDelay == 0) resetDelay = resetAtEnd 
             ? TimeEpsilon * 3
             : TimeEpsilon;
         
@@ -134,12 +134,12 @@ public static class AnimationUtilities
 
         if (resetAtEnd)
         {
-            animation.TrackInsertKey(trackIndex, duration - TimeEpsilon, value);
-            animation.TrackInsertKey(trackIndex, duration, originalValue);
+            animation.TrackInsertKey(trackIndex, resetDelay - TimeEpsilon, value);
+            animation.TrackInsertKey(trackIndex, resetDelay, originalValue);
         }
         
         node.Set(propertyPath, resetAtEnd ? originalValue : value);
-        animation.Length = (float)duration;
+        animation.Length = (float)resetDelay;
         return animation;
     }
 
