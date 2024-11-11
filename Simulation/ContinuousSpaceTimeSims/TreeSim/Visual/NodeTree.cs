@@ -5,8 +5,7 @@ using PrimerTools.Simulation;
 public partial class NodeTree : NodeEntity<DataTree>
 {
 	// Lazy thing. Gives visual trees an rng object for rotating mangoes.
-	// Could pass the simulation world rng if we wanted to couple these to the results
-	// Probably no need.
+	// Could pass an rng value if we wanted the visual part of the sim to be reliable.
 	public static Rng NodeTreeRng = new Rng(0);
 	
 	private FruitTree _fruitTree;
@@ -32,11 +31,8 @@ public partial class NodeTree : NodeEntity<DataTree>
 			Death();
 			return;
 		}
-                
-		if (dataTree.FruitGrowthProgress > FruitTreeSimSettings.NodeFruitGrowthDelay && this is
-		    {
-			    HasFruit: false
-		    })
+		
+		if (dataTree is { HasFruit: false } tree && tree.FruitGrowthProgress > FruitTreeSimSettings.NodeFruitGrowthDelay)
 		{
 			GrowFruit(FruitTreeSimSettings.FruitGrowthTime - FruitTreeSimSettings.NodeFruitGrowthDelay);
 		}

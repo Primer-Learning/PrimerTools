@@ -37,9 +37,9 @@ public class FruitTreeSim : Simulation<DataTree>
             var physicalTree = new DataTree
             {
                 Position = new Vector3(
-                    simulationWorld.Rng.RangeFloat(simulationWorld.WorldDimensions.X),
+                    SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.X),
                     0,
-                    simulationWorld.Rng.RangeFloat(simulationWorld.WorldDimensions.Y)
+                    SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.Y)
                 )
             };
             Registry.RegisterEntity(physicalTree);
@@ -59,7 +59,7 @@ public class FruitTreeSim : Simulation<DataTree>
                     UpdateFruit(ref tree);
                     break;
                 case SimMode.TreeGrowth:
-                    UpdateTree(ref tree, PhysicsServer3D.SpaceGetDirectState(simulationWorld.GetWorld3D().Space), Registry);
+                    UpdateTree(ref tree, PhysicsServer3D.SpaceGetDirectState(SimulationWorld.GetWorld3D().Space), Registry);
                     if (tree is { IsMature: true, TimeSinceLastSpawn: 0 })
                     {
                         var newPosition = TryGenerateNewTreePosition(tree);
@@ -96,7 +96,7 @@ public class FruitTreeSim : Simulation<DataTree>
                                    neighborCount * FruitTreeSimSettings.SaplingDeathProbabilityPerNeighbor;
 
             // Check if sapling is too close to a mature tree
-            if (IsTooCloseToMatureTree(tree, spaceState, registry) || simulationWorld.Rng.rand.NextDouble() < deathProbability)
+            if (IsTooCloseToMatureTree(tree, spaceState, registry) || SimulationWorld.Rng.rand.NextDouble() < deathProbability)
             {
                 tree.Alive = false;
             }
@@ -113,7 +113,7 @@ public class FruitTreeSim : Simulation<DataTree>
             var neighborCount = CountNeighbors(tree, spaceState, registry);
             var deathProbability = FruitTreeSimSettings.MatureTreeDeathProbabilityBase +
                                    neighborCount * FruitTreeSimSettings.MatureTreeDeathProbabilityPerNeighbor;
-            if (simulationWorld.Rng.rand.NextDouble() < deathProbability)
+            if (SimulationWorld.Rng.rand.NextDouble() < deathProbability)
             {
                 tree.Alive = false;
             }
@@ -189,8 +189,8 @@ public class FruitTreeSim : Simulation<DataTree>
     
     public Vector3 TryGenerateNewTreePosition(DataTree parent)
     {
-        var angle = simulationWorld.Rng.RangeFloat(0, Mathf.Tau);
-        var distance = simulationWorld.Rng.RangeFloat(FruitTreeSimSettings.MinTreeSpawnRadius, FruitTreeSimSettings.MaxTreeSpawnRadius);
+        var angle = SimulationWorld.Rng.RangeFloat(0, Mathf.Tau);
+        var distance = SimulationWorld.Rng.RangeFloat(FruitTreeSimSettings.MinTreeSpawnRadius, FruitTreeSimSettings.MaxTreeSpawnRadius);
         var offset = new Vector3(Mathf.Cos(angle) * distance, 0, Mathf.Sin(angle) * distance);
         return parent.Position + offset;
     }
@@ -209,7 +209,7 @@ public class FruitTreeSim : Simulation<DataTree>
             filePath = Path.Combine(saveDir, $"tree_distribution_{DateTime.Now:yyyyMMdd_HHmmss}.json");
         }
 
-        GD.Print(simulationWorld.WorldDimensions);
+        GD.Print(SimulationWorld.WorldDimensions);
         var treesToSave = Registry.Entities
             .Where(tree => tree.Alive)
             .Select(tree => new TreeDistributionData.TreeData(tree))

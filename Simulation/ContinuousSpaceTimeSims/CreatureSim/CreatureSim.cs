@@ -11,7 +11,7 @@ public class CreatureSim : Simulation<DataCreature>
 {
 	public CreatureSim(SimulationWorld simulationWorld) : base(simulationWorld) {}
 
-	private FruitTreeSim FruitTreeSim => simulationWorld.Simulations.OfType<FruitTreeSim>().FirstOrDefault();
+	private FruitTreeSim FruitTreeSim => SimulationWorld.Simulations.OfType<FruitTreeSim>().FirstOrDefault();
 	
 	protected override void CustomInitialize()
 	{
@@ -21,12 +21,12 @@ public class CreatureSim : Simulation<DataCreature>
 			return;
 		}
 
-		foreach (var creature in CreatureSimSettings.Instance.InitializePopulation(InitialEntityCount, simulationWorld.Rng))
+		foreach (var creature in CreatureSimSettings.Instance.InitializePopulation(InitialEntityCount, SimulationWorld.Rng))
 		{
 			var position = new Vector3(
-				simulationWorld.Rng.RangeFloat(simulationWorld.WorldDimensions.X),
+				SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.X),
 				0,
-				simulationWorld.Rng.RangeFloat(simulationWorld.WorldDimensions.Y)
+				SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.Y)
 			);
 			var mutableVersion = creature;
 			mutableVersion.Position = position;
@@ -66,7 +66,7 @@ public class CreatureSim : Simulation<DataCreature>
             {
                 if (trait is DeleteriousTrait deleteriousTrait)
                 {
-                    if (deleteriousTrait.CheckForDeath(creature.Age, simulationWorld.Rng))
+                    if (deleteriousTrait.CheckForDeath(creature.Age, SimulationWorld.Rng))
                     {
 	                    GD.Print($"Creature died of deleterious mutation {deleteriousTrait.Id} with onset age {deleteriousTrait.ActivationAge} and severity {deleteriousTrait.MortalityRate}");
                         alive = false;
@@ -79,7 +79,7 @@ public class CreatureSim : Simulation<DataCreature>
             var apTrait = creature.Genome.GetTrait<bool>("Antagonistic Pleiotropy Speed");
             if (apTrait is { ExpressedValue: true } && creature.Age > CreatureSimSettings.Instance.MaturationTime)
             {
-	            if (simulationWorld.Rng.rand.NextDouble() < 0.05 / SimulationWorld.PhysicsStepsPerSimSecond)
+	            if (SimulationWorld.Rng.rand.NextDouble() < 0.05 / SimulationWorld.PhysicsStepsPerSimSecond)
 	            {
 		            GD.Print("Death from antagonistic pleiotropy aging");
 		            alive = false;
@@ -130,7 +130,7 @@ public class CreatureSim : Simulation<DataCreature>
                         mate.Energy -= CreatureSimSettings.Instance.ReproductionEnergyCost / 2;
                         creature.Energy -= CreatureSimSettings.Instance.ReproductionEnergyCost / 2;
 
-                        var offspring = CreatureSimSettings.Instance.Reproduce(creature.Genome, mate.Genome, simulationWorld.Rng);
+                        var offspring = CreatureSimSettings.Instance.Reproduce(creature.Genome, mate.Genome, SimulationWorld.Rng);
                         offspring.Position = (mate.Position + creature.Position) / 2;
                         Registry.RegisterEntity(offspring);
                         Registry.Entities[i] = creature;
@@ -177,7 +177,7 @@ public class CreatureSim : Simulation<DataCreature>
             if ((creature.CurrentDestination - creature.Position).LengthSquared() <
                 CreatureSimSettings.Instance.CreatureEatDistance * CreatureSimSettings.Instance.CreatureEatDistance)
             {
-                creature.CurrentDestination = simulationWorld.GetRandomDestination(creature.Position, CreatureSimSettings.Instance.CreatureStepMaxLength);
+                creature.CurrentDestination = SimulationWorld.GetRandomDestination(creature.Position, CreatureSimSettings.Instance.CreatureStepMaxLength);
             }
             PerformMovement(ref creature);
             
@@ -317,7 +317,7 @@ public class CreatureSim : Simulation<DataCreature>
 		tree.FruitGrowthProgress = 0;
 		// FruitTreeSim.Registry.Entities[treeIndex] = tree;
 		
-		creature.Energy += simulationWorld.Rng.RangeFloat(CreatureSimSettings.Instance.MinEnergyGainFromFood, CreatureSimSettings.Instance.MaxEnergyGainFromFood);
+		creature.Energy += SimulationWorld.Rng.RangeFloat(CreatureSimSettings.Instance.MinEnergyGainFromFood, CreatureSimSettings.Instance.MaxEnergyGainFromFood);
 		creature.EatingTimeLeft = CreatureSimSettings.Instance.EatDuration;
 		CreatureEatEvent?.Invoke(creatureIndex, tree.Body, CreatureSimSettings.Instance.EatDuration / SimulationWorld.TimeScale);
 		return creature;

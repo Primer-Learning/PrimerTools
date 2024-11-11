@@ -49,7 +49,7 @@ public partial class NodeEntityManager<TDataEntity, TNodeEntity> : Node3D
         NodeEntities.Clear();
     }
     
-    public void VisualProcess(double delta)
+    public virtual void VisualProcess(double delta)
     {
         if (DataEntityRegistry == null) return;
 

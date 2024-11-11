@@ -34,7 +34,7 @@ public partial class SimulationWorld : Node3D
     }
     [Export] public VisualizationMode VisualizationMode = VisualizationMode.NodeCreatures;
     
-    private static Vector2 _worldDimension = Vector2.One * 50;
+    private Vector2 _worldDimension = Vector2.One * 50;
     [Export]
     public Vector2 WorldDimensions
     {
@@ -110,8 +110,8 @@ public partial class SimulationWorld : Node3D
         Ground = _groundScene.Instantiate<Node3D>();
         AddChild(Ground);
         Ground.Name = "Ground";
-        Ground.Scale = new Vector3(WorldDimensions.Y, (WorldDimensions.X + WorldDimensions.Y) / 2, WorldDimensions.X);
-        Ground.Position = new Vector3(WorldDimensions.Y / 2, 0, WorldDimensions.X / 2);
+        Ground.Scale = new Vector3(WorldDimensions.X, (WorldDimensions.X + WorldDimensions.Y) / 2, WorldDimensions.Y);
+        Ground.Position = new Vector3(WorldDimensions.X / 2, 0, WorldDimensions.Y / 2);
         
         Simulations.Clear();
 
@@ -179,7 +179,7 @@ public partial class SimulationWorld : Node3D
         }
     }
 
-    public static bool IsWithinWorldBounds(Vector3 position)
+    public bool IsWithinWorldBounds(Vector3 position)
     {
         return position.X >= 0 && position.X <= _worldDimension.X &&
                position.Z >= 0 && position.Z <= _worldDimension.Y;

@@ -11,6 +11,13 @@ public partial class NodeTreeManager : NodeEntityManager<DataTree, NodeTree>
         : base(dataEntityRegistry) {}
     public NodeTreeManager(){}
 
+    public override void VisualProcess(double delta)
+    {
+        if (FruitTreeSimSettings.NodeFruitGrowthDelay > FruitTreeSimSettings.FruitGrowthTime)
+            GD.PushWarning("Animation delay is bigger than growth time, which is not handled well.");
+        base.VisualProcess(delta);
+    }
+
     /// <summary>
     /// Meant for manual animation of the forest growth from a saved forest.
     /// </summary>
