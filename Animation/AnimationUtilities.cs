@@ -14,7 +14,7 @@ public static class AnimationUtilities
     public const double DefaultDuration = 0.5;
     
     #region Node animation extensions
-    public static Animation AnimateValue<TNode, TValue>(this TNode node, TValue value, string propertyPath, double duration = DefaultDuration) where TNode : Node
+    public static Animation AnimateValue<TNode, TValue>(this TNode node, TValue value, string propertyPath, double duration = DefaultDuration, bool log = false) where TNode : Node
     {
         // One day, make an enum of the different interpolation types and use a switch statement to choose the handles.
         // For now, just use smooth step.
@@ -33,9 +33,9 @@ public static class AnimationUtilities
         // x values are in seconds
         // y values in the unit of the property being animated
         
-        return node.AnimateValue(value, propertyPath, new Vector2((float)duration / 3, 0), new Vector2(- (float)duration / 3, 0), duration);
+        return node.AnimateValue(value, propertyPath, new Vector2((float)duration / 3, 0), new Vector2(- (float)duration / 3, 0), duration, log);
     }
-    public static Animation AnimateValue<TNode, TValue>(this TNode node, TValue value, string propertyPath, Vector2 outHandle, Vector2 inHandle, double duration = DefaultDuration) where TNode : Node
+    public static Animation AnimateValue<TNode, TValue>(this TNode node, TValue value, string propertyPath, Vector2 outHandle, Vector2 inHandle, double duration = DefaultDuration, bool log = false) where TNode : Node
     {
         if (duration == 0) duration = TimeEpsilon;
         var animation = new Animation();
@@ -46,7 +46,8 @@ public static class AnimationUtilities
                 node.AnimateValue( (float) doubleValue, propertyPath, outHandle, inHandle, duration);
                 break;
             case int intValue:
-                node.AnimateValue( (float) intValue, propertyPath, outHandle, inHandle, duration);
+                GD.Print("int AnimateValue not implemented. Casting to float.");
+                return node.AnimateValue( (float) intValue, propertyPath, outHandle, inHandle, duration);
                 break;
             case float floatValue:
                 var trackIndex = animation.AddTrack(Animation.TrackType.Bezier);
