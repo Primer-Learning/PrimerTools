@@ -30,7 +30,7 @@ public partial class Graph : Node3D
     
     private void InstantiateAxes()
     {
-        var axisScene = ResourceLoader.Load<PackedScene>("res://addons/PrimerTools/Graph/Scenes/axis.tscn"); 
+        var axisScene = ResourceLoader.Load<PackedScene>("res://addons/PrimerTools/Graph/Scenes/axis.tscn");
         var x = axisScene.Instantiate<Axis>();
         var y = axisScene.Instantiate<Axis>();
         var z = axisScene.Instantiate<Axis>();
@@ -75,16 +75,16 @@ public partial class Graph : Node3D
     public float XAxisLabelOffset = 1;
     public float XAxisLabelScale = 1;
     private string xAxisLabel = "";
-    private LatexNode xAxisLatexNode;
+    private LatexNode xAxisLabelLatexNode;
     public string XAxisLabel
     {
         get => xAxisLabel;
         set
         {
             xAxisLabel = value;
-            if (IsInstanceValid(xAxisLatexNode)) xAxisLatexNode.Free();
-            xAxisLatexNode = LatexNode.Create(value);
-            AddChild(xAxisLatexNode);
+            if (IsInstanceValid(xAxisLabelLatexNode)) xAxisLabelLatexNode.Free();
+            xAxisLabelLatexNode = LatexNode.Create(value);
+            AddChild(xAxisLabelLatexNode);
         }
     }
     
@@ -92,15 +92,15 @@ public partial class Graph : Node3D
     public float YAxisLabelOffset = 1;
     public float YAxisLabelScale = 1;
     private string yAxisLabel = "";
-    private LatexNode yAxisLatexNode;
+    public LatexNode YAxisLabelLatexNode;
     public string YAxisLabel
     {
         get => yAxisLabel;
         set
         {
             yAxisLabel = value;
-            yAxisLatexNode = LatexNode.Create(value);
-            AddChild(yAxisLatexNode);
+            YAxisLabelLatexNode = LatexNode.Create(value);
+            AddChild(YAxisLabelLatexNode);
         }
     }
 
@@ -122,37 +122,37 @@ public partial class Graph : Node3D
             GetChildren().OfType<IPrimerGraphData>().Select(x => x.Transition(duration))
         );
         // Axis labels
-        if (xAxisLatexNode is not null)
+        if (xAxisLabelLatexNode is not null)
         {
             updateTransitions.Add(
-                xAxisLatexNode.MoveTo(
+                xAxisLabelLatexNode.MoveTo(
                     XAxisAlignment == AxisLabelAlignmentOptions.Along
                         ? new Vector3(XAxis.LengthMinusPadding / 2, -XAxisLabelOffset, 0)
                         : new Vector3(XAxis.LengthMinusPadding + XAxisLabelOffset, 0, 0)
                 )
             );
             updateTransitions.Add(        
-                xAxisLatexNode.ScaleTo(Vector3.One * XAxisLabelScale)
+                xAxisLabelLatexNode.ScaleTo(Vector3.One * XAxisLabelScale)
             );
         }
-        if (yAxisLatexNode is not null)
+        if (YAxisLabelLatexNode is not null)
         {
             updateTransitions.Add(
-                yAxisLatexNode.MoveTo(
+                YAxisLabelLatexNode.MoveTo(
                     YAxisAlignment == AxisLabelAlignmentOptions.Along
                         ? new Vector3(-YAxisLabelOffset, YAxis.LengthMinusPadding / 2, 0)
                         : new Vector3(0, YAxis.LengthMinusPadding + YAxisLabelOffset, 0)
                 )
             );
             updateTransitions.Add(
-                yAxisLatexNode.RotateTo(
+                YAxisLabelLatexNode.RotateTo(
                     YAxisAlignment == AxisLabelAlignmentOptions.Along
                         ? new Vector3(0, 0, 90)
                         : Vector3.Zero
                 )
             );
             updateTransitions.Add(        
-                yAxisLatexNode.ScaleTo(Vector3.One * YAxisLabelScale)
+                YAxisLabelLatexNode.ScaleTo(Vector3.One * YAxisLabelScale)
             );
         }
         
