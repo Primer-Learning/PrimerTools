@@ -22,11 +22,11 @@ public partial class StackedBarPlot : Node3D, IPrimerGraphData
     public Transformation TransformPointFromDataSpaceToPositionSpace = point => point;
     
     public List<List<float>> Data;
-    public delegate List<float>[] DataFetch();
+    public delegate float[][] DataFetch();
     public DataFetch DataFetchMethod = () =>
     {
         PrimerGD.PrintWithStackTrace("Data fetch method not assigned. Returning empty list.");
-        return Array.Empty<List<float>>();
+        return Array.Empty<float[]>();
     };
 
     public void FetchData()
@@ -69,6 +69,9 @@ public partial class StackedBarPlot : Node3D, IPrimerGraphData
         var stackProperties = DataAsRectProperties();
         
         if (!stackProperties.Any()) return null;
+
+        // We track bars in the scene, since stored values get lost when rebuilding the project.
+        var remainingBars = GetChildren().OfType<MeshInstance3D>().ToList(); 
         
         var tween = CreateTween();
         tween.SetParallel();
@@ -83,6 +86,7 @@ public partial class StackedBarPlot : Node3D, IPrimerGraphData
             {
                 var segment = stackProperties[stackIndex][segmentIndex];
                 var bar = GetNodeOrNull<MeshInstance3D>($"Bar {stackIndex} {segmentIndex}");
+                remainingBars.Remove(bar);
                 
                 if (bar == null)
                 {
@@ -124,6 +128,13 @@ public partial class StackedBarPlot : Node3D, IPrimerGraphData
 
                 cumulativeHeight += segmentHeight;
             }
+        }
+
+        // Shrink remaining bars
+        foreach (var bar in remainingBars)
+        {
+            tween.TweenProperty(bar, "position:y", 0, duration);
+            tween.TweenProperty(bar, "mesh:size:y", 0, duration);
         }
 
         return tween;
