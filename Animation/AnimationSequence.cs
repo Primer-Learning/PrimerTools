@@ -278,7 +278,7 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		}
 		
 		// Make the animation 100s longer than it actually is, so the editor leaves some room
-		topLevelAnimation.Length = (float) latestTime + 100;
+		topLevelAnimation.Length = (float) latestTime + 10;
 		
 		AddAnimationToLibrary(topLevelAnimation, MainAnimationName, library);
 	}
