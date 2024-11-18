@@ -48,7 +48,6 @@ public static class AnimationUtilities
             case int intValue:
                 GD.Print("int AnimateValue not implemented. Casting to float.");
                 return node.AnimateValue( (float) intValue, propertyPath, outHandle, inHandle, duration);
-                break;
             case float floatValue:
                 var trackIndex = animation.AddTrack(Animation.TrackType.Bezier);
                 animation.TrackSetPath(trackIndex, node.GetPath()+":" + propertyPath);

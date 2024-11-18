@@ -34,6 +34,10 @@ public partial class BlobAnimationTree : SelfBuildingAnimationTree
 
 		var addNode = new AnimationNodeAdd2();
 		topLevelBlendTree.AddNode("Add", addNode);
+		addNode.FilterEnabled = true;
+		// TODO: Figure out how to do this in code? Not sure what the path is supposed to be relative to.
+		// addNode.SetFilterPath("blob_rig/Skeleton3D/bone_torso/bone_neck/bone_mouth", true);
+		GD.PushWarning("Make sure to set the add filter so the mouth state machine only affects the mouth.");
 		Set("parameters/Add/add_amount", 1);
 		
 		topLevelBlendTree.ConnectNode("Add", 0, "BODY");
@@ -77,9 +81,11 @@ public partial class BlobAnimationTree : SelfBuildingAnimationTree
 				var startTransition = new AnimationNodeStateMachineTransition();
 				startTransition.AdvanceMode = AnimationNodeStateMachineTransition.AdvanceModeEnum.Auto;
 				startTransition.XfadeTime = 0f;
-				startTransition.AdvanceCondition = animName;
+				// No advance condition, since we want it to advance immediately from the start state with no delay.
+				// startTransition.AdvanceCondition = animName; // Actually, no condition, since we never want it si
 				stateMachine.AddTransition("Start", animName, startTransition);
 				Set($"parameters/{prefix}/conditions/{animName}", true);
+				GD.Print();
 			}
 			
 			// Connect to previously placed nodes
