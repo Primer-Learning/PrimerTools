@@ -559,6 +559,17 @@ public static class AnimationUtilities
         animation.TrackInsertKey(trackIndex, duration, finalColor.V);
         animation.TrackSetPath(trackIndex, meshInstance3D.GetPath()+":surface_material_override/0:albedo_color:v");
         
+        if (material.AlbedoColor.A < 1 || finalColor.A < 1)
+        {
+            material.Transparency = BaseMaterial3D.TransparencyEnum.Alpha;
+            material.CullMode = BaseMaterial3D.CullModeEnum.Back;
+            
+            trackIndex = animation.AddTrack(Animation.TrackType.Value);
+            animation.TrackInsertKey(trackIndex, 0f, material.AlbedoColor.A);
+            animation.TrackInsertKey(trackIndex, duration, finalColor.A);
+            animation.TrackSetPath(trackIndex, meshInstance3D.GetPath()+":surface_material_override/0:albedo_color:a");
+        }
+        
         material.AlbedoColor = finalColor;
 
         animation.Length = (float)duration;
@@ -568,7 +579,13 @@ public static class AnimationUtilities
     public static Animation AnimateColorRgb(this MeshInstance3D meshInstance3D, Color finalColor, double duration = DefaultDuration)
     {
         var material = meshInstance3D.GetOrCreateOverrideMaterial();
-        
+
+        if (material.AlbedoColor.A < 1 || finalColor.A < 1)
+        {
+            material.Transparency = BaseMaterial3D.TransparencyEnum.Alpha;
+            material.CullMode = BaseMaterial3D.CullModeEnum.Back;
+        }
+
         var animation = new Animation();
         var trackIndex = animation.AddTrack(Animation.TrackType.Value);
         animation.TrackInsertKey(trackIndex, 0.0f, material.AlbedoColor);
