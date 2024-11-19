@@ -97,15 +97,7 @@ public static class AnimationUtilities
                 node.SetIndexed(propertyPath, colorValue);
                 break;
             case Quaternion quaternionValue:
-                trackIndex = animation.AddTrack(Animation.TrackType.Value);
-                animation.TrackSetPath(trackIndex, node.GetPath()+":" + propertyPath);
-                // First key
-                animation.TrackInsertKey(trackIndex, 0.0f, node.GetIndexed(propertyPath).AsQuaternion());
-                // Second key
-                animation.TrackInsertKey(trackIndex, duration, quaternionValue);
-                animation.TrackSetInterpolationType(trackIndex, Animation.InterpolationType.CubicAngle);
-
-                node.SetIndexed(propertyPath, quaternionValue);
+                PrimerGD.PrintErrorWithStackTrace("Don't use AnimateValue for quaternions. Use RotateTo instead.");
                 break;
             default:
                 GD.PrintErr("Unsupported type for AnimateValue");
@@ -196,7 +188,6 @@ public static class AnimationUtilities
     public static Animation RotateTo(this Node3D node, Quaternion destination, bool global = false, double duration = DefaultDuration)
     {
         if (duration == 0) duration = TimeEpsilon;
-        // var animation = new Animation();
 
         // Quaternion breaks if scale is zero.
         // Animated rotation is usually useless for zero-scale objects, but can be used
@@ -204,17 +195,29 @@ public static class AnimationUtilities
         // Also, animation methods are sometimes used to change values in a non-animated way.
         if (node.Scale.X < TimeEpsilon) node.Scale = Vector3.One * LengthEpsilon;
         
-        node.Quaternion = node.Quaternion.Normalized();
-
         if (global)
         {
             var parent = node.GetParent();
-            if (parent is not Node3D node3DParent) return node.AnimateValue(destination, "quaternion", duration);
-
-            destination = Quaternion.FromEuler(node3DParent.GlobalRotation).Inverse() * destination;
+            if (parent is Node3D node3DParent)
+            {
+                destination = Quaternion.FromEuler(node3DParent.GlobalRotation).Inverse() * destination;
+            }
         }
+
+        destination = destination.Normalized();
         
-        return node.AnimateValue(destination, "quaternion", duration);
+        var animation = new Animation();
+        var trackIndex = animation.AddTrack(Animation.TrackType.Rotation3D);
+        animation.TrackSetPath(trackIndex, node.GetPath());
+        // First key
+        animation.RotationTrackInsertKey(trackIndex, 0.0, node.Quaternion);
+        // Second key
+        animation.RotationTrackInsertKey(trackIndex, duration, destination);
+        animation.TrackSetInterpolationType(trackIndex, Animation.InterpolationType.CubicAngle);
+
+        node.Quaternion = destination;
+
+        return animation;
     }
     public static Animation WalkTo(this Node3D node, Vector3 destination, float stopDistance = 0, double duration = DefaultDuration, double prepTurnDuration = 0.1)
     {
