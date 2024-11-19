@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using PrimerTools;
 
-namespace RockPaperScissors;
+namespace PrimerTools;
 
 public static class IListExtensions
 {
