@@ -84,6 +84,12 @@ public partial class Graph : Node3D
             xAxisLabel = value;
             if (IsInstanceValid(xAxisLabelLatexNode)) xAxisLabelLatexNode.Free();
             xAxisLabelLatexNode = LatexNode.Create(value);
+
+            if (XAxisAlignment == AxisLabelAlignmentOptions.End)
+            {
+                xAxisLabelLatexNode.HorizontalAlignment = LatexNode.HorizontalAlignmentOptions.Left;
+            }
+            
             AddChild(xAxisLabelLatexNode);
         }
     }
