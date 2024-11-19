@@ -13,26 +13,43 @@ public class CreatureSim : Simulation<DataCreature>
 
 	private FruitTreeSim FruitTreeSim => SimulationWorld.Simulations.OfType<FruitTreeSim>().FirstOrDefault();
 	
-	protected override void CustomInitialize()
+	protected override void CustomInitialize(IEnumerable<Vector3> initialPositions)
 	{
 		if (FruitTreeSim == null)
 		{
 			GD.PrintErr("TreeSim not found. Not initializing creature sim because they will all starve to death immediately. You monster.");
 			return;
 		}
+		
+		List<Vector3> posList;
+		if (initialPositions == null)
+		{
+			posList = new List<Vector3>();
+			for (var i = 0; i < InitialEntityCount; i++)
+			{
+				posList.Add(
+					new Vector3(
+						SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.X),
+						0,
+						SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.Y)
+					)
+				);
+			}
+		}
+		else
+		{
+			posList = initialPositions.ToList();
+		}
 
+		var j = 0;
 		foreach (var creature in CreatureSimSettings.Instance.InitializePopulation(InitialEntityCount, SimulationWorld.Rng))
 		{
-			var position = new Vector3(
-				SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.X),
-				0,
-				SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.Y)
-			);
 			var mutableVersion = creature;
-			mutableVersion.Position = position;
-			mutableVersion.CurrentDestination = position;
+			mutableVersion.Position = posList[j];
+			mutableVersion.CurrentDestination = posList[j];
 			
 			Registry.RegisterEntity(mutableVersion);
+			j++;
 		}
 	}
 

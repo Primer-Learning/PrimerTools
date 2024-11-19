@@ -118,7 +118,7 @@ public partial class SimulationWorld : Node3D
         foreach (var sim in simulations)
         {
             Simulations.Add(sim);
-
+        
             if (VisualizationMode == VisualizationMode.NodeCreatures)
             {
                 switch (sim)

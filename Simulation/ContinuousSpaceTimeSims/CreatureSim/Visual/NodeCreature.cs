@@ -23,7 +23,7 @@ public partial class NodeCreature : NodeEntity<DataCreature>
 	public override void Initialize(DataCreature dataCreature)
 	{
 		Position = dataCreature.Position;
-		Scale = Vector3.Zero;
+		Scale = dataCreature.Age / CreatureSimSettings.Instance.MaturationTime * Vector3.One;
 		
 		if (_blob == null)
 		{

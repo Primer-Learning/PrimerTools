@@ -23,7 +23,7 @@ public class FruitTreeSim : Simulation<DataTree>
     }
     public SimMode Mode = SimMode.TreeGrowth;
 
-    protected override void CustomInitialize()
+    protected override void CustomInitialize(IEnumerable<Vector3> initialPositions)
     {
         GD.Print("initialize trees");
         if (_settings.LoadTreeDistribution)
@@ -32,17 +32,26 @@ public class FruitTreeSim : Simulation<DataTree>
             return;
         }
 
-        for (var i = 0; i < InitialEntityCount; i++)
+        if (initialPositions == null)
         {
-            var physicalTree = new DataTree
+            var posList = new List<Vector3>();
+            for (var i = 0; i < InitialEntityCount; i++)
             {
-                Position = new Vector3(
-                    SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.X),
-                    0,
-                    SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.Y)
-                )
-            };
-            Registry.RegisterEntity(physicalTree);
+                posList.Add(
+                    new Vector3(
+                        SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.X),
+                        0,
+                        SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.Y)
+                    )
+                );
+            }
+
+            initialPositions = posList;
+        }
+
+        foreach (var pos in initialPositions)
+        {
+            Registry.RegisterEntity(new DataTree { Position = pos });
         }
     }
     protected override void CustomStep()

@@ -88,7 +88,6 @@ public struct DataCreature : IDataEntity
         Body = bodyArea;
         Awareness = awarenessArea;
         Alive = true;
-        Age = 0;
         _bodyShapeResource = bodyShape;
         _awarenessShapeResource = awarenessShape;
         Velocity = Vector3.Zero;

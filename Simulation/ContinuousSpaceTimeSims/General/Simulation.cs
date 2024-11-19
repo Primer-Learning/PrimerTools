@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Godot;
 
 namespace PrimerTools.Simulation;
@@ -20,15 +21,15 @@ public abstract class Simulation<TDataEntity> : ISimulation
     private bool _initialized;
     private bool _running;
 
-    public void Initialize()
+    public void Initialize(IEnumerable<Vector3> initialPositions = null)
     {
         if (_initialized) return;
         _initialized = true;
         _running = true;
         
-        CustomInitialize();
+        CustomInitialize(initialPositions);
     }
-    protected abstract void CustomInitialize();
+    protected abstract void CustomInitialize(IEnumerable<Vector3> initialPositions);
     public virtual void Reset()
     {
         Registry?.Reset();

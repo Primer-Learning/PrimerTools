@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Godot;
 
 namespace PrimerTools.Simulation;
@@ -8,10 +9,10 @@ public partial class NodeEntityManager<TDataEntity, TNodeEntity> : Node3D
     where TNodeEntity : NodeEntity<TDataEntity>, new()
 {
     public readonly List<TNodeEntity> NodeEntities = new();
+    public List<TNodeEntity> PreExistingNodeEntities = new();
     protected readonly DataEntityRegistry<TDataEntity> DataEntityRegistry;
 
     public NodeEntityManager(){}
-    
     public NodeEntityManager(DataEntityRegistry<TDataEntity> dataEntityRegistry)
     {
         DataEntityRegistry = dataEntityRegistry;
@@ -22,10 +23,21 @@ public partial class NodeEntityManager<TDataEntity, TNodeEntity> : Node3D
     
     private void RegisterEntity(TDataEntity dataEntity)
     {
-        var node = new TNodeEntity();
-        AddChild(node);
-        node.Initialize(dataEntity);
-        NodeEntities.Add(node);
+        TNodeEntity nodeEntity;
+        if (PreExistingNodeEntities.Any())
+        {
+            GD.PushWarning("Using PreExistingNodeEntities is untested");
+            nodeEntity = PreExistingNodeEntities.Last();
+            PreExistingNodeEntities.RemoveAt(PreExistingNodeEntities.Count - 1);
+        }
+        else
+        {
+            nodeEntity = new TNodeEntity();
+        }
+        
+        AddChild(nodeEntity);
+        nodeEntity.Initialize(dataEntity);
+        NodeEntities.Add(nodeEntity);
     }
     private void RemoveEntity(int index)
     {
