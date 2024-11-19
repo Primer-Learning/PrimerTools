@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using RockPaperScissors;
 
 namespace PrimerTools.Simulation;
 
@@ -60,6 +61,58 @@ public static class InitialPopulationGeneration
             // );
 
             creatures[i] = new DataCreature { Genome = genome };
+        }
+        
+        return creatures;
+    }
+    
+    public static DataCreature[] MaxAgeGenesWithMatureCreaturesFromTheBeginning(int numCreatures, Rng rng = null)
+    {
+        var creatures = new DataCreature[numCreatures];
+
+        var maxAgeGenes = new List<float>();
+        for (var i = 0; i < numCreatures * 2; i++)
+        {
+            maxAgeGenes.Add(i % 20 + 1);
+        }
+        maxAgeGenes.Shuffle(rng);
+
+        for (var i = 0; i < numCreatures; i++)
+        {
+            var genome = new Genome();
+            
+            genome.AddTrait(
+                new Trait<float>(
+                    "MaxSpeed", 
+                    new List<float> { CreatureSimSettings.Instance.ReferenceCreatureSpeed, CreatureSimSettings.Instance.ReferenceCreatureSpeed },
+                    ExpressionMechanisms.Float.Codominant,
+                    1
+                )
+            );
+
+            genome.AddTrait(
+                new Trait<float>(
+                    "AwarenessRadius", 
+                    new List<float> { CreatureSimSettings.Instance.ReferenceAwarenessRadius, CreatureSimSettings.Instance.ReferenceAwarenessRadius},
+                    ExpressionMechanisms.Float.Codominant,
+                    1
+                )
+            );
+
+            genome.AddTrait(
+                new Trait<float>(
+                    "MaxAge",
+                    new List<float> { maxAgeGenes[i] * 5, maxAgeGenes[i + 1] * 5 },
+                    ExpressionMechanisms.Float.Codominant,
+                    0
+                )
+            );
+
+            creatures[i] = new DataCreature
+            {
+                Genome = genome,
+                Age = CreatureSimSettings.Instance.MaturationTime
+            };
         }
         
         return creatures;
