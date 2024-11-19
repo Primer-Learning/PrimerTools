@@ -22,8 +22,6 @@ public partial class BarPlot : Node3D, IPrimerGraphData
     public delegate Vector3 Transformation(Vector3 inputPoint);
     public Transformation TransformPointFromDataSpaceToPositionSpace = point => point;
     
-    // private List<Tuple<float, float, float>> renderedRectProperties = new();
-    
     private List<float> Data;
     public delegate float[] DataFetch();
     public DataFetch DataFetchMethod = () =>
@@ -41,15 +39,16 @@ public partial class BarPlot : Node3D, IPrimerGraphData
     {
         return Data.Select( (value, i) =>
             new Tuple<float, float, float>(
-                TransformPointFromDataSpaceToPositionSpace(new Vector3(i + _offset, 0, 0)).X,
+                TransformPointFromDataSpaceToPositionSpace(new Vector3((i + _offsetInBarWidthUnits) * BarWidth, 0, 0)).X,
                 TransformPointFromDataSpaceToPositionSpace(new Vector3(0, value, 0)).Y,
-                TransformPointFromDataSpaceToPositionSpace(new Vector3(_barWidth, 0, 0)).X
+                TransformPointFromDataSpaceToPositionSpace(new Vector3(_barWidthFillFactor * BarWidth, 0, 0)).X
             )
         ).ToList();
     }
-    
-    private float _offset = 1;
-    private float _barWidth = 0.8f;
+
+    public float BarWidth = 1;
+    private float _offsetInBarWidthUnits = 1;
+    private float _barWidthFillFactor = 0.8f;
     private float _barDepth = 0.01f;
 
     public Animation Transition(double duration = AnimationUtilities.DefaultDuration)
@@ -195,7 +194,7 @@ public partial class BarPlot : Node3D, IPrimerGraphData
     {
         var bar = new MeshInstance3D();
         var mesh = new BoxMesh();
-        mesh.Size = TransformPointFromDataSpaceToPositionSpace(new Vector3(_barWidth, 0, _barDepth));
+        mesh.Size = TransformPointFromDataSpaceToPositionSpace(new Vector3(_barWidthFillFactor * BarWidth, 0, _barDepth));
         bar.Position = new Vector3(rectProperties.Item1, 0, 0);
         bar.Mesh = mesh;
         bar.Name = $"Bar {i}";
