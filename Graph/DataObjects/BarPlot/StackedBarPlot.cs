@@ -4,6 +4,8 @@ using System.Linq;
 using Godot;
 using PrimerAssets;
 using PrimerTools.LaTeX;
+using System.Text.Json;
+using System.IO;
 
 namespace PrimerTools.Graph;
 
@@ -22,6 +24,16 @@ public partial class StackedBarPlot : Node3D, IPrimerGraphData
     public Transformation TransformPointFromDataSpaceToPositionSpace = point => point;
     
     public List<List<float>> Data;
+    public int StackCountLimit = 0; // zero means no limit
+    private List<List<float>> PlottedData
+    {
+        get
+        {
+            if (StackCountLimit <= 0) return Data;
+            return Data.Take(StackCountLimit).ToList();
+        }
+    }
+
     public delegate float[][] DataFetch();
     public DataFetch DataFetchMethod = () =>
     {
@@ -39,7 +51,7 @@ public partial class StackedBarPlot : Node3D, IPrimerGraphData
         var result = new List<List<Tuple<float, float, float>>>();
         
         // For each stack
-        for (var stackIndex = 0; stackIndex < Data.Count; stackIndex++)
+        for (var stackIndex = 0; stackIndex < PlottedData.Count; stackIndex++)
         {
             var stackSegments = new List<Tuple<float, float, float>>();
             
@@ -247,5 +259,28 @@ public partial class StackedBarPlot : Node3D, IPrimerGraphData
     {
         Data ??= new List<List<float>>();
         Data.AddRange(newData.Select(stack => stack.ToList()));
+    }
+
+    public void SaveData(string filePath, bool globalPath = false)
+    {
+        string finalPath = globalPath ? filePath : ProjectSettings.GlobalizePath(filePath);
+        if (!finalPath.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+            finalPath += ".json";
+        Directory.CreateDirectory(Path.GetDirectoryName(finalPath));
+        var jsonString = JsonSerializer.Serialize(Data.Select(list => list.ToArray()).ToArray());
+        File.WriteAllText(finalPath, jsonString);
+    }
+
+    public void LoadData(string filePath, bool globalPath = false)
+    {
+        string finalPath = globalPath ? filePath : ProjectSettings.GlobalizePath(filePath);
+        if (!finalPath.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+            throw new ArgumentException("File path must end with .json extension");
+        if (!File.Exists(finalPath))
+            throw new FileNotFoundException($"Data file not found at {finalPath}");
+            
+        var jsonString = File.ReadAllText(finalPath);
+        var loadedData = JsonSerializer.Deserialize<float[][]>(jsonString);
+        Data = loadedData.Select(array => array.ToList()).ToList();
     }
 }
