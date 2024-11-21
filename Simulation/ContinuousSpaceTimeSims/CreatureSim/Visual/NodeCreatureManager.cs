@@ -35,7 +35,7 @@ public partial class NodeCreatureManager : NodeEntityManager<DataCreature, NodeC
         );
     }
 
-    private void OnCreatureDeath(int creatureIndex)
+    private void OnCreatureDeath(int creatureIndex, CreatureSim.DeathCause cause)
     {
         NodeEntities[creatureIndex].Death();
     }

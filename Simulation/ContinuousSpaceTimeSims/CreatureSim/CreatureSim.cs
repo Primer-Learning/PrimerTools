@@ -9,6 +9,12 @@ namespace PrimerTools.Simulation;
 [Tool]
 public class CreatureSim : Simulation<DataCreature>
 {
+	public enum DeathCause
+	{
+		Starvation,
+		Aging
+	}
+	
 	public CreatureSim(SimulationWorld simulationWorld) : base(simulationWorld) {}
 
 	private FruitTreeSim FruitTreeSim => SimulationWorld.Simulations.OfType<FruitTreeSim>().FirstOrDefault();
@@ -69,13 +75,22 @@ public class CreatureSim : Simulation<DataCreature>
             
             if (!creature.Alive) continue;
             // Process deaths
-            var alive = creature.Energy > 0;
+            if (creature.Energy < 0)
+            {
+	            creature.Alive = false;
+	            CreatureDeathEvent?.Invoke(i, DeathCause.Starvation);
+	            Registry.Entities[i] = creature;
+	            continue;
+            }
             
             // Check for deaths from max age trait
             var maxAgeTrait = creature.Genome.GetTrait<float>("MaxAge");
             if (maxAgeTrait != null && maxAgeTrait.ExpressedValue < creature.Age)
             {
-	            alive = false;
+	            creature.Alive = false;
+	            CreatureDeathEvent?.Invoke(i, DeathCause.Aging);
+	            Registry.Entities[i] = creature;
+	            continue;
             }
             
             // Check for death from deleterious mutations
@@ -85,12 +100,15 @@ public class CreatureSim : Simulation<DataCreature>
                 {
                     if (deleteriousTrait.CheckForDeath(creature.Age, SimulationWorld.Rng))
                     {
-	                    GD.Print($"Creature died of deleterious mutation {deleteriousTrait.Id} with onset age {deleteriousTrait.ActivationAge} and severity {deleteriousTrait.MortalityRate}");
-                        alive = false;
+	                    // GD.Print($"Creature died of deleterious mutation {deleteriousTrait.Id} with onset age {deleteriousTrait.ActivationAge} and severity {deleteriousTrait.MortalityRate}");
+	                    creature.Alive = false;
+	                    CreatureDeathEvent?.Invoke(i, DeathCause.Aging);
+	                    Registry.Entities[i] = creature;
                         break;
                     }
                 }
             }
+            if (!creature.Alive) continue; // Move to next creature. Can't do it from inside the above loop.
 
             // Deaths from antagonistic pleiotropy
             var apTrait = creature.Genome.GetTrait<bool>("Antagonistic Pleiotropy Speed");
@@ -98,18 +116,12 @@ public class CreatureSim : Simulation<DataCreature>
             {
 	            if (SimulationWorld.Rng.rand.NextDouble() < 0.05 / SimulationWorld.PhysicsStepsPerSimSecond)
 	            {
-		            GD.Print("Death from antagonistic pleiotropy aging");
-		            alive = false;
+		            // GD.Print("Death from antagonistic pleiotropy aging");
+		            creature.Alive = false;
+		            CreatureDeathEvent?.Invoke(i, DeathCause.Aging);
+		            Registry.Entities[i] = creature;
+		            continue;
 	            }
-            }
-
-            // Could really do this after each check
-            if (!alive)
-            {
-	            creature.Alive = false;
-	            CreatureDeathEvent?.Invoke(i);
-	            Registry.Entities[i] = creature;
-	            continue;
             }
             
             // Do-nothing conditions 
@@ -323,7 +335,7 @@ public class CreatureSim : Simulation<DataCreature>
 		PhysicsServer3D.AreaSetTransform(creature.Awareness, transformNextFrame);
 		SpendMovementEnergy(ref creature);
 	}
-	public static event Action<int> CreatureDeathEvent; // creatureIndex
+	public static event Action<int, DeathCause> CreatureDeathEvent; // creatureIndex
 	public static event Action<int, Rid, float> CreatureEatEvent; // creatureIndex, treeBodyRid, duration
 	private DataCreature EatFood(DataCreature creature, ref DataTree tree, int creatureIndex)
 	{

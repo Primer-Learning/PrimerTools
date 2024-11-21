@@ -224,7 +224,7 @@ public partial class SimulationTestScene : Node3D
 		
 		// Cumulative death/survival plotting
 		var creatureDeathAges = new List<float>();
-		CreatureSim.CreatureDeathEvent += index =>
+		CreatureSim.CreatureDeathEvent += (index, cause) =>
 		{
 			var age = SimulationWorld.CreatureSim.Registry.Entities[index].Age;
 			creatureDeathAges.Add(age);
