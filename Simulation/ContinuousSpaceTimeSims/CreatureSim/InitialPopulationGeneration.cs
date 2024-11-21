@@ -18,7 +18,7 @@ public static class InitialPopulationGeneration
                 new Trait<float>(
                     "MaxSpeed", 
                     new List<float> { CreatureSimSettings.Instance.ReferenceCreatureSpeed, CreatureSimSettings.Instance.ReferenceCreatureSpeed },
-                    ExpressionMechanisms.Float.Codominant,
+                    ExpressionMechanisms.Float.AverageCodominant,
                     1
                 )
             );
@@ -27,7 +27,7 @@ public static class InitialPopulationGeneration
                 new Trait<float>(
                     "AwarenessRadius", 
                     new List<float> { CreatureSimSettings.Instance.ReferenceAwarenessRadius, CreatureSimSettings.Instance.ReferenceAwarenessRadius},
-                    ExpressionMechanisms.Float.Codominant,
+                    ExpressionMechanisms.Float.AverageCodominant,
                     1
                 )
             );
@@ -37,7 +37,7 @@ public static class InitialPopulationGeneration
                 new Trait<float>(
                     "MaxAge", 
                     new List<float> { maxAgeOptions.RandomItem(rng) },
-                    ExpressionMechanisms.Float.Codominant,
+                    ExpressionMechanisms.Float.AverageCodominant,
                     0
                 )
             );
@@ -73,7 +73,15 @@ public static class InitialPopulationGeneration
         var maxAgeGenes = new List<float>();
         for (var i = 0; i < numCreatures * 2; i++)
         {
-            maxAgeGenes.Add(i % 20 + 1);
+            // On every rotation of 20, the first 19 are 1-19, and the 20th is 10,000, for effectively infinite
+            if (i % 20 != 19)
+            {
+                maxAgeGenes.Add(i % 19 + 1);
+            }
+            else
+            {
+                maxAgeGenes.Add(10000);
+            }
         }
         maxAgeGenes.Shuffle(rng);
 
@@ -85,7 +93,7 @@ public static class InitialPopulationGeneration
                 new Trait<float>(
                     "MaxSpeed", 
                     new List<float> { CreatureSimSettings.Instance.ReferenceCreatureSpeed, CreatureSimSettings.Instance.ReferenceCreatureSpeed },
-                    ExpressionMechanisms.Float.Codominant,
+                    ExpressionMechanisms.Float.AverageCodominant,
                     1
                 )
             );
@@ -94,7 +102,7 @@ public static class InitialPopulationGeneration
                 new Trait<float>(
                     "AwarenessRadius", 
                     new List<float> { CreatureSimSettings.Instance.ReferenceAwarenessRadius, CreatureSimSettings.Instance.ReferenceAwarenessRadius},
-                    ExpressionMechanisms.Float.Codominant,
+                    ExpressionMechanisms.Float.AverageCodominant,
                     1
                 )
             );
@@ -103,7 +111,8 @@ public static class InitialPopulationGeneration
                 new Trait<float>(
                     "MaxAge",
                     new List<float> { maxAgeGenes[i] * 5, maxAgeGenes[i + 1] * 5 },
-                    ExpressionMechanisms.Float.Codominant,
+                    // ExpressionMechanisms.Float.RandomCodominant(rng), // Random codominance
+                    ExpressionMechanisms.Float.AverageCodominant, // Random codominance
                     0
                 )
             );
@@ -130,7 +139,7 @@ public static class InitialPopulationGeneration
                 new Trait<float>(
                     "MaxSpeed", 
                     new List<float> { CreatureSimSettings.Instance.ReferenceCreatureSpeed, CreatureSimSettings.Instance.ReferenceCreatureSpeed },
-                    ExpressionMechanisms.Float.Codominant,
+                    ExpressionMechanisms.Float.AverageCodominant,
                     1
                 )
             );
@@ -139,7 +148,7 @@ public static class InitialPopulationGeneration
                 new Trait<float>(
                     "AwarenessRadius", 
                     new List<float> { CreatureSimSettings.Instance.ReferenceAwarenessRadius, CreatureSimSettings.Instance.ReferenceAwarenessRadius},
-                    ExpressionMechanisms.Float.Codominant,
+                    ExpressionMechanisms.Float.AverageCodominant,
                     1
                 )
             );

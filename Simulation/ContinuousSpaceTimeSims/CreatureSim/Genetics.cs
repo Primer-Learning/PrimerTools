@@ -10,7 +10,11 @@ public static class ExpressionMechanisms
     {
         public static Func<List<float>, float> HighDominant => alleles => alleles.Max();
         public static Func<List<float>, float> LowDominant => alleles => alleles.Min();
-        public static Func<List<float>, float> Codominant => alleles => alleles.Average();
+        public static Func<List<float>, float> AverageCodominant => alleles => alleles.Average();
+        public static Func<List<float>, float> RandomCodominant(Rng rng)
+        {
+            return alleles => alleles.RandomItem(rng);
+        }
     }
 
     public static class Bool
@@ -18,18 +22,10 @@ public static class ExpressionMechanisms
         public static Func<List<bool>, bool> Dominant => alleles => alleles.Any(a => a);
         public static Func<List<bool>, bool> Recessive => alleles => alleles.All(a => a);
         
-        // If you want Codominant that takes a random value when expressed, best to just do that with a lambda
-        // when defining the trait.
-        
-        // Implementing that here is complicated.
-        // What rng object to use? If we want consistency across sims, we should pass an rng object or use a static one
-        // that lives in SimulationWorld or something.
-        // Passing one messes up the delegate signature. Could always pass an rng object, which is usually unneeded.
-        // A static one might be a good idea, but there currently isn't one, since I wanted to reserve the ability to 
-        // run more than one sim at a time. But perhaps that's silly.
-        
-        // Just using the default static one, which doesn't accomplish consistency and prints a warning.
-        public static Func<List<bool>, bool> Codominant => alleles => alleles.RandomItem(null);
+        public static Func<List<bool>, bool> RandomCodominant(Rng rng)
+        {
+            return alleles => alleles.RandomItem(rng);
+        }
     }
 }
 
