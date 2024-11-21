@@ -34,6 +34,30 @@ namespace PrimerTools
             var index = rng.RangeInt(0, list.Count);
             return list[index];
         }
+        
+        public static float Median(this IEnumerable<float> source)
+        {
+            if (source == null)
+                throw new ArgumentNullException(nameof(source));
+
+            var sortedList = source.OrderBy(x => x).ToList();
+        
+            if (sortedList.Count == 0)
+                throw new InvalidOperationException("Cannot compute median for an empty list.");
+
+            int midIndex = sortedList.Count / 2;
+        
+            if (sortedList.Count % 2 == 0)
+            {
+                // For even count, average the two middle values
+                return (sortedList[midIndex - 1] + sortedList[midIndex]) / 2f;
+            }
+            else
+            {
+                // For odd count, return the middle value
+                return sortedList[midIndex];
+            }
+        }
 
         #region enumerable.Shuffle()
         public static List<T> ShuffleToList<T>(this IEnumerable<T> self, Rng rng = null)
