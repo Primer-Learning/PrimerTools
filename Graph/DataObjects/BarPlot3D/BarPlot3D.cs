@@ -17,8 +17,12 @@ public partial class BarPlot3D : Node3D, IPrimerGraphData
     
     public delegate float[,] DataFetch();
     public DataFetch DataFetchMethod;
-    
-    public Color[] Colors = PrimerColor.Rainbow.ToArray();
+
+    public Color[,] Colors = new Color[,]
+    {
+        { PrimerColor.Blue, PrimerColor.Red },
+        { PrimerColor.Red, PrimerColor.Blue }
+    };
     public float BarWidth { get; set; } = 1;
     public float BarDepth { get; set; } = 1;
 
@@ -63,9 +67,9 @@ public partial class BarPlot3D : Node3D, IPrimerGraphData
     {
         return TransformPointFromDataSpaceToPositionSpace(
             new Vector3(
-                x + 0.5f,
+                (x + 0.5f) * BarWidth,
                 0,
-                y + 0.5f
+                (y + 0.5f) * BarDepth
             )
         );
     }
@@ -92,7 +96,7 @@ public partial class BarPlot3D : Node3D, IPrimerGraphData
         // Set initial material
         var meshInstance = bar.GetNode<MeshInstance3D>("MeshInstance3D");
         var material = new StandardMaterial3D();
-        material.AlbedoColor = Colors[(x + y) % Colors.Length];
+        material.AlbedoColor = Colors[x % Colors.GetLength(0), y % Colors.GetLength(1)];
         meshInstance.Mesh.SurfaceSetMaterial(0, material);
         
         return bar;

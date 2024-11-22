@@ -21,7 +21,7 @@ public class Histogram2DOptions
 
 public static class BarData3DUtilities
 {
-    private static float[,] MakeHistogram2D(IEnumerable<(float x, float y)> dataToBin, Histogram2DOptions options)
+    public static float[,] MakeHistogram2D(IEnumerable<(float x, float y)> dataToBin, Histogram2DOptions options)
     {
         var toBin = dataToBin.ToArray();
         if (!toBin.Any()) return new float[0, 0];
