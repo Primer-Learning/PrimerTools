@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
@@ -32,7 +33,7 @@ public static class ReproductionStrategies
     public static DataCreature AsexualReproduce(Genome genome1, Genome genome2, Rng rng)
     {
         var newGenome = genome1.Clone();
-        MutateCreature(newGenome, rng);
+        newGenome.Mutate(rng);
         var newCreature = new DataCreature { Genome = newGenome };
         return newCreature;
     }
@@ -62,8 +63,20 @@ public static class ReproductionStrategies
 
                 newGenome.AddTrait(new Trait<float>(traitName, newAlleles, floatTrait1.ExpressionMechanism, floatTrait1.MutationIncrement));
             }
-            
-            if (trait1 is Trait<bool> boolTrait1 && trait2 is Trait<bool> boolTrait2)
+            else if (trait1 is DeleteriousTrait deleteriousTrait1 && trait2 is DeleteriousTrait deleteriousTrait2)
+            {
+                var currentParentIndex = rng.RangeInt(0, 2);
+                var newAlleles = new List<bool>();
+                for (var i = 0; i < deleteriousTrait1.Alleles.Count; i++)
+                {
+                    var parentTrait = parentGenomes[currentParentIndex].Traits[traitName] as DeleteriousTrait;
+                    newAlleles.Add(parentTrait.Alleles.RandomItem(rng));
+                    currentParentIndex = 1 - currentParentIndex; // Switch to the other parent
+                }
+
+                newGenome.AddTrait(DeleteriousTrait.CreateNew(deleteriousTrait1.RawActivationAge, deleteriousTrait1.RawMortalityRate, newAlleles));
+            }
+            else if (trait1 is Trait<bool> boolTrait1 && trait2 is Trait<bool> boolTrait2)
             {
                 var currentParentIndex = rng.RangeInt(0, 2);
                 var newAlleles = new List<bool>();
@@ -76,75 +89,11 @@ public static class ReproductionStrategies
 
                 newGenome.AddTrait(new Trait<bool>(traitName, newAlleles, boolTrait1.ExpressionMechanism, boolTrait1.MutationIncrement));
             }
+            else {GD.Print($"{traitName} not added to new genome");}
         }
 
-        // Handle deleterious traits from both parents
-        var allDeleteriousTraits = genome1.Traits.Values
-            .Concat(genome2.Traits.Values)
-            .OfType<DeleteriousTrait>()
-            .Where(x => x.Alleles.Any(v => v))
-            .GroupBy(t => t.Id)
-            .ToDictionary(g => g.Key, g => g.ToList());
-
-        foreach (var (id, traits) in allDeleteriousTraits)
-        {
-            if (traits.Count == 2) // Both parents have the trait
-            {
-                var parent1Trait = traits[0];
-                var parent2Trait = traits[1];
-                
-                var newAlleles = new List<bool>
-                {
-                    parent1Trait.Alleles[rng.RangeInt(0, 2)],
-                    parent2Trait.Alleles[rng.RangeInt(0, 2)]
-                };
-                
-                newGenome.AddTrait(new DeleteriousTrait(
-                    id,
-                    newAlleles,
-                    parent1Trait.ActivationAge,
-                    parent1Trait.MortalityRate
-                ));
-            }
-            else // Only one parent has the trait
-            {
-                var parentTrait = traits[0];
-                var newAlleles = new List<bool>
-                {
-                    parentTrait.Alleles[rng.RangeInt(0, 2)],
-                    false // Wild-type allele from the other parent
-                };
-                
-                newGenome.AddTrait(new DeleteriousTrait(
-                    id,
-                    newAlleles,
-                    parentTrait.ActivationAge,
-                    parentTrait.MortalityRate
-                ));
-            }
-        }
-
-        MutateCreature(newGenome, rng);
+        newGenome.Mutate(rng);
 
         return new DataCreature { Genome = newGenome };
-    }
-
-    private static void MutateCreature(Genome genome, Rng rng)
-    {
-        foreach (var trait in genome.Traits.Values)
-        {
-            if (rng.RangeFloat(0, 1) < CreatureSimSettings.Instance.MutationProbability)
-            {
-                if (trait is Trait<float> floatTrait)
-                {
-                    floatTrait.Mutate(rng);
-                }
-            }
-        }
-        // Possibly add new deleterious mutation
-        if (rng.RangeFloat(0, 1) < CreatureSimSettings.Instance.DeleteriousMutationRate)
-        {
-            genome.AddTrait(DeleteriousTrait.CreateNew(rng));
-        }
     }
 }

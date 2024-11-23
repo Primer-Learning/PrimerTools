@@ -31,44 +31,62 @@ public static class ExpressionMechanisms
 
 public class DeleteriousTrait : Trait<bool>
 {
-    public Guid Id { get; }
-    public float ActivationAge { get; }
-    public float MortalityRate { get; }
+    public int RawActivationAge { get; }
+    public float AdjustedActivationAge => (RawActivationAge + 1) * 5; // Map to multiples of five
+    public int RawMortalityRate { get; }
+    public float AdjustedMortalityRate => (RawMortalityRate + 1) / 20f; // Map to multiples of five percent 
 
-    public DeleteriousTrait(Guid id, List<bool> alleles, float activationAge, float mortalityRate) 
-        : base($"Deleterious_{id}", alleles, ExpressionMechanisms.Bool.Dominant, false)
+    public DeleteriousTrait(string name, List<bool> alleles, int rawActivationAge, int rawMortalityRate) 
+        : base($"Deleterious_{name}", alleles, ExpressionMechanisms.Bool.Dominant, false)
     {
         if (alleles.Count != 2)
             throw new ArgumentException("DeleteriousTrait must be diploid (exactly 2 alleles)", nameof(alleles));
             
-        Id = id;
-        ActivationAge = activationAge;
-        MortalityRate = mortalityRate;
+        RawActivationAge = rawActivationAge;
+        RawMortalityRate = rawMortalityRate;
     }
 
     public bool CheckForDeath(float age, Rng rng)
     {
-        if (!ExpressedValue || age < ActivationAge) return false;
-        return rng.rand.NextDouble() < MortalityRate / SimulationWorld.PhysicsStepsPerSimSecond;
+        if (!ExpressedValue || age < AdjustedActivationAge) return false;
+        return rng.rand.NextDouble() < AdjustedMortalityRate / SimulationWorld.PhysicsStepsPerSimSecond;
     }
 
-    public static DeleteriousTrait CreateNew(Rng rng)
+    // public static DeleteriousTrait CreateNew(Rng rng)
+    // {
+    //     return new DeleteriousTrait(
+    //         Guid.NewGuid(),
+    //         new List<bool> { true, false }, // New mutations start heterozygous
+    //         activationAge: rng.RangeInt(1, 21) * 5, // 5 second increments
+    //         mortalityRate: rng.RangeInt(1, 21) / 20f // 5% increments
+    //     );
+    // }
+    public static DeleteriousTrait CreateNew(int rawActivationAge, int rawMortalityRate)
     {
         return new DeleteriousTrait(
-            Guid.NewGuid(),
-            new List<bool> { true, false }, // New mutations start heterozygous
-            activationAge: rng.RangeFloat(1f, 100f),
-            mortalityRate: rng.RangeFloat(0.01f, 1f)
+            $"{rawActivationAge}_{rawMortalityRate}",
+            new List<bool> { false, false },
+            rawActivationAge: rawActivationAge,
+            rawMortalityRate: rawMortalityRate
+        );
+    }
+    public static DeleteriousTrait CreateNew(int rawActivationAge, int rawMortalityRate, List<bool> alleles)
+    {
+        return new DeleteriousTrait(
+            $"{rawActivationAge}_{rawMortalityRate}",
+            alleles,
+            rawActivationAge: rawActivationAge,
+            rawMortalityRate: rawMortalityRate
         );
     }
 
     public override Trait Clone()
     {
         return new DeleteriousTrait(
-            Id,
+            Name,
             new List<bool>(Alleles),
-            ActivationAge,
-            MortalityRate
+            RawActivationAge,
+            RawMortalityRate
         );
     }
 }
@@ -99,26 +117,7 @@ public class Trait<T> : Trait
         ExpressionMechanism = expressionMechanism;
         MutationIncrement = mutationIncrement;
     }
-
-    public void Mutate(Rng rng)
-    {
-        if (typeof(T) == typeof(float))
-        {
-            var allele = (float)(object)Alleles[0];
-            var increment = (float)(object)MutationIncrement;
-            allele += rng.RangeFloat(0, 1) < 0.5f ? -increment : increment;
-            allele = Math.Max(0, allele);
-            Alleles[0] = (T)(object)allele;
-        }
-        else if (typeof(T) == typeof(bool) && (bool)(object)MutationIncrement)
-        {
-            var index = rng.RangeInt(0, Alleles.Count);
-            var currentValue = (bool)(object)Alleles[index];
-            Alleles[index] = (T)(object)(!currentValue);
-        }
-        // Add more type-specific mutation logic here if needed
-    }
-
+    
     public override Trait Clone()
     {
         return new Trait<T>(
@@ -152,7 +151,7 @@ public class Genome
         }
         else
         {
-            throw new InvalidOperationException("Cannot add traits to a cloned Genome.");
+            throw new InvalidOperationException("Cannot add traits to a cloned Genome."); // I don't remember what this is. Seems to not do anything?
         }
     }
 
@@ -160,7 +159,6 @@ public class Genome
     {
         Traits.TryGetValue(name, out var theTrait);
         return (Trait<T>)theTrait;
-        // return (Trait<T>)Traits[name];
     }
 
     public Genome Clone()
@@ -171,5 +169,51 @@ public class Genome
             clonedTraits[kvp.Key] = kvp.Value.Clone();
         }
         return new Genome(clonedTraits);
+    }
+    public void Mutate(Rng rng)
+    {
+        foreach (var trait in Traits.Values)
+        {
+            switch (trait)
+            {
+                case Trait<float> floatTrait:
+                {
+                    for (var i = 0; i < floatTrait.Alleles.Count; i++)
+                    {
+                        if (rng.RangeFloat(0, 1) < CreatureSimSettings.Instance.MutationProbability)
+                        {
+                            var allele = floatTrait.Alleles[i];
+                            var increment = floatTrait.MutationIncrement;
+                            allele += rng.RangeFloat(0, 1) < 0.5f ? -increment : increment;
+                            allele = Math.Max(0, allele);
+                            floatTrait.Alleles[i] = allele;
+                        }
+                    }
+                    break;
+                }
+                case DeleteriousTrait dt:
+                {
+                    for (var i = 0; i < dt.Alleles.Count; i++)
+                    {
+                        if (rng.RangeFloat(0, 1) < CreatureSimSettings.Instance.DeleteriousMutationRate)
+                        {
+                            dt.Alleles[i] = !dt.Alleles[i];
+                        }
+                    }
+                    break;
+                }
+                case Trait<bool> boolTrait:
+                {
+                    for (var i = 0; i < boolTrait.Alleles.Count; i++)
+                    {
+                        if (rng.RangeFloat(0, 1) < CreatureSimSettings.Instance.MutationProbability)
+                        {
+                            boolTrait.Alleles[i] = !boolTrait.Alleles[i];
+                        }
+                    }
+                    break;
+                }
+            }
+        }
     }
 }
