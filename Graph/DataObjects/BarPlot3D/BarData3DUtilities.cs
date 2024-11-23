@@ -11,39 +11,44 @@ public class Histogram2DOptions
     {
         None,
         Normalize,
-        PerCapita
+        PerCapita,
+        PerTwoCapita // Convenient for diploid allele frequencies
     }
 
-    public AdjustmentMethodType AdjustmentMethod { get; set; } = AdjustmentMethodType.None;
-    public float BinWidthX { get; set; } = 1;
-    public float BinWidthY { get; set; } = 1;
+    public AdjustmentMethodType AdjustmentMethod = AdjustmentMethodType.None;
+    public float BinWidthX = 1;
+    public float? MinX = 0; // Null means let the data determine
+    public float? MaxX = null;
+    public float BinWidthY = 1;
+    public float? MinY = 0;
+    public float? MaxY = null;
 }
 
 public static class BarData3DUtilities
 {
-    public static float[,] MakeHistogram2D(IEnumerable<(float x, float y)> dataToBin, Histogram2DOptions options)
+    public static float[,] MakeHistogram2D(IEnumerable<(float x, float y)> dataToBin, Histogram2DOptions options = null)
     {
         var toBin = dataToBin.ToArray();
         if (!toBin.Any()) return new float[0, 0];
 
-        var maxX = toBin.Max(point => point.x);
-        var maxY = toBin.Max(point => point.y);
+        options ??= new Histogram2DOptions();
+
+        var minX = options.MinX ?? toBin.Min(point => point.x);
+        var minY = options.MinY ?? toBin.Min(point => point.y);
+        var maxX = options.MaxX ?? toBin.Max(point => point.x);
+        var maxY = options.MaxY ?? toBin.Max(point => point.y);
         
-        var numBinsX = Mathf.CeilToInt(maxX / options.BinWidthX);
-        var numBinsY = Mathf.CeilToInt(maxY / options.BinWidthY);
+        var numBinsX = Mathf.CeilToInt((maxX - minX) / options.BinWidthX);
+        var numBinsY = Mathf.CeilToInt((maxY - minY) / options.BinWidthY);
         var histogram = new float[numBinsX, numBinsY];
 
         foreach (var (x, y) in toBin)
         {
-            // Handle zero case
-            if (x == 0 && y == 0)
-            {
-                histogram[0, 0]++;
-                continue;
-            }
-
-            var binIndexX = Mathf.CeilToInt(x / options.BinWidthX) - 1;
-            var binIndexY = Mathf.CeilToInt(y / options.BinWidthY) - 1;
+            // Bins include their max
+            // This means the true min needs special handling to not go in bin -1
+            // Could add a min-inclusive mode if needed.
+            var binIndexX = x > minX ? Mathf.CeilToInt((x - minX) / options.BinWidthX) - 1 : 0;
+            var binIndexY = y > minY ? Mathf.CeilToInt((y - minY) / options.BinWidthY) - 1 : 0;
             histogram[binIndexX, binIndexY]++;
         }
 
@@ -67,12 +72,12 @@ public static class BarData3DUtilities
         return normalized;
     }
 
-    private static float[,] PerCapitaAdjustment(float[,] histogram, int total)
+    private static float[,] PerCapitaAdjustment(float[,] histogram, int total, bool two)
     {
         var adjusted = new float[histogram.GetLength(0), histogram.GetLength(1)];
         for (var x = 0; x < histogram.GetLength(0); x++)
         for (var y = 0; y < histogram.GetLength(1); y++)
-            adjusted[x, y] = histogram[x, y] / total;
+            adjusted[x, y] = histogram[x, y] / (total * (two ? 2 : 1));
 
         return adjusted;
     }
@@ -85,7 +90,10 @@ public static class BarData3DUtilities
                 histogram = NormalizeHistogram(histogram);
                 break;
             case Histogram2DOptions.AdjustmentMethodType.PerCapita:
-                histogram = PerCapitaAdjustment(histogram, dataSourceGetter().Count());
+                histogram = PerCapitaAdjustment(histogram, dataSourceGetter().Count(), false);
+                break;
+            case Histogram2DOptions.AdjustmentMethodType.PerTwoCapita:
+                histogram = PerCapitaAdjustment(histogram, dataSourceGetter().Count(), true);
                 break;
             case Histogram2DOptions.AdjustmentMethodType.None:
                 break;
