@@ -26,12 +26,10 @@ public class Histogram2DOptions
 
 public static class BarData3DUtilities
 {
-    public static float[,] MakeHistogram2D(IEnumerable<(float x, float y)> dataToBin, Histogram2DOptions options = null)
+    private static float[,] MakeHistogram2DInternal(IEnumerable<(float x, float y)> dataToBin, Histogram2DOptions options)
     {
         var toBin = dataToBin.ToArray();
         if (!toBin.Any()) return new float[0, 0];
-
-        options ??= new Histogram2DOptions();
 
         var minX = options.MinX ?? toBin.Min(point => point.x);
         var minY = options.MinY ?? toBin.Min(point => point.y);
@@ -54,6 +52,14 @@ public static class BarData3DUtilities
         }
 
         return histogram;
+    }
+
+    public static float[,] MakeHistogram2D(IEnumerable<(float x, float y)> dataToBin, Histogram2DOptions options = null)
+    {
+        options ??= new Histogram2DOptions();
+        var data = dataToBin.ToArray();
+        var histogram = MakeHistogram2DInternal(data, options);
+        return ApplyAdjustment(histogram, () => data, options);
     }
 
     private static float[,] NormalizeHistogram(float[,] histogram)
@@ -114,7 +120,7 @@ public static class BarData3DUtilities
         
         return () =>
         {
-            var histogram = MakeHistogram2D(
+            var histogram = MakeHistogram2DInternal(
                 dataSourceGetter().Select(propertySelector),
                 options);
 
@@ -131,7 +137,7 @@ public static class BarData3DUtilities
         
         return () =>
         {
-            var histogram = MakeHistogram2D(
+            var histogram = MakeHistogram2DInternal(
                 dataSourceGetter().SelectMany(propertySelector),
                 options);
             
