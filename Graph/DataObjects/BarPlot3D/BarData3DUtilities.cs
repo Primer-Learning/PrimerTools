@@ -38,8 +38,9 @@ public static class BarData3DUtilities
         var maxX = options.MaxX ?? toBin.Max(point => point.x);
         var maxY = options.MaxY ?? toBin.Max(point => point.y);
         
-        var numBinsX = Mathf.CeilToInt((maxX - minX) / options.BinWidthX);
-        var numBinsY = Mathf.CeilToInt((maxY - minY) / options.BinWidthY);
+        var numBinsX = Mathf.Max(1, Mathf.CeilToInt((maxX - minX) / options.BinWidthX));
+        var numBinsY = Mathf.Max(1, Mathf.CeilToInt((maxY - minY) / options.BinWidthY));
+        
         var histogram = new float[numBinsX, numBinsY];
 
         foreach (var (x, y) in toBin)

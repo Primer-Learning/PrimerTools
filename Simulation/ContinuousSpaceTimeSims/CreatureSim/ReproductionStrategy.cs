@@ -49,6 +49,7 @@ public static class ReproductionStrategies
         {
             var trait1 = genome1.Traits[traitName];
             var trait2 = genome2.Traits[traitName];
+            GD.Print(traitName);
 
             if (trait1 is Trait<float> floatTrait1 && trait2 is Trait<float> floatTrait2)
             {
@@ -71,10 +72,17 @@ public static class ReproductionStrategies
                 {
                     var parentTrait = parentGenomes[currentParentIndex].Traits[traitName] as DeleteriousTrait;
                     newAlleles.Add(parentTrait.Alleles.RandomItem(rng));
-                    currentParentIndex = 1 - currentParentIndex; // Switch to the other parent
+                    currentParentIndex = 1 - currentParentIndex; // Switch to the other parent for the next allele
                 }
 
-                newGenome.AddTrait(DeleteriousTrait.CreateNew(deleteriousTrait1.ActivationAge, deleteriousTrait1.MortalityRatePerSecond, newAlleles));
+                newGenome.AddTrait(
+                    DeleteriousTrait.CreateNew(
+                        deleteriousTrait1.ActivationAge,
+                        deleteriousTrait1.MortalityRatePerSecond,
+                        newAlleles,
+                        traitName
+                    )
+                );
             }
             else if (trait1 is Trait<bool> boolTrait1 && trait2 is Trait<bool> boolTrait2)
             {
@@ -92,7 +100,7 @@ public static class ReproductionStrategies
             else {GD.Print($"{traitName} not added to new genome");}
         }
 
-        newGenome.Mutate(rng);
+        // newGenome.Mutate(rng);
 
         return new DataCreature { Genome = newGenome };
     }

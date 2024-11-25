@@ -38,7 +38,7 @@ public class DeleteriousTrait : Trait<bool>
     public float MortalityRatePerStep => 1 - Mathf.Pow(1 - MortalityRatePerSecond, 1f / SimulationWorld.PhysicsStepsPerSimSecond);
 
     public DeleteriousTrait(string name, List<bool> alleles, float activationAge, float mortalityRatePerSecond) 
-        : base($"Deleterious_{name}", alleles, ExpressionMechanisms.Bool.Dominant, false)
+        : base(name, alleles, ExpressionMechanisms.Bool.Dominant, false)
     {
         if (alleles.Count != 2)
             throw new ArgumentException("DeleteriousTrait must be diploid (exactly 2 alleles)", nameof(alleles));
@@ -54,22 +54,14 @@ public class DeleteriousTrait : Trait<bool>
         return rng.rand.NextDouble() < 1 - Mathf.Pow(1 - MortalityRatePerStep, 1f / SimulationWorld.PhysicsStepsPerSimSecond);
     }
     
-    public static DeleteriousTrait CreateNew(float activationAge, float mortalityRate)
+    public static DeleteriousTrait CreateNew(float activationAge, float mortalityRate, List<bool> alleles, string name = "")
     {
+        if (string.IsNullOrEmpty(name)) name = $"{activationAge}_{mortalityRate}";
         return new DeleteriousTrait(
-            $"{activationAge}_{mortalityRate}",
-            new List<bool> { false, false },
+            name,
+            alleles,
             activationAge: activationAge,
             mortalityRatePerSecond: mortalityRate
-        );
-    }
-    public static DeleteriousTrait CreateNew(float rawActivationAge, float rawMortalityRate, List<bool> alleles)
-    {
-        return new DeleteriousTrait(
-            $"{rawActivationAge}_{rawMortalityRate}",
-            alleles,
-            activationAge: rawActivationAge,
-            mortalityRatePerSecond: rawMortalityRate
         );
     }
 
