@@ -114,7 +114,8 @@ public class CreatureSim : Simulation<DataCreature>
             var apTrait = creature.Genome.GetTrait<bool>("Antagonistic Pleiotropy Speed");
             if (apTrait is { ExpressedValue: true } && creature.Age > CreatureSimSettings.Instance.MaturationTime)
             {
-	            if (SimulationWorld.Rng.rand.NextDouble() < 0.05 / SimulationWorld.PhysicsStepsPerSimSecond)
+	            var apDeathRate = 0.05f;
+		        if (SimulationWorld.Rng.rand.NextDouble() < 1 - Mathf.Pow(1 - apDeathRate, 1f / SimulationWorld.PhysicsStepsPerSimSecond))
 	            {
 		            // GD.Print("Death from antagonistic pleiotropy aging");
 		            creature.Alive = false;

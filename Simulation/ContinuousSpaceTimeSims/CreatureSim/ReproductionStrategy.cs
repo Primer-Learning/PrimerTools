@@ -74,7 +74,7 @@ public static class ReproductionStrategies
                     currentParentIndex = 1 - currentParentIndex; // Switch to the other parent
                 }
 
-                newGenome.AddTrait(DeleteriousTrait.CreateNew(deleteriousTrait1.RawActivationAge, deleteriousTrait1.RawMortalityRate, newAlleles));
+                newGenome.AddTrait(DeleteriousTrait.CreateNew(deleteriousTrait1.ActivationAge, deleteriousTrait1.MortalityRatePerSecond, newAlleles));
             }
             else if (trait1 is Trait<bool> boolTrait1 && trait2 is Trait<bool> boolTrait2)
             {

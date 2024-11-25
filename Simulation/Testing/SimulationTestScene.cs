@@ -77,7 +77,7 @@ public partial class SimulationTestScene : Node3D
 	}
 
 	[Export] private bool _plotting;
-	[Export] private int _initialCreatureCount = 2;
+	[Export] private int _initialCreatureCount = 100;
 	[Export] private int _initialTreeCount = 10;
 	
 	private Node3D GraphParent => GetNode<Node3D>("GraphParent");
@@ -136,28 +136,28 @@ public partial class SimulationTestScene : Node3D
 		// periodicPlotter.Curve = curve;
 		
 		// Deleterious mutation bar plot
-		// var barPlot3D = thisGraph.AddBarPlot3D();
-		// barPlot3D.DataFetchMethod = BarData3DUtilities.PropertyHistogram2D(
-		// 	() => CreatureSim.Registry.Entities,
-		// 	creature =>
-		// 	{
-		// 		var deleteriousMutationProperties = new List<(float, float)>();
-		// 		foreach (var trait in creature.Genome.Traits.Values)
-		// 		{
-		// 			if (trait is DeleteriousTrait deleteriousTrait && deleteriousTrait.Alleles.Any(x => x)) // Deleterious trait is true
-		// 			{
-		// 				deleteriousMutationProperties.Add((deleteriousTrait.ActivationAge, deleteriousTrait.MortalityRate * 100));
-		// 			}
-		// 		}
-		//
-		// 		return deleteriousMutationProperties;
-		// 	},
-		// 	new Histogram2DOptions{AdjustmentMethod = Histogram2DOptions.AdjustmentMethodType.PerCapita}
-		// );
-		//
-		// periodicPlotter.BarPlot3D = barPlot3D;
+		var barPlot3D = thisGraph.AddBarPlot3D();
+		barPlot3D.DataFetchMethod = BarData3DUtilities.PropertyHistogram2D(
+			() => SimulationWorld.CreatureSim.Registry.Entities,
+			creature =>
+			{
+				var deleteriousMutationProperties = new List<(float, float)>();
+				foreach (var trait in creature.Genome.Traits.Values)
+				{
+					if (trait is DeleteriousTrait deleteriousTrait && deleteriousTrait.Alleles.Any(x => x)) // Deleterious trait is true
+					{
+						deleteriousMutationProperties.Add((deleteriousTrait.ActivationAge, deleteriousTrait.MortalityRatePerSecond * 100));
+					}
+				}
+		
+				return deleteriousMutationProperties;
+			},
+			new Histogram2DOptions{AdjustmentMethod = Histogram2DOptions.AdjustmentMethodType.PerCapita}
+		);
+		
+		
 
-		var barPlot = thisGraph.AddBarPlot();
+		// var barPlot = thisGraph.AddBarPlot();
 		// barPlot.DataFetchMethod = BarDataUtilities.NormalizedPropertyHistogram(
 		// 	() => CreatureSim.Registry.Entities,
 		// 	creature =>
@@ -166,20 +166,20 @@ public partial class SimulationTestScene : Node3D
 		// 		return alleles.Select(x => x ? 20f : 10f);
 		// 	}
 		// );
-		barPlot.DataFetchMethod = BarDataUtilities.PropertyHistogram(
-			() => SimulationWorld.CreatureSim.Registry.Entities,
-			creature =>
-			{
-				var alleles = creature.Genome.GetTrait<float>("MaxAge").Alleles;
-				return alleles.Select(x =>
-					{
-						if (x <= 20) return 10f;
-						if (x <= 40) return 20f;
-						return 30f;
-					} // Hacky custom binning to the float.MaxValue "no max" doesn't mess up the histogram
-				);
-			}
-		);
+		// barPlot.DataFetchMethod = BarDataUtilities.PropertyHistogram(
+		// 	() => SimulationWorld.CreatureSim.Registry.Entities,
+		// 	creature =>
+		// 	{
+		// 		var alleles = creature.Genome.GetTrait<float>("MaxAge").Alleles;
+		// 		return alleles.Select(x =>
+		// 			{
+		// 				if (x <= 20) return 10f;
+		// 				if (x <= 40) return 20f;
+		// 				return 30f;
+		// 			} // Hacky custom binning to the float.MaxValue "no max" doesn't mess up the histogram
+		// 		);
+		// 	}
+		// );
 		
 		//
 		// Second graph
@@ -337,6 +337,7 @@ public partial class SimulationTestScene : Node3D
 		CreatureSimSettings.Instance.Reproduce = ReproductionStrategies.SexualReproduce;
 		CreatureSimSettings.Instance.InitializePopulation =
 			InitialPopulationGeneration.WorkingInitialPopulationThatChangesALot;
+		CreatureSimSettings.Instance.DeleteriousMutationRate = 0.01f;
 		var creatureSim = new CreatureSim(SimulationWorld)
 		{
 			InitialEntityCount = _initialCreatureCount

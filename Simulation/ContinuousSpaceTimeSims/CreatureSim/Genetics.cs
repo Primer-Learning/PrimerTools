@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Godot;
 
 namespace PrimerTools.Simulation;
 
@@ -31,52 +32,44 @@ public static class ExpressionMechanisms
 
 public class DeleteriousTrait : Trait<bool>
 {
-    public int RawActivationAge { get; }
-    public float AdjustedActivationAge => (RawActivationAge + 1) * 5; // Map to multiples of five
-    public int RawMortalityRate { get; }
-    public float AdjustedMortalityRate => (RawMortalityRate + 1) / 20f; // Map to multiples of five percent 
+    public float ActivationAge { get; }
+    public float MortalityRatePerSecond { get; }
+    // Need to adjust for step size with an exponent to keep the results independent of step size (on average)
+    public float MortalityRatePerStep => 1 - Mathf.Pow(1 - MortalityRatePerSecond, 1f / SimulationWorld.PhysicsStepsPerSimSecond);
 
-    public DeleteriousTrait(string name, List<bool> alleles, int rawActivationAge, int rawMortalityRate) 
+    public DeleteriousTrait(string name, List<bool> alleles, float activationAge, float mortalityRatePerSecond) 
         : base($"Deleterious_{name}", alleles, ExpressionMechanisms.Bool.Dominant, false)
     {
         if (alleles.Count != 2)
             throw new ArgumentException("DeleteriousTrait must be diploid (exactly 2 alleles)", nameof(alleles));
             
-        RawActivationAge = rawActivationAge;
-        RawMortalityRate = rawMortalityRate;
+        ActivationAge = activationAge;
+        MortalityRatePerSecond = mortalityRatePerSecond;
     }
 
     public bool CheckForDeath(float age, Rng rng)
     {
-        if (!ExpressedValue || age < AdjustedActivationAge) return false;
-        return rng.rand.NextDouble() < AdjustedMortalityRate / SimulationWorld.PhysicsStepsPerSimSecond;
+        if (!ExpressedValue || age < ActivationAge) return false;
+        
+        return rng.rand.NextDouble() < 1 - Mathf.Pow(1 - MortalityRatePerStep, 1f / SimulationWorld.PhysicsStepsPerSimSecond);
     }
-
-    // public static DeleteriousTrait CreateNew(Rng rng)
-    // {
-    //     return new DeleteriousTrait(
-    //         Guid.NewGuid(),
-    //         new List<bool> { true, false }, // New mutations start heterozygous
-    //         activationAge: rng.RangeInt(1, 21) * 5, // 5 second increments
-    //         mortalityRate: rng.RangeInt(1, 21) / 20f // 5% increments
-    //     );
-    // }
-    public static DeleteriousTrait CreateNew(int rawActivationAge, int rawMortalityRate)
+    
+    public static DeleteriousTrait CreateNew(float activationAge, float mortalityRate)
     {
         return new DeleteriousTrait(
-            $"{rawActivationAge}_{rawMortalityRate}",
+            $"{activationAge}_{mortalityRate}",
             new List<bool> { false, false },
-            rawActivationAge: rawActivationAge,
-            rawMortalityRate: rawMortalityRate
+            activationAge: activationAge,
+            mortalityRatePerSecond: mortalityRate
         );
     }
-    public static DeleteriousTrait CreateNew(int rawActivationAge, int rawMortalityRate, List<bool> alleles)
+    public static DeleteriousTrait CreateNew(float rawActivationAge, float rawMortalityRate, List<bool> alleles)
     {
         return new DeleteriousTrait(
             $"{rawActivationAge}_{rawMortalityRate}",
             alleles,
-            rawActivationAge: rawActivationAge,
-            rawMortalityRate: rawMortalityRate
+            activationAge: rawActivationAge,
+            mortalityRatePerSecond: rawMortalityRate
         );
     }
 
@@ -85,8 +78,8 @@ public class DeleteriousTrait : Trait<bool>
         return new DeleteriousTrait(
             Name,
             new List<bool>(Alleles),
-            RawActivationAge,
-            RawMortalityRate
+            ActivationAge,
+            MortalityRatePerSecond
         );
     }
 }
