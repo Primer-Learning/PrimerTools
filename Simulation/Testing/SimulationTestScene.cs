@@ -233,7 +233,7 @@ public partial class SimulationTestScene : Node3D
 		
 		barPlot2.DataFetchMethod = () =>
 		{
-			var histogram = BarDataUtilities.MakeHistogram(creatureDeathAges, 1);
+			var histogram = BarDataUtilities.MakeHistogram(creatureDeathAges);
 			
 			// Normalize
 			histogram = histogram.Select(x => x / creatureDeathAges.Count).ToArray();
@@ -288,7 +288,7 @@ public partial class SimulationTestScene : Node3D
 		
 		barPlot3.DataFetchMethod = () =>
 		{
-			var histogram = BarDataUtilities.MakeHistogram(creatureDeathAges, 1);
+			var histogram = BarDataUtilities.MakeHistogram(creatureDeathAges);
 			
 			// Normalize
 			histogram = histogram.Select(x => x / creatureDeathAges.Count).ToArray();

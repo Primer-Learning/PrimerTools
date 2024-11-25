@@ -49,8 +49,7 @@ public static class ReproductionStrategies
         {
             var trait1 = genome1.Traits[traitName];
             var trait2 = genome2.Traits[traitName];
-            GD.Print(traitName);
-
+            
             if (trait1 is Trait<float> floatTrait1 && trait2 is Trait<float> floatTrait2)
             {
                 var currentParentIndex = rng.RangeInt(0, 2);
@@ -100,7 +99,7 @@ public static class ReproductionStrategies
             else {GD.Print($"{traitName} not added to new genome");}
         }
 
-        // newGenome.Mutate(rng);
+        newGenome.Mutate(rng);
 
         return new DataCreature { Genome = newGenome };
     }
