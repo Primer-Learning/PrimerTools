@@ -67,7 +67,6 @@ public static class BarDataUtilities
 
     private static float[] PerCapitaAdjustment(float[] histogram, int total, bool two)
     {
-        PrimerGD.PrintWithStackTrace($"Total: {total}");
         var adjusted = new float[histogram.Length];
         for (var i = 0; i < histogram.Length; i++)
             adjusted[i] = histogram[i] / (total * (two ? 2 : 1));
