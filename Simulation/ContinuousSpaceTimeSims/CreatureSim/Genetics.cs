@@ -50,8 +50,8 @@ public class DeleteriousTrait : Trait<bool>
     public bool CheckForDeath(float age, Rng rng)
     {
         if (!ExpressedValue || age < ActivationAge) return false;
-        
-        return rng.rand.NextDouble() < 1 - Mathf.Pow(1 - MortalityRatePerStep, 1f / SimulationWorld.PhysicsStepsPerSimSecond);
+
+        return rng.rand.NextDouble() < MortalityRatePerStep;
     }
     
     public static DeleteriousTrait CreateNew(float activationAge, float mortalityRate, List<bool> alleles, string name = "")
@@ -189,11 +189,14 @@ public class Genome
                 }
                 case Trait<bool> boolTrait:
                 {
-                    for (var i = 0; i < boolTrait.Alleles.Count; i++)
+                    if (boolTrait.MutationIncrement)
                     {
-                        if (rng.RangeFloat(0, 1) < CreatureSimSettings.Instance.MutationProbability)
+                        for (var i = 0; i < boolTrait.Alleles.Count; i++)
                         {
-                            boolTrait.Alleles[i] = !boolTrait.Alleles[i];
+                            if (rng.RangeFloat(0, 1) < CreatureSimSettings.Instance.MutationProbability)
+                            {
+                                boolTrait.Alleles[i] = !boolTrait.Alleles[i];
+                            }
                         }
                     }
                     break;
