@@ -105,6 +105,7 @@ public partial class NodeCreature : NodeEntity<DataCreature>
 	
 	public async void Eat(Node3D fruit, float eatDuration)
 	{
+		if (Scale == Vector3.Zero) return;
 		var turnDuration = 0.25f;
 		var fruitMoveDuration = 0.5f;
 		var animationSettleDuration = 0.5f;
