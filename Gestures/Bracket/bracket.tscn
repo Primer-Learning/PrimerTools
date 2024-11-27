@@ -1,0 +1,16 @@
+[gd_scene load_steps=3 format=3 uid="uid://cr0auqlg2kiuq"]
+
+[ext_resource type="PackedScene" uid="uid://dmfd4vojv5g8j" path="res://addons/PrimerTools/Gestures/Bracket/bracket.glb" id="1_slkfe"]
+[ext_resource type="Script" path="res://addons/PrimerTools/Gestures/Bracket/Bracket.cs" id="2_rl31f"]
+
+[node name="bracket" instance=ExtResource("1_slkfe")]
+script = ExtResource("2_rl31f")
+
+[node name="bracket" parent="." index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.00499849, 0)
+
+[node name="bracketTipMesh_Left" parent="bracket" index="4"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, 1)
+
+[node name="bracketTipMesh_Right" parent="bracket" index="5"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1)
