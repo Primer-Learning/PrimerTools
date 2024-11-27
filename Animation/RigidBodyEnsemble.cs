@@ -37,13 +37,13 @@ public partial class RigidBodyEnsemble : Node3D
 		}
 
 		return rigidChildren.Select((x, i) => x.MoveTo(childDestinations[i], duration: duration, global: global))
-			.RunInParallel();
+			.InParallel();
 	}
 	
 	public Animation ScaleTo(Vector3 finalScale, float duration = 0.5f)
 	{
 		var rigidChildren = GetChildren().OfType<RigidBody3D>();
-		return rigidChildren.Select(x => x.ScaleTo(finalScale, duration: duration)).RunInParallel();
+		return rigidChildren.Select(x => x.ScaleTo(finalScale, duration: duration)).InParallel();
 	}
 	public Animation ScaleTo(float finalScale, float duration = 0.5f)
 	{
@@ -55,7 +55,7 @@ public partial class RigidBodyEnsemble : Node3D
 		var rigidChildren = GetChildren().OfType<RigidBody3D>();
 		// This should always reset to ensure the rigidbody is frozen when the animation starts playing.
 		// But if 'forever', just re-freeze after 1000s but correct the animation's Length property.
-		var animation = rigidChildren.Select(x => x.AnimateFreeze(false, resetAtEnd: true, duration: forever ? 1000 : duration)).RunInParallel();
+		var animation = rigidChildren.Select(x => x.AnimateFreeze(false, resetAtEnd: true, duration: forever ? 1000 : duration)).InParallel();
 		animation.Length = duration;
 		return animation;
 	}

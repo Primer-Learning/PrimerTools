@@ -118,7 +118,7 @@ public partial class BarPlot3D : Node3D, IPrimerGraphData
             animations.Add(bar.ScaleTo(CalculateBarScale(_data[x, y])));
         }
 
-        return animations.RunInParallel().WithDuration(duration);
+        return animations.InParallel().WithDuration(duration);
     }
 
     public Tween TweenTransition(double duration = AnimationUtilities.DefaultDuration)
@@ -166,6 +166,6 @@ public partial class BarPlot3D : Node3D, IPrimerGraphData
             animations.Add(bar.ScaleTo(Vector3.Zero));
         }
 
-        return animations.RunInParallel();
+        return animations.InParallel();
     }
 }

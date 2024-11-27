@@ -47,7 +47,7 @@ public partial class PointData : Node3D, IPrimerGraphData
             transitionAnimations.Add(node.MoveTo(Graph.DataSpaceToPositionSpace(position)));
         }
 
-        return transitionAnimations.RunInParallel();
+        return transitionAnimations.InParallel();
     }
 
     public Tween TweenTransition(double duration)

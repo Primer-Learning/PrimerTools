@@ -188,7 +188,7 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		{
 			PrimerGD.PrintErrorWithStackTrace("Can't register an empty animation");
 		}
-		RegisterAnimation(animations.RunInParallel());
+		RegisterAnimation(animations.InParallel());
 	}
 
 	private Animation TopLevelAnimationWithPlaybackTracksRemoved()
@@ -272,7 +272,7 @@ public abstract partial class AnimationSequence : AnimationPlayer
 				// End time for next iteration or final length
 				time += _referenceAnimationPlayers[i].GetAnimation(animationName).Length;
 			}
-			if (singleClip) AddAnimationToLibrary(animationsWithDelays.RunInParallel(), "final_combined", _referenceAnimationLibraries[i]);
+			if (singleClip) AddAnimationToLibrary(animationsWithDelays.InParallel(), "final_combined", _referenceAnimationLibraries[i]);
 
 			latestTime = Mathf.Max(latestTime, time);
 		}

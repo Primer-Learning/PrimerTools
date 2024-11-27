@@ -209,7 +209,7 @@ public partial class StackedBarPlot : Node3D, IPrimerGraphData
             }
         }
 
-        return animations.RunInParallel();
+        return animations.InParallel();
     }
 
     private MeshInstance3D CreateBar(int stackIndex, int segmentIndex, Tuple<float, float, float> segment)

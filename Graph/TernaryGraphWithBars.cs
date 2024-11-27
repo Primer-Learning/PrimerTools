@@ -74,6 +74,6 @@ public partial class TernaryGraphWithBars : TernaryGraph
         {
             animations.Add(bars[i].ScaleTo( new Vector3(BarWidthScale, Mathf.Max(Data[i], 0.001f), BarWidthScale)));
         }
-        return animations.RunInParallel();
+        return animations.InParallel();
     }
 }

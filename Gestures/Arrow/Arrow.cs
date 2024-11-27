@@ -122,7 +122,7 @@ public partial class Arrow : Node3D
             tailObject.Visible = false;
         }
 
-        return animations.RunInParallel();
+        return animations.InParallel();
     }
     
     // public Tween ScaleUpFromHead()

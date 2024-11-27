@@ -81,7 +81,7 @@ public partial class Table : Node3D
                 }
             }
         }
-        return animations.RunInParallel();
+        return animations.InParallel();
     }
     
     public Animation ScaleCellToDefault(int row, int column)

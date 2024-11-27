@@ -108,7 +108,7 @@ public partial class BarPlot : Node3D, IPrimerGraphData
             }
         }
 
-        return animations.RunInParallel();
+        return animations.InParallel();
     }
 
     public Tween TweenTransition(double duration = AnimationUtilities.DefaultDuration)

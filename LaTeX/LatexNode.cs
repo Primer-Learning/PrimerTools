@@ -144,7 +144,7 @@ public partial class LatexNode : Node3D
 				}
 			}
 		}
-		return animations.RunInParallel();
+		return animations.InParallel();
 	}
 	
 	#region Alignment

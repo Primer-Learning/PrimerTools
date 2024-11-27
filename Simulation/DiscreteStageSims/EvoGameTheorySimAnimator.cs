@@ -92,7 +92,7 @@ public partial class EvoGameTheorySimAnimator : Node3D
             animations.Add(home.ScaleTo(Vector3.One * 0.5f));
         }
 
-        return animations.RunInParallel();
+        return animations.InParallel();
     }
 
     public void NonAnimatedSetup()
@@ -199,9 +199,9 @@ public partial class EvoGameTheorySimAnimator : Node3D
             toHomeAnimations.Add(new Animation().WithDuration(0.5f));
             
             dailyAnimations.Add(AnimationUtilities.Series(
-                    appearanceAnimations.RunInParallel(),
-                    toTreeAnimations.RunInParallel(),
-                    toHomeAnimations.RunInParallel()
+                    appearanceAnimations.InParallel(),
+                    toTreeAnimations.InParallel(),
+                    toHomeAnimations.InParallel()
                 )
             );
         }
@@ -349,7 +349,7 @@ public partial class EvoGameTheorySimAnimator : Node3D
             animations.Add(graphWithBars.Transition());
         }
         
-        return animations.RunInParallel();
+        return animations.InParallel();
     }
 
     public BarPlot BarPlot;

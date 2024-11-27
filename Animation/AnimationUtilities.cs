@@ -737,7 +737,7 @@ public static class AnimationUtilities
         return newAnimation;
     }
     
-    public static Animation RunInParallel(this IEnumerable<Animation> animations)
+    public static Animation InParallel(this IEnumerable<Animation> animations)
     {
         return Parallel(animations.ToArray());
     }

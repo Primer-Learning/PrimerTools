@@ -163,9 +163,9 @@ public partial class Graph : Node3D
         }
         
         return AnimationUtilities.Series(
-            removeTransitions.RunInParallel(),
-            updateTransitions.RunInParallel(),
-            addTransitions.RunInParallel()
+            removeTransitions.InParallel(),
+            updateTransitions.InParallel(),
+            addTransitions.InParallel()
         );
     }
 
