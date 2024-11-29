@@ -21,14 +21,20 @@ public abstract class Simulation<TDataEntity> : ISimulation
     private bool _initialized;
     private bool _running;
 
-    public void Initialize(IEnumerable<Vector3> initialPositions = null)
+    public void Initialize(bool run = true, IEnumerable<Vector3> initialPositions = null)
     {
         if (_initialized) return;
         _initialized = true;
-        _running = true;
+        _running = run;
         
         CustomInitialize(initialPositions);
     }
+
+    public void Start()
+    {
+        _running = true;
+    }
+    
     protected abstract void CustomInitialize(IEnumerable<Vector3> initialPositions);
     public virtual void Reset()
     {

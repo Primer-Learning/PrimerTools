@@ -4,6 +4,9 @@ using Godot;
 
 namespace PrimerTools.Simulation;
 
+// Todo: Try making this class non-generic. It might work fine with just the interface.
+// The only issue might be that entities gotten from the list will need to be cast to their correct type.
+// I'm not certain how casting plays with interfaces.
 public class DataEntityRegistry<T> where T : IDataEntity
 {
 	private readonly World3D _world3D;

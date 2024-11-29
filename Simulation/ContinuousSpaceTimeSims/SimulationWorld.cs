@@ -32,6 +32,12 @@ public partial class SimulationWorld : Node3D
             // GD.Print($"SimulationWorld running : {value}");
         }
     }
+
+    public void Start()
+    {
+        Running = true;
+    }
+    
     [Export] public VisualizationMode VisualizationMode = VisualizationMode.NodeCreatures;
     
     private Vector2 _worldDimension = Vector2.One * 50;

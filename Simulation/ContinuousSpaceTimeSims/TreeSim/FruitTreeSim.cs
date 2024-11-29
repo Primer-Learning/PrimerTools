@@ -45,10 +45,10 @@ public class FruitTreeSim : Simulation<DataTree>
                     )
                 );
             }
-
+        
             initialPositions = posList;
         }
-
+        
         foreach (var pos in initialPositions)
         {
             Registry.RegisterEntity(new DataTree { Position = pos });
