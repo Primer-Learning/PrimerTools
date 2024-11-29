@@ -5,9 +5,15 @@ using PrimerTools;
 [Tool]
 public partial class Arrow : Node3D
 {
+    // TODO: Fix this up. It's confusing because tries to handle local and global positions, and also following objects.
+    // Probably best to set it up so the core functionality works with head/tail positions in the Node3D's parent space.
+    // Then atop that, add functionality for specifying global positions or objects follow. Need to think through the 
+    // intended object following behavior. Might be best to not do that at all and instead just require manual calls
+    // to animation methods using that objects position (local or global)
+    
     public static readonly PackedScene ArrowScene = ResourceLoader.Load<PackedScene>("res://addons/PrimerTools/Gestures/Arrow/arrow.tscn");
 
-    public static Arrow CreateArrow()
+    public static Arrow CreateInstance()
     {
         var arrow = ArrowScene.Instantiate<Arrow>();
         return arrow;
@@ -54,6 +60,7 @@ public partial class Arrow : Node3D
     }
 
     // Starting point approach
+    [Export] public Vector3 headPoint;
     [Export] public Vector3 tailPoint;
     [Export] private Node3D shaftObject;
     [Export] private Node3D headObject;
@@ -65,7 +72,7 @@ public partial class Arrow : Node3D
     // Todo: Make this an animation, like Transition. This will make it easier to 
     // move the arrow while keeping its tail point, for example. Or to change multiple parameters at once.
     // Currently, these need to manually be animated.
-    public Animation Transition()
+    public Animation Transition(double duration = AnimationUtilities.DefaultDuration)
     {
         var animations = new List<Animation>();
 
@@ -73,6 +80,10 @@ public partial class Arrow : Node3D
         {
             // GlobalPosition = nodeThatHeadFollows.GlobalPosition;
             animations.Add(this.MoveTo(nodeThatHeadFollows.GlobalPosition, global: true));
+        }
+        else
+        {
+            animations.Add(this.MoveTo(headPoint));
         }
         
         if (nodeThatTailFollows != null)
@@ -122,7 +133,131 @@ public partial class Arrow : Node3D
             tailObject.Visible = false;
         }
 
-        return animations.InParallel();
+        return animations.InParallel().WithDuration(duration);
+    }
+    
+    public Tween TweenTransition(double duration = AnimationUtilities.DefaultDuration)
+    {
+        var tween = CreateTween();
+        tween.SetParallel();
+        
+        if (nodeThatHeadFollows != null)
+        {
+            // GlobalPosition = nodeThatHeadFollows.GlobalPosition;
+            // animations.Add(this.MoveTo(nodeThatHeadFollows.GlobalPosition, global: true));
+
+            tween.TweenProperty(
+                this,
+                "global_position",
+                nodeThatHeadFollows.GlobalPosition,
+                duration
+            );
+        }
+        else
+        {
+            tween.TweenProperty(
+                this,
+                "position",
+                headPoint,
+                duration
+            );
+        }
+        
+        if (nodeThatTailFollows != null)
+        {
+            // This assumes global scale is Vector3.one
+            tailPoint = nodeThatTailFollows.GlobalPosition - GlobalPosition;
+            
+            // animations.Add(this.RotateTo(new Vector3(0, 0, Mathf.Atan2(tailPoint.Y, tailPoint.X) * 180 / Mathf.Pi)));
+            tween.TweenProperty(
+                this,
+                "rotation",
+                new Vector3(0, 0, Mathf.Atan2(tailPoint.Y, tailPoint.X)),
+                duration
+            );
+        }
+        else
+        {
+            tween.TweenProperty(
+                this,
+                "rotation",
+                new Vector3(0, 0, Mathf.Atan2(tailPoint.Y, tailPoint.X)),
+                duration
+            );
+        }
+        
+        
+        var lengthToCutFromHead = ShowHeadArrow ? shaftAdjustment * Chonk + HeadPadding : HeadPadding;
+        // animations.Add(shaftObject.MoveTo(Vector3.Right * lengthToCutFromHead));
+        tween.TweenProperty(
+            shaftObject,
+            "position",
+            Vector3.Right * lengthToCutFromHead,
+            duration
+        );
+        
+        // shaftObject.Position = Vector3.Right * lengthToCutFromHead;
+        
+        // Not a truly robust scale correction, but should work when all the scales of parents are uniform.
+        var totalLength = tailPoint.Length();
+        var lengthToCutFromTail = ShowTailArrow
+            ? shaftAdjustment * Chonk + TailPadding
+            : TailPadding;
+        
+        // animations.Add(shaftObject.ScaleTo(new Vector3(totalLength - lengthToCutFromHead - lengthToCutFromTail, Chonk, 1)));
+        tween.TweenProperty(
+            shaftObject,
+            "scale",
+            new Vector3(totalLength - lengthToCutFromHead - lengthToCutFromTail, Chonk, 1),
+            duration
+        );
+        
+        if (ShowHeadArrow)
+        {
+            headObject.Visible = true;
+            // animations.Add(headObject.MoveTo(Vector3.Right * HeadPadding));
+            tween.TweenProperty(
+                headObject,
+                "position",
+                Vector3.Right * HeadPadding,
+                duration
+            );
+            // animations.Add(headObject.ScaleTo(Vector3.One * Chonk));
+            tween.TweenProperty(
+                headObject,
+                "scale",
+                Vector3.One * Chonk,
+                duration
+            );
+        }
+        else
+        {
+            headObject.Visible = false;
+        }
+        if (ShowTailArrow)
+        {
+            tailObject.Visible = true;
+            // animations.Add(tailObject.MoveTo(Vector3.Right * (totalLength - TailPadding)));
+            tween.TweenProperty(
+                tailObject,
+                "position",
+                Vector3.Right * (totalLength - TailPadding),
+                duration
+            );
+            // animations.Add(tailObject.ScaleTo(Vector3.One * Chonk));
+            tween.TweenProperty(
+                tailObject,
+                "scale",
+                Vector3.One * Chonk,
+                duration
+            );
+        }
+        else
+        {
+            tailObject.Visible = false;
+        }
+
+        return tween;
     }
     
     // public Tween ScaleUpFromHead()
