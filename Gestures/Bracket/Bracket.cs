@@ -40,6 +40,12 @@ public partial class Bracket : Node3D
 		var lHorizontal = (-toLPoint).Project(lToR);
 		
 		var stemToBaseline = toLPoint + lHorizontal;
+
+		if (LeftTipPosition == RightTipPosition || stemToBaseline.LengthSquared() == 0)
+		{
+			return (Quaternion.Identity, 0, 0, 0, 0, 0);
+		}
+		
 		var rotation = Basis.LookingAt(-stemToBaseline, LeftTipPosition.Cross(RightTipPosition)).GetRotationQuaternion();
 		var scale = stemToBaseline.Length();
 		var rLength = (toRPoint - stemToBaseline).Length() / scale;
