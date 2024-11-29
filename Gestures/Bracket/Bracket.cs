@@ -99,7 +99,7 @@ public partial class Bracket : Node3D
 		).WithDuration(duration);
 	}
 
-	public Tween TweenTransition(double duration)
+	public Tween TweenTransition(double duration = AnimationUtilities.DefaultDuration)
 	{
 		var parameters = CalculateUpdateParameters();
 		
