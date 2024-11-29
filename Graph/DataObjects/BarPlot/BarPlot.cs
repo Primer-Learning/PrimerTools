@@ -24,14 +24,15 @@ public partial class BarPlot : Node3D, IPrimerGraphData
     public delegate Vector3 Transformation(Vector3 inputPoint);
     public Transformation TransformPointFromDataSpaceToPositionSpace = point => point;
 
-    private List<float> Data;
+    private List<float> _data;
+    public IReadOnlyList<float> Data => _data.AsReadOnly();
     public int BarCountLimit = 0; // zero means no limit
     private List<float> PlottedData
     {
         get
         {
-            if (BarCountLimit <= 0) return Data;
-            return Data.Take(BarCountLimit).ToList();
+            if (BarCountLimit <= 0) return _data;
+            return _data.Take(BarCountLimit).ToList();
         }
     }
     
@@ -43,7 +44,7 @@ public partial class BarPlot : Node3D, IPrimerGraphData
     };
     public void FetchData()
     {
-        Data = DataFetchMethod().ToList();
+        _data = DataFetchMethod().ToList();
     }
 
     private List<Tuple<float, float, float>> DataAsRectProperties()
@@ -104,7 +105,7 @@ public partial class BarPlot : Node3D, IPrimerGraphData
                 theLabel.numberPrefix = BarLabelPrefix;
                 theLabel.DecimalPlacesToShow = BarLabelDecimalPlaces;
                 
-                animations.Add(theLabel.AnimateNumericalExpression(Mathf.RoundToInt(Data[i])));
+                animations.Add(theLabel.AnimateNumericalExpression(Mathf.RoundToInt(_data[i])));
             }
         }
 
@@ -192,7 +193,7 @@ public partial class BarPlot : Node3D, IPrimerGraphData
                 tween.TweenProperty(
                     theLabel,
                     "NumericalExpression",
-                    Mathf.RoundToInt(Data[i]),
+                    Mathf.RoundToInt(_data[i]),
                     duration
                 );
             }
@@ -241,13 +242,13 @@ public partial class BarPlot : Node3D, IPrimerGraphData
     
     public void SetData(params float[] bars)
     {
-        Data = bars.ToList();
+        _data = bars.ToList();
     }
 
     public void AddData(params float[] newData)
     {
-        Data ??= new List<float>();
-        Data.AddRange(newData);
+        _data ??= new List<float>();
+        _data.AddRange(newData);
     }
 
     public void SaveData(string filePath, bool globalPath = false)
@@ -256,7 +257,7 @@ public partial class BarPlot : Node3D, IPrimerGraphData
         if (!finalPath.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
             finalPath += ".json";
         Directory.CreateDirectory(Path.GetDirectoryName(finalPath));
-        var jsonString = JsonSerializer.Serialize(Data.ToArray());
+        var jsonString = JsonSerializer.Serialize(_data.ToArray());
         File.WriteAllText(finalPath, jsonString);
     }
 
@@ -270,6 +271,6 @@ public partial class BarPlot : Node3D, IPrimerGraphData
             
         var jsonString = File.ReadAllText(finalPath);
         var loadedData = JsonSerializer.Deserialize<float[]>(jsonString);
-        Data = loadedData.ToList();
+        _data = loadedData.ToList();
     }
 }
