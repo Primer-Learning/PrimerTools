@@ -46,10 +46,18 @@ public static class AnimationUtilities
                 node.AnimateValue( (float) doubleValue, propertyPath, outHandle, inHandle, duration);
                 break;
             case int intValue:
-                GD.Print("int AnimateValue not implemented. Casting to float.");
-                return node.AnimateValue( (float) intValue, propertyPath, outHandle, inHandle, duration);
+                // TODO: Make this actually step through intermediate values instead of just snapping to the final value.
+                // Or maybe that doesn't make sense? It's pretty rare to want that on non-floats.
+                // At time of writing, I'm only using this to keyframe an int property as a hack for running setter code
+                // since method call tracks don't run in the editor.
+                var trackIndex = animation.AddTrack(Animation.TrackType.Value);
+                animation.TrackSetPath(trackIndex, node.GetPath() + ":" + propertyPath);
+                animation.TrackInsertKey(trackIndex, 0, node.GetIndexed(propertyPath).AsInt32());
+                animation.TrackInsertKey(trackIndex, TimeEpsilon, intValue);
+                node.SetIndexed(propertyPath, intValue);
+                break;
             case float floatValue:
-                var trackIndex = animation.AddTrack(Animation.TrackType.Bezier);
+                trackIndex = animation.AddTrack(Animation.TrackType.Bezier);
                 animation.TrackSetPath(trackIndex, node.GetPath()+":" + propertyPath);
                 
                 // First key
@@ -135,8 +143,10 @@ public static class AnimationUtilities
         return animation;
     }
 
-    public static Animation MethodCall<TNode>(this TNode nodeWithMethod, string methodName, Godot.Collections.Array args) where TNode : Node
+    public static Animation MethodCall<TNode>(this TNode nodeWithMethod, string methodName, Godot.Collections.Array args = null) where TNode : Node
     {
+        if (args == null) args = new Godot.Collections.Array();
+        
         var animation = new Animation();
         animation.AddTrack(Animation.TrackType.Method);
         animation.TrackSetPath(0, nodeWithMethod.GetPath());
