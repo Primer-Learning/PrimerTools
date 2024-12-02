@@ -84,6 +84,8 @@ public partial class SimulationWorld : Node3D
 
     public const int PhysicsStepsPerSimSecond = 60;
     public const float TimeStep = 1f / PhysicsStepsPerSimSecond;
+    public int PhysicsStepsTaken { get; private set; }
+    public float SimTime => PhysicsStepsTaken * TimeStep;
 
     private Rng _rng;
     public Rng Rng => _rng ??= new Rng(_seed == -1 ? System.Environment.TickCount : _seed);
@@ -149,7 +151,7 @@ public partial class SimulationWorld : Node3D
     private int _realTimeOfLastStatusPrint;
     private int _stepsSinceLastStatusPrint;
     [Export] private float _statusPrintSimTimeInterval;
-    private int _totalPhysicsSteps;
+
     public override void _PhysicsProcess(double delta)
     {
         if (!Running) return;
@@ -157,9 +159,9 @@ public partial class SimulationWorld : Node3D
         {
             simulation.Step();
         }
-
+        PhysicsStepsTaken++;
+        
         if (_statusPrintSimTimeInterval == 0) return;
-        _totalPhysicsSteps++;
         _stepsSinceLastStatusPrint++;
 
         if ((float)_stepsSinceLastStatusPrint / PhysicsStepsPerSimSecond >= _statusPrintSimTimeInterval)
