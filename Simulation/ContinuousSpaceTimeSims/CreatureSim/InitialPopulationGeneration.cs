@@ -20,7 +20,7 @@ public static class InitialPopulationGeneration
                     "MaxSpeed", 
                     new List<float> { CreatureSimSettings.Instance.ReferenceCreatureSpeed, CreatureSimSettings.Instance.ReferenceCreatureSpeed },
                     ExpressionMechanisms.Float.AverageCodominant,
-                    1
+                    0
                 )
             );
 
@@ -29,7 +29,7 @@ public static class InitialPopulationGeneration
                     "AwarenessRadius", 
                     new List<float> { CreatureSimSettings.Instance.ReferenceAwarenessRadius, CreatureSimSettings.Instance.ReferenceAwarenessRadius},
                     ExpressionMechanisms.Float.AverageCodominant,
-                    1
+                    0
                 )
             );
 
@@ -79,7 +79,7 @@ public static class InitialPopulationGeneration
                     "MaxSpeed", 
                     new List<float> { CreatureSimSettings.Instance.ReferenceCreatureSpeed, CreatureSimSettings.Instance.ReferenceCreatureSpeed },
                     ExpressionMechanisms.Float.AverageCodominant,
-                    1
+                    0
                 )
             );
 
@@ -88,7 +88,7 @@ public static class InitialPopulationGeneration
                     "AwarenessRadius", 
                     new List<float> { CreatureSimSettings.Instance.ReferenceAwarenessRadius, CreatureSimSettings.Instance.ReferenceAwarenessRadius},
                     ExpressionMechanisms.Float.AverageCodominant,
-                    1
+                    0
                 )
             );
 
