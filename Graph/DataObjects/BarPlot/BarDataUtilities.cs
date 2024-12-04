@@ -53,7 +53,7 @@ public static class BarDataUtilities
         return ApplyAdjustment(histogram, () => data, options);
     }
 
-    private static float[] NormalizeHistogram(float[] histogram)
+    public static float[] NormalizeHistogram(float[] histogram)
     {
         var sum = histogram.Sum();
         if (sum == 0) return histogram;
