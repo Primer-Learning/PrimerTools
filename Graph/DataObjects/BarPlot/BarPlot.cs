@@ -66,13 +66,18 @@ public partial class BarPlot : Node3D, IPrimerGraphData
     public Animation Transition(double duration = AnimationUtilities.DefaultDuration)
     {
         var rectProperties = DataAsRectProperties();
-
         var animations = new List<Animation>();
+        
+        // Keep track of updated bars
+        var updatedBars = new HashSet<string>();
 
         // Iterate through the data points
         for (var i = 0; i < rectProperties.Count; i++)
         {
-            var bar = GetNodeOrNull<MeshInstance3D>($"Bar {i}");
+            var barName = $"Bar {i}";
+            updatedBars.Add(barName);
+            
+            var bar = GetNodeOrNull<MeshInstance3D>(barName);
             // If the bar doesn't exist, make it
             if (bar == null)
             {
@@ -100,12 +105,31 @@ public partial class BarPlot : Node3D, IPrimerGraphData
                 var targetLabelScale = BarLabelScaleFactor * rectProperties[i].Item3 / 2 * Vector3.One;
                 animations.Add(theLabel.ScaleTo(targetLabelScale));
 
-                // var labelTextAnimation = new Animation();
                 theLabel.numberSuffix = BarLabelSuffix;
                 theLabel.numberPrefix = BarLabelPrefix;
                 theLabel.DecimalPlacesToShow = BarLabelDecimalPlaces;
                 
                 animations.Add(theLabel.AnimateNumericalExpression(Mathf.RoundToInt(_data[i])));
+            }
+        }
+
+        // Handle any remaining bars that aren't in the current data set
+        foreach (var child in GetChildren())
+        {
+            if (child is MeshInstance3D bar && !updatedBars.Contains(child.Name))
+            {
+                // Animate the bar to zero height
+                animations.Add(bar.AnimateValue(0f, "mesh:size:y"));
+                
+                // Move it to y=0 position
+                animations.Add(bar.AnimateValue(new Vector3(bar.Position.X, 0, bar.Position.Z), "position"));
+
+                // Handle associated label if it exists
+                var labelName = $"Label {child.Name.ToString().Split(' ')[1]}";
+                if (GetNodeOrNull<LatexNode>(labelName) is { } label)
+                {
+                    animations.Add(label.ScaleTo(Vector3.Zero));
+                }
             }
         }
 
@@ -116,15 +140,21 @@ public partial class BarPlot : Node3D, IPrimerGraphData
     {
         var rectProperties = DataAsRectProperties();
 
-        if (!rectProperties.Any()) return null;
+        if (!rectProperties.Any() && GetChildren().Count == 0) return null;
 
         var tween = CreateTween();
         tween.SetParallel();
         
+        // Keep track of updated bars
+        var updatedBars = new HashSet<string>();
+        
         // Iterate through the data points
         for (var i = 0; i < rectProperties.Count; i++)
         {
-            var bar = GetNodeOrNull<MeshInstance3D>($"Bar {i}");
+            var barName = $"Bar {i}";
+            updatedBars.Add(barName);
+            
+            var bar = GetNodeOrNull<MeshInstance3D>(barName);
             // If the bar doesn't exist, make it
             if (bar == null)
             {
@@ -133,7 +163,6 @@ public partial class BarPlot : Node3D, IPrimerGraphData
             
             // Position animation
             var targetPosition = new Vector3(rectProperties[i].Item1, rectProperties[i].Item2 / 2, 0);
-            // animations.Add(bar.AnimateValue(targetPosition, "position"));
             tween.TweenProperty(
                 bar,
                 "position",
@@ -143,7 +172,6 @@ public partial class BarPlot : Node3D, IPrimerGraphData
             
             // Height animation
             var targetHeight = rectProperties[i].Item2;
-            // animations.Add(bar.AnimateValue(targetHeight, "mesh:size:y"));
             tween.TweenProperty(
                 bar,
                 "mesh:size:y",
@@ -153,7 +181,6 @@ public partial class BarPlot : Node3D, IPrimerGraphData
             
             // Width animation
             var targetWidth = rectProperties[i].Item3;
-            // animations.Add(bar.AnimateValue(targetWidth, "mesh:size:x"));
             tween.TweenProperty(
                 bar,
                 "mesh:size:x",
@@ -167,7 +194,6 @@ public partial class BarPlot : Node3D, IPrimerGraphData
                 
                 var targetLabelPos = new Vector3(rectProperties[i].Item1,
                     rectProperties[i].Item2 + BarLabelVerticalOffset * parentGraphSize.Y / 10, 0);
-                // animations.Add(theLabel.MoveTo(targetLabelPos));
                 tween.TweenProperty(
                     theLabel,
                     "position",
@@ -176,7 +202,6 @@ public partial class BarPlot : Node3D, IPrimerGraphData
                 );
                 
                 var targetLabelScale = BarLabelScaleFactor * rectProperties[i].Item3 / 2 * Vector3.One;
-                // animations.Add(theLabel.ScaleTo(targetLabelScale));
                 tween.TweenProperty(
                     theLabel,
                     "scale",
@@ -184,18 +209,51 @@ public partial class BarPlot : Node3D, IPrimerGraphData
                     duration
                 );
 
-                // var labelTextAnimation = new Animation();
                 theLabel.numberSuffix = BarLabelSuffix;
                 theLabel.numberPrefix = BarLabelPrefix;
                 theLabel.DecimalPlacesToShow = BarLabelDecimalPlaces;
                 
-                // animations.Add(theLabel.AnimateNumericalExpression(Mathf.RoundToInt(Data[i])));
                 tween.TweenProperty(
                     theLabel,
                     "NumericalExpression",
                     Mathf.RoundToInt(_data[i]),
                     duration
                 );
+            }
+        }
+        
+        // Handle any remaining bars that aren't in the current data set
+        foreach (var child in GetChildren())
+        {
+            if (child is MeshInstance3D bar && !updatedBars.Contains(child.Name))
+            {
+                // Animate the bar to zero height
+                tween.TweenProperty(
+                    bar,
+                    "mesh:size:y",
+                    0f,
+                    duration
+                );
+                
+                // Move it to y=0 position
+                tween.TweenProperty(
+                    bar,
+                    "position",
+                    new Vector3(bar.Position.X, 0, bar.Position.Z),
+                    duration
+                );
+
+                // Handle associated label if it exists
+                var labelName = $"Label {child.Name.ToString().Split(' ')[1]}";
+                if (GetNodeOrNull<LatexNode>(labelName) is { } label)
+                {
+                    tween.TweenProperty(
+                        label,
+                        "scale",
+                        Vector3.Zero,
+                        duration
+                    );
+                }
             }
         }
 
