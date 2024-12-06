@@ -23,6 +23,15 @@ public partial class BarPlot : Node3D, IPrimerGraphData
     
     public delegate Vector3 Transformation(Vector3 inputPoint);
     public Transformation TransformPointFromDataSpaceToPositionSpace = point => point;
+    
+    private Graph ParentGraph => GetParent<Graph>();
+    
+    private Vector3 GetAppropriateTransformation(Vector3 point, bool useTween)
+    {
+        if (useTween)
+            return ParentGraph.GetDataSpaceToPositionSpaceFromCurrentObjects(point);
+        return TransformPointFromDataSpaceToPositionSpace(point);
+    }
 
     private List<float> _data;
     public IReadOnlyList<float> Data => _data.AsReadOnly();
@@ -47,13 +56,13 @@ public partial class BarPlot : Node3D, IPrimerGraphData
         _data = DataFetchMethod().ToList();
     }
 
-    private List<Tuple<float, float, float>> DataAsRectProperties()
+    private List<Tuple<float, float, float>> DataAsRectProperties(bool useTween = false)
     {
         return PlottedData.Select( (value, i) =>
             new Tuple<float, float, float>(
-                TransformPointFromDataSpaceToPositionSpace(new Vector3((i + _offsetInBarWidthUnits) * BarWidth, 0, 0)).X,
-                TransformPointFromDataSpaceToPositionSpace(new Vector3(0, value, 0)).Y,
-                TransformPointFromDataSpaceToPositionSpace(new Vector3(_barWidthFillFactor * BarWidth, 0, 0)).X
+                GetAppropriateTransformation(new Vector3((i + _offsetInBarWidthUnits) * BarWidth, 0, 0), useTween).X,
+                GetAppropriateTransformation(new Vector3(0, value, 0), useTween).Y,
+                GetAppropriateTransformation(new Vector3(_barWidthFillFactor * BarWidth, 0, 0), useTween).X
             )
         ).ToList();
     }
@@ -65,7 +74,7 @@ public partial class BarPlot : Node3D, IPrimerGraphData
 
     public Animation Transition(double duration = AnimationUtilities.DefaultDuration)
     {
-        var rectProperties = DataAsRectProperties();
+        var rectProperties = DataAsRectProperties(useTween: false);
         var animations = new List<Animation>();
         
         // Keep track of updated bars
@@ -138,7 +147,7 @@ public partial class BarPlot : Node3D, IPrimerGraphData
 
     public Tween TweenTransition(double duration = AnimationUtilities.DefaultDuration)
     {
-        var rectProperties = DataAsRectProperties();
+        var rectProperties = DataAsRectProperties(useTween: true);
 
         if (!rectProperties.Any() && GetChildren().Count == 0) return null;
 

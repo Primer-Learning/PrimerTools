@@ -18,7 +18,7 @@ public partial class PointData : Node3D, IPrimerGraphData
             point.Name = "Point";
             AddChild(point);
             point.Owner = GetTree().EditedSceneRoot;
-            point.Position = Graph.DataSpaceToPositionSpace(pos);
+            point.Position = Graph.GetDataSpaceToPositionSpaceFromSettings(pos);
             pointObjects.Add((pos, point));
         }
     }
@@ -44,7 +44,7 @@ public partial class PointData : Node3D, IPrimerGraphData
         var transitionAnimations = new List<Animation>();
         foreach (var (position, node) in pointObjects)
         {
-            transitionAnimations.Add(node.MoveTo(Graph.DataSpaceToPositionSpace(position)));
+            transitionAnimations.Add(node.MoveTo(Graph.GetDataSpaceToPositionSpaceFromSettings(position)));
         }
 
         return transitionAnimations.InParallel();

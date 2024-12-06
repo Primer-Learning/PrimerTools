@@ -8,6 +8,8 @@ namespace PrimerTools.Graph;
 [Tool]
 public partial class Graph : Node3D
 {
+    private Node3D _dataSpaceMin;
+    private Node3D _dataSpaceMax;
     // private MemberChangeChecker memberChangeChecker;
     public override void _Process(double delta)
     {
@@ -24,6 +26,12 @@ public partial class Graph : Node3D
         var graph = new Graph();
         graph.Name = "Graph";
         graph.InstantiateAxes();
+        
+        // Initialize data space marker nodes
+        graph._dataSpaceMin = new Node3D { Name = "DataSpaceMin" };
+        graph._dataSpaceMax = new Node3D { Name = "DataSpaceMax" };
+        graph.AddChild(graph._dataSpaceMin);
+        graph.AddChild(graph._dataSpaceMax);
         
         return graph;
     }
@@ -110,11 +118,37 @@ public partial class Graph : Node3D
         }
     }
 
-    public Animation Transition(float duration = 0.5f)
+    /// <summary>
+    /// Overload method with simplified duration argument.
+    /// </summary>
+    /// <param name="duration"></param>
+    /// <param name="transitionDataObjects"></param>
+    /// <returns></returns>
+    public Animation Transition(double duration = AnimationUtilities.DefaultDuration, bool transitionDataObjects = true)
+    {
+        return Transition(duration, duration, duration, transitionDataObjects);
+    }
+
+    /// <summary>
+    /// The main implementation of Transition. It receives seperate duration arguments for the three stages of a graph
+    /// transition.
+    /// </summary>
+    /// <param name="durationTuple"></param>
+    /// <param name="addDuration"></param>
+    /// <param name="transitionDataObjects"></param>
+    /// <param name="removeDuration"></param>
+    /// <param name="updateDuration"></param>
+    /// <returns></returns>
+    public Animation Transition( double removeDuration, double updateDuration, double addDuration, bool transitionDataObjects = true)
     {
         var removeTransitions = new List<Animation>();
         var updateTransitions = new List<Animation>();
         var addTransitions = new List<Animation>();
+        
+        // Update data space markers
+        // This happens during remove with zero (epsilon) duration, because the sooner the better.
+        removeTransitions.Add(_dataSpaceMin.MoveTo(new Vector3(XAxis.Min, YAxis.Min, ZAxis.Min), duration: 0));
+        removeTransitions.Add(_dataSpaceMax.MoveTo(new Vector3(XAxis.Max, YAxis.Max, ZAxis.Max), duration: 0));
 
         foreach (var axis in Axes)
         {
@@ -123,10 +157,13 @@ public partial class Graph : Node3D
             updateTransitions.Add(update);
             addTransitions.Add(add);
         }
-        // For data objects
-        updateTransitions.AddRange(
-            GetChildren().OfType<IPrimerGraphData>().Select(x => x.Transition(duration))
-        );
+
+        if (transitionDataObjects)
+        {
+            updateTransitions.AddRange(
+                GetChildren().OfType<IPrimerGraphData>().Select(x => x.Transition(updateDuration))
+            );
+        }
         // Axis labels
         if (xAxisLabelLatexNode is not null)
         {
@@ -163,9 +200,9 @@ public partial class Graph : Node3D
         }
         
         return AnimationUtilities.Series(
-            removeTransitions.InParallel(),
-            updateTransitions.InParallel(),
-            addTransitions.InParallel()
+            removeTransitions.InParallel().WithDuration(removeDuration),
+            updateTransitions.InParallel().WithDuration(updateDuration),
+            addTransitions.InParallel().WithDuration(addDuration)
         );
     }
 
@@ -181,7 +218,7 @@ public partial class Graph : Node3D
     public CurvePlot2D AddCurvePlot2D(string name = "Curve")
     {
         var line = new CurvePlot2D();
-        line.TransformPointFromDataSpaceToPositionSpace = DataSpaceToPositionSpace;
+        line.TransformPointFromDataSpaceToPositionSpace = GetDataSpaceToPositionSpaceFromSettings;
         AddChild(line);
         line.Owner = GetTree().EditedSceneRoot;
         line.Name = name;
@@ -200,7 +237,7 @@ public partial class Graph : Node3D
     public BarPlot AddBarPlot(string name = "BarPlot")
     {
         var barPlot = new BarPlot();
-        barPlot.TransformPointFromDataSpaceToPositionSpace = DataSpaceToPositionSpace;
+        barPlot.TransformPointFromDataSpaceToPositionSpace = GetDataSpaceToPositionSpaceFromSettings;
         AddChild(barPlot);
         barPlot.Owner = GetTree().EditedSceneRoot;
         barPlot.Name = name;
@@ -210,7 +247,7 @@ public partial class Graph : Node3D
     public BarPlot3D AddBarPlot3D(string name = "BarPlot3D")
     {
         var barPlot = new BarPlot3D();
-        barPlot.TransformPointFromDataSpaceToPositionSpace = DataSpaceToPositionSpace;
+        barPlot.TransformPointFromDataSpaceToPositionSpace = GetDataSpaceToPositionSpaceFromSettings;
         AddChild(barPlot);
         barPlot.Owner = GetTree().EditedSceneRoot;
         barPlot.Name = name;
@@ -220,19 +257,32 @@ public partial class Graph : Node3D
     public StackedBarPlot AddStackedBarPlot(string name = "StackedBarPlot")
     {
         var stackedBarPlot = new StackedBarPlot();
-        stackedBarPlot.TransformPointFromDataSpaceToPositionSpace = DataSpaceToPositionSpace;
+        stackedBarPlot.TransformPointFromDataSpaceToPositionSpace = GetDataSpaceToPositionSpaceFromSettings;
         AddChild(stackedBarPlot);
         stackedBarPlot.Owner = GetTree().EditedSceneRoot;
         stackedBarPlot.Name = name;
         return stackedBarPlot;
     }
     
-    public Vector3 DataSpaceToPositionSpace(Vector3 point)
+    public Vector3 GetDataSpaceToPositionSpaceFromSettings(Vector3 point)
     {
         return new Vector3(
             (point.X - XAxis.Min) / XAxis.RangeSize * XAxis.LengthMinusPadding,
             (point.Y - YAxis.Min) / YAxis.RangeSize * YAxis.LengthMinusPadding,
             (point.Z - ZAxis.Min) / ZAxis.RangeSize * ZAxis.LengthMinusPadding
+        );
+    }
+
+    public Vector3 GetDataSpaceToPositionSpaceFromCurrentObjects(Vector3 point)
+    {
+        var min = _dataSpaceMin.Position;
+        var max = _dataSpaceMax.Position;
+        var range = max - min;
+
+        return new Vector3(
+            (point.X - min.X) / range.X * XAxis.LengthMinusPadding,
+            (point.Y - min.Y) / range.Y * YAxis.LengthMinusPadding,
+            (point.Z - min.Z) / range.Z * ZAxis.LengthMinusPadding
         );
     }
 }
