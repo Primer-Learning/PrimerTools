@@ -80,7 +80,7 @@ public partial class StackedBarPlot : Node3D, IPrimerGraphData
     {
         var stackProperties = DataAsRectProperties();
         
-        if (!stackProperties.Any()) return null;
+        if (!stackProperties.Any() && GetChildren().Count == 0) return null;
 
         // We track bars in the scene, since stored values get lost when rebuilding the project.
         var remainingBars = GetChildren().OfType<MeshInstance3D>().ToList(); 

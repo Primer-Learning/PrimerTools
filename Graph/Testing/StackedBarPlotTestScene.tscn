@@ -6,6 +6,7 @@
 
 [node name="StackedBarPlotTestScript" type="Node3D" parent="."]
 script = ExtResource("1_meheg")
+Run = true
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 0.869616, 0.493729, 0, -0.493729, 0.869616, 0, 14.41, 6.35957)
