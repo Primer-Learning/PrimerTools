@@ -21,8 +21,12 @@ public partial class Bracket : Node3D
 	public Vector3 RightTipPosition = new Vector3(1, 0, 1);
 
 	private ExportedMemberChangeChecker _exportedMemberChangeChecker;
+
+	[Export]
+	public bool EnableImmediateUpdates;
 	public override void _Process(double delta)
 	{
+		if (!EnableImmediateUpdates) return;
 		_exportedMemberChangeChecker ??= new ExportedMemberChangeChecker(this);
         
 		if (Engine.IsEditorHint() && _exportedMemberChangeChecker.CheckForChanges())
@@ -34,6 +38,7 @@ public partial class Bracket : Node3D
 	private (Quaternion rotation, float scale, float lLength, float rLength, float lBarLength, float rBarLength)
 		CalculateUpdateParameters()
 	{
+		// PrimerGD.PrintWithStackTrace("Calculating update parameters");
 		var toLPoint = LeftTipPosition - StemPosition;
 		var toRPoint = RightTipPosition - StemPosition;
 		var lToR = RightTipPosition - LeftTipPosition;
@@ -107,6 +112,7 @@ public partial class Bracket : Node3D
 
 	public Tween TweenTransition(double duration = AnimationUtilities.DefaultDuration)
 	{
+		if (Scale == Vector3.Zero) Scale = Vector3.One * 0.001f;
 		var parameters = CalculateUpdateParameters();
 		
 		var tween = CreateTween();

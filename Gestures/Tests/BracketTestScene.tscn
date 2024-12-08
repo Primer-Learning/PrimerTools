@@ -1072,8 +1072,8 @@ libraries = {
 [node name="bracket" type="Node3D" parent="AnimationPlayer"]
 transform = Transform3D(-3.63441, -0.612708, 0.256066, -0.661723, 3.22202, -1.68246, 0.0557062, -1.70093, -3.27928, 0, 0, 0)
 script = ExtResource("2_v538i")
-LeftTipPosition = Vector3(3.565, -1.08, -3.33)
-RightTipPosition = Vector3(-17.965, -5, -3)
+LeftTipPosition = Vector3(-0.910445, 0, 1)
+RightTipPosition = Vector3(5.01348, 0, 1)
 
 [node name="bracket" type="Node3D" parent="AnimationPlayer/bracket"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.00499849, 0)
