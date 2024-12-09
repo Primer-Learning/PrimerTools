@@ -182,20 +182,20 @@ public static class AnimationUtilities
         return node.MoveTo(finalPos, duration: duration, global: global);
     } 
     
-    public static Animation RotateTo(this Node3D node, float xDeg, float yDeg, float zDeg, bool global = false, double duration = DefaultDuration)
+    public static Animation RotateTo(this Node3D node, float xDeg, float yDeg, float zDeg, bool global = false, double duration = DefaultDuration, Animation.InterpolationType interpolationType = Animation.InterpolationType.CubicAngle)
     {
-        return node.RotateTo(new Vector3(xDeg, yDeg, zDeg), global: global, duration);
+        return node.RotateTo(new Vector3(xDeg, yDeg, zDeg), global: global, duration, interpolationType);
     }
-    public static Animation RotateTo(this Node3D node, Vector3 eulerAnglesInDegrees, bool global = false, double duration = DefaultDuration)
+    public static Animation RotateTo(this Node3D node, Vector3 eulerAnglesInDegrees, bool global = false, double duration = DefaultDuration, Animation.InterpolationType interpolationType = Animation.InterpolationType.CubicAngle)
     {
         var eulerAnglesInRadians = new Vector3(
             Mathf.DegToRad(eulerAnglesInDegrees.X),
             Mathf.DegToRad(eulerAnglesInDegrees.Y),
             Mathf.DegToRad(eulerAnglesInDegrees.Z)
         );
-        return node.RotateTo(Quaternion.FromEuler(eulerAnglesInRadians), global: global, duration);
+        return node.RotateTo(Quaternion.FromEuler(eulerAnglesInRadians), global: global, duration, interpolationType);
     }
-    public static Animation RotateTo(this Node3D node, Quaternion destination, bool global = false, double duration = DefaultDuration)
+    public static Animation RotateTo(this Node3D node, Quaternion destination, bool global = false, double duration = DefaultDuration, Animation.InterpolationType interpolationType = Animation.InterpolationType.CubicAngle)
     {
         if (duration == 0) duration = TimeEpsilon;
 
@@ -223,7 +223,7 @@ public static class AnimationUtilities
         animation.RotationTrackInsertKey(trackIndex, 0.0, node.Quaternion);
         // Second key
         animation.RotationTrackInsertKey(trackIndex, duration, destination);
-        animation.TrackSetInterpolationType(trackIndex, Animation.InterpolationType.CubicAngle);
+        animation.TrackSetInterpolationType(trackIndex, interpolationType);
 
         node.Quaternion = destination;
 
