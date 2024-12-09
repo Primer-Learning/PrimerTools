@@ -121,7 +121,10 @@ public partial class LatexNode : Node3D
 			{
 				if (grandchild is MeshInstance3D meshInstance3D)
 				{
-					meshInstance3D.Mesh.SurfaceSetMaterial(0,(StandardMaterial3D) meshInstance3D.Mesh.SurfaceGetMaterial(0).Duplicate(true));
+					// Old duplication that kept the material from blender import.
+					// meshInstance3D.Mesh.SurfaceSetMaterial(0,(StandardMaterial3D) meshInstance3D.Mesh.SurfaceGetMaterial(0).Duplicate(true));
+					// Instead, create a new material with basic defaults.
+					meshInstance3D.Mesh.SurfaceSetMaterial(0, new StandardMaterial3D());
 				}
 			}
 		}
