@@ -23,12 +23,16 @@ public partial class Arrow : Node3D
 
     private const float shaftAdjustment = 0.05f;
 
+    [Export]
+    public bool EnableImmediateUpdates;
     public override void _Process(double delta)
     {
+        if (!EnableImmediateUpdates) return;
         _exportedMemberChangeChecker ??= new ExportedMemberChangeChecker(this);
 
         if (Engine.IsEditorHint() && _exportedMemberChangeChecker.CheckForChanges())
         {
+            GD.Print("Updating arrow");
             Transition();
         }
         
@@ -72,31 +76,40 @@ public partial class Arrow : Node3D
     // Todo: Make this an animation, like Transition. This will make it easier to 
     // move the arrow while keeping its tail point, for example. Or to change multiple parameters at once.
     // Currently, these need to manually be animated.
-    public Animation Transition(double duration = AnimationUtilities.DefaultDuration)
+    public Animation Transition(double duration = AnimationUtilities.DefaultDuration, Animation.InterpolationType rotationInterpolationType = Animation.InterpolationType.CubicAngle)
     {
         var animations = new List<Animation>();
 
+        var finalPosition = Position;
+        
         if (nodeThatHeadFollows != null)
         {
+            GD.PushWarning("Node following disabled for Arrow.");
             // GlobalPosition = nodeThatHeadFollows.GlobalPosition;
-            animations.Add(this.MoveTo(nodeThatHeadFollows.GlobalPosition, global: true));
+            // animations.Add(this.MoveTo(nodeThatHeadFollows.GlobalPosition, global: true));
         }
         else
         {
-            animations.Add(this.MoveTo(headPoint));
+            finalPosition = headPoint;
+            // animations.Add(this.MoveTo(headPoint));
         }
         
-        if (nodeThatTailFollows != null)
-        {
-            // This assumes global scale is Vector3.one
-            tailPoint = nodeThatTailFollows.GlobalPosition - GlobalPosition;
-        }
+        // if (nodeThatTailFollows != null)
+        // {
+        //     // This assumes global scale is Vector3.one
+        //     tailPoint = nodeThatTailFollows.GlobalPosition - GlobalPosition;
+        // }
+
+        var finalRotation = new Vector3(0, 0, Mathf.Atan2(tailPoint.Y, tailPoint.X) * 180 / Mathf.Pi);
+        // animations.Add(this.RotateTo(new Vector3(0, 0, Mathf.Atan2(tailPoint.Y, tailPoint.X) * 180 / Mathf.Pi)));
         
-        animations.Add(this.RotateTo(new Vector3(0, 0, Mathf.Atan2(tailPoint.Y, tailPoint.X) * 180 / Mathf.Pi)));
         // Rotation = new Vector3(0, 0, Mathf.Atan2(tailPoint.Y, tailPoint.X));
         
         var lengthToCutFromHead = ShowHeadArrow ? shaftAdjustment * Chonk + HeadPadding : HeadPadding;
-        animations.Add(shaftObject.MoveTo(Vector3.Right * lengthToCutFromHead));
+
+        var finalShaftPosition = Vector3.Right * lengthToCutFromHead;
+        // animations.Add(shaftObject.MoveTo(Vector3.Right * lengthToCutFromHead));
+        
         // shaftObject.Position = Vector3.Right * lengthToCutFromHead;
         
         // Not a truly robust scale correction, but should work when all the scales of parents are uniform.
@@ -104,37 +117,54 @@ public partial class Arrow : Node3D
         var lengthToCutFromTail = ShowTailArrow
             ? shaftAdjustment * Chonk + TailPadding
             : TailPadding;
-        
-        animations.Add(shaftObject.ScaleTo(new Vector3(totalLength - lengthToCutFromHead - lengthToCutFromTail, Chonk, 1)));
+
+        var finalShaftScale = new Vector3(totalLength - lengthToCutFromHead - lengthToCutFromTail, Chonk, 1);
+        // animations.Add(shaftObject.ScaleTo(new Vector3(totalLength - lengthToCutFromHead - lengthToCutFromTail, Chonk, 1)));
         // shaftObject.Scale = new Vector3(totalLength - lengthToCutFromHead - lengthToCutFromTail, Chonk, 1);
-        
+
+        var finalHeadObjectPosition = Vector3.Right * HeadPadding;
+        var finalHeadScale = Vector3.One * Chonk;
         if (ShowHeadArrow)
         {
             headObject.Visible = true;
             // headObject.Position = Vector3.Right * HeadPadding;
-            animations.Add(headObject.MoveTo(Vector3.Right * HeadPadding));
+            // animations.Add(headObject.MoveTo(Vector3.Right * HeadPadding));
             // headObject.Scale = Vector3.One * Chonk;
-            animations.Add(headObject.ScaleTo(Vector3.One * Chonk));
+            // animations.Add(headObject.ScaleTo(Vector3.One * Chonk));
         }
         else
         {
             headObject.Visible = false;
         }
+
+        var finalTailObjectPosition = Vector3.Right * (totalLength - TailPadding);
+        var finalTailObjectScale = Vector3.One * Chonk;
         if (ShowTailArrow)
         {
             tailObject.Visible = true;
             // tailObject.Position = Vector3.Right * (totalLength - TailPadding);
-            animations.Add(tailObject.MoveTo(Vector3.Right * (totalLength - TailPadding)));
+            // animations.Add(tailObject.MoveTo(Vector3.Right * (totalLength - TailPadding)));
             // tailObject.Scale = Vector3.One * Chonk;
-            animations.Add(tailObject.ScaleTo(Vector3.One * Chonk));
+            // animations.Add(tailObject.ScaleTo(Vector3.One * Chonk));
         }
         else
         {
             tailObject.Visible = false;
         }
 
-        return animations.InParallel().WithDuration(duration);
+        // return animations.InParallel().WithDuration(duration);
+        return AnimationUtilities.Parallel(
+            this.MoveTo(finalPosition),
+            this.RotateTo(finalRotation, interpolationType: rotationInterpolationType),
+            shaftObject.MoveTo(finalShaftPosition),
+            shaftObject.ScaleTo(finalShaftScale),
+            headObject.MoveTo(finalHeadObjectPosition),
+            headObject.ScaleTo(finalHeadScale),
+            tailObject.MoveTo(finalTailObjectPosition),
+            tailObject.ScaleTo(finalTailObjectScale)
+        ).WithDuration(duration);
     }
+    
     
     public Tween TweenTransition(double duration = AnimationUtilities.DefaultDuration)
     {
