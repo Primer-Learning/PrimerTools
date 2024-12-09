@@ -1,5 +1,9 @@
 using Godot;
 
+/// <summary>
+/// Draws a graph that can be seen in the camera preview. Should be the child of the target camera.
+/// It actually puts a small subviewport grid in front of the camera, since you can't preview the canvas in a 3D scene.
+/// </summary>
 [Tool]
 public partial class CameraGrid : CanvasImitator
 {
