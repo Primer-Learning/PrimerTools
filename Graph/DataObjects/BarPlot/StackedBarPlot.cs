@@ -61,7 +61,7 @@ public partial class StackedBarPlot : Node3D, IPrimerGraphData
                 var value = Data[stackIndex][segmentIndex];
                 stackSegments.Add(
                     new Tuple<float, float, float>(
-                        TransformPointFromDataSpaceToPositionSpace(new Vector3(stackIndex + _offset, 0, 0)).X,
+                        TransformPointFromDataSpaceToPositionSpace(new Vector3(stackIndex + Offset, 0, 0)).X,
                         TransformPointFromDataSpaceToPositionSpace(new Vector3(0, value, 0)).Y,
                         TransformPointFromDataSpaceToPositionSpace(new Vector3(_barWidth, 0, 0)).X
                     )
@@ -72,7 +72,9 @@ public partial class StackedBarPlot : Node3D, IPrimerGraphData
         return result;
     }
     
-    private float _offset = 1;
+    // TODO: Make this follow the pattern in BarPlot where there is a bar width and a fill factor.
+    // This allows for bars to span more than one unit, such as a histogram grouping things by fives.
+    public float Offset = 1;
     private float _barWidth = 0.8f;
     private float _barDepth = 0.01f;
 

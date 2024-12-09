@@ -60,7 +60,7 @@ public partial class BarPlot : Node3D, IPrimerGraphData
     {
         return PlottedData.Select( (value, i) =>
             new Tuple<float, float, float>(
-                GetAppropriateTransformation(new Vector3((i + _offsetInBarWidthUnits) * BarWidth, 0, 0), useTween).X,
+                GetAppropriateTransformation(new Vector3((i + OffsetInBarWidthUnits) * BarWidth, 0, 0), useTween).X,
                 GetAppropriateTransformation(new Vector3(0, value, 0), useTween).Y,
                 GetAppropriateTransformation(new Vector3(_barWidthFillFactor * BarWidth, 0, 0), useTween).X
             )
@@ -68,7 +68,7 @@ public partial class BarPlot : Node3D, IPrimerGraphData
     }
 
     public float BarWidth = 1;
-    private float _offsetInBarWidthUnits = 1;
+    public float OffsetInBarWidthUnits = 1;
     private float _barWidthFillFactor = 0.8f;
     private float _barDepth = 0.01f;
 
