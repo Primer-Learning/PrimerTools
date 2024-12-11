@@ -37,6 +37,11 @@ public partial class SimulationWorld : Node3D
     {
         Running = true;
     }
+
+    public void Stop()
+    {
+        Running = false;
+    }
     
     [Export] public VisualizationMode VisualizationMode = VisualizationMode.NodeCreatures;
     
