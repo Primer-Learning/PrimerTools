@@ -20,6 +20,7 @@ public abstract class Simulation<TDataEntity> : ISimulation
 
     private bool _initialized;
     private bool _running;
+    public int PhysicsStepsTaken;
 
     public void Initialize(bool run = true, IEnumerable<Vector3> initialPositions = null)
     {
@@ -53,6 +54,7 @@ public abstract class Simulation<TDataEntity> : ISimulation
             return;
         }
         CustomStep();
+        PhysicsStepsTaken++;
     }
 
     public void ClearDeadEntities()
