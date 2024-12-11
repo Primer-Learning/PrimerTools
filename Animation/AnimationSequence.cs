@@ -146,6 +146,16 @@ public abstract partial class AnimationSequence : AnimationPlayer
 
 	#region Animation Methods
 
+	public double GetLastAnimationEndTime(int indexOfPlaybackTrack = 0)
+	{
+		if (_startTimes[indexOfPlaybackTrack].Count == 0) return 0;
+		
+		var lastDuration = _referenceAnimationLibraries[indexOfPlaybackTrack]
+			.GetAnimation($"anim{_startTimes[indexOfPlaybackTrack].Count - 1}").Length;
+		var lastStartTime = _startTimes[indexOfPlaybackTrack][^1];
+		return lastStartTime + lastDuration;
+	}
+	
 	/// <summary>
 	/// Registers an animation to be included in the top-level animation.
 	/// </summary>
@@ -180,6 +190,19 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		
 		// Put the library in the animation player
 		AddAnimationToLibrary(animation, $"anim{_startTimes[indexOfPlaybackTrack].Count}", _referenceAnimationLibraries[indexOfPlaybackTrack]);
+
+		// Time correction
+		var lastTime = GetLastAnimationEndTime(indexOfPlaybackTrack);
+		if (time < 0) // Don't warn for the default -1 time.
+		{
+			time = lastTime;
+		}
+		else if (time < lastTime) // But do warn if a time was entered but not used.
+		{
+			time = lastTime;
+			GD.PushWarning($"Animation {_startTimes[indexOfPlaybackTrack].Count} in library {indexOfPlaybackTrack} starts before the previous animation ends. Pushing it back.");
+		}
+		
 		_startTimes[indexOfPlaybackTrack].Add(time);
 	}
 	protected void RegisterAnimation(params Animation[] animations)
@@ -248,14 +271,18 @@ public abstract partial class AnimationSequence : AnimationPlayer
 			for (var j = 0; j < _referenceAnimationPlayers[i].GetAnimationList().Length; j++)
 			{
 				var animationName = $"{ReferenceLibraryBaseName}{i}/anim{j}";
+				
+				time = _startTimes[i][j];
+				
 				// Handle start time
 				if (_startTimes[i][j] >= time) // If next start time is after previous end time, use it
 				{
 					time = _startTimes[i][j];
 				}
-				else if (_startTimes[i][j] > 0) // Otherwise, use the previous end time. If it the time was set, warn that it's not used.
+				else // Otherwise use the last end time and warn that an adjustment was made.
 				{
 					GD.PushWarning($"Animation {j} in library {i} starts before the previous animation ends. Pushing it back.");
+					GD.PushWarning("Also, the previous warning should never happen because start times are now corrected in RegisterAnimation. Hrm.");
 				}
 				
 				if (singleClip)
