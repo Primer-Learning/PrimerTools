@@ -79,7 +79,29 @@ public partial class Graph : Node3D
         End
     }
 
-    public AxisLabelAlignmentOptions XAxisAlignment = AxisLabelAlignmentOptions.End;
+    private AxisLabelAlignmentOptions _xAxisAlignment = AxisLabelAlignmentOptions.End;
+
+    public AxisLabelAlignmentOptions XAxisAlignment
+    {
+        get => _xAxisAlignment;
+        set
+        {
+            _xAxisAlignment = value;
+            if (xAxisLabelLatexNode == null) return;
+            switch (value)
+            {
+                case AxisLabelAlignmentOptions.End:
+                    xAxisLabelLatexNode.HorizontalAlignment = LatexNode.HorizontalAlignmentOptions.Left;
+                    break;
+                case AxisLabelAlignmentOptions.Along:
+                    xAxisLabelLatexNode.HorizontalAlignment = LatexNode.HorizontalAlignmentOptions.Center;
+                    break;
+                default:
+                    GD.PrintErr("Unrecognized axis label alignment option.");
+                    break;
+            }
+        }
+    }
     public float XAxisLabelOffset = 1;
     public float XAxisLabelScale = 1;
     private string xAxisLabel = "";
