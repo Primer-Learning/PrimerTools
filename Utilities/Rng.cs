@@ -7,6 +7,8 @@ namespace PrimerTools
     public class Rng
     {
         public static Random staticRandom;
+        private static int _staticCallCount;
+        public static int StaticCallCount => _staticCallCount;
         public static void Initialize(int? seed = null)
         {
             if (seed is null)
@@ -29,12 +31,14 @@ namespace PrimerTools
         public static int RangeInt(int minInclusive, int maxExclusive)
         {
             Initialize();
+            _staticCallCount++;
             return staticRandom.Next(minInclusive, maxExclusive);
         }
 
         public static int NextInt()
         {
             Initialize();
+            _staticCallCount++;
             return staticRandom.Next();
         }
 
@@ -43,15 +47,18 @@ namespace PrimerTools
         public static float RangeFloat(float minInclusive, float maxExclusive)
         {
             Initialize();
+            _staticCallCount++;
             return (float) staticRandom.NextDouble() * (maxExclusive - minInclusive) + minInclusive;
         }
 
         // instance
         public Random rand { get; }
+        public int CallCount;
 
         public Rng(Random rand)
         {
             this.rand = rand;
+            CallCount = 0;
         }
 
         public Rng(int seed) : this(new Random(seed))
@@ -69,7 +76,11 @@ namespace PrimerTools
         {
             var rand = rng?.rand;
             
-            if (rand != null) return rand.Next(minInclusive, maxExclusive);
+            if (rand != null)
+            {
+                rng.CallCount++;
+                return rand.Next(minInclusive, maxExclusive);
+            }
             if (!hasWarned)
             {
                 GD.Print("No Rng given, using static rng. If you did this on purpose, use Rng.RangeInt() directly. Otherwise, check that you're passing an the Rng object you want.");
@@ -84,7 +95,11 @@ namespace PrimerTools
         {
             var rand = rng?.rand;
 
-            if (rand != null) return (float)(rand.NextDouble() * (maxExclusive - minInclusive) + minInclusive);
+            if (rand != null)
+            {
+                rng.CallCount++;
+                return (float)(rand.NextDouble() * (maxExclusive - minInclusive) + minInclusive);
+            }
             if (!hasWarned)
             {
                 GD.Print("No Rng given, using static rng. If you did this on purpose, use Rng.RangeInt() directly. Otherwise, check that you're passing an the Rng object you want.");
