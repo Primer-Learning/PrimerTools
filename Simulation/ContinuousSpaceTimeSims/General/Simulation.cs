@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Godot;
 
@@ -20,7 +21,8 @@ public abstract class Simulation<TDataEntity> : ISimulation
 
     private bool _initialized;
     private bool _running;
-    public int PhysicsStepsTaken;
+    private int _physicsStepsTaken;
+    public float TimeElapsed => _physicsStepsTaken * SimulationWorld.TimeStep;
 
     public void Initialize(bool run = true, IEnumerable<Vector3> initialPositions = null)
     {
@@ -44,6 +46,7 @@ public abstract class Simulation<TDataEntity> : ISimulation
         _running = false;
     }
     
+    public event Action<float> Stepped;
     public void Step()
     {
         if (!_running) return;
@@ -54,7 +57,8 @@ public abstract class Simulation<TDataEntity> : ISimulation
             return;
         }
         CustomStep();
-        PhysicsStepsTaken++;
+        _physicsStepsTaken++;
+        Stepped?.Invoke(_physicsStepsTaken);
     }
 
     public void ClearDeadEntities()
