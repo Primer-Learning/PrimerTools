@@ -61,6 +61,12 @@ public class CreatureSim : Simulation<DataCreature>
 
 	protected override void CustomStep()
 	{
+		if (PhysicsStepsTaken >= 10000)
+		{
+			GD.Print(PhysicsStepsTaken);
+			SimulationWorld.Running = false;
+		}
+		
 		// Universal updates. More than just age?
 		for (var i = 0; i < Registry.Entities.Count; i++)
 		{

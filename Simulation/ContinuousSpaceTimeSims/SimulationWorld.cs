@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
+using PrimerAssets;
 using PrimerTools.Simulation.New;
 
 namespace PrimerTools.Simulation;
@@ -55,7 +57,10 @@ public partial class SimulationWorld : Node3D
 
     public Node3D Ground; 
 
+    // TODO: Track down some inconsistency with different time scales
+    // It was happening in a scene and could be the scene's fault, but I'm not sure.
     private static float _timeScale = 1;
+    public static event Action<float> TimeScaleChanged;
     public static float TimeScale
     {
         get => _timeScale;
@@ -64,6 +69,7 @@ public partial class SimulationWorld : Node3D
             _timeScale = value;
             Engine.PhysicsTicksPerSecond = (int)(value * 60);
             Engine.MaxPhysicsStepsPerFrame = (int)(value * 60);
+            TimeScaleChanged?.Invoke(value);
         }
     }
 
@@ -90,7 +96,7 @@ public partial class SimulationWorld : Node3D
     public const int PhysicsStepsPerSimSecond = 60;
     public const float TimeStep = 1f / PhysicsStepsPerSimSecond;
     public int PhysicsStepsTaken { get; private set; }
-    public float SimTime => PhysicsStepsTaken * TimeStep;
+    public float TimeElapsed => PhysicsStepsTaken * TimeStep;
 
     private Rng _rng;
     public Rng Rng => _rng ??= new Rng(_seed == -1 ? System.Environment.TickCount : _seed);
