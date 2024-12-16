@@ -37,6 +37,7 @@ public partial class SimulationWorld : Node3D
 
     public void Start()
     {
+        GD.Print($"Starting sim at timescale: {_timeScale}");
         Running = true;
     }
 

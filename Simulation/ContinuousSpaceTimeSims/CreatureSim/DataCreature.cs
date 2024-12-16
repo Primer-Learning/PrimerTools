@@ -29,9 +29,9 @@ public struct DataCreature : IDataEntity
     }
         
     public float AwarenessRadius => Genome.GetTrait<float>("AwarenessRadius").ExpressedValue;
-    public float MaxAge => Genome.GetTrait<float>("MaxAge").ExpressedValue;
     
     public float Age;
+    public bool ForcedMature;
     public float Energy;
     public float HungerThreshold;
     public int FoodTargetIndex;

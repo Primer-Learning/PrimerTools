@@ -46,7 +46,7 @@ public abstract class Simulation<TDataEntity> : ISimulation
         _running = false;
     }
     
-    public event Action<float> Stepped;
+    public static event Action<float> Stepped;
     public void Step()
     {
         if (!_running) return;

@@ -45,8 +45,10 @@ public partial class NodeCreature : NodeEntity<DataCreature>
 	
 	public void UpdateTransform(DataCreature dataCreature)
 	{
-		var scaleFactor = Mathf.Min(1, dataCreature.Age / CreatureSimSettings.Instance.MaturationTime);
-		Scale = scaleFactor * Vector3.One;
+		Scale = Vector3.One * (dataCreature.ForcedMature
+				? 1
+				: Mathf.Min(1, dataCreature.Age / CreatureSimSettings.Instance.MaturationTime)
+			);
         
 		if (dataCreature.EatingTimeLeft > 0) return;
         
