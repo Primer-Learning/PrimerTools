@@ -26,4 +26,23 @@ public partial class AxisTic : Node3D
     {
         return latexNode.ScaleTo(scale);
     }
+
+    public void SetLabelDistance(float? distance)
+    {
+        if (distance.HasValue)
+        {
+            latexNode.Position = new Vector3(latexNode.Position.X, -distance.Value, latexNode.Position.Z);
+        }
+        // If no distance specified, keep the default position from the scene
+    }
+
+    public Animation AnimateLabelDistance(float? distance)
+    {
+        if (!distance.HasValue)
+            return null;
+            
+        return latexNode.MoveTo(
+            new Vector3(latexNode.Position.X, -distance.Value, latexNode.Position.Z)
+        );
+    }
 }

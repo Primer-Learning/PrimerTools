@@ -48,6 +48,12 @@ public partial class Axis : Node3D
 	public bool ShowArrows = true;
 	public bool ShowRod = true;
 	
+	private float? ticLabelDistance = null;
+	public float? TicLabelDistance {
+		get => ticLabelDistance;
+		set => ticLabelDistance = value;
+	}
+	
 	public override void _Process(double delta)
 	{
 		exportedMemberChangeChecker ??= new ExportedMemberChangeChecker(this);
@@ -163,6 +169,7 @@ public partial class Axis : Node3D
 				newTicAnimations.Add(tic.ScaleTo(Chonk, duration));
 				tic.SetLabel();
 				tic.SetLabelScale(0);
+				tic.SetLabelDistance(TicLabelDistance);
 				if (!ShowTicCylinders) tic.GetNode<MeshInstance3D>("MeshInstance3D").Visible = false;
 			}
 			else
@@ -172,6 +179,10 @@ public partial class Axis : Node3D
 			
 			ticMovementAnimations.Add(tic.MoveTo(GetPosition(tic)));
 			ticMovementAnimations.Add(tic.AnimateLabelScale(0.2f));
+			if (TicLabelDistance.HasValue)
+			{
+				ticMovementAnimations.Add(tic.AnimateLabelDistance(TicLabelDistance));
+			}
 			
 			if (length == 0)
 			{
