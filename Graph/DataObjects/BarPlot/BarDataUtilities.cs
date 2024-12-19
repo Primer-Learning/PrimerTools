@@ -12,7 +12,7 @@ public class HistogramOptions
         None,
         Normalize,
         PerCapita,
-        PerTwoCapita // Convenient for diploid allele frequencies
+        // PerTwoCapita // Convenient for diploid allele frequencies // Or is it? The only time I used this, it was not right.
     }
 
     public AdjustmentMethodType AdjustmentMethod = AdjustmentMethodType.None;
@@ -84,8 +84,8 @@ public static class BarDataUtilities
             case HistogramOptions.AdjustmentMethodType.PerCapita:
                 histogram = PerCapitaAdjustment(histogram, dataSourceGetter().Count(), false);
                 break;
-            case HistogramOptions.AdjustmentMethodType.PerTwoCapita:
-                histogram = PerCapitaAdjustment(histogram, dataSourceGetter().Count(), true);
+            // case HistogramOptions.AdjustmentMethodType.PerTwoCapita:
+            //     histogram = PerCapitaAdjustment(histogram, dataSourceGetter().Count(), true);
                 break;
             case HistogramOptions.AdjustmentMethodType.None:
                 break;
