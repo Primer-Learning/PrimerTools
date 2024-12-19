@@ -23,6 +23,9 @@ public partial class StackedBarPlot : Node3D, IPrimerGraphData
     public delegate Vector3 Transformation(Vector3 inputPoint);
     public Transformation TransformPointFromDataSpaceToPositionSpace = point => point;
     
+    // TODO: Probably just make Data a float[][]
+    // Or maybe not, since adding to that constantly re-allocates.
+    // Probably doesn't matter.
     public List<List<float>> Data;
     public int StackCountLimit = 0; // zero means no limit
     private List<List<float>> PlottedData

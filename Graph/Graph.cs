@@ -146,9 +146,9 @@ public partial class Graph : Node3D
     /// <param name="duration"></param>
     /// <param name="transitionDataObjects"></param>
     /// <returns></returns>
-    public Animation Transition(double duration = AnimationUtilities.DefaultDuration, bool transitionDataObjects = true)
+    public Animation Transition(double duration = AnimationUtilities.DefaultDuration)
     {
-        return Transition(duration, duration, duration, transitionDataObjects);
+        return Transition(duration, duration, duration);
     }
 
     /// <summary>
@@ -161,7 +161,7 @@ public partial class Graph : Node3D
     /// <param name="removeDuration"></param>
     /// <param name="updateDuration"></param>
     /// <returns></returns>
-    public Animation Transition( double removeDuration, double updateDuration, double addDuration, bool transitionDataObjects = true)
+    public Animation Transition( double removeDuration, double updateDuration, double addDuration)
     {
         var removeTransitions = new List<Animation>();
         var updateTransitions = new List<Animation>();
@@ -180,12 +180,15 @@ public partial class Graph : Node3D
             addTransitions.Add(add);
         }
 
-        if (transitionDataObjects)
-        {
+        // This condition is meant to avoid messing up tweened data updates
+        // But actually I think we never want to mix those. Commenting out for now.
+        // if (transitionDataObjects)
+        // {
             updateTransitions.AddRange(
                 GetChildren().OfType<IPrimerGraphData>().Select(x => x.Transition(updateDuration))
             );
-        }
+        // }
+        
         // Axis labels
         if (xAxisLabelLatexNode is not null)
         {
