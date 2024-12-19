@@ -95,7 +95,7 @@ public partial class Bracket : Node3D
 		RBar.Scale = new Vector3(parameters.rBarLength, RBar.Scale.Y, RBar.Scale.Z);
 	}
 
-	public Animation Transition(double duration = AnimationUtilities.DefaultDuration)
+	public Animation Transition()
 	{
 		var parameters = CalculateUpdateParameters();
 
@@ -107,7 +107,15 @@ public partial class Bracket : Node3D
 			RTip.MoveTo(new Vector3(parameters.rLength, 0, 1)),
 			LBar.ScaleTo(new Vector3(parameters.lBarLength, LBar.Scale.Y, LBar.Scale.Z)),
 			RBar.ScaleTo(new Vector3(parameters.rBarLength, RBar.Scale.Y, RBar.Scale.Z))
-		).WithDuration(duration);
+		);
+	}
+
+	public Animation ScaleUpFromZero(double duration = AnimationUtilities.DefaultDuration)
+	{
+		Transition();
+		var scale = Scale;
+		Scale = Vector3.Zero;
+		return this.ScaleTo(scale);
 	}
 
 	public Tween TweenTransition(double duration = AnimationUtilities.DefaultDuration)
