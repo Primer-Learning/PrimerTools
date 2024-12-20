@@ -14,6 +14,19 @@ namespace PrimerTools
         {
             return string.Join(separator, strings);
         }
+        
+        public static string ToValidNodeName(this string str)
+        {
+            // These are the characters that Godot replaces with underscores
+            char[] invalidChars = new[] { '.', ':', '@', '/', '"', '%' };
+
+            foreach (char invalidChar in invalidChars)
+            {
+                str = str.Replace(invalidChar, '_');
+            }
+
+            return str;
+        }
 
         // Copied from
         // https://andrewlock.net/why-is-string-gethashcode-different-each-time-i-run-my-program-in-net-core/

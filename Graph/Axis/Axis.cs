@@ -136,7 +136,7 @@ public partial class Axis : Node3D
 	[Export] public PackedScene TicScene;
 	
 	public int AutoTicCount = 0;
-	public List<TicData> ManualTicks = new();
+	public List<TicData> ManualTics = new();
 
 	private (Animation removeAnimation, Animation updateAnimation, Animation addAnimation) UpdateTics(float duration)
 	{
@@ -151,15 +151,15 @@ public partial class Axis : Node3D
 		
 		foreach (var data in PrepareTics())
 		{
-			var name = $"Tic {data.label}";
+			var name = $"Tic {data.label}".ToValidNodeName();
 			var tic = GetNodeOrNull<AxisTic>(name);
 
 			if (tic == null)
 			{
 				tic = TicScene.Instantiate<AxisTic>();
 				tic.data = data;
-				tic.Name = name;
 				AddChild(tic);
+				tic.Name = name;
 				tic.Owner = GetTree().EditedSceneRoot;
 				tic.SceneFilePath = "";
 				tic.MakeSelfAndChildrenLocal(GetTree().EditedSceneRoot);
@@ -174,6 +174,7 @@ public partial class Axis : Node3D
 			}
 			else
 			{
+				tic.data = data;
 				ticsToRemove.Remove(tic);
 			}
 			
@@ -244,8 +245,8 @@ public partial class Axis : Node3D
 	
 	private List<TicData> PrepareTics()
 	{
-		if (ManualTicks.Count > 0)
-			return ManualTicks;
+		if (ManualTics.Count > 0)
+			return ManualTics;
             
 		if (TicStep <= 0)
 			return new List<TicData>();
