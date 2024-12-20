@@ -58,6 +58,7 @@ public partial class BarPlot : Node3D, IPrimerGraphData
 
     private List<Tuple<float, float, float>> DataAsRectProperties(bool useTween = false)
     {
+        if (PlottedData == null) return new List<Tuple<float, float, float>>();
         return PlottedData.Select( (value, i) =>
             new Tuple<float, float, float>(
                 GetAppropriateTransformation(new Vector3((i + OffsetInBarWidthUnits) * BarWidth, 0, 0), useTween).X,
