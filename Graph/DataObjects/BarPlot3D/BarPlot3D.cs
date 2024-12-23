@@ -36,6 +36,12 @@ public partial class BarPlot3D : Node3D, IPrimerGraphData
         
         _data = DataFetchMethod();
     }
+    
+    public void SetData(float[,] bars)
+    {
+        _data = bars;
+    }
+
 
     private Node3D CreateBar(int x, int y)
     {
