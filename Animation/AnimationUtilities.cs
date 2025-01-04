@@ -233,7 +233,7 @@ public static class AnimationUtilities
     {
         var difference = destination - node.Position;
         
-        var prepRotation = node.RotateTo(new Quaternion(Vector3.Back, difference.Normalized()), global: false, prepTurnDuration);
+        var prepRotation = node.RotateTo(new Quaternion(Vector3.Back, difference.Normalized()), global: false, prepTurnDuration, Animation.InterpolationType.LinearAngle);
         var move = node.MoveTo(destination, stopDistance, duration);
 
         return Parallel(
