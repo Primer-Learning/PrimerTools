@@ -22,6 +22,7 @@ public partial class NodeTree : NodeEntity<DataTree>
 	{
 		Scale = Vector3.Zero;
 		Position = dataTree.Position;
+		Rotation = new Vector3(0, dataTree.Angle, 0);
 		Name = "Tree";
 	}
 	public override void Update(DataTree dataTree)

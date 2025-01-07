@@ -17,11 +17,13 @@ public class TreeDistributionData
         public float PositionZ { get; set; }
         public float Age { get; set; }
         public Vector3 Position => new Vector3(PositionX, PositionY, PositionZ);
+        public float Angle { get; set; }
         public TreeData(DataTree tree)
         {
             PositionX = tree.Position.X;
             PositionY = tree.Position.Y;
             PositionZ = tree.Position.Z;
+            Angle = tree.Angle;
             Age = tree.Age;
         }
     }

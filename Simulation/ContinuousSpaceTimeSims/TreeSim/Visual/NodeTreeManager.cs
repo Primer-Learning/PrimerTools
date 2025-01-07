@@ -4,9 +4,6 @@ using PrimerTools.Simulation;
 
 public partial class NodeTreeManager : NodeEntityManager<DataTree, NodeTree>
 {
-    // Currently useless, but good for tree sim events in the future
-    // Just here for symmetry with NodeCreatureManager
-    
     public NodeTreeManager(DataEntityRegistry<DataTree> dataEntityRegistry) 
         : base(dataEntityRegistry) {}
     public NodeTreeManager(){}
@@ -43,5 +40,16 @@ public partial class NodeTreeManager : NodeEntityManager<DataTree, NodeTree>
             animations[i] = NodeEntities[i].ScaleTo(NodeTree.ScaleFromAge(DataEntityRegistry.Entities[i].Age), duration);
         }
         return AnimationUtilities.Parallel(animations);
+    }
+
+    public void CullTinyTrees()
+    {
+        foreach (var tree in NodeEntities)
+        {
+            if (tree.Scale.X < 0.2f)
+            {
+                tree.QueueFree();
+            }
+        }
     }
 }

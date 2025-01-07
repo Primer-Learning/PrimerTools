@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
-using PrimerAssets;
 using PrimerTools.Simulation.New;
 
 namespace PrimerTools.Simulation;
@@ -104,7 +103,7 @@ public partial class SimulationWorld : Node3D
     public World3D World3D => GetWorld3D();
     public readonly List<ISimulation> Simulations = new();
     private NodeCreatureManager _creatureNodeManager;
-    private NodeTreeManager _treeNodeManager;
+    public NodeTreeManager TreeNodeManager;
 
     public void Reset()
     {
@@ -115,8 +114,8 @@ public partial class SimulationWorld : Node3D
 	    }
         _creatureNodeManager?.QueueFree();
         _creatureNodeManager = null;
-        _treeNodeManager?.QueueFree();
-        _treeNodeManager = null;
+        TreeNodeManager?.QueueFree();
+        TreeNodeManager = null;
         Ground?.QueueFree();
     }
     public void Initialize(params ISimulation[] simulations)
@@ -144,9 +143,9 @@ public partial class SimulationWorld : Node3D
                 switch (sim)
                 {
                     case FruitTreeSim treeSim:
-                        _treeNodeManager = new NodeTreeManager(treeSim.Registry);
-                        _treeNodeManager.Name = "NodeTreeManager";
-                        AddChild(_treeNodeManager);
+                        TreeNodeManager = new NodeTreeManager(treeSim.Registry);
+                        TreeNodeManager.Name = "NodeTreeManager";
+                        AddChild(TreeNodeManager);
                         break;
                     case CreatureSim creatureSim:
                         _creatureNodeManager = new NodeCreatureManager(creatureSim.Registry);
@@ -191,7 +190,7 @@ public partial class SimulationWorld : Node3D
         if (!Running) return;
         
         _creatureNodeManager?.VisualProcess(delta);
-        _treeNodeManager?.VisualProcess(delta);
+        TreeNodeManager?.VisualProcess(delta);
         
         foreach (var simulation in Simulations)
         {

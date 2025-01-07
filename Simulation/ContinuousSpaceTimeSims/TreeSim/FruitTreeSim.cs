@@ -34,6 +34,7 @@ public class FruitTreeSim : Simulation<DataTree>
 
         if (initialPositions == null)
         {
+            GD.Print(InitialEntityCount);
             var posList = new List<Vector3>();
             for (var i = 0; i < InitialEntityCount; i++)
             {
@@ -51,7 +52,7 @@ public class FruitTreeSim : Simulation<DataTree>
         
         foreach (var pos in initialPositions)
         {
-            Registry.RegisterEntity(new DataTree { Position = pos });
+            Registry.RegisterEntity(new DataTree { Position = pos, Angle = SimulationWorld.Rng.RangeFloat(0, Mathf.Tau)});
         }
     }
     protected override void CustomStep()
@@ -87,11 +88,12 @@ public class FruitTreeSim : Simulation<DataTree>
         foreach (var newTreePosition in newTreePositions)
             
         {
-            var physicalTree = new DataTree
+            var dataTree = new DataTree
             {
-                Position = newTreePosition
+                Position = newTreePosition,
+                Angle = SimulationWorld.Rng.RangeFloat(0, Mathf.Tau)
             };
-            Registry.RegisterEntity(physicalTree);
+            Registry.RegisterEntity(dataTree);
         }
     }
     
@@ -261,7 +263,8 @@ public class FruitTreeSim : Simulation<DataTree>
             var tree = new DataTree
             {
                 Position = treeData.Position,
-                Age = treeData.Age,
+                Angle = treeData.Angle,
+                Age = treeData.Age
             };
             Registry.RegisterEntity(tree);
         }
