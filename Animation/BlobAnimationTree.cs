@@ -135,6 +135,29 @@ public partial class BlobAnimationTree : SelfBuildingAnimationTree
 		}
 	}
 
+	public Animation AnimateTransitionAnimationState(string stateMachineName, AnimationEnum animationEnum)
+	{
+		var animations = new List<Animation>();
+		// Set them all to false
+		foreach (var animationName in GetAnimationNamesForStateMachine(stateMachineName, includeWiggles: true))
+		{
+			animations.Add(
+				this.AnimateBool(
+					animationName == _animationNames[animationEnum],
+					$"parameters/{stateMachineName}/conditions/{animationName}"
+				)
+			);
+		}
+
+		if (stateMachineName == "BODY") CurrentBodyState = animationEnum;
+		if (stateMachineName == "MOUTH") CurrentMouthState = animationEnum;
+
+		return animations.InParallel();
+	}
+	
+	// TODO: Consider eliminating this. It's meant as a convenience for executing an animation and then going back 
+	// to the previous state, but it requires all transition methods update it. Probably easier to just use the
+	// animation tree's state directly in cases where we want to also create a backward transition. 
 	public AnimationEnum CurrentBodyState = AnimationEnum.Keying;
 	public AnimationEnum CurrentMouthState = AnimationEnum.Closed;
 
