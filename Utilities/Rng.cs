@@ -83,7 +83,7 @@ namespace PrimerTools
             }
             if (!hasWarned)
             {
-                GD.Print("No Rng given, using static rng. If you did this on purpose, use Rng.RangeInt() directly. Otherwise, check that you're passing an the Rng object you want.");
+                PrimerGD.PrintWithStackTrace("No Rng given, using static rng. If you did this on purpose, use Rng.RangeInt() directly. Otherwise, check that you're passing an the Rng object you want.");
                 hasWarned = true;
             }
             return Rng.RangeInt(minInclusive, maxExclusive);
@@ -102,7 +102,7 @@ namespace PrimerTools
             }
             if (!hasWarned)
             {
-                GD.Print("No Rng given, using static rng. If you did this on purpose, use Rng.RangeInt() directly. Otherwise, check that you're passing an the Rng object you want.");
+                PrimerGD.PrintWithStackTrace("No Rng given, using static rng. If you did this on purpose, use Rng.RangeInt() directly. Otherwise, check that you're passing an the Rng object you want.");
                 hasWarned = true;
             }
             return Rng.RangeFloat(minInclusive, maxExclusive);
