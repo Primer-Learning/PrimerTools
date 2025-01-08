@@ -160,15 +160,19 @@ public static class AnimationUtilities
     }
     public static Animation MoveTo(this Node3D node, Vector3 destination, float stopDistance = 0, double duration = DefaultDuration, bool global = false)
     {
-        var difference = global
-            ? destination - node.GlobalPosition
-            : destination - node.Position;
-         
+        // If destination was given in global space, figure out the equivalent point expressed in local space.
+        // The reason for doing this instead of animating global_position is that those keyframes fight with local
+        // position keyframes. So we want just one of those two to be keyframed. Local is used more often, so that's
+        // the default, and global values must be translated.
+        if (global)
+        {
+            destination = node.ToLocal(destination);
+        }
+        var difference = destination - node.Position;
+        
         destination -= difference.Normalized() * stopDistance;
         
-        var propertyPath = global ? "global_position" : "position";
-        
-        return node.AnimateValue(destination, propertyPath, duration);
+        return node.AnimateValue(destination, "position", duration);
     }
 
     
@@ -219,8 +223,13 @@ public static class AnimationUtilities
         var animation = new Animation();
         var trackIndex = animation.AddTrack(Animation.TrackType.Rotation3D);
         animation.TrackSetPath(trackIndex, node.GetPath());
+        // Double these keys so space between rotations can actually be still instead of interpolated into one big curve.
         // First key
         animation.RotationTrackInsertKey(trackIndex, 0.0, node.Quaternion);
+        // First key
+        animation.RotationTrackInsertKey(trackIndex, 0.0 + TimeEpsilon, node.Quaternion);
+        // Second key
+        animation.RotationTrackInsertKey(trackIndex, duration - TimeEpsilon, destination);
         // Second key
         animation.RotationTrackInsertKey(trackIndex, duration, destination);
         animation.TrackSetInterpolationType(trackIndex, interpolationType);
@@ -233,7 +242,7 @@ public static class AnimationUtilities
     {
         var difference = destination - node.Position;
         
-        var prepRotation = node.RotateTo(new Quaternion(Vector3.Back, difference.Normalized()), global: false, prepTurnDuration, Animation.InterpolationType.LinearAngle);
+        var prepRotation = node.RotateTo(new Quaternion(Vector3.Back, difference.Normalized()), global: false, prepTurnDuration);
         var move = node.MoveTo(destination, stopDistance, duration);
 
         return Parallel(
