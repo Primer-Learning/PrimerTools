@@ -150,7 +150,7 @@ public partial class NodeCreature : NodeEntity<DataCreature>
 			fruitMoveDuration / SimulationWorld.TimeScale
 		);
 
-		_blob.TriggerEat(fruitMoveDuration + animationSettleDuration);
+		_blob.AsyncEat(fruitMoveDuration + animationSettleDuration);
 		
 		await nextTween.ToSignal(nextTween, Tween.SignalName.Finished);
 		var finalTween = CreateTween();
