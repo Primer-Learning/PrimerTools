@@ -1,6 +1,9 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Godot;
 
 namespace PrimerTools;
@@ -64,32 +67,88 @@ public abstract partial class AnimationSequence : AnimationPlayer
 	[Export] private bool makeChildrenLocal;
 	[Export] private double timeToRewindTo = 0;
 
-	private bool _shouldActuallyUpdatePath = false;
-	[ExportGroup("Recording options")] 
-	[Export] private bool NewRecordingPathButton
+	#region Movie maker handling
+	[ExportGroup("Recording options")]
+	[Export] private bool _record;
+	private string _sceneName;
+	private string _baseDirectory;
+	private string SceneDirectory => Path.Combine(_baseDirectory, "current_take");
+
+	[Export]
+	public string SceneName
 	{
-		get => _shouldActuallyUpdatePath;
+		get => _sceneName;
 		set
 		{
-			if (!value && _shouldActuallyUpdatePath)
-			{
-				_shouldActuallyUpdatePath = true;
-				SetSceneMoviePath();
-			}
-			_shouldActuallyUpdatePath = true;
+			_sceneName = value;
+			_baseDirectory = Path.Combine(ProjectSettings.GlobalizePath("res://"), "..", "png", _sceneName);
+			
+			DebouncedCreateDirectory(); // I want run this once after no keystrokes have come in for one second
 		}
 	}
+	
+	private CancellationTokenSource _debounceCts;
+	private async void DebouncedCreateDirectory()
+	{
+		try 
+		{
+			// Cancel any previous pending operation
+			_debounceCts?.Cancel();
+			_debounceCts?.Dispose();
+			_debounceCts = new CancellationTokenSource();
 
+			await Task.Delay(1000, _debounceCts.Token);
+        
+			// If we get here without being cancelled, create the directory
+			CreateRecordingDirectory();
+		}
+		catch (OperationCanceledException) {}
+	}
+
+	private void CreateRecordingDirectory()
+	{
+		// Set the path for the movie maker mode
+		Directory.CreateDirectory(SceneDirectory);
+		var file = Path.Combine(SceneDirectory, "image.png");
+		GD.Print(file);
+		GetParent().SetMeta("movie_file", file);
+	}
+	private void MovePreviousTakeToNumberedDirectory()
+	{
+		if (!Directory.Exists(SceneDirectory) || !Directory.EnumerateFileSystemEntries(SceneDirectory).Any()) return;
+    
+		var number = 1;
+		while (Directory.Exists(Path.Combine(_baseDirectory, $"take_{number}")))
+		{
+			number++;
+		}
+
+		var targetDirectory = Path.Combine(_baseDirectory, $"take_{number}");
+		Directory.CreateDirectory(targetDirectory);
+
+		// Move all png files
+		// There's a locked .wav file, but we don't care about sounds
+		foreach (string sourcePath in Directory.GetFiles(SceneDirectory, "*.png", SearchOption.AllDirectories))
+		{
+			var relativePath = Path.GetRelativePath(SceneDirectory, sourcePath);
+			var targetPath = Path.Combine(targetDirectory, relativePath);
+			File.Move(sourcePath, targetPath);
+		}
+	}
+	#endregion
+	
 	public static AnimationSequence Instance { get; private set; }
 
 	public override void _Ready()
 	{
 		if (Engine.IsEditorHint()) return;
-		if (Engine.GetWriteMoviePath() != "") // We recordin
+		if (_record)
 		{
+			if (string.IsNullOrEmpty(_sceneName)) GD.PrintErr("Recording is true, but scene name is empty.");
+			MovePreviousTakeToNumberedDirectory();
+			
 			// If there's more than one fps viewer, you messed up
 			var fpsViewer = GetParent().GetChildren().OfType<FPSViewer>().FirstOrDefault();
-			
 			if (fpsViewer != null) fpsViewer.Visible = false;
 		}
 		
@@ -348,36 +407,6 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		library.AddAnimation(animationName, animation);
 	}
 	
-	#endregion
-
-	#region Movie Maker Mode Path Handling
-
-	private void SetSceneMoviePath()
-	{
-		// Establish base directory
-		GD.Print(Directory.GetCurrentDirectory());
-		var baseDirectory = Path.Combine(Directory.GetCurrentDirectory(), "..", "png", GetTree().EditedSceneRoot.Name);
-		GD.Print(baseDirectory);
-		
-		// Move take_current if it exists
-		var sceneDirectory = Path.Combine(baseDirectory, "current_take");
-		if (Directory.Exists(sceneDirectory) && Directory.EnumerateFileSystemEntries(sceneDirectory).Any())
-		{
-			var number = 1;
-			while (Directory.Exists(Path.Combine(baseDirectory, $"take_{number}")))
-			{
-				number++;
-			}
-			Directory.Move(sceneDirectory, Path.Combine(baseDirectory, $"take_{number}"));
-		}
-		
-		// Set the path for the movie maker mode
-		Directory.CreateDirectory(sceneDirectory);
-		var file = Path.Combine(sceneDirectory, "movie.avi");
-		GD.Print(file);
-		GetTree().EditedSceneRoot.SetMeta("movie_file", file);
-	}
-
 	#endregion
 	
 	#region Rewinding
