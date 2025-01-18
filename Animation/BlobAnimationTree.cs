@@ -154,6 +154,21 @@ public partial class BlobAnimationTree : SelfBuildingAnimationTree
 
 		return animations.InParallel();
 	}
+
+	public Animation AnimateTransitionAnimationState(BlobAnimationStateMachineEnum stateMachine,
+		AnimationEnum animationEnum)
+	{
+		switch (stateMachine)
+		{
+			case BlobAnimationStateMachineEnum.Mouth:
+				return AnimateTransitionAnimationState("MOUTH", animationEnum);
+			case BlobAnimationStateMachineEnum.Body:
+				return AnimateTransitionAnimationState("Body", animationEnum);
+			default:
+				GD.PrintErr("Unrecognized state machine");
+				return new Animation();
+		}
+	}
 	
 	// TODO: Consider eliminating this. It's meant as a convenience for executing an animation and then going back 
 	// to the previous state, but it requires all transition methods update it. Probably easier to just use the
@@ -166,6 +181,12 @@ public partial class BlobAnimationTree : SelfBuildingAnimationTree
 		var list = GetNode<AnimationPlayer>(AnimPlayer).GetAnimationList().Where(x => x.StartsWith(stateMachineName)).ToList();
 		if (includeWiggles && stateMachineName == "BODY") list.Add("Wiggles");
 		return list;
+	}
+
+	public enum BlobAnimationStateMachineEnum
+	{
+		Mouth,
+		Body
 	}
 	public enum AnimationEnum
 	{

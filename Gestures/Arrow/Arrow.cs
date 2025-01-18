@@ -10,6 +10,7 @@ public partial class Arrow : Node3D
     // Then atop that, add functionality for specifying global positions or objects follow. Need to think through the 
     // intended object following behavior. Might be best to not do that at all and instead just require manual calls
     // to animation methods using that objects position (local or global)
+    // Another currently weird thing is that tailpoint is relative to headpoint, not relative to the parent space.
     
     public static readonly PackedScene ArrowScene = ResourceLoader.Load<PackedScene>("res://addons/PrimerTools/Gestures/Arrow/arrow.tscn");
 
