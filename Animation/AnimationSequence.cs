@@ -362,10 +362,36 @@ public abstract partial class AnimationSequence : AnimationPlayer
 			latestTime = Mathf.Max(latestTime, time);
 		}
 		
-		// Make the animation 100s longer than it actually is, so the editor leaves some room
-		topLevelAnimation.Length = (float) latestTime + 10;
+		// Extend animation
+		// In the editor, we want lots of room.
+		// When playing, we want just a little cushion.
+		var padding = 100;
+		if (!Engine.IsEditorHint())
+		{
+			padding = 3;
+		}
+		topLevelAnimation.Length = (float) latestTime + padding;
+
+		if (!Engine.IsEditorHint())
+		{
+			// Add animation that triggers a quit when the animation is over
+			topLevelAnimation.AddTrack(Animation.TrackType.Method);
+			topLevelAnimation.TrackSetPath(topLevelAnimation.GetTrackCount() - 1, GetPath());
+			topLevelAnimation.TrackInsertKey(topLevelAnimation.GetTrackCount() - 1, topLevelAnimation.Length - 1,
+				new Godot.Collections.Dictionary()
+				{
+					{"method", MethodName.Quit},
+					{"args", new Godot.Collections.Array()}
+				}
+			);
+		}
 		
 		AddAnimationToLibrary(topLevelAnimation, MainAnimationName, library);
+	}
+
+	private void Quit()
+	{
+		GetTree().Quit();
 	}
 	#endregion
 	
