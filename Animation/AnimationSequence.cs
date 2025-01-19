@@ -70,6 +70,57 @@ public abstract partial class AnimationSequence : AnimationPlayer
 	#region Movie maker handling
 	[ExportGroup("Recording options")]
 	[Export] private bool _record;
+
+	public enum OutputResolutionOptions
+	{
+		SD,
+		HD,
+		FHD,
+		UHD
+	}
+	
+	private OutputResolutionOptions _outputResolution;
+	[Export]
+	public OutputResolutionOptions OutputResolution
+	{
+		get => _outputResolution;
+		set
+		{
+			_outputResolution = value;
+			int height;
+			int width;
+
+			switch (value)
+			{
+				case OutputResolutionOptions.SD:
+					height = 480;
+					width = 854;
+					break;
+				case OutputResolutionOptions.HD:
+					height = 720;
+					width = 1280;
+					break;
+				case OutputResolutionOptions.FHD:
+					height = 1080;
+					width = 1920;
+					break;
+				case OutputResolutionOptions.UHD:
+					height = 2160;
+					width = 3840;
+					break;
+				default:
+					GD.PrintErr("Unrecognized output resolution");
+					height = 720;
+					width = 1280;
+					break;
+			}
+			
+			ProjectSettings.SetSetting("display/window/size/viewport_height", height);
+			ProjectSettings.SetSetting("display/window/size/viewport_width", width);
+			ProjectSettings.Save();
+		}
+	}
+	
 	private string _sceneName;
 	private string _baseDirectory;
 	private string SceneDirectory => Path.Combine(_baseDirectory, "current_take");
