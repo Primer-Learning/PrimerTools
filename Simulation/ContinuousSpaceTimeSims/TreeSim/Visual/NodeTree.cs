@@ -9,7 +9,6 @@ public partial class NodeTree : NodeEntity<DataTree>
 	public static Rng NodeTreeRng = new Rng(0);
 	
 	private FruitTree _fruitTree;
-	
 	#region Core methods
 	public override void _Ready()
 	{

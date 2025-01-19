@@ -96,6 +96,10 @@ public partial class LatexNode : Node3D
 		Align();
 	}
 
+	// TODO: Consider using GetOrCreateOverrideMaterial instead of MakeMaterialUnique.
+	// Should be essentially the same thing,
+	// but it could be used in the same loop rather than needing a separate flag and method.
+	// It's slightly more checks, but pretty negligible.
 	public void SetColor(Color color)
 	{
 		MakeMaterialUnique();

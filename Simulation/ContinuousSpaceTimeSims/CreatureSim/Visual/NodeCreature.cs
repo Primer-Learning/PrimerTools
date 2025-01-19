@@ -7,6 +7,8 @@ namespace PrimerTools.Simulation.New;
 public partial class NodeCreature : NodeEntity<DataCreature>
 {
 	private Blob _blob;
+	private Accessory _beard;
+	private StatusDisplay _statusDisplay;
 
 	#region Core methods
 	public override void _Ready()
@@ -31,16 +33,40 @@ public partial class NodeCreature : NodeEntity<DataCreature>
 			return;
 		}
 		
-		_blob.SetColor(ColorFromSpeed(dataCreature.MaxSpeed));
+		_blob.SetColor(PrimerColor.Blue);
 		var normalizedAwareness = dataCreature.AwarenessRadius / CreatureSimSettings.Instance.ReferenceAwarenessRadius;
 		_blob.LeftEye.Scale = normalizedAwareness * Vector3.One;
 		_blob.RightEye.Scale = normalizedAwareness * Vector3.One;
+
+		_beard = _blob.AddAccessory(Accessory.AccessoryType.Beard);
+		
+		_statusDisplay = StatusDisplay.CreateInstance();
+		_blob.AddChild(_statusDisplay);
+		_statusDisplay.Position = Vector3.Up * 2;
+		_statusDisplay.Scale = Vector3.One;
+		_statusDisplay.Energy = dataCreature.Energy;
 		// this.MakeSelfAndChildrenLocal();
 	}
 
 	public override void Update(DataCreature dataCreature)
 	{
 		UpdateTransform(dataCreature);
+
+		// Beard
+		_beard.Scale = Vector3.One *
+		               (
+			               dataCreature.ForcedMature
+			               ? 1
+			               : Mathf.Min(1, dataCreature.Age / CreatureSimSettings.Instance.MaturationTime)
+		               );
+
+		const int maxBeardAge = 100;
+		var timeAfterMaturity = (dataCreature.Age - CreatureSimSettings.Instance.MaturationTime) /
+		                        (maxBeardAge - CreatureSimSettings.Instance.MaturationTime);
+		_beard.SetColor(PrimerColor.InterpolateInLinearSpace(PrimerColor.Black, PrimerColor.White, timeAfterMaturity));
+		
+		// Display
+		_statusDisplay.Energy = dataCreature.Energy;
 	}
 	
 	public void UpdateTransform(DataCreature dataCreature)

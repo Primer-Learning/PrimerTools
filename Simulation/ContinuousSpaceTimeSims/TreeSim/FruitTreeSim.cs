@@ -257,13 +257,17 @@ public class FruitTreeSim : Simulation<DataTree>
         }
 
         Registry.Reset();
+
+        var unrotatedTrees = distribution.Trees.All(x => x.Angle == 0);
         
         foreach (var treeData in distribution.Trees)
         {
             var tree = new DataTree
             {
                 Position = treeData.Position,
-                Angle = treeData.Angle,
+                Angle = unrotatedTrees 
+                    ? Rng.RangeFloat(0, 360)
+                    : treeData.Angle,
                 Age = treeData.Age
             };
             Registry.RegisterEntity(tree);
