@@ -176,9 +176,11 @@ public partial class NodeCreature : NodeEntity<DataCreature>
 			fruitMoveDuration / SimulationWorld.TimeScale
 		);
 
-		_blob.AsyncEat(fruitMoveDuration + animationSettleDuration);
+		_blob.AsyncEat((fruitMoveDuration + animationSettleDuration) / SimulationWorld.TimeScale);
 		
 		await nextTween.ToSignal(nextTween, Tween.SignalName.Finished);
+		fruit.QueueFree();
+		
 		var finalTween = CreateTween();
 		finalTween.TweenProperty(
 			this,

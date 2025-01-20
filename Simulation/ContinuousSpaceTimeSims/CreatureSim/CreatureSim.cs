@@ -72,6 +72,14 @@ public class CreatureSim : Simulation<DataCreature>
 		for (var i = 0; i < Registry.Entities.Count; i++)
 		{
 			var creature = Registry.Entities[i];
+
+			if (creature.Digesting > 0)
+			{
+				// Could be a DigestionRate setting or even trait?
+				var digestAmount = Mathf.Min(creature.Digesting, 0.05f);
+				creature.Energy += digestAmount;
+				creature.Digesting -= digestAmount;
+			}
             
             if (!creature.Alive) continue;
             // Process deaths
@@ -347,7 +355,7 @@ public class CreatureSim : Simulation<DataCreature>
 		tree.FruitGrowthProgress = 0;
 		// FruitTreeSim.Registry.Entities[treeIndex] = tree;
 		
-		creature.Energy += SimulationWorld.Rng.RangeFloat(CreatureSimSettings.Instance.MinEnergyGainFromFood, CreatureSimSettings.Instance.MaxEnergyGainFromFood);
+		creature.Digesting += SimulationWorld.Rng.RangeFloat(CreatureSimSettings.Instance.MinEnergyGainFromFood, CreatureSimSettings.Instance.MaxEnergyGainFromFood);
 		creature.EatingTimeLeft = CreatureSimSettings.Instance.EatDuration;
 		CreatureEatEvent?.Invoke(creatureIndex, tree.Body, CreatureSimSettings.Instance.EatDuration / SimulationWorld.TimeScale);
 		return creature;

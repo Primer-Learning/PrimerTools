@@ -33,6 +33,7 @@ public struct DataCreature : IDataEntity
     public float Age;
     public bool ForcedMature;
     public float Energy;
+    public float Digesting;
     public float HungerThreshold;
     public int FoodTargetIndex;
     public float EatingTimeLeft;
