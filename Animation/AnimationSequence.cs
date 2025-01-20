@@ -78,7 +78,8 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		FHD,
 		UHD
 	}
-	
+
+	private bool _setOutputResolution;
 	private OutputResolutionOptions _outputResolution;
 	[Export]
 	public OutputResolutionOptions OutputResolution
@@ -86,6 +87,11 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		get => _outputResolution;
 		set
 		{
+			if (!_setOutputResolution) // Prevents it running on build, which confuses the godot editor.
+			{
+				_setOutputResolution = true;
+				return;
+			} 
 			_outputResolution = value;
 			int height;
 			int width;
