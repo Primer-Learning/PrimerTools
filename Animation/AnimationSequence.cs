@@ -39,7 +39,9 @@ public abstract partial class AnimationSequence : AnimationPlayer
 	[Export] private bool RunButton {
 		get => _run;
 		set {
-			if (!value && _run && Engine.IsEditorHint()) {
+			if (!value && _run && Engine.IsEditorHint())
+			{
+				DoneWithConstruction = false;
 				Reset();
 				Define();
 				CreateTopLevelAnimation(makeSingleClip);
@@ -49,6 +51,8 @@ public abstract partial class AnimationSequence : AnimationPlayer
 				{
 					this.MakeSelfAndChildrenLocal(GetTree().EditedSceneRoot);
 				}
+
+				DoneWithConstruction = true;
 			}
 			_run = true;
 		}
@@ -66,6 +70,9 @@ public abstract partial class AnimationSequence : AnimationPlayer
 	[Export] private bool makeSingleClip;
 	[Export] private bool makeChildrenLocal;
 	[Export] private double timeToRewindTo = 0;
+
+	[ExportGroup("Play options")]
+	[Export] private bool _quitWhenFinished;
 
 	#region Movie maker handling
 	[ExportGroup("Recording options")]
@@ -196,9 +203,11 @@ public abstract partial class AnimationSequence : AnimationPlayer
 	
 	public static AnimationSequence Instance { get; private set; }
 
+	protected bool DoneWithConstruction;
 	public override void _Ready()
 	{
 		if (Engine.IsEditorHint()) return;
+		DoneWithConstruction = false;
 		if (_record)
 		{
 			if (string.IsNullOrEmpty(_sceneName)) GD.PrintErr("Recording is true, but scene name is empty.");
@@ -225,6 +234,11 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		// Animation playback tracks are kinda dumb and only know about their starting key,
 		// so you can't play them from the middle of an animation.
 		// We keep the audio track, though.
+		
+		// Comment long after this code was written:
+		// Is the pause, seek, and play of the main AnimationPlayer (this) even needed?
+		// Seems like we're just stripping that and then playing the individuals.
+		
 		TopLevelAnimationWithPlaybackTracksRemoved(); // We happen to not need the return value here.
 		CurrentAnimation = mainAnimName;
 		Pause(); // Setting current animation automatically plays. We need to pause so seeking works.
@@ -238,6 +252,8 @@ public abstract partial class AnimationSequence : AnimationPlayer
 			_referenceAnimationPlayers[i].Seek(timeToRewindTo);
 			_referenceAnimationPlayers[i].Play();
 		}
+
+		DoneWithConstruction = true;
 	}
 	
 	protected abstract void Define();
@@ -429,7 +445,7 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		}
 		topLevelAnimation.Length = (float) latestTime + padding;
 
-		if (!Engine.IsEditorHint())
+		if (!Engine.IsEditorHint() && _quitWhenFinished)
 		{
 			// Add animation that triggers a quit when the animation is over
 			topLevelAnimation.AddTrack(Animation.TrackType.Method);
