@@ -64,7 +64,7 @@ public partial class BarPlot3D : Node3D, IPrimerGraphData
         return bar;
     }
 
-    private Node3D GetBar(int x, int y)
+    public Node3D GetBar(int x, int y)
     {
         return GetNodeOrNull<Node3D>($"Bar {x}, {y}");
     }
@@ -91,7 +91,7 @@ public partial class BarPlot3D : Node3D, IPrimerGraphData
         );
     }
     
-    private Node3D EnsureBarExists(int x, int y)
+    public Node3D EnsureBarExists(int x, int y)
     {
         var bar = GetBar(x, y);
         
