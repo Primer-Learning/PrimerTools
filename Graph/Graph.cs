@@ -171,6 +171,8 @@ public partial class Graph : Node3D
         return Transition(duration, duration, duration);
     }
 
+    // TODO: Fix the convenient Transition method, making it give zero duration to portions with no real animations.
+    // Currently, this serves as a workaround for that case, but its purpose is to give fine control.
     /// <summary>
     /// The main implementation of Transition. It receives seperate duration arguments for the three stages of a graph
     /// transition.
