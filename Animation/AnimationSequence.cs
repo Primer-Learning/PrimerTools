@@ -210,6 +210,9 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		DoneWithConstruction = false;
 		if (_record)
 		{
+			_quitWhenFinished = true;	// Always quit when recording, since you can see the result even after it quits,
+										// and failing to quit when recording can to a zillion pngs for no reason. 
+			
 			if (string.IsNullOrEmpty(_sceneName)) GD.PrintErr("Recording is true, but scene name is empty.");
 			MovePreviousTakeToNumberedDirectory();
 			
