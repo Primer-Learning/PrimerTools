@@ -40,6 +40,7 @@ public partial class LatexNode : Node3D
 	public string numberPrefix = "";
 	public string numberSuffix = "";
 	public int DecimalPlacesToShow = 0;
+	public bool showApproxAtZero = false;
 	private float number;
 	public float NumericalExpression {
 		get => number;
@@ -51,7 +52,7 @@ public partial class LatexNode : Node3D
 			// Whether to show the approximation symbol
 			// For now, we'll just show it if the number is zero
 			// if (Mathf.Abs(value - rounded) > 0.00001)
-			if (rounded == 0 && value != 0)
+			if (rounded == 0 && value != 0 && showApproxAtZero)
 			{
 				approx = "\\sim ";
 			}

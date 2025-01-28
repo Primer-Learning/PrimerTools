@@ -25,8 +25,6 @@ namespace PrimerTools.Latex
         public ExecutionResult Execute(string cwd, string[] args, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
-            
-            // PrimerLogger.Log("BBBBBB", new { binaryPath, cwd }, args);
 
             using var process = new Process {
                 StartInfo = CreateStartInfo(args, cwd)

@@ -143,9 +143,10 @@ internal class LatexToMesh
         var sanitized = Regex.Replace(latexExpression, $"[{Regex.Escape(invalidChars)}]", "_");
 
         // Shorten if too long to avoid path length issues, keeping under 255 characters
-        if (sanitized.Length > 200)
+        const int maxBaseLength = 100;
+        if (sanitized.Length > maxBaseLength)
         {
-            sanitized = sanitized[..200];
+            sanitized = sanitized[..maxBaseLength];
         }
 
         // Generate a hash of the original expression for uniqueness
