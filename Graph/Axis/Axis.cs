@@ -179,6 +179,7 @@ public partial class Axis : Node3D
 			}
 			
 			ticMovementAnimations.Add(tic.MoveTo(GetPosition(tic)));
+			ticMovementAnimations.Add(tic.ScaleTo(Chonk, duration));
 			ticMovementAnimations.Add(tic.AnimateLabelScale(0.2f));
 			if (TicLabelDistance.HasValue)
 			{

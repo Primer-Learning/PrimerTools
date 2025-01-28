@@ -281,13 +281,13 @@ public partial class Graph : Node3D
         
         if (ZAxisLabelLatexNode is not null && IsInstanceValid(ZAxisLabelLatexNode))
         {
-            updateTransitions.Add(
-                ZAxisLabelLatexNode.MoveTo(
-                    ZAxisLabelAlignment == AxisLabelAlignmentOptions.Along
-                        ? new Vector3(0, -ZAxisLabelOffset, ZAxis.LengthMinusPadding / 2)
-                        : new Vector3(-12.5f, -4.5f, ZAxis.LengthMinusPadding)
-                )
-            );
+            // updateTransitions.Add(
+            //     ZAxisLabelLatexNode.MoveTo(
+            //         ZAxisLabelAlignment == AxisLabelAlignmentOptions.Along
+            //             ? new Vector3(0, -ZAxisLabelOffset, ZAxis.LengthMinusPadding / 2)
+            //             : new Vector3(-12.5f, -4.5f, ZAxis.LengthMinusPadding)
+            //     )
+            // );
             updateTransitions.Add(        
                 ZAxisLabelLatexNode.ScaleTo(Vector3.One * ZAxisLabelScale)
             );

@@ -109,7 +109,6 @@ public partial class StackedBarPlot : Node3D, IPrimerGraphData
                 {
                     bar = CreateBar(stackIndex, segmentIndex, segment);
                 }
-
                 var segmentHeight = segment.Item2;
                 var targetPosition = new Vector3(
                     segment.Item1, 
