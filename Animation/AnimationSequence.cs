@@ -210,8 +210,10 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		DoneWithConstruction = false;
 		if (_record)
 		{
-			_quitWhenFinished = true;	// Always quit when recording, since you can see the result even after it quits,
-										// and failing to quit when recording can to a zillion pngs for no reason. 
+			// _quitWhenFinished = true;	// Always quit when recording, since you can see the result even after it quits,
+			// 							// and failing to quit when recording can to a zillion pngs for no reason.
+			// Actually don't. Sometimes you want a sim to run.
+			// Leaving this here in case I have that bright idea again.
 			
 			if (string.IsNullOrEmpty(_sceneName)) GD.PrintErr("Recording is true, but scene name is empty.");
 			MovePreviousTakeToNumberedDirectory();
@@ -245,6 +247,7 @@ public abstract partial class AnimationSequence : AnimationPlayer
 		TopLevelAnimationWithPlaybackTracksRemoved(); // We happen to not need the return value here.
 		CurrentAnimation = mainAnimName;
 		Pause(); // Setting current animation automatically plays. We need to pause so seeking works.
+		Seek(0);
 		Seek(timeToRewindTo);
 		Play();
 		
