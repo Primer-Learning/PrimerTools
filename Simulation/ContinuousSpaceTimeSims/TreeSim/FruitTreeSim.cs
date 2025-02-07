@@ -4,8 +4,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
-using PrimerTools;
-using PrimerTools.Simulation;
+
+namespace PrimerTools.Simulation;
 
 [Tool]
 public class FruitTreeSim : Simulation<DataTree>

@@ -101,6 +101,7 @@ public class CreatureSim : Simulation<DataCreature>
 	            continue;
             }
             
+            // Comments this out when aging reduces efficiency
             // Check for death from deleterious mutations
             foreach (var trait in creature.Genome.Traits.Values)
             {
@@ -365,6 +366,21 @@ public class CreatureSim : Simulation<DataCreature>
 		var normalizedSpeed = creature.MaxSpeed / CreatureSimSettings.Instance.ReferenceCreatureSpeed;
 		var normalizedAwarenessRadius = creature.AwarenessRadius / CreatureSimSettings.Instance.ReferenceAwarenessRadius;
 		
-		creature.Energy -= (CreatureSimSettings.Instance.BaseEnergySpend + CreatureSimSettings.Instance.GlobalEnergySpendAdjustmentFactor * ( normalizedSpeed * normalizedSpeed + normalizedAwarenessRadius)) / SimulationWorld.PhysicsStepsPerSimSecond;
+		
+		var energyCost = (CreatureSimSettings.Instance.BaseEnergySpend +
+		                  CreatureSimSettings.Instance.GlobalEnergySpendAdjustmentFactor *
+		                  (normalizedSpeed * normalizedSpeed + normalizedAwarenessRadius))
+		                 / SimulationWorld.PhysicsStepsPerSimSecond;
+	
+		// Aging lowers efficiency section
+		// foreach (var trait in creature.Genome.Traits.Values)
+		// {
+		//     if (trait is DeleteriousTrait { ExpressedValue: true, MortalityRatePerSecond: > 0 })
+		//     {
+		// 	    energyCost *= 1 + creature.Age / 100f;
+		//     }
+		// }
+		
+		creature.Energy -= energyCost;
 	}
 }

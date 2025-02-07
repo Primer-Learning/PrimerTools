@@ -8,10 +8,10 @@ public class FruitTreeSimSettings
     #endregion
     
     #region Simulation Parameters
-    public static float MaxTreeSpawnRadius = 7f;
-    public static float MinTreeSpawnRadius = 1f;
-    public static float TreeCompetitionRadius = 5f;
-    public static float MinimumTreeDistance = 1f;
+    public static float MaxTreeSpawnRadius = 8f;
+    public static float MinTreeSpawnRadius = 2f;
+    public static float TreeCompetitionRadius = 6f;
+    public static float MinimumTreeDistance = 2f;
 
     public const float TreeMaturationTime = 1f;
     public const float TreeSpawnInterval = 0.4f;
@@ -21,6 +21,6 @@ public class FruitTreeSimSettings
     public const float SaplingDeathProbabilityBase = 0.001f;
     public const float SaplingDeathProbabilityPerNeighbor = 0.01f;
     public const float MatureTreeDeathProbabilityBase = 0.0001f;
-    public const float MatureTreeDeathProbabilityPerNeighbor = 0.0001f;
+    public const float MatureTreeDeathProbabilityPerNeighbor = 0.0002f;
     #endregion
 }

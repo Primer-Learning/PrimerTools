@@ -93,7 +93,7 @@ public partial class SimulationWorld : Node3D
     }
     #endregion
 
-    public const int PhysicsStepsPerSimSecond = 60;
+    public const int PhysicsStepsPerSimSecond = 30;
     public const float TimeStep = 1f / PhysicsStepsPerSimSecond;
     public int PhysicsStepsTaken { get; private set; }
     public float TimeElapsed => PhysicsStepsTaken * TimeStep;

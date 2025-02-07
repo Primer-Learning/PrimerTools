@@ -8,7 +8,7 @@ public partial class NodeCreature : NodeEntity<DataCreature>
 {
 	private Blob _blob;
 	private Accessory _beard;
-	private StatusDisplay _statusDisplay;
+	// private StatusDisplay _statusDisplay;
 
 	#region Core methods
 	public override void _Ready()
@@ -40,11 +40,12 @@ public partial class NodeCreature : NodeEntity<DataCreature>
 
 		_beard = _blob.AddAccessory(Accessory.AccessoryType.Beard);
 		
-		_statusDisplay = StatusDisplay.CreateInstance();
-		_blob.AddChild(_statusDisplay);
-		_statusDisplay.Position = Vector3.Up * 2;
-		_statusDisplay.Scale = Vector3.One;
-		_statusDisplay.Energy = dataCreature.Energy;
+		// TODO: Repair the status display scene
+		// _statusDisplay = StatusDisplay.CreateInstance();
+		// _blob.AddChild(_statusDisplay);
+		// _statusDisplay.Position = Vector3.Up * 2;
+		// _statusDisplay.Scale = Vector3.One;
+		// _statusDisplay.Energy = dataCreature.Energy;
 		// this.MakeSelfAndChildrenLocal();
 	}
 
@@ -66,7 +67,7 @@ public partial class NodeCreature : NodeEntity<DataCreature>
 		_beard.SetColor(PrimerColor.InterpolateInLinearSpace(PrimerColor.Black, PrimerColor.White, timeAfterMaturity));
 		
 		// Display
-		_statusDisplay.Energy = dataCreature.Energy;
+		// _statusDisplay.Energy = dataCreature.Energy;
 	}
 	
 	public void UpdateTransform(DataCreature dataCreature)
