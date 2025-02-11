@@ -1,33 +1,32 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
 
 namespace PrimerTools.Simulation;
 
-public class NodeEntityManager<TDataEntity> where TDataEntity : IDataEntity
+public abstract partial class NodeEntityManager<TDataEntity> : Node3D, INodeEntityManager 
+    where TDataEntity : IDataEntity
 {
-    public readonly List<NodeEntity> NodeEntities = new();
+    protected readonly List<NodeEntity> NodeEntities = new();
     public List<NodeEntity> PreExistingNodeEntities = new();
     protected readonly DataEntityRegistry<TDataEntity> DataEntityRegistry;
     public IReadOnlyList<TDataEntity> DataEntities => DataEntityRegistry.Entities;
-    private readonly Node3D _parent;
     private readonly Func<NodeEntity> _entityFactory;
 
-    public NodeEntityManager(
+    protected NodeEntityManager(
         DataEntityRegistry<TDataEntity> dataEntityRegistry,
-        Node3D parent,
         Func<NodeEntity> entityFactory)
     {
         DataEntityRegistry = dataEntityRegistry;
-        _parent = parent;
         _entityFactory = entityFactory;
         
         DataEntityRegistry.EntityRegistered += RegisterEntity;
         DataEntityRegistry.EntityUnregistered += RemoveEntity;
         DataEntityRegistry.ResetEvent += Reset;
     }
-    
+    public NodeEntityManager() {}  
+
     private void RegisterEntity(TDataEntity dataEntity)
     {
         NodeEntity nodeEntity;
@@ -42,15 +41,14 @@ public class NodeEntityManager<TDataEntity> where TDataEntity : IDataEntity
             nodeEntity = _entityFactory();
         }
         
-        _parent.AddChild(nodeEntity);
+        AddChild(nodeEntity);
         nodeEntity.Initialize(dataEntity);
         NodeEntities.Add(nodeEntity);
     }
+
     private void RemoveEntity(int index)
     {
         NodeEntities.RemoveAt(index);
-        // Don't queuefree here. It can queuefree itself after an animation
-        // GetChild(index).QueueFree();
     }
 
     public T GetNodeEntityByDataID<T>(Rid rid) where T : NodeEntity
@@ -68,6 +66,9 @@ public class NodeEntityManager<TDataEntity> where TDataEntity : IDataEntity
         NodeEntities.Clear();
     }
     
+    // You might think the nodes should just run their own update method from _Process
+    // But since the node entities are structs, it's hard to keep references to them.
+    // It works well to just do it from here.
     public virtual void VisualProcess(double delta)
     {
         if (DataEntityRegistry == null) return;
@@ -78,10 +79,27 @@ public class NodeEntityManager<TDataEntity> where TDataEntity : IDataEntity
         }
     }
 
-    public void UnsubscribeFromEvents()
+    protected void UnsubscribeFromEvents()
     {
         DataEntityRegistry.EntityRegistered -= RegisterEntity;
         DataEntityRegistry.EntityUnregistered -= RemoveEntity;
         DataEntityRegistry.ResetEvent -= Reset;
+    }
+
+    public override void _Ready()
+    {
+        base._Ready();
+        Name = $"Node{GetType().Name.Replace("Manager", "")}";
+    }
+
+    public override void _ExitTree()
+    {
+        UnsubscribeFromEvents();
+        base._ExitTree();
+    }
+
+    public new void QueueFree()
+    {
+        base.QueueFree();
     }
 }

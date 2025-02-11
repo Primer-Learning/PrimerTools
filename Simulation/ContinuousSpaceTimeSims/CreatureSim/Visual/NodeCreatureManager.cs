@@ -3,26 +3,21 @@ using Godot;
 
 namespace PrimerTools.Simulation.New;
 
-public partial class NodeCreatureManager : Node3D
+public partial class NodeCreatureManager : NodeEntityManager<DataCreature>
 {
-    private readonly NodeEntityManager<DataCreature> _entityManager;
     private readonly ICreatureFactory _creatureFactory;
 
     public NodeCreatureManager(
         DataEntityRegistry<DataCreature> dataEntityRegistry,
         ICreatureFactory creatureFactory)
+        : base(dataEntityRegistry, () => new NodeCreature(creatureFactory))
     {
         _creatureFactory = creatureFactory;
-        _entityManager = new NodeEntityManager<DataCreature>(
-            dataEntityRegistry,
-            this,
-            () => new NodeCreature(_creatureFactory));
-            
         CreatureSim.CreatureEatEvent += OnCreatureEat;
         CreatureSim.CreatureDeathEvent += OnCreatureDeath;
     }
-    public void VisualProcess(double delta) => _entityManager.VisualProcess(delta);
-    public NodeCreatureManager(){}
+
+    public NodeCreatureManager() : base(null, null) {}
 
     private NodeTreeManager _nodeTreeManager;
 
@@ -40,7 +35,7 @@ public partial class NodeCreatureManager : Node3D
 
     private void OnCreatureEat(int creatureIndex, Rid treeID, float duration)
     {
-        (_entityManager.NodeEntities[creatureIndex] as NodeCreature)?.Eat(
+        (NodeEntities[creatureIndex] as NodeCreature)?.Eat(
             NodeTreeManager?.GetNodeEntityByDataID(treeID)?.GetFruit(),
             duration
         );
@@ -48,19 +43,13 @@ public partial class NodeCreatureManager : Node3D
 
     private void OnCreatureDeath(int creatureIndex, CreatureSim.DeathCause cause)
     {
-        (_entityManager.NodeEntities[creatureIndex] as NodeCreature)?.Death();
+        (NodeEntities[creatureIndex] as NodeCreature)?.Death();
     }
 
     public override void _ExitTree()
     {
-        if (_entityManager != null)
-        {
-            _entityManager.UnsubscribeFromEvents();
-        }
-
         CreatureSim.CreatureEatEvent -= OnCreatureEat;
         CreatureSim.CreatureDeathEvent -= OnCreatureDeath;
-
         base._ExitTree();
     }
 }

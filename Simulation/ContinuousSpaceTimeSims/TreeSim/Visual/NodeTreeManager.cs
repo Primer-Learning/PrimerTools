@@ -2,40 +2,32 @@ using Godot;
 using PrimerTools;
 using PrimerTools.Simulation;
 
-public partial class NodeTreeManager : Node3D
+public partial class NodeTreeManager : NodeEntityManager<DataTree>
 {
-    private readonly NodeEntityManager<DataTree> _entityManager;
-
     public NodeTreeManager(DataEntityRegistry<DataTree> dataEntityRegistry)
+        : base(dataEntityRegistry, () => new NodeTree())
     {
-        _entityManager = new NodeEntityManager<DataTree>(
-            dataEntityRegistry,
-            this,
-            () => new NodeTree());
     }
 
-    public void VisualProcess(double delta) => _entityManager.VisualProcess(delta);
+    public NodeTreeManager() : base(null, null) {}
     
-    public NodeTreeManager(){}
-    
-    public NodeTree GetNodeEntityByDataID(Rid rid) => _entityManager.GetNodeEntityByDataID<NodeTree>(rid);
+    public NodeTree GetNodeEntityByDataID(Rid rid) => GetNodeEntityByDataID<NodeTree>(rid);
 
-    // TODO: Figure out a way to handle warnings like this now that we no longer inherit from NodeEntityManager
-    // public override void VisualProcess(double delta)
-    // {
-    //     if (FruitTreeSimSettings.NodeFruitGrowthDelay > FruitTreeSimSettings.FruitGrowthTime)
-    //         GD.PushWarning("Animation delay is bigger than growth time, which is not handled well.");
-    //     base.VisualProcess(delta);
-    // }
+    public override void VisualProcess(double delta)
+    {
+        if (FruitTreeSimSettings.NodeFruitGrowthDelay > FruitTreeSimSettings.FruitGrowthTime)
+            GD.PushWarning("Animation delay is bigger than growth time, which is not handled well.");
+        base.VisualProcess(delta);
+    }
 
     /// <summary>
     /// Meant for manual animation of the forest growth from a saved forest.
     /// </summary>
     public void GrowAllTrees(float duration)
     {
-        for (var i = 0; i < _entityManager.DataEntities.Count; i++)
+        for (var i = 0; i < DataEntities.Count; i++)
         {
-            (_entityManager.NodeEntities[i] as NodeTree)?.TweenToCorrectScale(_entityManager.DataEntities[i].Age, duration);
+            (NodeEntities[i] as NodeTree)?.TweenToCorrectScale(DataEntities[i].Age, duration);
         }
     }
 
@@ -46,12 +38,12 @@ public partial class NodeTreeManager : Node3D
     /// <returns></returns>
     public Animation AnimateGrowingAllTrees(float duration)
     {
-        var numTrees = _entityManager.DataEntities.Count;
+        var numTrees = DataEntities.Count;
         var animations = new Animation[numTrees];
-        for (var i = 0; i < _entityManager.DataEntities.Count; i++)
+        for (var i = 0; i < DataEntities.Count; i++)
         {
-            animations[i] = (_entityManager.NodeEntities[i] as NodeTree)?.ScaleTo(
-                NodeTree.ScaleFromAge(_entityManager.DataEntities[i].Age), 
+            animations[i] = (NodeEntities[i] as NodeTree)?.ScaleTo(
+                NodeTree.ScaleFromAge(DataEntities[i].Age), 
                 duration);
         }
         return AnimationUtilities.Parallel(animations);
@@ -59,7 +51,7 @@ public partial class NodeTreeManager : Node3D
 
     public void CullTinyTrees()
     {
-        foreach (var entity in _entityManager.NodeEntities)
+        foreach (var entity in NodeEntities)
         {
             var tree = entity as NodeTree;
             if (tree == null) continue;
@@ -69,15 +61,5 @@ public partial class NodeTreeManager : Node3D
                 tree.QueueFree();
             }
         }
-    }
-    
-    public override void _ExitTree()
-    {
-        if (_entityManager != null)
-        {
-            _entityManager.UnsubscribeFromEvents();
-        }
-        
-        base._ExitTree();
     }
 }

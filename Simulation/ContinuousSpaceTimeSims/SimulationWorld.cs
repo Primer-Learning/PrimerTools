@@ -103,8 +103,7 @@ public partial class SimulationWorld : Node3D
     public Rng Rng => _rng ??= new Rng(_seed == -1 ? System.Environment.TickCount : _seed);
     public World3D World3D => GetWorld3D();
     public readonly List<ISimulation> Simulations = new();
-    private NodeCreatureManager _creatureNodeManager;
-    public NodeTreeManager TreeNodeManager;
+    private readonly List<INodeEntityManager> _entityManagers = new();
 
     public void Reset()
     {
@@ -113,10 +112,12 @@ public partial class SimulationWorld : Node3D
         {
 		    simulation.Reset();
 	    }
-        _creatureNodeManager?.QueueFree();
-        _creatureNodeManager = null;
-        TreeNodeManager?.QueueFree();
-        TreeNodeManager = null;
+        
+        foreach (var manager in _entityManagers)
+        {
+            manager.QueueFree();
+        }
+        _entityManagers.Clear();
         Ground?.QueueFree();
     }
     public void Initialize(params ISimulation[] simulations)
@@ -141,21 +142,19 @@ public partial class SimulationWorld : Node3D
         
             if (VisualizationMode == VisualizationMode.NodeCreatures)
             {
-                switch (sim)
+                INodeEntityManager manager = sim switch
                 {
-                    case FruitTreeSim treeSim:
-                        TreeNodeManager = new NodeTreeManager(treeSim.Registry);
-                        TreeNodeManager.Name = "NodeTreeManager";
-                        AddChild(TreeNodeManager);
-                        break;
-                    case CreatureSim creatureSim:
-                        _creatureNodeManager = new NodeCreatureManager(
-                            creatureSim.Registry,
-                            new DefaultCreatureFactory()
-                        );
-                        _creatureNodeManager.Name = "NodeCreatureManager";
-                        AddChild(_creatureNodeManager);
-                        break;
+                    FruitTreeSim treeSim => new NodeTreeManager(treeSim.Registry),
+                    CreatureSim creatureSim => new NodeCreatureManager(
+                        creatureSim.Registry,
+                        new DefaultCreatureFactory()),
+                    _ => null
+                };
+
+                if (manager != null)
+                {
+                    AddChild((Node)manager);
+                    _entityManagers.Add(manager);
                 }
             }
         }
@@ -193,8 +192,10 @@ public partial class SimulationWorld : Node3D
     {
         if (!Running) return;
         
-        _creatureNodeManager?.VisualProcess(delta);
-        TreeNodeManager?.VisualProcess(delta);
+        foreach (var manager in _entityManagers)
+        {
+            manager.VisualProcess(delta);
+        }
         
         foreach (var simulation in Simulations)
         {
