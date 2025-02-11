@@ -1,0 +1,7 @@
+[gd_scene load_steps=3 format=3 uid="uid://bhqv7fa20osuf"]
+
+[ext_resource type="PackedScene" uid="uid://dpak6w133vjho" path="res://addons/PrimerTools/Simulation/Models/Medium mango tree/mango tree medium.blend" id="1_c8slw"]
+[ext_resource type="Script" path="res://addons/PrimerTools/Simulation/FruitTree.cs" id="2_5g4av"]
+
+[node name="mango tree medium" instance=ExtResource("1_c8slw")]
+script = ExtResource("2_5g4av")

@@ -7,9 +7,9 @@ public partial class FruitTree : Node3D
 {
 	public Rng Rng;
 	// Only the medium tree for now
-	public static readonly PackedScene TreeScene = ResourceLoader.Load<PackedScene>("res://addons/PrimerAssets/Organized/Trees/Mango trees/Medium mango tree/mango_tree_medium.tscn");
+	public static readonly PackedScene TreeScene = ResourceLoader.Load<PackedScene>("res://addons/PrimerTools/Simulation/Models/Medium mango tree/mango_tree_medium.tscn");
 	private static readonly PackedScene MangoScene =
-		ResourceLoader.Load<PackedScene>("res://addons/PrimerAssets/Organized/Mango/mango.blend");
+		ResourceLoader.Load<PackedScene>("res://addons/PrimerTools/Simulation/Models/Mango/mango.blend");
 	private static readonly Pool<Node3D> MangoPool = new (MangoScene);
 
 	public static FruitTree CreateInstance()
