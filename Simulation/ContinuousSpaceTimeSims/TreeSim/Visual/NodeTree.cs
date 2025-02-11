@@ -2,7 +2,7 @@ using Godot;
 using PrimerTools;
 using PrimerTools.Simulation;
 
-public partial class NodeTree : NodeEntity<DataTree>
+public partial class NodeTree : NodeEntity
 {
 	// Lazy thing. Gives visual trees an rng object for rotating mangoes.
 	// Could pass an rng value if we wanted the visual part of the sim to be reliable.
@@ -17,27 +17,29 @@ public partial class NodeTree : NodeEntity<DataTree>
 		_fruitTree.Rng = NodeTreeRng;
 		AddChild(_fruitTree);
 	}
-	public override void Initialize(DataTree dataTree)
+	public override void Initialize(IDataEntity dataEntity)
 	{
+		var tree = (DataTree)dataEntity;
 		Scale = Vector3.Zero;
-		Position = dataTree.Position;
-		Rotation = new Vector3(0, dataTree.Angle, 0);
+		Position = tree.Position;
+		Rotation = new Vector3(0, tree.Angle, 0);
 		Name = "Tree";
 	}
-	public override void Update(DataTree dataTree)
+	public override void Update(IDataEntity dataEntity)
 	{
-		if (!dataTree.Alive)
+		var tree = (DataTree)dataEntity;
+		if (!tree.Alive)
 		{
 			Death();
 			return;
 		}
 		
-		if (dataTree is { HasFruit: false } tree && tree.FruitGrowthProgress > FruitTreeSimSettings.NodeFruitGrowthDelay)
+		if (tree is { HasFruit: false } && tree.FruitGrowthProgress > FruitTreeSimSettings.NodeFruitGrowthDelay)
 		{
 			GrowFruit(FruitTreeSimSettings.FruitGrowthTime - FruitTreeSimSettings.NodeFruitGrowthDelay);
 		}
 
-		Scale = ScaleFromAge(dataTree.Age);
+		Scale = ScaleFromAge(tree.Age);
 	}
 
 	public static Vector3 ScaleFromAge(float age)

@@ -2,27 +2,40 @@ using Godot;
 using PrimerTools;
 using PrimerTools.Simulation;
 
-public partial class NodeTreeManager : NodeEntityManager<DataTree, NodeTree>
+public partial class NodeTreeManager : Node3D
 {
-    public NodeTreeManager(DataEntityRegistry<DataTree> dataEntityRegistry) 
-        : base(dataEntityRegistry) {}
-    public NodeTreeManager(){}
+    private readonly NodeEntityManager<DataTree> _entityManager;
 
-    public override void VisualProcess(double delta)
+    public NodeTreeManager(DataEntityRegistry<DataTree> dataEntityRegistry)
     {
-        if (FruitTreeSimSettings.NodeFruitGrowthDelay > FruitTreeSimSettings.FruitGrowthTime)
-            GD.PushWarning("Animation delay is bigger than growth time, which is not handled well.");
-        base.VisualProcess(delta);
+        _entityManager = new NodeEntityManager<DataTree>(
+            dataEntityRegistry,
+            this,
+            () => new NodeTree());
     }
+
+    public void VisualProcess(double delta) => _entityManager.VisualProcess(delta);
+    
+    public NodeTreeManager(){}
+    
+    public NodeTree GetNodeEntityByDataID(Rid rid) => _entityManager.GetNodeEntityByDataID<NodeTree>(rid);
+
+    // TODO: Figure out a way to handle warnings like this now that we no longer inherit from NodeEntityManager
+    // public override void VisualProcess(double delta)
+    // {
+    //     if (FruitTreeSimSettings.NodeFruitGrowthDelay > FruitTreeSimSettings.FruitGrowthTime)
+    //         GD.PushWarning("Animation delay is bigger than growth time, which is not handled well.");
+    //     base.VisualProcess(delta);
+    // }
 
     /// <summary>
     /// Meant for manual animation of the forest growth from a saved forest.
     /// </summary>
     public void GrowAllTrees(float duration)
     {
-        for (var i = 0; i < DataEntityRegistry.Entities.Count; i++)
+        for (var i = 0; i < _entityManager.DataEntities.Count; i++)
         {
-            NodeEntities[i].TweenToCorrectScale(DataEntityRegistry.Entities[i].Age, duration);
+            (_entityManager.NodeEntities[i] as NodeTree)?.TweenToCorrectScale(_entityManager.DataEntities[i].Age, duration);
         }
     }
 
@@ -33,19 +46,24 @@ public partial class NodeTreeManager : NodeEntityManager<DataTree, NodeTree>
     /// <returns></returns>
     public Animation AnimateGrowingAllTrees(float duration)
     {
-        var numTrees = DataEntityRegistry.Entities.Count;
+        var numTrees = _entityManager.DataEntities.Count;
         var animations = new Animation[numTrees];
-        for (var i = 0; i < DataEntityRegistry.Entities.Count; i++)
+        for (var i = 0; i < _entityManager.DataEntities.Count; i++)
         {
-            animations[i] = NodeEntities[i].ScaleTo(NodeTree.ScaleFromAge(DataEntityRegistry.Entities[i].Age), duration);
+            animations[i] = (_entityManager.NodeEntities[i] as NodeTree)?.ScaleTo(
+                NodeTree.ScaleFromAge(_entityManager.DataEntities[i].Age), 
+                duration);
         }
         return AnimationUtilities.Parallel(animations);
     }
 
     public void CullTinyTrees()
     {
-        foreach (var tree in NodeEntities)
+        foreach (var entity in _entityManager.NodeEntities)
         {
+            var tree = entity as NodeTree;
+            if (tree == null) continue;
+            
             if (tree.Scale.X < 0.2f)
             {
                 tree.QueueFree();

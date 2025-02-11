@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Godot;
-using PrimerAssets;
 using PrimerTools.LaTeX;
 
 namespace PrimerTools.Graph;

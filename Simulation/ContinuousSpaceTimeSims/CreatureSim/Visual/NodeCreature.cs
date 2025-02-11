@@ -1,44 +1,47 @@
+using Aging.addons.PrimerTools.Simulation.ContinuousSpaceTimeSims.CreatureSim.Visual;
 using Godot;
-using PrimerAssets;
-using Blob = PrimerAssets.Blob;
 
 namespace PrimerTools.Simulation.New;
 
-public partial class NodeCreature : NodeEntity<DataCreature>
+public partial class NodeCreature : NodeEntity
 {
-	private Blob _blob;
-	private Accessory _beard;
-	// private StatusDisplay _statusDisplay;
+    private readonly ICreatureFactory _creatureFactory;
+    private ICreatureModelHandler _creatureModelHandler;
+    // private StatusDisplay _statusDisplay;
 
-	#region Core methods
-	public override void _Ready()
-	{
-		base._Ready();
-		
-		Name = "Creature"; 
-		_blob = Blob.CreateInstance();
-		AddChild(_blob);
-		_blob.BlobAnimationTree.Active = false;
-		
-		_blob.SetColor(PrimerColor.Blue);
+    public NodeCreature(ICreatureFactory creatureFactory)
+    {
+        _creatureFactory = creatureFactory;
+    }
+
+    public NodeCreature()
+    {
+	    throw new System.NotImplementedException();
+    }
+
+    #region Core methods
+    public override void _Ready()
+    {
+        base._Ready();
+        Name = "Creature";
+
+        _creatureModelHandler = _creatureFactory.CreateInstance();
+        _creatureModelHandler.OnReady(this);
 	}
-	public override void Initialize(DataCreature dataCreature)
+	public override void Initialize(IDataEntity dataEntity)
 	{
-		Position = dataCreature.Position;
-		Scale = dataCreature.Age / CreatureSimSettings.Instance.MaturationTime * Vector3.One;
+		var creature = (DataCreature)dataEntity;
+		Position = creature.Position;
+		Scale = creature.Age / CreatureSimSettings.Instance.MaturationTime * Vector3.One;
 		
-		if (_blob == null)
+		if (_creatureModelHandler == null)
 		{
 			PrimerGD.PrintErrorWithStackTrace("Creature blob does not exist and cannot have its visuals adjusted.");
 			return;
 		}
 		
-		_blob.SetColor(PrimerColor.Blue);
-		var normalizedAwareness = dataCreature.AwarenessRadius / CreatureSimSettings.Instance.ReferenceAwarenessRadius;
-		_blob.LeftEye.Scale = normalizedAwareness * Vector3.One;
-		_blob.RightEye.Scale = normalizedAwareness * Vector3.One;
-
-		_beard = _blob.AddAccessory(Accessory.AccessoryType.Beard);
+		var normalizedAwareness = creature.AwarenessRadius / CreatureSimSettings.Instance.ReferenceAwarenessRadius;
+		_creatureModelHandler.Initialize(normalizedAwareness);
 		
 		// TODO: Repair the status display scene
 		// _statusDisplay = StatusDisplay.CreateInstance();
@@ -49,22 +52,11 @@ public partial class NodeCreature : NodeEntity<DataCreature>
 		// this.MakeSelfAndChildrenLocal();
 	}
 
-	public override void Update(DataCreature dataCreature)
+	public override void Update(IDataEntity dataEntity)
 	{
-		UpdateTransform(dataCreature);
-
-		// Beard
-		_beard.Scale = Vector3.One *
-		               (
-			               dataCreature.ForcedMature
-			               ? 1
-			               : Mathf.Min(1, dataCreature.Age / CreatureSimSettings.Instance.MaturationTime)
-		               );
-
-		const int maxBeardAge = 100;
-		var timeAfterMaturity = (dataCreature.Age - CreatureSimSettings.Instance.MaturationTime) /
-		                        (maxBeardAge - CreatureSimSettings.Instance.MaturationTime);
-		_beard.SetColor(PrimerColor.InterpolateInLinearSpace(PrimerColor.Black, PrimerColor.White, timeAfterMaturity));
+		var creature = (DataCreature)dataEntity;
+		UpdateTransform(creature);
+		_creatureModelHandler.Update(creature);
 		
 		// Display
 		// _statusDisplay.Energy = dataCreature.Energy;
@@ -173,11 +165,11 @@ public partial class NodeCreature : NodeEntity<DataCreature>
 		nextTween.TweenProperty(
 			fruit,
 			"global_position",
-			GlobalPosition + GlobalBasis * _blob.MouthPosition,
+			GlobalPosition + GlobalBasis * _creatureModelHandler.GetMouthPosition(),
 			fruitMoveDuration / SimulationWorld.TimeScale
 		);
 
-		_blob.AsyncEat((fruitMoveDuration + animationSettleDuration) / SimulationWorld.TimeScale);
+		_creatureModelHandler.TriggerEatAnimation((fruitMoveDuration + animationSettleDuration) / SimulationWorld.TimeScale);
 		
 		await nextTween.ToSignal(nextTween, Tween.SignalName.Finished);
 		fruit.QueueFree();

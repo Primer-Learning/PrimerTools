@@ -1,21 +1,28 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Godot;
 
 namespace PrimerTools.Simulation;
 
-public partial class NodeEntityManager<TDataEntity, TNodeEntity> : Node3D
-    where TDataEntity : IDataEntity
-    where TNodeEntity : NodeEntity<TDataEntity>, new()
+public class NodeEntityManager<TDataEntity> where TDataEntity : IDataEntity
 {
-    public readonly List<TNodeEntity> NodeEntities = new();
-    public List<TNodeEntity> PreExistingNodeEntities = new();
+    public readonly List<NodeEntity> NodeEntities = new();
+    public List<NodeEntity> PreExistingNodeEntities = new();
     protected readonly DataEntityRegistry<TDataEntity> DataEntityRegistry;
+    public IReadOnlyList<TDataEntity> DataEntities => DataEntityRegistry.Entities;
+    private readonly Node3D _parent;
+    private readonly Func<NodeEntity> _entityFactory;
 
-    public NodeEntityManager(){}
-    public NodeEntityManager(DataEntityRegistry<TDataEntity> dataEntityRegistry)
+    public NodeEntityManager(
+        DataEntityRegistry<TDataEntity> dataEntityRegistry,
+        Node3D parent,
+        Func<NodeEntity> entityFactory)
     {
         DataEntityRegistry = dataEntityRegistry;
+        _parent = parent;
+        _entityFactory = entityFactory;
+        
         DataEntityRegistry.EntityRegistered += RegisterEntity;
         DataEntityRegistry.EntityUnregistered += RemoveEntity;
         DataEntityRegistry.ResetEvent += Reset;
@@ -23,7 +30,7 @@ public partial class NodeEntityManager<TDataEntity, TNodeEntity> : Node3D
     
     private void RegisterEntity(TDataEntity dataEntity)
     {
-        TNodeEntity nodeEntity;
+        NodeEntity nodeEntity;
         if (PreExistingNodeEntities.Any())
         {
             GD.PushWarning("Using PreExistingNodeEntities is untested");
@@ -32,10 +39,10 @@ public partial class NodeEntityManager<TDataEntity, TNodeEntity> : Node3D
         }
         else
         {
-            nodeEntity = new TNodeEntity();
+            nodeEntity = _entityFactory();
         }
         
-        AddChild(nodeEntity);
+        _parent.AddChild(nodeEntity);
         nodeEntity.Initialize(dataEntity);
         NodeEntities.Add(nodeEntity);
     }
@@ -46,10 +53,10 @@ public partial class NodeEntityManager<TDataEntity, TNodeEntity> : Node3D
         // GetChild(index).QueueFree();
     }
 
-    public TNodeEntity GetNodeEntityByDataID(Rid rid)
+    public T GetNodeEntityByDataID<T>(Rid rid) where T : NodeEntity
     {
         var index = DataEntityRegistry.EntityLookup[rid];
-        return NodeEntities[index];
+        return NodeEntities[index] as T;
     }
 
     private void Reset()

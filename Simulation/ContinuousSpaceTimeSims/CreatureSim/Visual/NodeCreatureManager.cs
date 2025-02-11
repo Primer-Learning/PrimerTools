@@ -3,14 +3,25 @@ using Godot;
 
 namespace PrimerTools.Simulation.New;
 
-public partial class NodeCreatureManager : NodeEntityManager<DataCreature, NodeCreature>
+public partial class NodeCreatureManager : Node3D
 {
-    public NodeCreatureManager(DataEntityRegistry<DataCreature> dataEntityRegistry) 
-        : base(dataEntityRegistry)
+    private readonly NodeEntityManager<DataCreature> _entityManager;
+    private readonly ICreatureFactory _creatureFactory;
+
+    public NodeCreatureManager(
+        DataEntityRegistry<DataCreature> dataEntityRegistry,
+        ICreatureFactory creatureFactory)
     {
+        _creatureFactory = creatureFactory;
+        _entityManager = new NodeEntityManager<DataCreature>(
+            dataEntityRegistry,
+            this,
+            () => new NodeCreature(_creatureFactory));
+            
         CreatureSim.CreatureEatEvent += OnCreatureEat;
         CreatureSim.CreatureDeathEvent += OnCreatureDeath;
     }
+    public void VisualProcess(double delta) => _entityManager.VisualProcess(delta);
     public NodeCreatureManager(){}
 
     private NodeTreeManager _nodeTreeManager;
@@ -29,7 +40,7 @@ public partial class NodeCreatureManager : NodeEntityManager<DataCreature, NodeC
 
     private void OnCreatureEat(int creatureIndex, Rid treeID, float duration)
     {
-        NodeEntities[creatureIndex].Eat(
+        (_entityManager.NodeEntities[creatureIndex] as NodeCreature)?.Eat(
             NodeTreeManager?.GetNodeEntityByDataID(treeID)?.GetFruit(),
             duration
         );
@@ -37,7 +48,7 @@ public partial class NodeCreatureManager : NodeEntityManager<DataCreature, NodeC
 
     private void OnCreatureDeath(int creatureIndex, CreatureSim.DeathCause cause)
     {
-        NodeEntities[creatureIndex].Death();
+        (_entityManager.NodeEntities[creatureIndex] as NodeCreature)?.Death();
     }
 
     public override void _ExitTree()

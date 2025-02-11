@@ -2,8 +2,8 @@ using Godot;
 
 namespace PrimerTools.Simulation;
 
-public partial class NodeEntity<T> : Node3D where T : IDataEntity
+public partial class NodeEntity : Node3D
 {
-    public virtual void Initialize(T dataEntity){}
-    public virtual void Update(T dataEntity){}
+    public virtual void Initialize(IDataEntity dataEntity){}
+    public virtual void Update(IDataEntity dataEntity){}
 }

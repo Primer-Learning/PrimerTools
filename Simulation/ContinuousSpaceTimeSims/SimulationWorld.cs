@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Aging.addons.PrimerTools.Simulation.ContinuousSpaceTimeSims.CreatureSim.Visual;
 using Godot;
 using PrimerTools.Simulation.New;
 
@@ -148,7 +149,10 @@ public partial class SimulationWorld : Node3D
                         AddChild(TreeNodeManager);
                         break;
                     case CreatureSim creatureSim:
-                        _creatureNodeManager = new NodeCreatureManager(creatureSim.Registry);
+                        _creatureNodeManager = new NodeCreatureManager(
+                            creatureSim.Registry,
+                            new DefaultCreatureFactory()
+                        );
                         _creatureNodeManager.Name = "NodeCreatureManager";
                         AddChild(_creatureNodeManager);
                         break;
