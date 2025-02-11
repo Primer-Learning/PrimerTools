@@ -71,11 +71,17 @@ public class NodeEntityManager<TDataEntity> where TDataEntity : IDataEntity
     public virtual void VisualProcess(double delta)
     {
         if (DataEntityRegistry == null) return;
-
+    
         for (var i = 0; i < DataEntityRegistry.Entities.Count; i++)
         {
             NodeEntities[i].Update(DataEntityRegistry.Entities[i]);
         }
     }
-    
+
+    public void UnsubscribeFromEvents()
+    {
+        DataEntityRegistry.EntityRegistered -= RegisterEntity;
+        DataEntityRegistry.EntityUnregistered -= RemoveEntity;
+        DataEntityRegistry.ResetEvent -= Reset;
+    }
 }

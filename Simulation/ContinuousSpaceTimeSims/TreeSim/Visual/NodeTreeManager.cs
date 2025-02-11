@@ -70,4 +70,14 @@ public partial class NodeTreeManager : Node3D
             }
         }
     }
+    
+    public override void _ExitTree()
+    {
+        if (_entityManager != null)
+        {
+            _entityManager.UnsubscribeFromEvents();
+        }
+        
+        base._ExitTree();
+    }
 }

@@ -53,8 +53,14 @@ public partial class NodeCreatureManager : Node3D
 
     public override void _ExitTree()
     {
-        base._ExitTree();
+        if (_entityManager != null)
+        {
+            _entityManager.UnsubscribeFromEvents();
+        }
+
         CreatureSim.CreatureEatEvent -= OnCreatureEat;
         CreatureSim.CreatureDeathEvent -= OnCreatureDeath;
+
+        base._ExitTree();
     }
 }
