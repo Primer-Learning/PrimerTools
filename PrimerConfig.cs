@@ -2,14 +2,14 @@ using System;
 using System.IO;
 using System.Text.Json;
 using Godot;
-using FileAccess = System.IO.FileAccess;
 
 namespace GladiatorManager.addons.PrimerTools;
 
 public class PrimerConfig
 {
+    // Just a color palette handler at this point
+    private const string ConfigPath = "res://primer_config.json";
     public ColorPalette Colors { get; set; }
-    public AssetPaths Assets { get; set; }
 
     public PrimerConfig()
     {
@@ -18,23 +18,16 @@ public class PrimerConfig
     
     public class ColorPalette
     {
-        public Color Blue { get; set; } = Godot.Colors.Blue;
-        public Color Red { get; set; } = Godot.Colors.Red;
-        public Color Green { get; set; } = Godot.Colors.Green;
-        public Color Orange { get; set; } = Godot.Colors.Orange;
-        public Color Purple { get; set; } = Godot.Colors.Purple;
-        public Color Yellow { get; set; } = Godot.Colors.Yellow;
+        public Color Blue { get; set; } = Godot.Colors.DodgerBlue;
+        public Color Red { get; set; } = Godot.Colors.Crimson;
+        public Color Green { get; set; } = Godot.Colors.ForestGreen;
+        public Color Orange { get; set; } = Godot.Colors.DarkOrange;
+        public Color Purple { get; set; } = Godot.Colors.DarkOrchid;
+        public Color Yellow { get; set; } = Godot.Colors.Gold;
         public Color Gray { get; set; } = Godot.Colors.Gray;
         public Color LightGray { get; set; } = Godot.Colors.LightGray;
         public Color White { get; set; } = Godot.Colors.White;
         public Color Black { get; set; } = Godot.Colors.Black;
-    }
-
-    public class AssetPaths
-    {
-        public string Models { get; set; } = "res://default_models";
-        public string Materials { get; set; } = "res://default_materials";
-        // etc
     }
 
     private static PrimerConfig _instance;
@@ -50,10 +43,13 @@ public class PrimerConfig
         }
     }
 
-    private const string DefaultPath = "res://primer_config.json";
-
-    private static PrimerConfig LoadConfig(string configPath = DefaultPath)
+    private static PrimerConfig LoadConfig(string configPath = ConfigPath)
     {
+        // It's convenient to comment this out when iterating on the palette
+        // using the default colors above.
+        // Otherwise, you have to delete the config file between changes. 
+        // return new PrimerConfig();
+        
         configPath = ProjectSettings.GlobalizePath(configPath);
         try
         {
@@ -77,7 +73,7 @@ public class PrimerConfig
         }
     }
     
-    public static void SaveConfig(string configPath = DefaultPath)
+    public static void SaveConfig(string configPath = ConfigPath)
     {
         configPath = ProjectSettings.GlobalizePath(configPath);
         try
