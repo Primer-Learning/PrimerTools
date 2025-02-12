@@ -48,13 +48,36 @@ public partial class SimulationWorld : Node3D
     
     [Export] public VisualizationMode VisualizationMode = VisualizationMode.NodeCreatures;
     
-    private Vector2 _worldDimension = Vector2.One * 50;
     [Export]
     public Vector2 WorldDimensions
     {
-        get => _worldDimension;
-        set => _worldDimension = value;
+        get
+        {
+            return _worldMax - _worldMin;
+        }
+        set
+        {
+            GD.PushWarning("WorldDimensions is being deprecated. Use WorldMin and WorldMax instead.");
+            _worldMin = -value / 2;
+            _worldMax = value / 2;
+        }
     }
+
+    private Vector2 _worldMin = -Vector2.One * 50;
+    public Vector2 WorldMin
+    {
+        get => _worldMin;
+        set => _worldMin = value;
+    }
+    
+    private Vector2 _worldMax = Vector2.One * 50;
+    public Vector2 WorldMax
+    {
+        get => _worldMax;
+        set => _worldMax = value;
+    }
+    
+    
 
     public Node3D Ground; 
 
@@ -68,8 +91,8 @@ public partial class SimulationWorld : Node3D
         set
         {
             _timeScale = value;
-            Engine.PhysicsTicksPerSecond = (int)(value * 60);
-            Engine.MaxPhysicsStepsPerFrame = (int)(value * 60);
+            Engine.PhysicsTicksPerSecond = (int)(value * PhysicsStepsPerSimSecond);
+            Engine.MaxPhysicsStepsPerFrame = (int)(value * PhysicsStepsPerSimSecond);
             TimeScaleChanged?.Invoke(value);
         }
     }
@@ -122,17 +145,17 @@ public partial class SimulationWorld : Node3D
     }
     public void Initialize(params ISimulation[] simulations)
     {
-        if (simulations.Length == 0) GD.PrintErr("No simulations added to SimulationWorld.");
+        if (simulations.Length == 0) GD.PushWarning("No simulations added to SimulationWorld.");
         
         PhysicsServer3D.SetActive(true);
-        Engine.PhysicsTicksPerSecond = (int) (_timeScale * 60);
+        Engine.PhysicsTicksPerSecond = (int) (_timeScale * PhysicsStepsPerSimSecond);
 
         if (Ground != null && IsInstanceValid(Ground)) Ground.Free();
         Ground = _groundScene.Instantiate<Node3D>();
         AddChild(Ground);
         Ground.Name = "Ground";
         Ground.Scale = new Vector3(WorldDimensions.X, (WorldDimensions.X + WorldDimensions.Y) / 2, WorldDimensions.Y);
-        Ground.Position = new Vector3(WorldDimensions.X / 2, 0, WorldDimensions.Y / 2);
+        Ground.Position = new Vector3(_worldMax.X + _worldMin.X, 0, _worldMin.Y + _worldMax.Y) / 2;
         
         Simulations.Clear();
 
@@ -205,8 +228,8 @@ public partial class SimulationWorld : Node3D
 
     public bool IsWithinWorldBounds(Vector3 position)
     {
-        return position.X >= 0 && position.X <= _worldDimension.X &&
-               position.Z >= 0 && position.Z <= _worldDimension.Y;
+        return position.X >= _worldMin.X && position.X <= _worldMax.X &&
+               position.Z >= -_worldMin.Y && position.Z <= _worldMax.Y;
     }
     public Vector3 GetRandomDestination(Vector3 position, float maxDistance, float minDistance = 0)
     {
