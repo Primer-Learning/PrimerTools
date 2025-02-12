@@ -16,7 +16,7 @@ public enum VisualizationMode
 [Tool]
 public partial class SimulationWorld : Node3D
 {
-    private PackedScene _groundScene = ResourceLoader.Load<PackedScene>("res://addons/PrimerAssets/Organized/Ground/round_ground.tscn");
+    private PackedScene _groundScene = ResourceLoader.Load<PackedScene>("res://addons/PrimerTools/Simulation/Models/Ground/round_ground.tscn");
     
     public CreatureSim CreatureSim => Simulations.OfType<CreatureSim>().FirstOrDefault();
     public FruitTreeSim FruitTreeSim => Simulations.OfType<FruitTreeSim>().FirstOrDefault();
