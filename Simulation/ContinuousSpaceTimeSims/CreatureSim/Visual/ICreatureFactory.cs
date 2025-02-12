@@ -1,6 +1,6 @@
 using Godot;
 
-namespace PrimerTools.Simulation;
+namespace PrimerTools.Simulation.ContinuousSpaceTimeSims.CreatureSim;
 
 public interface ICreatureFactory
 {

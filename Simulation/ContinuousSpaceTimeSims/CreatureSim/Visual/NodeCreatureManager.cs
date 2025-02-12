@@ -1,7 +1,7 @@
 using System.Linq;
 using Godot;
 
-namespace PrimerTools.Simulation.New;
+namespace PrimerTools.Simulation.ContinuousSpaceTimeSims.CreatureSim.Visual;
 
 public partial class NodeCreatureManager : NodeEntityManager<DataCreature>
 {

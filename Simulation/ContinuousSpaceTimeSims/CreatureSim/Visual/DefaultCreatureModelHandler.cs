@@ -2,7 +2,7 @@ using Godot;
 using PrimerTools;
 using PrimerTools.Simulation;
 
-namespace Aging.addons.PrimerTools.Simulation.ContinuousSpaceTimeSims.CreatureSim.Visual;
+namespace PrimerTools.Simulation.ContinuousSpaceTimeSims.CreatureSim.Visual;
 
 public class DefaultCreatureModelHandler : ICreatureModelHandler
 {

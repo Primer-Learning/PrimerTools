@@ -4,7 +4,7 @@ using System.Linq;
 using Godot;
 using Godot.Collections;
 
-namespace PrimerTools.Simulation;
+namespace PrimerTools.Simulation.ContinuousSpaceTimeSims.CreatureSim;
 
 [Tool]
 public class CreatureSim : Simulation<DataCreature>

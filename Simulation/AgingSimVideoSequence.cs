@@ -4,6 +4,7 @@ using System.Linq;
 using Godot;
 using PrimerTools;
 using PrimerTools.Simulation;
+using PrimerTools.Simulation.ContinuousSpaceTimeSims.CreatureSim;
 
 public abstract partial class AgingSimVideoSequence : AnimationSequence
 {

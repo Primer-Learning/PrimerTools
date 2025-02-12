@@ -6,6 +6,7 @@ using Godot;
 using MemoryPack;
 using PrimerTools.Graph;
 using PrimerTools.Simulation;
+using PrimerTools.Simulation.ContinuousSpaceTimeSims.CreatureSim;
 
 public class SimulationDataManager
 {

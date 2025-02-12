@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Aging.addons.PrimerTools.Simulation.ContinuousSpaceTimeSims.CreatureSim.Visual;
 using Godot;
-using PrimerTools.Simulation.New;
+using PrimerTools.Simulation;
+using PrimerTools.Simulation.ContinuousSpaceTimeSims.CreatureSim;
+using PrimerTools.Simulation.ContinuousSpaceTimeSims.CreatureSim.Visual;
 
 namespace PrimerTools.Simulation;
 
@@ -17,9 +18,6 @@ public enum VisualizationMode
 public partial class SimulationWorld : Node3D
 {
     private PackedScene _groundScene = ResourceLoader.Load<PackedScene>("res://addons/PrimerTools/Simulation/Models/Ground/round_ground.tscn");
-    
-    public CreatureSim CreatureSim => Simulations.OfType<CreatureSim>().FirstOrDefault();
-    public FruitTreeSim FruitTreeSim => Simulations.OfType<FruitTreeSim>().FirstOrDefault();
     
     #region Editor controls
 
@@ -125,6 +123,8 @@ public partial class SimulationWorld : Node3D
     private Rng _rng;
     public Rng Rng => _rng ??= new Rng(_seed == -1 ? System.Environment.TickCount : _seed);
     public World3D World3D => GetWorld3D();
+    public object CreatureSim { get; set; }
+
     public readonly List<ISimulation> Simulations = new();
     private readonly List<INodeEntityManager> _entityManagers = new();
 
@@ -165,6 +165,8 @@ public partial class SimulationWorld : Node3D
         
             if (VisualizationMode == VisualizationMode.NodeCreatures)
             {
+                // TODO: Have the sims link to their own visualizers
+                
                 INodeEntityManager manager = sim switch
                 {
                     FruitTreeSim treeSim => new NodeTreeManager(treeSim.Registry),

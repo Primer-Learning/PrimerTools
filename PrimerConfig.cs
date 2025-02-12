@@ -37,13 +37,13 @@ public class PrimerConfig
         {
             if (_instance == null)
             {
-                _instance = LoadConfig();
+                LoadConfig();
             }
             return _instance;
         }
     }
 
-    private static PrimerConfig LoadConfig(string configPath = ConfigPath)
+    private static void LoadConfig(string configPath = ConfigPath)
     {
         // It's convenient to comment this out when iterating on the palette
         // using the default colors above.
@@ -60,12 +60,13 @@ public class PrimerConfig
                 PropertyNameCaseInsensitive = true
             };
             
-            return JsonSerializer.Deserialize<PrimerConfig>(jsonString, options);
+            _instance = JsonSerializer.Deserialize<PrimerConfig>(jsonString, options);
         }
         catch (FileNotFoundException ex)
         {
-            GD.PushWarning($"Config file not found at: {configPath}. Returning default config.", ex);
-            return new PrimerConfig();
+            GD.PushWarning($"Config file not found at: {configPath}. Creating default config.", ex);
+            _instance = new PrimerConfig();
+            SaveConfig();
         }
         catch (JsonException ex)
         {

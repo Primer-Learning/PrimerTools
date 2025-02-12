@@ -1,7 +1,6 @@
 using Godot;
-using System.Threading.Tasks;
 
-namespace PrimerTools.Simulation;
+namespace PrimerTools.Simulation.ContinuousSpaceTimeSims.CreatureSim;
 
 public interface ICreatureModelHandler
 {

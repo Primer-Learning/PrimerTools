@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Godot;
 
-namespace PrimerTools.Simulation;
+namespace PrimerTools.Simulation.ContinuousSpaceTimeSims.CreatureSim;
 
 public delegate int FindMateDelegate(int creatureIndex, IEnumerable<CreatureSim.LabeledCollision> labeledCollisions, Vector3
     creaturePosition);

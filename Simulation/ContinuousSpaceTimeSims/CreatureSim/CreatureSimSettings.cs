@@ -1,4 +1,4 @@
-namespace PrimerTools.Simulation;
+namespace PrimerTools.Simulation.ContinuousSpaceTimeSims.CreatureSim;
 
 public class CreatureSimSettings
 {

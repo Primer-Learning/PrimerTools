@@ -2,7 +2,7 @@
 using Godot;
 using RockPaperScissors;
 
-namespace PrimerTools.Simulation;
+namespace PrimerTools.Simulation.ContinuousSpaceTimeSims.CreatureSim;
 
 public delegate DataCreature[] InitialPopulationGeneratorDelegate(int numCreatures, Rng rng);
 public static class InitialPopulationGeneration

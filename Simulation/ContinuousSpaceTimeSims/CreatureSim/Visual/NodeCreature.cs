@@ -1,7 +1,6 @@
-using Aging.addons.PrimerTools.Simulation.ContinuousSpaceTimeSims.CreatureSim.Visual;
 using Godot;
 
-namespace PrimerTools.Simulation.New;
+namespace PrimerTools.Simulation.ContinuousSpaceTimeSims.CreatureSim.Visual;
 
 public partial class NodeCreature : NodeEntity
 {
