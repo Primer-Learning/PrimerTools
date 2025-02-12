@@ -40,9 +40,9 @@ public class FruitTreeSim : Simulation<DataTree>
             {
                 posList.Add(
                     new Vector3(
-                        SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.X),
+                        SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldMin.X, SimulationWorld.WorldMax.X),
                         0,
-                        SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.Y)
+                        SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldMin.Y, SimulationWorld.WorldMax.Y)
                     )
                 );
             }
@@ -86,7 +86,6 @@ public class FruitTreeSim : Simulation<DataTree>
             Registry.Entities[i] = tree;
         }
         foreach (var newTreePosition in newTreePositions)
-            
         {
             var dataTree = new DataTree
             {

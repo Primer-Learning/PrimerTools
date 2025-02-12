@@ -35,9 +35,9 @@ public class CreatureSim : Simulation<DataCreature>
 			{
 				posList.Add(
 					new Vector3(
-						SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.X),
+						SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldMin.X, SimulationWorld.WorldMax.X),
 						0,
-						SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldDimensions.Y)
+						SimulationWorld.Rng.RangeFloat(SimulationWorld.WorldMin.Y, SimulationWorld.WorldMax.Y)
 					)
 				);
 			}

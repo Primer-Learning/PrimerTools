@@ -231,7 +231,7 @@ public partial class SimulationWorld : Node3D
     public bool IsWithinWorldBounds(Vector3 position)
     {
         return position.X >= _worldMin.X && position.X <= _worldMax.X &&
-               position.Z >= -_worldMin.Y && position.Z <= _worldMax.Y;
+               position.Z >= _worldMin.Y && position.Z <= _worldMax.Y;
     }
     public Vector3 GetRandomDestination(Vector3 position, float maxDistance, float minDistance = 0)
     {
