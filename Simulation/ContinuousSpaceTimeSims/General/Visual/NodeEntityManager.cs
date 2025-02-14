@@ -51,9 +51,9 @@ public abstract partial class NodeEntityManager<TDataEntity> : Node3D, INodeEnti
         NodeEntities.RemoveAt(index);
     }
 
-    public T GetNodeEntityByDataID<T>(Rid rid) where T : NodeEntity
+    public T GetNodeEntityByDataID<T>(int id) where T : NodeEntity
     {
-        var index = DataEntityRegistry.EntityLookup[rid];
+        var index = DataEntityRegistry.EntityLookup[id];
         return NodeEntities[index] as T;
     }
 

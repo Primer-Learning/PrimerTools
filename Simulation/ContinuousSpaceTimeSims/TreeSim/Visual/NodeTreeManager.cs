@@ -11,7 +11,7 @@ public partial class NodeTreeManager : NodeEntityManager<DataTree>
 
     public NodeTreeManager() : base(null, null) {}
     
-    public NodeTree GetNodeEntityByDataID(Rid rid) => GetNodeEntityByDataID<NodeTree>(rid);
+    public NodeTree GetNodeEntityByDataID(int id) => GetNodeEntityByDataID<NodeTree>(id);
 
     public override void VisualProcess(double delta)
     {

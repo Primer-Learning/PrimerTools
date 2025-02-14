@@ -147,7 +147,7 @@ public class FruitTreeSim : Simulation<DataTree>
     {
         var queryParams = new PhysicsShapeQueryParameters3D();
         queryParams.CollideWithAreas = true;
-        queryParams.ShapeRid = PhysicsServer3D.AreaGetShape(sapling.Body, 0);
+        queryParams.ShapeRid = PhysicsServer3D.AreaGetShape(sapling.GetBodyRid(), 0);
         var transform = Transform3D.Identity.Translated(sapling.Position);
         transform = transform.ScaledLocal(Vector3.One * FruitTreeSimSettings.MinimumTreeDistance);
         queryParams.Transform = transform;
@@ -157,7 +157,7 @@ public class FruitTreeSim : Simulation<DataTree>
         foreach (var intersection in intersections)
         {
             var intersectedBody = (Rid)intersection["rid"];
-            if (registry.EntityLookup.TryGetValue(intersectedBody, out var index))
+            if (registry.BodyLookup.TryGetValue(intersectedBody, out var index))
             {
                 if (registry.Entities[index].IsMature)
                 {
@@ -173,7 +173,7 @@ public class FruitTreeSim : Simulation<DataTree>
     {
         var queryParams = new PhysicsShapeQueryParameters3D();
         queryParams.CollideWithAreas = true;
-        queryParams.ShapeRid = PhysicsServer3D.AreaGetShape(tree.Body, 0);
+        queryParams.ShapeRid = PhysicsServer3D.AreaGetShape(tree.GetBodyRid(), 0);
         var transform = Transform3D.Identity.Translated(tree.Position);
         transform = transform.ScaledLocal(Vector3.One * FruitTreeSimSettings.TreeCompetitionRadius);
         queryParams.Transform = transform;
@@ -184,10 +184,10 @@ public class FruitTreeSim : Simulation<DataTree>
         foreach (var intersection in intersections)
         {
             var intersectedBody = (Rid)intersection["rid"];
-            if (registry.EntityLookup.TryGetValue(intersectedBody, out var index))
+            if (registry.BodyLookup.TryGetValue(intersectedBody, out var index))
             {
                 var dataTree = registry.Entities[index];
-                if (dataTree.Alive && intersectedBody != tree.Body)
+                if (dataTree.Alive && intersectedBody != tree.GetBodyRid())
                 {
                     livingNeighbors++;
                 }

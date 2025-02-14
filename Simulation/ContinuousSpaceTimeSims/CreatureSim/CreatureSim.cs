@@ -9,12 +9,6 @@ namespace PrimerTools.Simulation.ContinuousSpaceTimeSims.CreatureSim;
 [Tool]
 public class CreatureSim : Simulation<DataCreature>
 {
-	public enum DeathCause
-	{
-		Starvation,
-		Aging
-	}
-	
 	public CreatureSim(SimulationWorld simulationWorld) : base(simulationWorld) {}
 
 	private FruitTreeSim FruitTreeSim => SimulationWorld.Simulations.OfType<FruitTreeSim>().FirstOrDefault();
@@ -65,88 +59,28 @@ public class CreatureSim : Simulation<DataCreature>
 		for (var i = 0; i < Registry.Entities.Count; i++)
 		{
 			var creature = Registry.Entities[i];
-			creature.Age += SimulationWorld.TimeStep;
+			// TODO: Refactor this to just record the step count at their birth
+			// My excuse for doing this is that _physicsStepsTaken didn't exist when I wrote this.
+			// Maybe.
+			creature.Age += SimulationWorld.TimeStep; 
 			Registry.Entities[i] = creature;
 		}
 
 		for (var i = 0; i < Registry.Entities.Count; i++)
 		{
 			var creature = Registry.Entities[i];
-
-			if (creature.Digesting > 0)
-			{
-				// Could be a DigestionRate setting or even trait?
-				var digestAmount = Mathf.Min(creature.Digesting, 0.05f);
-				creature.Energy += digestAmount;
-				creature.Digesting -= digestAmount;
-			}
+            if (!creature.Alive) continue; // Dead creatures aren't always cleared right away
             
-            if (!creature.Alive) continue;
-            // Process deaths
-            if (creature.Energy < 0)
+            var deathCause = creature.CheckForDeath(SimulationWorld.Rng);
+            if (deathCause != DataCreature.DeathCause.None)
             {
-	            creature.Alive = false;
-	            CreatureDeathEvent?.Invoke(i, DeathCause.Starvation);
-	            Registry.Entities[i] = creature;
-	            continue;
-            }
-            
-            // Check for deaths from max age trait
-            var maxAgeTrait = creature.Genome.GetTrait<float>("MaxAge");
-            if (maxAgeTrait != null && maxAgeTrait.ExpressedValue < creature.Age)
-            {
-	            creature.Alive = false;
-	            CreatureDeathEvent?.Invoke(i, DeathCause.Aging);
-	            Registry.Entities[i] = creature;
-	            continue;
-            }
-            
-            // Comments this out when aging reduces efficiency
-            // Check for death from deleterious mutations
-            foreach (var trait in creature.Genome.Traits.Values)
-            {
-                if (trait is DeleteriousTrait deleteriousTrait)
-                {
-                    if (deleteriousTrait.CheckForDeath(creature.Age, SimulationWorld.Rng))
-                    {
-	                    // GD.Print($"Creature died of deleterious mutation {deleteriousTrait.Id} with onset age {deleteriousTrait.ActivationAge} and severity {deleteriousTrait.MortalityRate}");
-	                    creature.Alive = false;
-	                    CreatureDeathEvent?.Invoke(i, DeathCause.Aging);
-	                    Registry.Entities[i] = creature;
-                        break;
-                    }
-                }
-            }
-            if (!creature.Alive) continue; // Move to next creature. Can't do it from inside the above loop.
-
-            // Deaths from antagonistic pleiotropy
-            var apTrait = creature.Genome.GetTrait<bool>("Antagonistic Pleiotropy Speed");
-            if (apTrait is { ExpressedValue: true } && creature.Age > CreatureSimSettings.Instance.MaturationTime)
-            {
-	            var apDeathRate = 0.03f;
-		        if (SimulationWorld.Rng.rand.NextDouble() < 1 - Mathf.Pow(1 - apDeathRate, 1f / SimulationWorld.PhysicsStepsPerSimSecond))
-	            {
-		            // GD.Print("Death from antagonistic pleiotropy aging");
-		            creature.Alive = false;
-		            CreatureDeathEvent?.Invoke(i, DeathCause.Aging);
-		            Registry.Entities[i] = creature;
-		            continue;
-	            }
-            }
-            
-            // Do-nothing conditions 
-            if (creature.Age < CreatureSimSettings.Instance.MaturationTime) continue;
-            if (creature.EatingTimeLeft > 0)
-            {
-                // TODO: Get rid of EatingTimeLeft. There could be an absolute time that is compared instead.
-                // Meaning we don't have to update this manually.
-                creature.EatingTimeLeft -= SimulationWorld.TimeStep;
+                CreatureDeathEvent?.Invoke(i, deathCause);
                 Registry.Entities[i] = creature;
                 continue;
             }
-            if (creature.MatingTimeLeft > 0)
+            
+            if (creature.InternalProcessAndCheckBusyState(SimulationWorld.TimeStep))
             {
-                creature.MatingTimeLeft = Mathf.Max(0, creature.MatingTimeLeft - SimulationWorld.TimeStep);
                 Registry.Entities[i] = creature;
                 continue;
             }
@@ -154,6 +88,9 @@ public class CreatureSim : Simulation<DataCreature>
             var labeledCollisions = GetLabeledCollisions(creature);
             
             // Check for mating
+            // Not extracting this for now. It involves coordination by two creatures, so it's more complex.
+            // Currently, potential mates never refuse, since every creature just finds the closest creature that's 
+            // ready to mate. This will need more thought if/when choosing mating is implemented.
             if (creature.OpenToMating)
             {
 	            var creatureCollisions = labeledCollisions.Where(x => x.Type == CollisionType.Creature);
@@ -178,7 +115,7 @@ public class CreatureSim : Simulation<DataCreature>
                     }
             
                     creature.CurrentDestination = mate.Position;
-                    PerformMovement(ref creature);
+                    creature.PerformMovement(SimulationWorld.TimeStep);;
                     Registry.Entities[i] = creature;
                     continue;
                 }
@@ -206,19 +143,15 @@ public class CreatureSim : Simulation<DataCreature>
                 if (closestFood.Type != CollisionType.None)
                 {
 	                creature.CurrentDestination = closestFood.Position;
-	                PerformMovement(ref creature);
+	                creature.PerformMovement(SimulationWorld.TimeStep);
 	                Registry.Entities[i] = creature;
 	                continue;
                 }
             }
 
             // Random movement from here
-            if ((creature.CurrentDestination - creature.Position).LengthSquared() <
-                CreatureSimSettings.Instance.CreatureEatDistance * CreatureSimSettings.Instance.CreatureEatDistance)
-            {
-                creature.CurrentDestination = SimulationWorld.GetRandomDestination(creature.Position, CreatureSimSettings.Instance.CreatureStepMaxLength);
-            }
-            PerformMovement(ref creature);
+            creature.UpdateRandomDestinationIfNeeded(SimulationWorld);
+            creature.PerformMovement(SimulationWorld.TimeStep);
             
             Registry.Entities[i] = creature;
 		}
@@ -249,8 +182,8 @@ public class CreatureSim : Simulation<DataCreature>
 		var queryParams = new PhysicsShapeQueryParameters3D();
 		queryParams.CollideWithAreas = true;
 		queryParams.CollideWithBodies = false;
-		queryParams.Exclude = new Array<Rid>() { creature.Body };
-		queryParams.ShapeRid = PhysicsServer3D.AreaGetShape(creature.Awareness, 0);
+		queryParams.Exclude = new Array<Rid>() { creature.Body.Area };
+		queryParams.ShapeRid = PhysicsServer3D.AreaGetShape(creature.Awareness.Area, 0);
 		queryParams.Transform = Transform3D.Identity.Translated(creature.Position);
 		
 		return PhysicsServer3D.SpaceGetDirectState(Registry.World3D.Space).IntersectShape(queryParams);
@@ -263,7 +196,7 @@ public class CreatureSim : Simulation<DataCreature>
 		foreach (var objectData in objectsInAwareness)
 		{
 			var objectRid = (Rid)objectData["rid"];
-			if (FruitTreeSim.Registry.EntityLookup.TryGetValue(objectRid, out var treeIndex))
+			if (FruitTreeSim.Registry.BodyLookup.TryGetValue(objectRid, out var treeIndex))
 			{
 				var tree = FruitTreeSim.Registry.Entities[treeIndex];
 				// TODO: Remove this check? This function should just report collisions, and the 
@@ -278,7 +211,7 @@ public class CreatureSim : Simulation<DataCreature>
 					});
 				}
 			}
-			else if (Registry.EntityLookup.TryGetValue(objectRid, out var creatureIndex))
+			else if (Registry.BodyLookup.TryGetValue(objectRid, out var creatureIndex))
 			{
 				var otherCreature = Registry.Entities[creatureIndex];
 				// TODO: Remove the OpenToMating check? This function should just report collisions, and the 
@@ -336,17 +269,9 @@ public class CreatureSim : Simulation<DataCreature>
 
 		return newVelocity;
 	}
-	private static void PerformMovement(ref DataCreature creature)
-	{
-		creature.Velocity = UpdateVelocity(creature.Position, creature.CurrentDestination, creature.Velocity, creature.AdjustedSpeed);
-		creature.Position += creature.Velocity / SimulationWorld.PhysicsStepsPerSimSecond;
-		var transformNextFrame = new Transform3D(Basis.Identity, creature.Position);
-		PhysicsServer3D.AreaSetTransform(creature.Body, transformNextFrame);
-		PhysicsServer3D.AreaSetTransform(creature.Awareness, transformNextFrame);
-		SpendMovementEnergy(ref creature);
-	}
-	public static event Action<int, DeathCause> CreatureDeathEvent; // creatureIndex
-	public static event Action<int, Rid, float> CreatureEatEvent; // creatureIndex, treeBodyRid, duration
+	public static event Action<int, DataCreature.DeathCause> CreatureDeathEvent; // creatureIndex
+	public static event Action<int, int, float> CreatureEatEvent; // creatureIndex, treeBodyRid, duration
+	
 	private DataCreature EatFood(DataCreature creature, ref DataTree tree, int creatureIndex)
 	{
 		// var tree = FruitTreeSim.Registry.Entities[treeIndex];
@@ -358,29 +283,8 @@ public class CreatureSim : Simulation<DataCreature>
 		
 		creature.Digesting += SimulationWorld.Rng.RangeFloat(CreatureSimSettings.Instance.MinEnergyGainFromFood, CreatureSimSettings.Instance.MaxEnergyGainFromFood);
 		creature.EatingTimeLeft = CreatureSimSettings.Instance.EatDuration;
-		CreatureEatEvent?.Invoke(creatureIndex, tree.Body, CreatureSimSettings.Instance.EatDuration / SimulationWorld.TimeScale);
+		CreatureEatEvent?.Invoke(creatureIndex, tree.EntityId, CreatureSimSettings.Instance.EatDuration / SimulationWorld.TimeScale);
 		return creature;
 	}
-	private static void SpendMovementEnergy(ref DataCreature creature)
-	{
-		var normalizedSpeed = creature.MaxSpeed / CreatureSimSettings.Instance.ReferenceCreatureSpeed;
-		var normalizedAwarenessRadius = creature.AwarenessRadius / CreatureSimSettings.Instance.ReferenceAwarenessRadius;
-		
-		
-		var energyCost = (CreatureSimSettings.Instance.BaseEnergySpend +
-		                  CreatureSimSettings.Instance.GlobalEnergySpendAdjustmentFactor *
-		                  (normalizedSpeed * normalizedSpeed + normalizedAwarenessRadius))
-		                 / SimulationWorld.PhysicsStepsPerSimSecond;
 	
-		// Aging lowers efficiency section
-		// foreach (var trait in creature.Genome.Traits.Values)
-		// {
-		//     if (trait is DeleteriousTrait { ExpressedValue: true, MortalityRatePerSecond: > 0 })
-		//     {
-		// 	    energyCost *= 1 + creature.Age / 100f;
-		//     }
-		// }
-		
-		creature.Energy -= energyCost;
-	}
 }

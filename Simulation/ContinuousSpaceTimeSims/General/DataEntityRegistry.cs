@@ -15,20 +15,36 @@ public class DataEntityRegistry<T> where T : IDataEntity
 	}
 
 	public List<T> Entities { get; } = new();
-	public Dictionary<Rid, int> EntityLookup { get; } = new();
+	public Dictionary<int, int> EntityLookup { get; } = new();
+    public readonly Dictionary<Rid, int> BodyLookup = new();
 
 	public event Action<T> EntityRegistered;
 	public event Action<int> EntityUnregistered;
 	public event Action ResetEvent;
 
+    private int _nextEntityId;
+
 	public void RegisterEntity(T entity)
 	{
+        entity.EntityId = _nextEntityId++;
 		entity.Initialize(_world3D.Space);
-		EntityLookup.Add(entity.Body, Entities.Count);
+		EntityLookup.Add(entity.EntityId, Entities.Count);
+        
+        // If the entity has a physics body, add it to the body lookup
+        if (entity is IPhysicsEntity physicsEntity)
+        {
+            BodyLookup[physicsEntity.GetBodyRid()] = Entities.Count;
+        }
+        
 		Entities.Add(entity);
 		
 		EntityRegistered?.Invoke(entity);
 	}
+
+    // public bool TryGetEntityIndexByBody(Rid body, out int index)
+    // {
+    //     return BodyLookup.TryGetValue(body, out index);
+    // }
 	private void UnregisterEntity(int index)
 	{
 		Entities.RemoveAt(index);
@@ -40,15 +56,26 @@ public class DataEntityRegistry<T> where T : IDataEntity
 		{
 			if (Entities[i].Alive) continue;
 			
+            // Remove from body lookup if it's a physics entity
+            if (Entities[i] is IPhysicsEntity physicsEntity)
+            {
+                BodyLookup.Remove(physicsEntity.GetBodyRid());
+            }
+            
 			Entities[i].CleanUp();
 			UnregisterEntity(i);
 		}
 		
-		// Rebuild Lookup
+		// Rebuild Lookups
 		EntityLookup.Clear();
+		BodyLookup.Clear();
 		for (int i = 0; i < Entities.Count; i++)
 		{
-			EntityLookup[Entities[i].Body] = i;
+			EntityLookup[Entities[i].EntityId] = i;
+            if (Entities[i] is IPhysicsEntity physicsEntity)
+            {
+                BodyLookup[physicsEntity.GetBodyRid()] = i;
+            }
 		}
 	}
 	

@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using GladiatorManager.BattleSim;
+using GladiatorManager.BattleSim.Visual;
 using Godot;
 using PrimerTools.Simulation;
 using PrimerTools.Simulation.ContinuousSpaceTimeSims.CreatureSim;
@@ -145,6 +147,7 @@ public partial class SimulationWorld : Node3D
     }
     public void Initialize(params ISimulation[] simulations)
     {
+        GD.Print("Initializing");
         if (simulations.Length == 0) GD.PushWarning("No simulations added to SimulationWorld.");
         
         PhysicsServer3D.SetActive(true);
@@ -173,8 +176,11 @@ public partial class SimulationWorld : Node3D
                     CreatureSim creatureSim => new NodeCreatureManager(
                         creatureSim.Registry,
                         new DefaultCreatureFactory()),
-                    _ => null
+                    BattleSim battleSim => new CombatantNodeManager(battleSim.Registry),
+                    _ => null,
                 };
+                
+                GD.Print(manager);
 
                 if (manager != null)
                 {

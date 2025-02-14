@@ -33,7 +33,7 @@ public partial class NodeCreatureManager : NodeEntityManager<DataCreature>
         }
     }
 
-    private void OnCreatureEat(int creatureIndex, Rid treeID, float duration)
+    private void OnCreatureEat(int creatureIndex, int treeID, float duration)
     {
         (NodeEntities[creatureIndex] as NodeCreature)?.Eat(
             NodeTreeManager?.GetNodeEntityByDataID(treeID)?.GetFruit(),
@@ -41,7 +41,7 @@ public partial class NodeCreatureManager : NodeEntityManager<DataCreature>
         );
     }
 
-    private void OnCreatureDeath(int creatureIndex, CreatureSim.DeathCause cause)
+    private void OnCreatureDeath(int creatureIndex, DataCreature.DeathCause cause)
     {
         (NodeEntities[creatureIndex] as NodeCreature)?.Death();
     }
