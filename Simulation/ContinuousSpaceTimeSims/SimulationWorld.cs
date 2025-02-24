@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using GladiatorManager.BattleSim;
 using GladiatorManager.BattleSim.Visual;
+// using GladiatorManager.BattleSim.Visual;
+using GladiatorManager.ContinuousSpaceTimeSims.CreatureSim.Visual;
 using Godot;
-using PrimerTools.Simulation;
 using PrimerTools.Simulation.ContinuousSpaceTimeSims.CreatureSim;
-using PrimerTools.Simulation.ContinuousSpaceTimeSims.CreatureSim.Visual;
 
 namespace PrimerTools.Simulation;
 
@@ -85,6 +85,7 @@ public partial class SimulationWorld : Node3D
     // It was happening in a scene and could be the scene's fault, but I'm not sure.
     private static float _timeScale = 1;
     public static event Action<float> TimeScaleChanged;
+    // TODO: Make this not static. Having both this and TimeScaleControl (for exporting and keyframing) is just weird
     public static float TimeScale
     {
         get => _timeScale;
@@ -117,7 +118,7 @@ public partial class SimulationWorld : Node3D
     }
     #endregion
 
-    public const int PhysicsStepsPerSimSecond = 30;
+    public const int PhysicsStepsPerSimSecond = 60;
     public const float TimeStep = 1f / PhysicsStepsPerSimSecond;
     public int PhysicsStepsTaken { get; private set; }
     public float TimeElapsed => PhysicsStepsTaken * TimeStep;
@@ -125,72 +126,97 @@ public partial class SimulationWorld : Node3D
     private Rng _rng;
     public Rng Rng => _rng ??= new Rng(_seed == -1 ? System.Environment.TickCount : _seed);
     public World3D World3D => GetWorld3D();
-    public object CreatureSim { get; set; }
+    
+    private readonly List<ISystem> _systems = new();
+    public IReadOnlyList<ISystem> Systems => _systems.AsReadOnly();
+    private EntityRegistry _registry;
+    private AreaPhysicsSystem _areaPhysicsSystem;
+    public EntityRegistry Registry => _registry;
+    private VisualEntityRegistry _visualEntityRegistry;
+    private CreatureVisualEventManager _creatureVisualEventManager;
+    private TreeVisualEventManager _treeVisualEventManager;
+    private CombatantVisualEventManager _combatantVisualEventManager;
+    private WeaponVisualEventManager _weaponVisualEventManager;
 
-    public readonly List<ISimulation> Simulations = new();
-    private readonly List<INodeEntityManager> _entityManagers = new();
+    public T AddSystem<T>() where T : ISystem, new()
+    {
+        if (_systems.Any(x => x.GetType() == typeof(T)))
+        {
+            GD.PrintErr($"{typeof(T)} already added to SimulationWorld");
+            return new T();
+        }
 
+        var system = new T();
+        system.Initialize(_registry, this);
+        _systems.Add(system);
+
+        // TODO: Make this happen elsewhere. SimulationWorld shouldn't need to know about all the possibilities.
+        if (VisualizationMode == VisualizationMode.NodeCreatures)
+        {
+            if (system is CreatureSystem)
+            {
+                _creatureVisualEventManager = new CreatureVisualEventManager(_visualEntityRegistry, this);
+            }
+            if (system is TreeSystem)
+            {
+                _treeVisualEventManager = new TreeVisualEventManager(_visualEntityRegistry, this);
+            }
+            if (system is CombatantSystem)
+            {
+                _combatantVisualEventManager = new CombatantVisualEventManager(_visualEntityRegistry, this);
+                _weaponVisualEventManager = new WeaponVisualEventManager(_visualEntityRegistry, this);
+            }
+        }
+
+        return system;
+    }
+    
     public void Reset()
     {
         Running = false;
-	    foreach (var simulation in Simulations)
-        {
-		    simulation.Reset();
-	    }
         
-        foreach (var manager in _entityManagers)
+        _creatureVisualEventManager?.Cleanup();
+        _creatureVisualEventManager = null;
+
+        foreach (var system in _systems)
         {
-            manager.QueueFree();
+            if (system is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
         }
-        _entityManagers.Clear();
+        _systems.Clear();
+        
+        // Reset physics system
+        _areaPhysicsSystem = new AreaPhysicsSystem();
+        _areaPhysicsSystem.Initialize(_registry, this);
+        
         Ground?.QueueFree();
     }
-    public void Initialize(params ISimulation[] simulations)
+    public SimulationWorld()
     {
-        GD.Print("Initializing");
-        if (simulations.Length == 0) GD.PushWarning("No simulations added to SimulationWorld.");
-        
         PhysicsServer3D.SetActive(true);
         Engine.PhysicsTicksPerSecond = (int) (_timeScale * PhysicsStepsPerSimSecond);
+        _realTimeOfLastStatusPrint = System.Environment.TickCount;
+        
+        _registry = new EntityRegistry();
+        _visualEntityRegistry = new VisualEntityRegistry(_registry);
+        AddChild(_visualEntityRegistry);
+        _visualEntityRegistry.Name = "Entity Node Parent";
 
+        // Add the physics system by default
+        _areaPhysicsSystem = new AreaPhysicsSystem();
+        _areaPhysicsSystem.Initialize(_registry, this);
+    }
+
+    public override void _Ready()
+    {
         if (Ground != null && IsInstanceValid(Ground)) Ground.Free();
         Ground = _groundScene.Instantiate<Node3D>();
         AddChild(Ground);
         Ground.Name = "Ground";
         Ground.Scale = new Vector3(WorldDimensions.X, (WorldDimensions.X + WorldDimensions.Y) / 2, WorldDimensions.Y);
         Ground.Position = new Vector3(_worldMax.X + _worldMin.X, 0, _worldMin.Y + _worldMax.Y) / 2;
-        
-        Simulations.Clear();
-
-        foreach (var sim in simulations)
-        {
-            Simulations.Add(sim);
-        
-            if (VisualizationMode == VisualizationMode.NodeCreatures)
-            {
-                // TODO: Have the sims link to their own visualizers
-                
-                INodeEntityManager manager = sim switch
-                {
-                    FruitTreeSim treeSim => new NodeTreeManager(treeSim.Registry),
-                    CreatureSim creatureSim => new NodeCreatureManager(
-                        creatureSim.Registry,
-                        new DefaultCreatureFactory()),
-                    BattleSim battleSim => new CombatantNodeManager(battleSim.Registry),
-                    _ => null,
-                };
-                
-                GD.Print(manager);
-
-                if (manager != null)
-                {
-                    AddChild((Node)manager);
-                    _entityManagers.Add(manager);
-                }
-            }
-        }
-
-        _realTimeOfLastStatusPrint = System.Environment.TickCount;
     }
 
     private int _realTimeOfLastStatusPrint;
@@ -200,10 +226,12 @@ public partial class SimulationWorld : Node3D
     public override void _PhysicsProcess(double delta)
     {
         if (!Running) return;
-        foreach (var simulation in Simulations)
+        foreach (var system in _systems)
         {
-            simulation.Step();
+            system.Update((float)delta);
         }
+        // Update physics after other systems
+        _areaPhysicsSystem.Update((float)delta);
         PhysicsStepsTaken++;
         
         if (_statusPrintSimTimeInterval == 0) return;
@@ -218,22 +246,11 @@ public partial class SimulationWorld : Node3D
             _realTimeOfLastStatusPrint = currentTime;
         }
     }
-    
     public override void _Process(double delta)
     {
         if (!Running) return;
-        
-        foreach (var manager in _entityManagers)
-        {
-            manager.VisualProcess(delta);
-        }
-        
-        foreach (var simulation in Simulations)
-        {
-            simulation.ClearDeadEntities();
-        }
+        _visualEntityRegistry.Update();
     }
-
     public bool IsWithinWorldBounds(Vector3 position)
     {
         return position.X >= _worldMin.X && position.X <= _worldMax.X &&

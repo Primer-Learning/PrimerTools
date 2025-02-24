@@ -24,7 +24,7 @@ public class SimulationDataManager
     private float _lastSaveTime;
     
     // Core death age data
-    private List<(float age, DataCreature.DeathCause cause)> _deathAges;
+    private List<(float age, CreatureSystem.DeathCause cause)> _deathAges;
     private List<List<float[]>> _deathAgeHistograms;
     private float[][][] _cachedLoadedDeathAgeHistograms;
     
@@ -52,7 +52,7 @@ public class SimulationDataManager
         
         if (mode != DataMode.Load)
         {
-            _deathAges = new List<(float, DataCreature.DeathCause)>();
+            _deathAges = new List<(float, CreatureSystem.DeathCause)>();
             _deathAgeHistograms = new List<List<float[]>>();
             _customHistograms = new List<float[]>();
             _customHistograms2D = new List<float[,]>();
@@ -70,7 +70,7 @@ public class SimulationDataManager
     /// </summary>
     /// <param name="age"></param>
     /// <param name="cause"></param>
-    public void RecordDeath(float age, DataCreature.DeathCause cause)
+    public void RecordDeath(float age, CreatureSystem.DeathCause cause)
     {
         if (CurrentMode == DataMode.Load) return;
         _deathAges.Add((age, cause));
@@ -83,11 +83,11 @@ public class SimulationDataManager
         {
             // Record death age histograms
             var histogramsByCause = new List<float[]>();
-            foreach (var cause in Enum.GetValues(typeof(DataCreature.DeathCause)))
+            foreach (var cause in Enum.GetValues(typeof(CreatureSystem.DeathCause)))
             {
                 var causeHistogram = BarDataUtilities.MakeHistogram(
                     _deathAges
-                        .Where(x => x.Item2 == (DataCreature.DeathCause)cause)
+                        .Where(x => x.Item2 == (CreatureSystem.DeathCause)cause)
                         .Select(x => x.Item1)
                 ).ToArray();
                 histogramsByCause.Add(causeHistogram);
@@ -162,11 +162,11 @@ public class SimulationDataManager
         }
         // For Save or None mode, return current histograms
         var histogramsByCause = new List<float[]>();
-        foreach (var cause in Enum.GetValues(typeof(DataCreature.DeathCause)))
+        foreach (var cause in Enum.GetValues(typeof(CreatureSystem.DeathCause)))
         {
             histogramsByCause.Add(BarDataUtilities.MakeHistogram(
                 _deathAges
-                    .Where(x => x.Item2 == (DataCreature.DeathCause)cause)
+                    .Where(x => x.Item2 == (CreatureSystem.DeathCause)cause)
                     .Select(x => x.Item1)
             ).ToArray());
         }

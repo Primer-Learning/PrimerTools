@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Godot;
+using PrimerTools.Simulation.Components;
 
 namespace PrimerTools.Simulation;
 
@@ -18,11 +19,11 @@ public class TreeDistributionData
         public float Age { get; set; }
         public Vector3 Position => new Vector3(PositionX, PositionY, PositionZ);
         public float Angle { get; set; }
-        public TreeData(DataTree tree)
+        public TreeData(TreeComponent tree, AreaPhysicsComponent areaPhysicsComponent)
         {
-            PositionX = tree.Position.X;
-            PositionY = tree.Position.Y;
-            PositionZ = tree.Position.Z;
+            PositionX = areaPhysicsComponent.Position.X;
+            PositionY = areaPhysicsComponent.Position.Y;
+            PositionZ = areaPhysicsComponent.Position.Z;
             Angle = tree.Angle;
             Age = tree.Age;
         }

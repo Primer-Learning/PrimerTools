@@ -1,10 +1,30 @@
 using Godot;
-using PrimerTools;
-using PrimerTools.Simulation;
+using PrimerTools.Simulation.Components;
 
-public partial class NodeTree : NodeEntity
+namespace PrimerTools.Simulation.Visual;
+
+public partial class TreeVisualEntity : VisualEntity 
 {
-	// Lazy thing. Gives visual trees an rng object for rotating mangoes.
+    public override void Update(EntityRegistry registry)
+    {
+	    if (!registry.TryGetComponent<TreeComponent>(EntityId, out var tree))
+		    return;
+	    
+	    if (tree is { HasFruit: false } && tree.FruitGrowthProgress > FruitTreeSimSettings.NodeFruitGrowthDelay)
+	    {
+		    GrowFruit(FruitTreeSimSettings.FruitGrowthTime - FruitTreeSimSettings.NodeFruitGrowthDelay);
+	    }
+
+	    Scale = ScaleFromAge(tree.Age);
+    }
+
+    public override void AddDebugNodes(AreaPhysicsComponent treeComponent)
+    {
+	    throw new System.NotImplementedException();
+    }
+
+
+    // Lazy thing. Gives visual trees an rng object for rotating mangoes.
 	// Could pass an rng value if we wanted the visual part of the sim to be reliable.
 	public static Rng NodeTreeRng = new Rng(0);
 	
@@ -16,33 +36,21 @@ public partial class NodeTree : NodeEntity
 		_fruitTree = FruitTree.CreateInstance();
 		_fruitTree.Rng = NodeTreeRng;
 		AddChild(_fruitTree);
-	}
-	public override void Initialize(IDataEntity dataEntity)
-	{
-		var tree = (DataTree)dataEntity;
-		Scale = Vector3.Zero;
-		Position = tree.Position;
-		Rotation = new Vector3(0, tree.Angle, 0);
 		Name = "Tree";
 	}
-	public override void Update(IDataEntity dataEntity)
+	public override void Initialize(EntityRegistry registry, EntityId entityId)
 	{
-		var tree = (DataTree)dataEntity;
-		if (!tree.Alive)
-		{
-			Death();
-			return;
-		}
+		base.Initialize(registry, entityId);
 		
-		if (tree is { HasFruit: false } && tree.FruitGrowthProgress > FruitTreeSimSettings.NodeFruitGrowthDelay)
+		if (registry.TryGetComponent<TreeComponent>(entityId, out var tree))
 		{
-			GrowFruit(FruitTreeSimSettings.FruitGrowthTime - FruitTreeSimSettings.NodeFruitGrowthDelay);
+			Scale = Vector3.Zero;
+			Position = registry.GetComponent<AreaPhysicsComponent>(entityId).Position;
+			Rotation = new Vector3(0, tree.Angle, 0);
 		}
-
-		Scale = ScaleFromAge(tree.Age);
 	}
 
-	public static Vector3 ScaleFromAge(float age)
+	private static Vector3 ScaleFromAge(float age)
 	{
 		return Vector3.One * Mathf.Min(1, age / FruitTreeSimSettings.TreeMaturationTime);
 	}
@@ -59,8 +67,9 @@ public partial class NodeTree : NodeEntity
 		return tween;
 	}
 	
-	private void Death()
+	public void Death()
 	{
+		// GD.Print($"Killing tree {Name}");
 		Visible = false;
 		QueueFree();
 	}

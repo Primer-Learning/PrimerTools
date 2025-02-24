@@ -1,6 +1,4 @@
 using Godot;
-using PrimerTools;
-using PrimerTools.Simulation;
 
 namespace PrimerTools.Simulation.ContinuousSpaceTimeSims.CreatureSim.Visual;
 
@@ -19,8 +17,7 @@ public class DefaultCreatureModelHandler : ICreatureModelHandler
     }
 
     public void Initialize(float normalizedAwareness) {}
-
-    public void Update(DataCreature dataCreature) {}
+    public void Update(CreatureComponent creatureComponent) {}
 
     public void TriggerEatAnimation(float duration) {}
     

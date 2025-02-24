@@ -90,7 +90,7 @@ public partial class FruitTree : Node3D
 	private void RotateFlowerRandomly(int flowerIndex)
 	{
 		var flower = GetNode<Node3D>($"Flower {flowerIndex}");
-		flower.Quaternion = QuaternionUtils.FromEulerDeg(new Vector3(this.Rng.RangeFloat(0, 5), this.Rng.RangeFloat(0, 360), this.Rng.RangeFloat(0, 5)));
+		flower.Quaternion = Transform3DUtils.QuaternionFromEulerDeg(new Vector3(this.Rng.RangeFloat(0, 5), this.Rng.RangeFloat(0, 360), this.Rng.RangeFloat(0, 5)));
 	}
 	private bool IsFruitOnTheFlowerAndMature(Node3D fruit)
 	{

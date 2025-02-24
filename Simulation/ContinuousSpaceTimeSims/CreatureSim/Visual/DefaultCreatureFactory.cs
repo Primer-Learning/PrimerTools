@@ -1,11 +1,10 @@
 using Godot;
-using PrimerTools.Simulation;
 
 namespace PrimerTools.Simulation.ContinuousSpaceTimeSims.CreatureSim.Visual;
 
 public class DefaultCreatureFactory : ICreatureFactory
 {
-    public ICreatureModelHandler CreateInstance()
+    public ICreatureModelHandler CreateModelHandler()
     {
         var node3D = new Node3D();
         var meshInstance = new MeshInstance3D();

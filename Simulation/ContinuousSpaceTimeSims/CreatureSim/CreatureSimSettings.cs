@@ -89,7 +89,7 @@ public class CreatureSimSettings
         MutationProbability = DefaultMutationProbability;
         MutationIncrement = DefaultMutationIncrement;
         DeleteriousMutationRate = DefaultDeleteriousMutationRate;
-        FindMate = MateSelectionStrategies.FindFirstAvailableMate;
+        // FindMate = MateSelectionStrategies.FindFirstAvailableMate;
         Reproduce = ReproductionStrategies.SexualReproduce;
         InitializePopulation = InitialPopulationGeneration.DefaultSpeedAndAwarenessDiploid;
     }

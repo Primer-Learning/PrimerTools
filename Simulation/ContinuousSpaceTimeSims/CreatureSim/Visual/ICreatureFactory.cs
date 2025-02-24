@@ -1,8 +1,13 @@
-using Godot;
+using PrimerTools.Simulation.ContinuousSpaceTimeSims.CreatureSim.Visual;
 
 namespace PrimerTools.Simulation.ContinuousSpaceTimeSims.CreatureSim;
 
-public interface ICreatureFactory
+public interface ICreatureFactory : IVisualEntityFactory<CreatureVisualEntity>
 {
-    ICreatureModelHandler CreateInstance();
+    ICreatureModelHandler CreateModelHandler();
+    
+    CreatureVisualEntity IVisualEntityFactory<CreatureVisualEntity>.CreateInstance()
+    {
+        return new CreatureVisualEntity(CreateModelHandler());
+    }
 }

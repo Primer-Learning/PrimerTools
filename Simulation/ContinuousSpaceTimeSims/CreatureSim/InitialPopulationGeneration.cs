@@ -4,12 +4,12 @@ using RockPaperScissors;
 
 namespace PrimerTools.Simulation.ContinuousSpaceTimeSims.CreatureSim;
 
-public delegate DataCreature[] InitialPopulationGeneratorDelegate(int numCreatures, Rng rng);
+public delegate CreatureComponent[] InitialPopulationGeneratorDelegate(int numCreatures, Rng rng);
 public static class InitialPopulationGeneration
 {
-    public static DataCreature[] WorkingInitialPopulationThatChangesALot(int numCreatures, Rng rng = null)
+    public static CreatureComponent[] WorkingInitialPopulationThatChangesALot(int numCreatures, Rng rng = null)
     {
-        var creatures = new DataCreature[numCreatures];
+        var creatures = new CreatureComponent[numCreatures];
 
         for (var i = 0; i < numCreatures; i++)
         {
@@ -61,14 +61,14 @@ public static class InitialPopulationGeneration
             //     )
             // );
 
-            creatures[i] = new DataCreature { Genome = genome };
+            creatures[i] = new CreatureComponent() { Genome = genome };
         }
         
         return creatures;
     }
-    public static DataCreature[] DefaultSpeedAndAwarenessDiploid(int numCreatures, Rng rng = null)
+    public static CreatureComponent[] DefaultSpeedAndAwarenessDiploid(int numCreatures, Rng rng = null)
     {
-        var creatures = new DataCreature[numCreatures];
+        var creatures = new CreatureComponent[numCreatures];
 
         for (var i = 0; i < numCreatures; i++)
         {
@@ -92,7 +92,7 @@ public static class InitialPopulationGeneration
                 )
             );
 
-            creatures[i] = new DataCreature { Genome = genome };
+            creatures[i] = new CreatureComponent { Genome = genome };
         }
         
         return creatures;

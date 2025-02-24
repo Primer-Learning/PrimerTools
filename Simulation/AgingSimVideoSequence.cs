@@ -25,28 +25,29 @@ public abstract partial class AgingSimVideoSequence : AnimationSequence
         if (EffectiveDataMode != SimulationDataManager.DataMode.Load)
         {
             // Set up death data collection
-            CreatureSim.CreatureDeathEvent += (index, cause) =>
-            {
-                var age = CreatureSim.Registry.Entities[index].Age;
-                DataManager.RecordDeath(age, cause);
-            };
-
-            // Set up data recording
-            if (EffectiveDataMode == SimulationDataManager.DataMode.Save)
-            {
-                CreatureSim.Stepped += (stepCount) =>
-                {
-                    var elapsedSimTime = stepCount * SimulationWorld.TimeStep;
-                    DataManager.RecordDataIfItIsTime(elapsedSimTime);
-                };
-            }
+            // CreatureSim.CreatureDeathEvent += (entityID, cause) =>
+            // {
+            //     // var age = CreatureSim.Registry.Entities[index].Age;
+            //     var age = CreatureSim.Registry.GetEntityById(entityID).Age;
+            //     DataManager.RecordDeath(age, cause);
+            // };
+            //
+            // // Set up data recording
+            // if (EffectiveDataMode == SimulationDataManager.DataMode.Save)
+            // {
+            //     CreatureSim.Stepped += (stepCount) =>
+            //     {
+            //         var elapsedSimTime = stepCount * SimulationWorld.TimeStep;
+            //         DataManager.RecordDataIfItIsTime(elapsedSimTime);
+            //     };
+            // }
         }
     }
 
 	#region Sims
     protected SimulationWorld SimulationWorld;
-    protected CreatureSim CreatureSim;
-    protected FruitTreeSim FruitTreeSim;
+    // protected CreatureSim CreatureSim;
+    // protected FruitTreeSim FruitTreeSim;
     
     protected float SimTimeScale = 1;
     [Export] private VisualizationMode _visMode = VisualizationMode.None;
@@ -70,41 +71,42 @@ public abstract partial class AgingSimVideoSequence : AnimationSequence
 	    string fileName = "LifeExpectancyWorkingTreeDistribution.json"
 	    )
     {
-	    CreatureSimSettings.Instance.FindMate = MateSelectionStrategies.FindFirstAvailableMate;
-	    CreatureSimSettings.Instance.Reproduce = ReproductionStrategies.SexualReproduce;
-	    CreatureSimSettings.Instance.InitializePopulation = populationGeneratorDelegate;
-	    CreatureSim = new CreatureSim(SimulationWorld);
-	    CreatureSim.InitialEntityCount = initialCreatureCount;
+	    // CreatureSimSettings.Instance.FindMate = MateSelectionStrategies.FindFirstAvailableMate;
+	    // CreatureSimSettings.Instance.Reproduce = ReproductionStrategies.SexualReproduce;
+	    // CreatureSimSettings.Instance.InitializePopulation = populationGeneratorDelegate;
+	    // CreatureSim = new CreatureSim(SimulationWorld);
+	    // CreatureSim.InitialEntityCount = initialCreatureCount;
 		
 	    var fruitTreeSimSettings = new FruitTreeSimSettings();
 	    // fruitTreeSimSettings.TreeDistributionPath =
 		    // "addons/PrimerTools/Simulation/ContinuousSpaceTimeSims/TreeSim/Saved Tree Distributions/" + fileName;
-	    FruitTreeSim = new FruitTreeSim(SimulationWorld, fruitTreeSimSettings);
-	    FruitTreeSim.Mode = FruitTreeSim.SimMode.TreeGrowth;
-	    SimulationWorld.Initialize(CreatureSim, FruitTreeSim);
+	    // FruitTreeSim = new FruitTreeSim(SimulationWorld, fruitTreeSimSettings);
+	    // FruitTreeSim.Mode = FruitTreeSim.SimMode.TreeGrowth;
+	    // SimulationWorld.Initialize(CreatureSim, FruitTreeSim);
     }
 
     protected List<Vector3> InitialBlobLocations;
     protected void InitializeCreatureSim()
     {
-	    if (CreatureSim == null)
-	    {
-		    GD.PushWarning("No creature sim to initialize.");
-		    return;
-	    }
-	    CreatureSim.Initialize(true, InitialBlobLocations);
-	    FruitTreeSimSettings.FruitGrowthTime = 6;
-	    FruitTreeSimSettings.NodeFruitGrowthDelay = 2;
+	    // if (CreatureSim == null)
+	    // {
+		   //  GD.PushWarning("No creature sim to initialize.");
+		   //  return;
+	    // }
+	    // CreatureSim.Initialize(true, InitialBlobLocations);
+	    // FruitTreeSimSettings.FruitGrowthTime = 6;
+	    // FruitTreeSimSettings.NodeFruitGrowthDelay = 2;
     }
     
     protected Animation MakeTreeAppearanceAnimation()
     {
-        if (SimulationWorld.VisualizationMode == VisualizationMode.None)
-        {
+        // if (SimulationWorld.VisualizationMode == VisualizationMode.None)
+        // {
+        GD.PushWarning("MakeTreeAppearanceAnimation hasn't been updated");
             return new Animation().WithDuration(0.5);
-        }
-        return SimulationWorld.GetNode<NodeTreeManager>("NodeTreeManager")
-            .AnimateGrowingAllTrees(0.5f);
+        // }
+        // return SimulationWorld.GetNode<TreeVisualSystem>("NodeTreeManager")
+        //     .AnimateGrowingAllTrees(0.5f);
     }
     #endregion
 

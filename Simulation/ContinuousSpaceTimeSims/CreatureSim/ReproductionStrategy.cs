@@ -5,40 +5,39 @@ using Godot;
 
 namespace PrimerTools.Simulation.ContinuousSpaceTimeSims.CreatureSim;
 
-public delegate int FindMateDelegate(int creatureIndex, IEnumerable<CreatureSim.LabeledCollision> labeledCollisions, Vector3
+public delegate int FindMateDelegate(IEnumerable<CreatureComponent> labeledCollisions, Vector3
     creaturePosition);
-public delegate DataCreature ReproduceDelegate(Genome genome1, Genome genome2, Rng rng);
+public delegate CreatureComponent ReproduceDelegate(Genome genome1, Genome genome2, Rng rng);
 
 public static class MateSelectionStrategies
 {
-    public static int FindFirstAvailableMate(int creatureIndex, IEnumerable<CreatureSim.LabeledCollision> labeledCollisions,
-        Vector3 creaturePosition)
-    {
-        return labeledCollisions
-            .Where(c => c.Type == CreatureSim.CollisionType.Creature)
-            .OrderBy(c => (c.Position - creaturePosition).LengthSquared())
-            .Select(c => c.Index)
-            .FirstOrDefault(-1);
-    }
+    // public static int FindFirstAvailableMate(IEnumerable<CreatureComponent> labeledCollisions, Vector3 creaturePosition)
+    // {
+    //     return labeledCollisions
+    //         .OrderBy(c => (c.Position - creaturePosition).LengthSquared())
+    //         .Select(c => c.EntityId)
+    //         .FirstOrDefault();
+    // }
 
-    public static int AsexualFindMate(int creatureIndex, IEnumerable<CreatureSim.LabeledCollision> labeledCollisions, Vector3
-        creaturePosition)
-    {
-        return creatureIndex;
-    }
+    // TODO: Re-implement this when it's needed. It doesn't match the current patterns, and it's not needed right now.
+    // public static CreatureComponent AsexualFindMate(int creatureIndex, IEnumerable<CreatureComponent> labeledCollisions, Vector3
+    //     creaturePosition)
+    // {
+    //     return creatureIndex;
+    // }
 }
 
 public static class ReproductionStrategies
 {
-    public static DataCreature AsexualReproduce(Genome genome1, Genome genome2, Rng rng)
+    public static CreatureComponent AsexualReproduce(Genome genome1, Genome genome2, Rng rng)
     {
         var newGenome = genome1.Clone();
         newGenome.Mutate(rng);
-        var newCreature = new DataCreature { Genome = newGenome };
+        var newCreature = new CreatureComponent { Genome = newGenome };
         return newCreature;
     }
 
-    public static DataCreature SexualReproduce(Genome genome1, Genome genome2, Rng rng)
+    public static CreatureComponent SexualReproduce(Genome genome1, Genome genome2, Rng rng)
     {
         var newGenome = new Genome();
         var parentGenomes = new[] { genome1.Clone(), genome2.Clone() };
@@ -101,6 +100,6 @@ public static class ReproductionStrategies
 
         newGenome.Mutate(rng);
 
-        return new DataCreature { Genome = newGenome };
+        return new CreatureComponent { Genome = newGenome };
     }
 }

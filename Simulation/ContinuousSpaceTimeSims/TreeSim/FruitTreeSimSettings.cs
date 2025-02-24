@@ -3,7 +3,7 @@ namespace PrimerTools.Simulation;
 public class FruitTreeSimSettings
 {
     #region Distribution Save/Load
-    public string TreeDistributionPath { get; set; }
+    public static string TreeDistributionPath { get; set; }
     public bool LoadTreeDistribution => !string.IsNullOrEmpty(TreeDistributionPath);
     #endregion
     
