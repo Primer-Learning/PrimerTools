@@ -131,6 +131,7 @@ public partial class SimulationWorld : Node3D
     public IReadOnlyList<ISystem> Systems => _systems.AsReadOnly();
     private EntityRegistry _registry;
     private AreaPhysicsSystem _areaPhysicsSystem;
+    private KinematicPhysicsSystem _kinematicPhysicsSystem;
     public EntityRegistry Registry => _registry;
     private VisualEntityRegistry _visualEntityRegistry;
     private CreatureVisualEventManager _creatureVisualEventManager;
@@ -190,6 +191,8 @@ public partial class SimulationWorld : Node3D
         // Reset physics system
         _areaPhysicsSystem = new AreaPhysicsSystem();
         _areaPhysicsSystem.Initialize(_registry, this);
+        _kinematicPhysicsSystem = new KinematicPhysicsSystem();
+        _kinematicPhysicsSystem.Initialize(_registry, this);
         
         Ground?.QueueFree();
     }
@@ -207,6 +210,8 @@ public partial class SimulationWorld : Node3D
         // Add the physics system by default
         _areaPhysicsSystem = new AreaPhysicsSystem();
         _areaPhysicsSystem.Initialize(_registry, this);
+        _kinematicPhysicsSystem = new KinematicPhysicsSystem();
+        _kinematicPhysicsSystem.Initialize(_registry, this);
     }
 
     public override void _Ready()
@@ -232,6 +237,7 @@ public partial class SimulationWorld : Node3D
         }
         // Update physics after other systems
         _areaPhysicsSystem.Update((float)delta);
+        _kinematicPhysicsSystem.Update((float)delta);
         PhysicsStepsTaken++;
         
         if (_statusPrintSimTimeInterval == 0) return;

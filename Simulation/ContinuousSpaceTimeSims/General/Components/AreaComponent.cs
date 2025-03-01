@@ -2,7 +2,7 @@ using Godot;
 
 namespace PrimerTools.Simulation;
 
-public struct AreaComponent
+public struct AreaComponent : IPhysicsComponent
 {
     public Rid Area { get; private set; }
     public Shape3D Shape { get; private set; }
@@ -37,6 +37,8 @@ public struct AreaComponent
     public Area3D ConstructDebugNode(Node3D parent)
     {
         var bodyArea = new Area3D();
+        bodyArea.CollisionLayer = 0;
+        bodyArea.CollisionMask = 0;
         parent.AddChild(bodyArea);
         var bodyShape = new CollisionShape3D();
         bodyArea.AddChild(bodyShape);

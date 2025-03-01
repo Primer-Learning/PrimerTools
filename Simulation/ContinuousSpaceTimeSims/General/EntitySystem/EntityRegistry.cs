@@ -7,13 +7,13 @@ namespace PrimerTools.Simulation;
 
 public class EntityRegistry
 {
-    private uint _nextEntityId;
+    private uint _nextEntityId = 1; // Start with 1 so Ids with value zero are invalid.
     private readonly Dictionary<Type, IComponentStorage> _componentStorages = new();
     private readonly HashSet<EntityId> _activeEntities = new();
 
     public EntityId CreateEntity()
     {
-        var entityId = new EntityId((int)_nextEntityId++);
+        var entityId = new EntityId(_nextEntityId++);
         _activeEntities.Add(entityId);
         return entityId;
     }
@@ -35,9 +35,9 @@ public class EntityRegistry
     }
     public void AddComponent<T>(EntityId entityId, T component) where T : struct, IComponent
     {
-        if (entityId.Value == -1)
+        if (!entityId.IsValid)
         {
-            throw new ArgumentException("Cannot add component with default EntityId. Use Entity");
+            throw new ArgumentException("Attempted to add component with default EntityId.");
         }
         
         // Handy logs
@@ -63,6 +63,11 @@ public class EntityRegistry
 
     public void UpdateComponent<T>(T component) where T : struct, IComponent
     {
+        if (!component.EntityId.IsValid) 
+        {
+            throw new InvalidOperationException(
+                $"Attempted to update component of type {typeof(T)} with invalid Id.");
+        }
         var storage = GetOrCreateStorage<T>();
         if (!storage.TryGet(component.EntityId, out _))
         {

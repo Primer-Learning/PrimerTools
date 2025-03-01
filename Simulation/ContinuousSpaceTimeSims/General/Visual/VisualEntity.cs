@@ -19,7 +19,13 @@ public abstract partial class VisualEntity : Node3D, IVisualEntity
     }
 
     public abstract void Update(EntityRegistry registry);
-    public abstract void AddDebugNodes(AreaPhysicsComponent component);
+    public void AddDebugNodes(params IPhysicsComponent[] bodyComponents)
+    {
+        foreach (var phys in bodyComponents)
+        {
+            phys.ConstructDebugNode(this);
+        }
+    }
 
     // This is for a theoretical future where there are multiple visual components together
     // For example, a creature with an emotion or intention indicator. The indicator might have its own data component.

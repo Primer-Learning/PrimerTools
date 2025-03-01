@@ -2,10 +2,35 @@ using Godot;
 
 namespace PrimerTools.Simulation;
 
-public struct AreaPhysicsComponent : IComponent
+public struct BodyPhysicsComponent : IComponent
 {
     public EntityId EntityId { get; set; }
     public Transform3D Transform;
+    private bool _kinematic;
+
+    public Transform3D GetBodyTransform()
+    {
+        return Body.GetTransform3D();
+    }
+
+    public bool Kinematic
+    {
+        get => _kinematic;
+        set
+        {
+            // Set the body mode
+            if (value)
+            {
+                PhysicsServer3D.BodySetMode(Body.Body, PhysicsServer3D.BodyMode.Kinematic);
+            }
+            else
+            {
+                PhysicsServer3D.BodySetMode(Body.Body, PhysicsServer3D.BodyMode.Rigid);
+            }
+            _kinematic = value;
+            // Perhaps some value handling will be needed
+        }
+    }
 
     public Vector3 Position
     {
@@ -23,28 +48,37 @@ public struct AreaPhysicsComponent : IComponent
     
     public Vector3 Velocity;
     public Vector3 AngularVelocity;
-    public AreaComponent Body;
+    public BodyComponent Body;
     public AreaComponent Awareness;
 
-    public AreaPhysicsComponent(Rid space, Vector3 position, Shape3D bodyShape, Vector3 bodyOffset = default) 
-        : this(space, Transform3D.Identity.Translated(position), bodyShape, bodyOffset) {}
-    
-    public AreaPhysicsComponent(
+    public BodyPhysicsComponent(
         Rid space,
         Transform3D transform,
         Shape3D bodyShape,
-        Vector3 bodyOffset = default,
+        Transform3D bodyOffset = default,
+        bool kinematic = true,
         float velocityDampingFactor = 0.99f,
         float angularVelocityDampingFactor = 0.99f
         ) : this()
     {
         Transform = transform;
         Velocity = Vector3.Zero;
-        Body.Initialize(space, Transform, Transform3D.Identity.Translated(bodyOffset),
+        Body.Initialize(space, Transform, bodyOffset == default ? Transform3D.Identity : bodyOffset,
             bodyShape);
+
+        Kinematic = kinematic;
 
         VelocityDampingFactor = velocityDampingFactor;
         AngularVelocityDampingFactor = angularVelocityDampingFactor;
+    }
+
+    public void AddCollisionException(BodyPhysicsComponent exception)
+    {
+        PhysicsServer3D.BodyAddCollisionException(Body.Body, exception.Body.Body);
+    }
+    public void RemoveCollisionException(BodyPhysicsComponent exception)
+    {
+        PhysicsServer3D.BodyRemoveCollisionException(Body.Body, exception.Body.Body);
     }
 
     public void AddAwareness(Rid space, float awarenessRadius, Vector3 awarenessOffset =
@@ -60,7 +94,7 @@ public struct AreaPhysicsComponent : IComponent
 
     public Rid GetBodyRid()
     {
-        return Body.Area;
+        return Body.Body;
     }
 
     public void CleanUp()
@@ -71,11 +105,11 @@ public struct AreaPhysicsComponent : IComponent
 
     public void UpdateCollisionAreas()
     {
-        if (Body.Area != default)
+        if (Body.Body.IsValid)
         {
-            Body.UpdateTransform(Transform);
+            Body.UpdateBaseTransform(Transform);
         }
-        if (Awareness.Area != default)
+        if (Awareness.Area.IsValid)
         {
             Awareness.UpdateTransform(Transform);
         }

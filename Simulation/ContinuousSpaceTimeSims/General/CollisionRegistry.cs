@@ -10,7 +10,7 @@ namespace PrimerTools.Simulation;
 /// </summary>
 public static class CollisionRegistry
 {
-    private static readonly Dictionary<Rid, (Type type, int entityId)> GlobalBodyLookup = new();
+    private static readonly Dictionary<Rid, (Type type, uint entityId)> GlobalBodyLookup = new();
     
     public static void RegisterBody(Rid rid, Type entityType, EntityId entityId)
     {
@@ -18,7 +18,7 @@ public static class CollisionRegistry
     }
 
     // Keep the old method for compatibility with existing simulations
-    public static void RegisterBody(Rid rid, Type entityType, int entityId)
+    public static void RegisterBody(Rid rid, Type entityType, uint entityId)
     {
         GlobalBodyLookup[rid] = (entityType, entityId);
     }
@@ -39,20 +39,6 @@ public static class CollisionRegistry
         }
         type = null;
         entityId = default;
-        return false;
-    }
-
-    // Keep the old method for compatibility
-    public static bool TryGetEntityInfo(Rid rid, out Type type, out int entityId)
-    {
-        if (GlobalBodyLookup.TryGetValue(rid, out var info))
-        {
-            type = info.type;
-            entityId = info.entityId;
-            return true;
-        }
-        type = null;
-        entityId = -1;
         return false;
     }
 }

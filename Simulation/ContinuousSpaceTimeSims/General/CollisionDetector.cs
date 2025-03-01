@@ -21,7 +21,7 @@ public static class CollisionDetector
     // Which means it will be as if your object is at the origin.
     // So we provide one.
     
-    public static List<TypedCollision> GetOverlappingEntities(
+    public static List<TypedCollision> GetOverlappingEntitiesWithArea(
         Rid detectionArea,
         Transform3D transform,
         Rid space,
@@ -30,7 +30,7 @@ public static class CollisionDetector
         var queryParams = new PhysicsShapeQueryParameters3D
         {
             CollideWithAreas = true,
-            CollideWithBodies = false,
+            CollideWithBodies = true,
             Exclude = new Array<Rid>(exclusions),
             ShapeRid = PhysicsServer3D.AreaGetShape(detectionArea, 0),
             Transform = transform
@@ -39,14 +39,47 @@ public static class CollisionDetector
         return QueryAndSortIntersections(queryParams, space);
     }
     
-    public static List<TypedCollision> GetOverlappingEntities(
+    public static List<TypedCollision> GetOverlappingEntitiesWithArea(
         Rid detectionArea,
         Rid space,
         params Rid[] exclusions)
     {
-        return GetOverlappingEntities(
+        return GetOverlappingEntitiesWithArea(
             detectionArea,
             PhysicsServer3D.AreaGetTransform(detectionArea),
+            space,
+            exclusions
+        );
+    }
+    
+    // There's not a clean way to figure out what an Rid corresponds to, that I know of
+    // So we have separate methods for body and area collision detection
+    // One idea for making this less bad is to have the physics components call these themselves
+    public static List<TypedCollision> GetOverlappingEntitiesWithBody(
+        Rid detectionBody,
+        Transform3D transform,
+        Rid space,
+        params Rid[] exclusions)
+    {
+        var queryParams = new PhysicsShapeQueryParameters3D
+        {
+            CollideWithAreas = true,
+            CollideWithBodies = true,
+            Exclude = new Array<Rid>(exclusions),
+            ShapeRid = PhysicsServer3D.BodyGetShape(detectionBody, 0),
+            Transform = transform
+        };
+
+        return QueryAndSortIntersections(queryParams, space);
+    }
+    public static List<TypedCollision> GetOverlappingEntitiesWithBody(
+        Rid detectionBody,
+        Rid space,
+        params Rid[] exclusions)
+    {
+        return GetOverlappingEntitiesWithBody(
+            detectionBody,
+            (Transform3D)PhysicsServer3D.BodyGetState(detectionBody, PhysicsServer3D.BodyState.Transform),
             space,
             exclusions
         );

@@ -13,12 +13,12 @@ public static class Transform3DUtils
     {
         var left = up.Cross(forward).Normalized();
         up = forward.Cross(left).Normalized(); // Recompute up to ensure orthogonality
-        return new Basis(left, up, forward);
+        return new Basis(left, up, forward).Orthonormalized();
     }
 
-    public static Vector3 CalculateAngularVelocityTowardBasis(this Transform3D transform, Basis desiredBasis, float rotationSpeedFactor = 10, float maxRotationSpeed = 10)
+    public static (Vector3 axis, float angle) GetAxisAngleRotationTowardBasis(this Basis basis, Basis desiredBasis)
     {
-        var currentRotation = transform.Basis.GetRotationQuaternion().Normalized();
+        var currentRotation = basis.GetRotationQuaternion().Normalized();
         var targetRotation = desiredBasis.GetRotationQuaternion().Normalized();
         var rotationDifference = currentRotation.Inverse() * targetRotation;
             
@@ -30,10 +30,27 @@ public static class Transform3DUtils
             angle = 2 * Mathf.Pi - angle;
             axis = -axis;
         }
+
+        return (axis, angle);
+    }
+
+    public static Vector3 CalculateAngularVelocityTowardBasis(this Transform3D transform, Basis desiredBasis, float rotationSpeedFactor = 10, float maxRotationSpeed = 10)
+    {
+        var (axis, angle) = transform.Basis.GetAxisAngleRotationTowardBasis(desiredBasis);
         return axis * Mathf.Min(angle * rotationSpeedFactor, maxRotationSpeed);
     }
 
     public static Vector3 CalculateVelocityAcceleratedTowardTarget(Vector3 targetDestination, Vector3 currentPosition, Vector3 currentVelocity, float maxSpeed, float accelerationFactor = 0.1f)
+    {
+        var accelerationVector =
+            CalculateAccelerationTowardTarget(targetDestination, currentPosition, currentVelocity, maxSpeed, accelerationFactor);
+        var newVelocity = currentVelocity + accelerationVector;
+        
+        return newVelocity.LimitLength(maxSpeed);
+        
+    }
+
+    public static Vector3 CalculateAccelerationTowardTarget(Vector3 targetDestination, Vector3 currentPosition, Vector3 currentVelocity, float maxSpeed, float accelerationFactor = 0.1f)
     {
         if (targetDestination == Vector3.Zero) GD.Print("Moving to the origin");
         var desiredDisplacement = targetDestination - currentPosition;
@@ -59,15 +76,6 @@ public static class Transform3DUtils
             accelerationVector = velocityChange;
         }
 
-        var newVelocity = currentVelocity + accelerationVector;
-        
-        var velocityLengthSquared = newVelocity.LengthSquared();
-        var maxSpeedSquared = maxSpeed * maxSpeed;
-        if (velocityLengthSquared > maxSpeedSquared)
-        {
-            newVelocity = maxSpeed / Mathf.Sqrt(velocityLengthSquared) * newVelocity;
-        }
-
-        return newVelocity;
+        return accelerationVector;
     }
 }

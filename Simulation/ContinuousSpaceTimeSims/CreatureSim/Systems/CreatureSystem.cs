@@ -102,7 +102,7 @@ public class CreatureSystem : ISystem
                 continue;
             }
             
-            var nearbyEntities = CollisionDetector.GetOverlappingEntities(
+            var nearbyEntities = CollisionDetector.GetOverlappingEntitiesWithArea(
                 physicsComponent.Awareness.Area,
                 _simulationWorld.World3D.Space,
                 physicsComponent.Body.Area);
@@ -240,7 +240,14 @@ public class CreatureSystem : ISystem
     private void PerformMovement(ref CreatureComponent creature, float timeStep)
     {
         var physicsComponent = _registry.GetComponent<AreaPhysicsComponent>(creature.EntityId);
-        physicsComponent.AccelerateTowardTarget(creature.CurrentDestination, creature.MaxSpeed);
+        
+        physicsComponent.Velocity = Transform3DUtils.CalculateVelocityAcceleratedTowardTarget(
+            creature.CurrentDestination,
+            physicsComponent.Position,
+            physicsComponent.Velocity,
+            creature.MaxSpeed
+        );
+        
         SpendMovementEnergy(ref creature);
         _registry.UpdateComponent(physicsComponent);
     }

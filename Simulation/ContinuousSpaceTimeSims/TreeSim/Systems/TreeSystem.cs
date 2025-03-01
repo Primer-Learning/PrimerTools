@@ -194,7 +194,7 @@ public class TreeSystem : ISystem
         var transform = Transform3D.Identity.Translated(areaPhysicsComponent.Position);
         transform = transform.ScaledLocal(Vector3.One * FruitTreeSimSettings.MinimumTreeDistance);
 
-        var nearbyEntities = CollisionDetector.GetOverlappingEntities(
+        var nearbyEntities = CollisionDetector.GetOverlappingEntitiesWithArea(
             areaPhysicsComponent.Body.Area,
             transform,
             space
@@ -211,7 +211,7 @@ public class TreeSystem : ISystem
         var transform = Transform3D.Identity.Translated(areaPhysicsComponent.Position);
         transform = transform.ScaledLocal(Vector3.One * FruitTreeSimSettings.TreeCompetitionRadius);
         
-        var nearbyEntities = CollisionDetector.GetOverlappingEntities(
+        var nearbyEntities = CollisionDetector.GetOverlappingEntitiesWithArea(
             areaPhysicsComponent.Body.Area,
             transform,
             space

@@ -18,12 +18,6 @@ public partial class TreeVisualEntity : VisualEntity
 	    Scale = ScaleFromAge(tree.Age);
     }
 
-    public override void AddDebugNodes(AreaPhysicsComponent treeComponent)
-    {
-	    throw new System.NotImplementedException();
-    }
-
-
     // Lazy thing. Gives visual trees an rng object for rotating mangoes.
 	// Could pass an rng value if we wanted the visual part of the sim to be reliable.
 	public static Rng NodeTreeRng = new Rng(0);

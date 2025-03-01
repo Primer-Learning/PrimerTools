@@ -41,11 +41,6 @@ public partial class CreatureVisualEntity : VisualEntity, IVisualEntityWithModel
         UpdateTransform(registry, creature);
         ModelHandler.Update(creature);
     }
-
-    public override void AddDebugNodes(AreaPhysicsComponent component)
-    {
-        throw new System.NotImplementedException();
-    }
     
     private void UpdateTransform(EntityRegistry registry, CreatureComponent creature)
     {
