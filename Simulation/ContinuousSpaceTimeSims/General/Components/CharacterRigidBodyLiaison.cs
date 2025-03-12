@@ -1,0 +1,145 @@
+using System.Linq;
+using Godot;
+using Godot.Collections;
+
+namespace PrimerTools.Simulation;
+
+public class CharacterRigidBodyLiaison
+{
+    public Transform3D LastTransform => Body.GetTransform3D();
+    public Vector3 LastPosition => LastTransform.Origin;
+    public Vector3 LastVelocity => (Vector3)PhysicsServer3D.BodyGetState(Rid, PhysicsServer3D.BodyState.LinearVelocity);
+    public Vector3 LastAngularVelocity => (Vector3)PhysicsServer3D.BodyGetState(Rid, PhysicsServer3D.BodyState.AngularVelocity);
+
+    public BodyComponent Body;
+
+    public Vector3 Destination;
+    public Vector3 DesiredFacing;
+    
+    private float _mass;
+    private float _maxSpeed;
+    private float _maxAcceleration;
+    private float _maxAngularVelocity = 5;
+    private float _maxAngularAcceleration = 5;
+
+    private Rid _space;
+    
+    public CharacterRigidBodyLiaison(
+        Rid space,
+        Transform3D transform,
+        Shape3D bodyShape,
+        Transform3D bodyOffset = default,
+        float maxSpeed = 100000,
+        float maxAcceleration = 10,
+        float mass = 50
+        )
+    {
+        Body.Initialize(space, transform, bodyOffset == default ? Transform3D.Identity : bodyOffset,
+            bodyShape);
+        _maxSpeed = maxSpeed;
+        _maxAcceleration = maxAcceleration;
+        _mass = mass;
+        _space = space;
+
+        PhysicsServer3D.BodySetForceIntegrationCallback(
+            Rid,
+            Callable.From<PhysicsDirectBodyState3D>(IntegrateForces)
+        );
+        PhysicsServer3D.BodySetParam(Rid, PhysicsServer3D.BodyParameter.Mass, mass);
+        AddAxisLocks();
+    }
+    
+    private Vector3 _netForce;
+    private Vector3 _netTorque;
+
+    public void AddExternalForce(Vector3 force)
+    {
+        _netForce += force;
+    }
+    public void AddExternalTorque(Vector3 torque)
+    {
+        _netTorque += torque;
+    }
+    
+    public float TempSpeedMultiplier = 3;
+    public void CalculateSelfInducedForces()
+    {
+        var intendedDisplacement = Destination - LastPosition; 
+        // Not certain whether the "intent" should be to move at max speed
+        // The intent could be instantaneous movement, but in the end, it's limited.
+        // Going with this for now. It at least naturally caps to max speed.
+        // Could tweak or look up optimal control strategies if needed. Maybe dexterous characters use better algorithms? 
+        var intendedVelocity = intendedDisplacement.Normalized() * _maxSpeed * TempSpeedMultiplier;
+        var intendedAcceleration = (intendedVelocity - LastVelocity) * TempSpeedMultiplier;
+        
+        // The static friction coefficient appears to be 1.
+        // I'm not certain if that's shape-independent.
+        // But probably, since why else would a capsule turn out that way?
+        var frictionFactor = _mass * 9.81f;
+        var force = intendedAcceleration.LimitLength(_maxAcceleration * TempSpeedMultiplier) * _mass + intendedAcceleration.Normalized() * frictionFactor;
+        if (force.LengthSquared() > 0.001f)
+        {
+            _netForce += force;    
+        }
+        
+        // Torque calculation
+        var currentBasis = LastTransform.Basis;
+        var desiredBasis = Transform3DUtils.BasisFromForwardAndUp(DesiredFacing, Vector3.Up);
+        var (axis, angle) = currentBasis.GetAxisAngleRotationTowardBasis(desiredBasis);
+        
+        const float massIndependentSpringConstant = 1; // m/s^2 per meter of displacement per mass
+        const float dampingRatio = 0.2f;
+        var damping = dampingRatio * 2 * Mathf.Sqrt(massIndependentSpringConstant); // m/s^2 per m/s per mass
+        var mainTorque = axis * angle * massIndependentSpringConstant;
+        var dampingTorque = -LastAngularVelocity * damping;
+        
+        var totalTorque = mainTorque + dampingTorque;
+        if (totalTorque.LengthSquared() > 0.001f)
+        {
+            _netTorque += totalTorque.LimitLength(_maxAngularAcceleration) * _mass;
+        }
+    }
+    private void IntegrateForces(PhysicsDirectBodyState3D state)
+    {
+        // Check if it's standing on anything
+        var intersections = PhysicsServer3D.SpaceGetDirectState(_space).IntersectPoint(
+            new PhysicsPointQueryParameters3D()
+            {
+                Position = LastPosition + Vector3.Down * 0.05f,
+                Exclude = new Array<Rid>() {Rid}
+            }
+        );
+        if (!intersections.Any()) return;
+        
+        state.ApplyForce(_netForce);
+        _netForce = Vector3.Zero;
+        state.ApplyTorque(_netTorque);
+        _netTorque = Vector3.Zero;
+    }
+
+    public void AddAxisLocks()
+    {
+        PhysicsServer3D.BodySetAxisLock(Rid, PhysicsServer3D.BodyAxis.AngularX, true);
+        PhysicsServer3D.BodySetAxisLock(Rid, PhysicsServer3D.BodyAxis.AngularZ, true);
+    }
+    public void RemoveAxisLocks()
+    {
+        PhysicsServer3D.BodySetAxisLock(Rid, PhysicsServer3D.BodyAxis.AngularX, false);
+        PhysicsServer3D.BodySetAxisLock(Rid, PhysicsServer3D.BodyAxis.AngularZ, false);
+    }
+    public void AddCollisionException(CharacterRigidBodyLiaison exception)
+    {
+        PhysicsServer3D.BodyAddCollisionException(Body.Body, exception.Body.Body);
+    }
+    public void RemoveCollisionException(CharacterRigidBodyLiaison exception)
+    {
+        PhysicsServer3D.BodyRemoveCollisionException(Body.Body, exception.Body.Body);
+    }
+
+    public Rid Rid => Body.Body;
+
+    public void CleanUp()
+    {
+        Body.CleanUp();
+    }
+}
