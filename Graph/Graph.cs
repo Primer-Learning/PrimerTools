@@ -36,6 +36,18 @@ public partial class Graph : Node3D
         return graph;
     }
     
+    public Graph()
+    {
+        Name = "Graph";
+        InstantiateAxes();
+        
+        // Initialize data space marker nodes
+        _dataSpaceMin = new Node3D { Name = "DataSpaceMin" };
+        _dataSpaceMax = new Node3D { Name = "DataSpaceMax" };
+        AddChild(_dataSpaceMin);
+        AddChild(_dataSpaceMax);
+    }
+    
     private void InstantiateAxes()
     {
         var axisScene = ResourceLoader.Load<PackedScene>("res://addons/PrimerTools/Graph/Scenes/axis.tscn");

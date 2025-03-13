@@ -25,6 +25,17 @@ public static class NodeExtensions
             child.MakeSelfAndChildrenLocal(ancestorWhoNodesAreLocalWithRespectTo, depth: depth + 1);
         }
     }
+
+    public static void MakeLocal(this Node self, Node ancestorWhoNodesAreLocalWithRespectTo = null)
+    {
+        if (ancestorWhoNodesAreLocalWithRespectTo == null)
+        {
+            ancestorWhoNodesAreLocalWithRespectTo = self.GetTree().EditedSceneRoot;
+        }
+        
+        self.Owner = ancestorWhoNodesAreLocalWithRespectTo;
+        self.SceneFilePath = "";
+    }
     
     public static void SetParent(this Node node, Node parent)
     {

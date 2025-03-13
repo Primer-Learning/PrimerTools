@@ -1,6 +1,5 @@
 using Godot;
-using Environment = System.Environment;
-using Random = System.Random;
+using System;
 
 namespace PrimerTools
 {
@@ -17,7 +16,7 @@ namespace PrimerTools
                 // So if the staticRandom object already exists, we don't need to do anything.
                 // But if it doesn't, create it and set the seed to the current time.
                 if (staticRandom is not null) return;
-                staticRandom = new Random(Environment.TickCount);
+                staticRandom = new Random(System.Environment.TickCount);
             }
             else
             {
