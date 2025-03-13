@@ -1,4 +1,6 @@
 **/LaTeX/gltf/
 .aider*
+*.uid
+*.import
 # Tree Distribution saves
 **Saved Tree Distributions/
