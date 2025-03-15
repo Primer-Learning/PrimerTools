@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using GladiatorManager.BattleSim;
+using GladiatorManager.BattleSim.Visual;
 using GladiatorManager.ContinuousSpaceTimeSims.CreatureSim.Visual;
 using Godot;
 using PrimerTools.Simulation.ContinuousSpaceTimeSims.CreatureSim;
@@ -134,6 +136,9 @@ public partial class SimulationWorld : Node3D
     private CreatureVisualEventManager _creatureVisualEventManager;
     private TreeVisualEventManager _treeVisualEventManager;
 
+    private CombatantVisualEventManager _combatantVisualEventManager;
+    private WeaponVisualEventManager _weaponVisualEventManager;
+
     public T AddSystem<T>() where T : ISystem, new()
     {
         if (_systems.Any(x => x.GetType() == typeof(T)))
@@ -157,11 +162,11 @@ public partial class SimulationWorld : Node3D
             {
                 _treeVisualEventManager = new TreeVisualEventManager(_visualEntityRegistry, this);
             }
-            // if (system is CombatantSystem)
-            // {
-            //     _combatantVisualEventManager = new CombatantVisualEventManager(_visualEntityRegistry, this);
-            //     _weaponVisualEventManager = new WeaponVisualEventManager(_visualEntityRegistry, this);
-            // }
+            if (system is CombatantSystem)
+            {
+                _combatantVisualEventManager = new CombatantVisualEventManager(_visualEntityRegistry, this);
+                _weaponVisualEventManager = new WeaponVisualEventManager(_visualEntityRegistry, this);
+            }
         }
 
         return system;
@@ -226,6 +231,7 @@ public partial class SimulationWorld : Node3D
     public override void _PhysicsProcess(double delta)
     {
         if (!Running) return;
+        // GD.Print("Running");
         foreach (var system in _systems)
         {
             system.Update((float)delta);
@@ -285,6 +291,69 @@ public partial class SimulationWorld : Node3D
         } while (!IsWithinWorldBounds(newDestination));
 
         return newDestination;
+    }
+    public Vector3 ClampDestinationToWorldBounds(Vector3 currentPosition, Vector3 intendedDestination)
+    {
+        // TODO: Make this more elegant and general by working with arbitrary boundaries rather that axis-aligned ones.
+        
+        // If the destination is already within bounds, just return it
+        if (IsWithinWorldBounds(intendedDestination))
+        {
+            return intendedDestination;
+        }
+
+        // Create a displacement vector
+        Vector3 displacement = intendedDestination - currentPosition;
+        
+        // Parameter for the ray - start at 1.0 (full length)
+        float tMin = 1.0f;
+        
+        // Check intersection with each boundary plane
+        // X minimum boundary
+        if (displacement.X < 0)
+        {
+            tMin = (_worldMin.X - currentPosition.X) / displacement.X;
+        }
+        
+        // X maximum boundary
+        if (displacement.X > 0)
+        {
+            tMin = (_worldMax.X - currentPosition.X) / displacement.X;
+        }
+        
+        // Z minimum boundary
+        if (displacement.Z < 0)
+        {
+            tMin = (_worldMin.Y - currentPosition.Z) / displacement.Z;
+        }
+        
+        // Z maximum boundary
+        if (displacement.Z > 0)
+        {
+            tMin = (_worldMax.Y - currentPosition.Z) / displacement.Z;
+        }
+        
+        // Apply a small offset to ensure we're just inside the boundary
+        const float epsilon = 0.001f;
+        tMin = Math.Max(0, tMin - epsilon);
+        
+        // Calculate the new destination
+        return currentPosition + displacement * tMin;
+    }
+
+    // Helper method to check if intersection point with a boundary is within the other dimension's bounds
+    private bool IsIntersectionPointWithinBounds(Vector3 origin, Vector3 displacement, float t, int axis)
+    {
+        Vector3 intersection = origin + displacement * t;
+        
+        if (axis == 0) // X-axis boundary, check Z
+        {
+            return intersection.Z >= _worldMin.Y && intersection.Z <= _worldMax.Y;
+        }
+        else // Z-axis boundary, check X
+        {
+            return intersection.X >= _worldMin.X && intersection.X <= _worldMax.X;
+        }
     }
 }
 
