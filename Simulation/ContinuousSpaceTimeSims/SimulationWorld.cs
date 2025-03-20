@@ -292,6 +292,42 @@ public partial class SimulationWorld : Node3D
 
         return newDestination;
     }
+
+    public float FractionOfDisplacementThatWouldGetYouToTheWorldBoundary(Vector3 currentPosition, Vector3 intendedDestination)
+    {
+        var tMin = float.MaxValue;
+        var displacement = intendedDestination - currentPosition;
+        
+        // Check intersection with each boundary plane
+        // tMin is the fraction of the displacement that would bring the intended position to the boundary
+        // Currently only works for 
+        
+        // X minimum boundary
+        if (currentPosition.X + displacement.X < _worldMin.X)
+        {
+            tMin = Mathf.Min(tMin, (_worldMin.X - currentPosition.X) / displacement.X);
+        }
+        
+        // X maximum boundary
+        if (currentPosition.X + displacement.X > _worldMax.X)
+        {
+            tMin = Mathf.Min(tMin, (_worldMax.X - currentPosition.X) / displacement.X);
+        }
+        
+        // Z minimum boundary
+        if (currentPosition.Z + displacement.Z < _worldMin.Y)
+        {
+            tMin = Mathf.Min(tMin, (_worldMin.Y - currentPosition.Z) / displacement.Z);
+        }
+        
+        // Z maximum boundary
+        if (currentPosition.Z + displacement.Z > _worldMax.Y)
+        {
+            tMin = Mathf.Min(tMin, (_worldMax.Y - currentPosition.Z) / displacement.Z);
+        }
+
+        return tMin;
+    }
     public Vector3 ClampDestinationToWorldBounds(Vector3 currentPosition, Vector3 intendedDestination)
     {
         // TODO: Make this more elegant and general by working with arbitrary boundaries rather that axis-aligned ones.
@@ -301,44 +337,15 @@ public partial class SimulationWorld : Node3D
         {
             return intendedDestination;
         }
-
-        // Create a displacement vector
-        Vector3 displacement = intendedDestination - currentPosition;
         
-        // Parameter for the ray - start at 1.0 (full length)
-        float tMin = 1.0f;
-        
-        // Check intersection with each boundary plane
-        // X minimum boundary
-        if (displacement.X < 0)
-        {
-            tMin = (_worldMin.X - currentPosition.X) / displacement.X;
-        }
-        
-        // X maximum boundary
-        if (displacement.X > 0)
-        {
-            tMin = (_worldMax.X - currentPosition.X) / displacement.X;
-        }
-        
-        // Z minimum boundary
-        if (displacement.Z < 0)
-        {
-            tMin = (_worldMin.Y - currentPosition.Z) / displacement.Z;
-        }
-        
-        // Z maximum boundary
-        if (displacement.Z > 0)
-        {
-            tMin = (_worldMax.Y - currentPosition.Z) / displacement.Z;
-        }
+        var tMin = FractionOfDisplacementThatWouldGetYouToTheWorldBoundary(currentPosition, intendedDestination);
         
         // Apply a small offset to ensure we're just inside the boundary
         const float epsilon = 0.001f;
         tMin = Math.Max(0, tMin - epsilon);
         
         // Calculate the new destination
-        return currentPosition + displacement * tMin;
+        return currentPosition + (intendedDestination - currentPosition) * tMin;
     }
 
     // Helper method to check if intersection point with a boundary is within the other dimension's bounds

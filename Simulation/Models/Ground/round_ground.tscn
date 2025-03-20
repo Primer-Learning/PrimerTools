@@ -1,7 +1,7 @@
 [gd_scene load_steps=7 format=4 uid="uid://cavo8a7kste8m"]
 
 [ext_resource type="PackedScene" uid="uid://cdkkm0xrmnyd4" path="res://addons/PrimerTools/Simulation/Models/Ground/round_ground.glb" id="1_716nn"]
-[ext_resource type="Shader" path="res://addons/PrimerTools/Simulation/Models/Ground/floating_island.gdshader" id="2_uhdrx"]
+[ext_resource type="Shader" uid="uid://0j37g0ww8q07" path="res://addons/PrimerTools/Simulation/Models/Ground/floating_island.gdshader" id="2_uhdrx"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_xnc1h"]
 render_priority = 0

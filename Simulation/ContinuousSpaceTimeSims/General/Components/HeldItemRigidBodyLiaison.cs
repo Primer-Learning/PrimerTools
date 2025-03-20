@@ -1,4 +1,3 @@
-using System.Numerics;
 using Godot;
 using Vector3 = Godot.Vector3;
 
@@ -12,7 +11,6 @@ public class HeldItemRigidBodyLiaison
     public Vector3 LastAngularVelocity => (Vector3)PhysicsServer3D.BodyGetState(Rid, PhysicsServer3D.BodyState.AngularVelocity);
     
     public BodyComponent Body;
-
     public Vector3 IntendedRelativePosition; 
     public CharacterRigidBodyLiaison MainBody;
 
