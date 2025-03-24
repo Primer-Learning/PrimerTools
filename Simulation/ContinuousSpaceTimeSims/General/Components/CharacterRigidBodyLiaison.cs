@@ -61,9 +61,24 @@ public class CharacterRigidBodyLiaison
         _netTorque += torque;
     }
     
-    public float TempSpeedMultiplier = 3;
+    public float TempSpeedMultiplier = 1;
     public void CalculateSelfInducedForces()
     {
+        Vector3 surfaceNormal;
+        var raycastInfo = PhysicsServer3D.SpaceGetDirectState(_space).IntersectRay(
+            new PhysicsRayQueryParameters3D()
+            {
+                From = LastPosition + Vector3.Up * 0.01f,
+                To = LastPosition + Vector3.Down * 0.05f
+            }
+        );
+        if (raycastInfo.Count > 0)
+        {
+            surfaceNormal = (Vector3)raycastInfo["normal"];
+        }
+        else return; // Can't apply forces on self if you're not standing on something (yet...)
+        
+        
         var intendedDisplacement = Destination - LastPosition; 
         // Not certain whether the "intent" should be to move at max speed
         // The intent could be instantaneous movement, but in the end, it's limited.
@@ -71,6 +86,14 @@ public class CharacterRigidBodyLiaison
         // Could tweak or look up optimal control strategies if needed. Maybe dexterous characters use better algorithms? 
         var intendedVelocity = intendedDisplacement.Normalized() * _maxSpeed * TempSpeedMultiplier;
         var intendedAcceleration = (intendedVelocity - LastVelocity) * TempSpeedMultiplier;
+        // Make intendedAcceleration parallel to the local plane
+        // by projecting it onto the plane, then applying its original length
+        // Not the most realistic adjustment to a hill, but it prevents getting stuck on a lip
+        intendedAcceleration = (intendedAcceleration - intendedAcceleration.Dot(surfaceNormal) * surfaceNormal)
+                               .Normalized() * intendedAcceleration.Length();
+        
+        // intendedAcceleration += intendedAcceleration.Dot(Vector3.Up)
+        //     * (float)PhysicsServer3D.BodyGetParam(Rid, PhysicsServer3D.BodyParameter.GravityScale) * Vector3.Up;
         
         // The static friction coefficient appears to be 1.
         // I'm not certain if that's shape-independent.
@@ -101,19 +124,9 @@ public class CharacterRigidBodyLiaison
     }
     private void IntegrateForces(PhysicsDirectBodyState3D state)
     {
-        // Check if it's standing on anything
-        var intersections = PhysicsServer3D.SpaceGetDirectState(_space).IntersectPoint(
-            new PhysicsPointQueryParameters3D()
-            {
-                Position = LastPosition + Vector3.Down * 0.05f,
-                Exclude = new Array<Rid>() {Rid}
-            }
-        );
-        if (!intersections.Any()) return;
-        
         state.ApplyForce(_netForce);
-        _netForce = Vector3.Zero;
         state.ApplyTorque(_netTorque);
+        _netForce = Vector3.Zero;
         _netTorque = Vector3.Zero;
     }
 
