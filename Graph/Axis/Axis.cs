@@ -71,11 +71,11 @@ public partial class Axis : Node3D
 	
 	internal (Animation removeAnimation, Animation updateAnimation, Animation addAnimation) UpdateChildren(float duration = 0.5f)
 	{
-		if (Min != 0)
-		{
-			GD.PrintErr("Idk how to deal with non-zero min yet.");
-			return (null, null, null);
-		}
+		// if (Min != 0)
+		// {
+		// 	GD.PrintErr("Idk how to deal with non-zero min yet.");
+		// 	return (null, null, null);
+		// }
 		
 		var (removeTics, updateTics, addTics) = UpdateTics(duration);
 
@@ -96,7 +96,7 @@ public partial class Axis : Node3D
 		if (!ShowRod) { rod.Visible = false; }
 
 		return AnimationUtilities.Parallel(
-			rod.MoveTo(new Vector3(-Padding.X, 0f, 0f), duration: duration),
+			rod.MoveTo(new Vector3(-Padding.X + Min * DataSpaceScale, 0f, 0f), duration: duration),
 			rod.ScaleTo(length == 0 
 				? Vector3.Zero
 				: new Vector3(length, Chonk, Chonk), duration)
@@ -122,8 +122,8 @@ public partial class Axis : Node3D
 		}
 
 		return AnimationUtilities.Parallel(
-			startArrow.MoveTo(new Vector3(-padding.X, 0f, 0f)),
-			endArrow.MoveTo(new Vector3(length - padding.X, 0f, 0f))
+			startArrow.MoveTo(new Vector3(-padding.X + Min * DataSpaceScale, 0f, 0f)),
+			endArrow.MoveTo(new Vector3(length - padding.X + Min * DataSpaceScale, 0f, 0f))
 		);
 	}
 

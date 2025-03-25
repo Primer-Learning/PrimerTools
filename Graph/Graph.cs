@@ -338,6 +338,11 @@ public partial class Graph : Node3D
         var line = new CurvePlot2D();
         line.TransformPointFromDataSpaceToPositionSpace = GetDataSpaceToPositionSpaceFromSettings;
         AddChild(line);
+        line.Position = new Vector3(
+            XAxis.Min * XAxis.DataSpaceScale,
+            YAxis.Min * YAxis.DataSpaceScale,
+            ZAxis.Min * ZAxis.DataSpaceScale
+        );
         line.Owner = GetTree().EditedSceneRoot;
         line.Name = name;
         return line;
