@@ -71,7 +71,7 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
         _dataPoints = data.Select((x, i) => new Vector3(i, x, 0)).ToList();
     }
 
-    public void SetDataWithFunction(Func<float, float> func, float minX, float maxX, int pointCount = 100)
+    public void SetDataWithOneToOneFunction(Func<float, float> func, float minX, float maxX, int pointCount = 100)
     {
         pointCount = Mathf.Max(pointCount, 2);
         var step = (maxX - minX) / (pointCount - 1);
@@ -81,6 +81,20 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
         {
             var x = minX + i * step;
             _dataPoints.Add(new Vector3(x, func(x), 0));
+        }
+    }
+    
+    public void SetDataWithParametricFunction(Func<float, Vector2> func, float minT, float maxT, int pointCount = 100)
+    {
+        pointCount = Mathf.Max(pointCount, 2);
+        var step = (maxT - minT) / (pointCount - 1);
+        
+        _dataPoints.Clear();
+        for (var i = 0; i < pointCount; i++)
+        {
+            var t = minT + i * step;
+            var outPut = func(t);
+            _dataPoints.Add(new Vector3(outPut[0], outPut[1], 0));
         }
     }
     
