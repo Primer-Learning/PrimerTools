@@ -234,7 +234,7 @@ public partial class StackedBarPlot : Node3D, IPrimerGraphData
         if (ShowValuesOnBars)
         {
             var label = new LatexNode();
-            label.latex = 0.ToString();
+            label.Latex = 0.ToString();
             label.Name = $"Label {stackIndex} {segmentIndex}";
             label.HorizontalAlignment = LatexNode.HorizontalAlignmentOptions.Center;
             label.VerticalAlignment = LatexNode.VerticalAlignmentOptions.Center;

@@ -109,7 +109,7 @@ public partial class TernaryGraph : Node3D
             AddChild(label);
             label.Owner = GetTree().EditedSceneRoot;
 
-            label.latex = LabelStrings[i];
+            label.Latex = LabelStrings[i];
             label.HorizontalAlignment = LatexNode.HorizontalAlignmentOptions.Center;
             label.VerticalAlignment = LatexNode.VerticalAlignmentOptions.Center;
             label.UpdateCharacters();

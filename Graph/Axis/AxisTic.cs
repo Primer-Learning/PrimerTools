@@ -12,7 +12,7 @@ public partial class AxisTic : Node3D
 
     public void SetLabel()
     {
-        latexNode.latex = data.label;
+        latexNode.Latex = data.label;
         latexNode.UpdateCharacters();
         this.MakeSelfAndChildrenLocal(GetTree().EditedSceneRoot);
     }

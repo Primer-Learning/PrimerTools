@@ -12,7 +12,7 @@ public partial class LatexNode : Node3D
 	public static LatexNode Create(string latex)
 	{
 		var node = new LatexNode();
-		node.latex = latex;
+		node.Latex = latex;
 		if (latex != "")
 		{
 			node.UpdateCharacters();
@@ -20,8 +20,20 @@ public partial class LatexNode : Node3D
 		}
 		return node;
 	}
+
+	public LatexNode(string latex)
+	{
+		Latex = latex;
+		if (latex != "")
+		{
+			UpdateCharacters();
+			Name = latex;
+		}
+	}
 	
-	
+	public LatexNode() {}
+
+
 	private bool run = true;
 	[Export] public bool Run {
 		get => run;
@@ -35,7 +47,7 @@ public partial class LatexNode : Node3D
 	}
 
 	[Export] public bool openBlender = false;
-	[Export] public string latex = "\\LaTeX";
+	[Export] public string Latex = "\\LaTeX";
 
 	public string numberPrefix = "";
 	public string numberSuffix = "";
@@ -56,7 +68,7 @@ public partial class LatexNode : Node3D
 			{
 				approx = "\\sim ";
 			}
-			latex = "$" + approx + numberPrefix + value.ToString("F" + DecimalPlacesToShow) + numberSuffix + "$";
+			Latex = "$" + approx + numberPrefix + value.ToString("F" + DecimalPlacesToShow) + numberSuffix + "$";
 			UpdateCharacters();
 			
 			number = value;
@@ -80,18 +92,22 @@ public partial class LatexNode : Node3D
 	private readonly LatexToMesh latexToMesh = new();
 	
 	public async void UpdateCharacters() {
-		if (latex == "") return;
+		if (Latex == "") return;
 		foreach (var child in GetChildren())
 		{
 			child.Free();
 		}
 		
-		var path = await latexToMesh.MeshFromExpression(latex, openBlender);
+		var path = await latexToMesh.MeshFromExpression(Latex, openBlender);
 		var newNode = ResourceLoader.Load<PackedScene>(path).Instantiate<Node3D>();
 		
+		/* TODO: Try triggering reload here
+		 * https://docs.godotengine.org/en/stable/classes/class_editorfilesystem.html#class-editorfilesystem-method-reimport-files
+		 * Beware the singleton (read top of documentation page)
+		 */
+		
+		
 		AddChild(newNode);
-		// Uncomment for testing a LaTeX object in its own scene.
-		// newNode.MakeSelfAndChildrenLocal(GetTree().EditedSceneRoot);
 		newNode.RotationDegrees = new Vector3(0, 0, 0);
 		
 		Align();

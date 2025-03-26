@@ -47,7 +47,7 @@ public partial class Table : Node3D
     public void AddLatexNodeToPositionWithDefaultSettingsForTheTable(string latexString, int row, int column)
     {
         var newLatexNode = new LatexNode();
-        newLatexNode.latex = latexString;
+        newLatexNode.Latex = latexString;
         newLatexNode.UpdateCharacters();
         
         newLatexNode.Scale = row == 0 || column == 0 ? HeaderLatexScale : CellLatexScale;

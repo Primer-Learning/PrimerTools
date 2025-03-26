@@ -288,7 +288,7 @@ public partial class BarPlot : Node3D, IPrimerGraphData
             // TODO: Consider not using LaTeX here. It's overkill, but is currently more work
             // at time of writing.
             var label = new LatexNode();
-            label.latex = 0.ToString();
+            label.Latex = 0.ToString();
             label.Name = $"Label {i}";
             label.HorizontalAlignment = LatexNode.HorizontalAlignmentOptions.Center;
             label.VerticalAlignment = LatexNode.VerticalAlignmentOptions.Bottom;
