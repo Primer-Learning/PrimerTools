@@ -68,7 +68,7 @@ public class CharacterRigidBodyLiaison
         var raycastInfo = PhysicsServer3D.SpaceGetDirectState(_space).IntersectRay(
             new PhysicsRayQueryParameters3D()
             {
-                From = LastPosition + Vector3.Up * 0.01f,
+                From = LastPosition + Vector3.Up * 0.05f,
                 To = LastPosition + Vector3.Down * 0.05f
             }
         );
@@ -77,7 +77,6 @@ public class CharacterRigidBodyLiaison
             surfaceNormal = (Vector3)raycastInfo["normal"];
         }
         else return; // Can't apply forces on self if you're not standing on something (yet...)
-        
         
         var intendedDisplacement = Destination - LastPosition; 
         // Not certain whether the "intent" should be to move at max speed
