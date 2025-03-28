@@ -45,163 +45,131 @@ public partial class CameraRig : Node3D
     {
         return Camera.MoveTo(new Vector3(Camera.Position.X, Camera.Position.Y, distance));
     }
+
+    #region Manipulation in play mode
+    public float RotationSensitivity { get; set; } = 0.005f;
+    public float PanSensitivity { get; set; } = 0.02f;
+    public float ZoomSensitivity { get; set; } = 0.1f;
+    public float ZoomMin { get; set; } = 1.0f;
+    public float ZoomMax { get; set; } = 50.0f;
+    public bool EnableDragRotation { get; set; } = true;
+    public bool EnablePanning { get; set; } = true;
+    public bool EnableZooming { get; set; } = true;
+    public bool InvertRotationX { get; set; } = false;
+    public bool InvertRotationY { get; set; } = true;
+    public bool InvertPanX { get; set; } = false;
+    public bool InvertPanY { get; set; } = false;
+    public bool InvertZoom { get; set; } = false;
     
+    private bool _isRotating = false;
+    private bool _isPanning = false;
+    private Vector2 _lastMousePosition;
+    public override void _Ready()
+    {
+        base._Ready();
+        SetProcessInput(true);
+    }
+    
+    public override void _Input(InputEvent @event)
+    {
+        if (@event is InputEventMouseButton mouseButtonEvent)
+        {
+            HandleMouseButtonEvent(mouseButtonEvent);
+        }
+        else if (@event is InputEventMouseMotion mouseMotionEvent)
+        {
+            HandleMouseMotionEvent(mouseMotionEvent);
+        }
+    }
+    
+    private void HandleMouseButtonEvent(InputEventMouseButton mouseButtonEvent)
+    {
+        switch (mouseButtonEvent.ButtonIndex)
+        {
+            case MouseButton.Left:
+                if (EnableDragRotation)
+                {
+                    _isRotating = mouseButtonEvent.Pressed;
+                    if (_isRotating)
+                        _lastMousePosition = mouseButtonEvent.Position;
+                }
+                break;
+                
+            case MouseButton.Middle:
+                if (EnablePanning)
+                {
+                    _isPanning = mouseButtonEvent.Pressed;
+                    if (_isPanning)
+                        _lastMousePosition = mouseButtonEvent.Position;
+                }
+                break;
+                
+            case MouseButton.WheelUp:
+                if (EnableZooming)
+                {
+                    float zoomDirection = InvertZoom ? 1 : -1;
+                    Zoom(zoomDirection * ZoomSensitivity);
+                }
+                break;
+                
+            case MouseButton.WheelDown:
+                if (EnableZooming)
+                {
+                    float zoomDirection = InvertZoom ? -1 : 1;
+                    Zoom(zoomDirection * ZoomSensitivity);
+                }
+                break;
+        }
+    }
+    
+    private void HandleMouseMotionEvent(InputEventMouseMotion mouseMotionEvent)
+    {
+        Vector2 delta = mouseMotionEvent.Position - _lastMousePosition;
+        _lastMousePosition = mouseMotionEvent.Position;
         
-//     public class CameraRig : MonoBehaviour
-//     {
-//         private Camera cameraCache;
-//         public Camera cam => cameraCache == null ? cameraCache = GetComponent<Camera>() : cameraCache;
-//
-//         [SerializeField, HideInInspector]
-//         private float _distance = 10;
-//         [ShowInInspector]
-//         public float distance {
-//             get => _distance;
-//             set {
-//                 
-//                 _distance = value;
-//                 UpdateSwivel();
-//             }
-//         }
-//         
-//         [SerializeField, HideInInspector]
-//         private Vector3 _swivelOrigin;
-//         [ShowInInspector]
-//         public Vector3 swivelOrigin {
-//             get => _swivelOrigin;
-//             set
-//             {
-//                 _swivelOrigin = value;
-//                 UpdateSwivel();
-//             }
-//         }
-//         
-//         [SerializeField, HideInInspector]
-//         private Vector3 _swivel;
-//         [ShowInInspector]
-//         public Vector3 swivel {
-//             get => _swivel;
-//             set
-//             {
-//                 _swivel = value;
-//                 UpdateSwivel();
-//             }
-//         }
-//         
-//         public bool faceSwivel = true;
-//         public Color backgroundColor = PrimerColor.gray;
-//
-//         private void OnDrawGizmos() => Gizmos.DrawSphere(swivelOrigin, 0.1f);
-//
-//         private void Awake()
-//         {
-//             if (cam != null && backgroundColor != cam.backgroundColor) {
-//                 cam.clearFlags = CameraClearFlags.SolidColor;
-//                 cam.backgroundColor = backgroundColor;
-//             }
-//         }
-//
-//         private void UpdateSwivel()
-//         {
-//             // var direction = faceSwivel ? Vector3.back : Vector3.forward;
-//             transform.position = Quaternion.Euler(swivel) * Vector3.back * distance + swivelOrigin;
-//             transform.rotation = Quaternion.Euler(swivel);
-//         }
-//
-//         public Tween FocusOn(Component target, Vector3 offset, float? distance = null, Vector3? swivel = null)
-//         {
-//             return Travel(distance, target.transform.position + offset, swivel);
-//         }
-//
-//         public Tween Travel(float? distance = null, Vector3? swivelOrigin = null, Vector3? swivel = null)
-//         {
-//             var tween = new List<Tween>();
-//             var linear = LinearEasing.instance;
-//
-//             if (distance.HasValue)
-//             {
-//                 tween.Add(Tween.Value(
-//                         v => this.distance = v,
-//                         () => this.distance,
-//                         () => distance.Value
-//                     ) with
-//                     {
-//                         easing = linear
-//                     });
-//             }
-//
-//             if (swivelOrigin.HasValue) {
-//                 {
-//                     tween.Add(Tween.Value(
-//                             v => this.swivelOrigin = v,
-//                             () => this.swivelOrigin,
-//                             () => swivelOrigin.Value
-//                         ) with
-//                         {
-//                             easing = linear
-//                         });
-//                 }
-//             }
-//
-//             if (swivel.HasValue) {
-//                 {
-//                     tween.Add(Tween.Value(
-//                             v => this.swivel = v,
-//                             () => this.swivel,
-//                             () => swivel.Value
-//                         ) with
-//                         {
-//                             easing = linear
-//                         });
-//                 }
-//             }
-//
-//             // or use tween.RunInBatch() to merge all tweens into one with unified easing
-//             return tween.RunInParallel() with { easing = IEasing.defaultMethod };
-//         }
-//
-//         [PropertySpace]
-//         [Button(ButtonSizes.Large)]
-//         private void CopyCode()
-//         {
-//             GUIUtility.systemCopyBuffer = $@"
-// .Travel(
-//     distance: {distance}f,
-//     swivelOrigin: {swivelOrigin.ToCode()},
-//     swivel: {swivel.ToCode()}
-// )
-//             ".Trim();
-//         }
-//
-//         public Tween TweenFieldOfView(float newFieldOfView)
-//         {
-//             var originalDistance = _distance;
-//             var originalFieldOfView = cam.fieldOfView;
-//             
-//             float NewDistance(float fov)
-//             {
-//                 return originalDistance * Mathf.Tan(originalFieldOfView * 0.5f * Mathf.Deg2Rad) / Mathf.Tan(fov * 0.5f * Mathf.Deg2Rad);
-//             }
-//
-//             return Tween.Value(
-//                 v => cam.fieldOfView = v,
-//                 to: () => newFieldOfView,
-//                 from: () => cam.fieldOfView
-//             ).Observe(afterUpdate: _ =>
-//             {
-//                 var oldDistance = _distance;
-//                 distance = NewDistance(cam.fieldOfView);
-//                 foreach (var child in transform.GetChildren())
-//                 {
-//                     var localPosition = child.localPosition;
-//                     localPosition = new Vector3(
-//                         localPosition.x,
-//                         localPosition.y,
-//                         localPosition.z * distance / oldDistance
-//                     );
-//                     child.localPosition = localPosition;
-//                 }
-//             });
-//         }
-//     }
+        if (_isRotating && EnableDragRotation)
+        {
+            // Apply horizontal rotation (around Y axis)
+            float yRotationDirection = InvertRotationX ? 1 : -1;
+            RotateY(yRotationDirection * delta.X * RotationSensitivity);
+            
+            // Apply vertical rotation (around X axis)
+            float xRotationDirection = InvertRotationY ? -1 : 1;
+            float xRotation = xRotationDirection * delta.Y * RotationSensitivity;
+            
+            // Rotate around the local X axis
+            RotateObjectLocal(Vector3.Right, xRotation);
+        }
+        
+        if (_isPanning && EnablePanning)
+        {
+            // Get the camera's local coordinate system
+            Basis cameraBasis = GlobalTransform.Basis;
+            
+            // Get the right and up vectors from the camera's basis
+            Vector3 right = cameraBasis.X.Normalized();
+            Vector3 up = cameraBasis.Y.Normalized();
+            
+            float xDirection = InvertPanX ? 1 : -1;
+            float yDirection = InvertPanY ? -1 : 1;
+            
+            Vector3 panOffset =
+                right * xDirection * delta.X * PanSensitivity +
+                up * yDirection * delta.Y * PanSensitivity;
+                
+            GlobalPosition += panOffset;
+        }
+    }
+    
+    private void Zoom(float amount)
+    {
+        float newDistance = Mathf.Clamp(
+            Distance + amount * Distance,
+            ZoomMin,
+            ZoomMax
+        );
+        
+        Distance = newDistance;
+    }
+    #endregion
 }
