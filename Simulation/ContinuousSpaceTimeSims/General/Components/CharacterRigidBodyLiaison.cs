@@ -21,6 +21,7 @@ public class CharacterRigidBodyLiaison
     private float _maxAcceleration;
     private float _maxAngularVelocity = 5;
     private float _maxAngularAcceleration = 5;
+    private bool _flying = false;
 
     private Rid _space;
     
@@ -46,6 +47,11 @@ public class CharacterRigidBodyLiaison
             Callable.From<PhysicsDirectBodyState3D>(IntegrateForces)
         );
         PhysicsServer3D.BodySetParam(Rid, PhysicsServer3D.BodyParameter.Mass, mass);
+        
+        if (_flying)
+        {
+            PhysicsServer3D.BodySetParam(Rid, PhysicsServer3D.BodyParameter.GravityScale, 0);
+        }
         AddAxisLocks();
     }
     
@@ -64,19 +70,22 @@ public class CharacterRigidBodyLiaison
     public float TempSpeedMultiplier = 1;
     public void CalculateSelfInducedForces()
     {
-        Vector3 surfaceNormal;
-        var raycastInfo = PhysicsServer3D.SpaceGetDirectState(_space).IntersectRay(
-            new PhysicsRayQueryParameters3D()
-            {
-                From = LastPosition + Vector3.Up * 0.05f,
-                To = LastPosition + Vector3.Down * 0.05f
-            }
-        );
-        if (raycastInfo.Count > 0)
+        Vector3 surfaceNormal = Vector3.Zero;
+        if (!_flying)
         {
-            surfaceNormal = (Vector3)raycastInfo["normal"];
+            var raycastInfo = PhysicsServer3D.SpaceGetDirectState(_space).IntersectRay(
+                new PhysicsRayQueryParameters3D()
+                {
+                    From = LastPosition + Vector3.Up * 0.05f,
+                    To = LastPosition + Vector3.Down * 0.05f
+                }
+            );
+            if (raycastInfo.Count > 0)
+            {
+                surfaceNormal = (Vector3)raycastInfo["normal"];
+            }
+            else return; // Can't apply forces on self if you're not standing on something (yet...)
         }
-        else return; // Can't apply forces on self if you're not standing on something (yet...)
         
         var intendedDisplacement = Destination - LastPosition; 
         // Not certain whether the "intent" should be to move at max speed
@@ -88,8 +97,11 @@ public class CharacterRigidBodyLiaison
         // Make intendedAcceleration parallel to the local plane
         // by projecting it onto the plane, then applying its original length
         // Not the most realistic adjustment to a hill, but it prevents getting stuck on a lip
-        intendedAcceleration = (intendedAcceleration - intendedAcceleration.Dot(surfaceNormal) * surfaceNormal)
-                               .Normalized() * intendedAcceleration.Length();
+        if (!_flying)
+        {
+            intendedAcceleration = (intendedAcceleration - intendedAcceleration.Dot(surfaceNormal) * surfaceNormal)
+                                   .Normalized() * intendedAcceleration.Length();
+        }
         
         // intendedAcceleration += intendedAcceleration.Dot(Vector3.Up)
         //     * (float)PhysicsServer3D.BodyGetParam(Rid, PhysicsServer3D.BodyParameter.GravityScale) * Vector3.Up;
