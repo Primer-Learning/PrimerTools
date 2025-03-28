@@ -48,7 +48,7 @@ public partial class SimulationWorld : Node3D
     [Export] public VisualizationMode VisualizationMode = VisualizationMode.NodeCreatures;
     
     [Export]
-    public Vector2 WorldDimensions
+    public Vector3 WorldDimensions
     {
         get
         {
@@ -62,15 +62,15 @@ public partial class SimulationWorld : Node3D
         }
     }
 
-    private Vector2 _worldMin = -Vector2.One * 50;
-    public Vector2 WorldMin
+    private Vector3 _worldMin = -Vector3.One * 50;
+    public Vector3 WorldMin
     {
         get => _worldMin;
         set => _worldMin = value;
     }
     
-    private Vector2 _worldMax = Vector2.One * 50;
-    public Vector2 WorldMax
+    private Vector3 _worldMax = Vector3.One * 50;
+    public Vector3 WorldMax
     {
         get => _worldMax;
         set => _worldMax = value;
@@ -220,8 +220,12 @@ public partial class SimulationWorld : Node3D
         Ground = _groundScene.Instantiate<Node3D>();
         AddChild(Ground);
         Ground.Name = "Ground";
-        Ground.Scale = new Vector3(WorldDimensions.X, (WorldDimensions.X + WorldDimensions.Y) / 2, WorldDimensions.Y);
-        Ground.Position = new Vector3(_worldMax.X + _worldMin.X, 0, _worldMin.Y + _worldMax.Y) / 2;
+        Ground.Scale = new Vector3(WorldDimensions.X, WorldDimensions.Y, WorldDimensions.Z);
+        Ground.Position = new Vector3(
+            (_worldMax.X + _worldMin.X) / 2,
+            _worldMin.Y,
+            (_worldMax.Z + _worldMin.Z) / 2
+        );
     }
 
     private int _realTimeOfLastStatusPrint;
@@ -261,7 +265,8 @@ public partial class SimulationWorld : Node3D
     public bool IsWithinWorldBounds(Vector3 position, float margin = 0)
     {
         return position.X >= _worldMin.X - margin && position.X <= _worldMax.X + margin &&
-               position.Z >= _worldMin.Y - margin && position.Z <= _worldMax.Y + margin;
+               position.Y >= _worldMin.Y - margin && position.Y <= _worldMax.Y + margin &&
+               position.Z >= _worldMin.Z - margin && position.Z <= _worldMax.Z + margin;
     }
     public Vector3 GetRandomDestination(Vector3 position, float maxDistance, float minDistance = 0)
     {
@@ -273,12 +278,18 @@ public partial class SimulationWorld : Node3D
 
         do
         {
-            var angle = _rng.RangeFloat(1) * 2 * Mathf.Pi;
-            var displacement = _rng.RangeFloat(minDistance, maxDistance) * new Vector3(
-                Mathf.Sin(angle),
-                0,
-                Mathf.Cos(angle)
+            // Generate random spherical coordinates
+            var theta = _rng.RangeFloat(1) * 2 * Mathf.Pi; // Azimuthal angle
+            var phi = _rng.RangeFloat(1) * Mathf.Pi;       // Polar angle
+            var r = _rng.RangeFloat(minDistance, maxDistance);
+            
+            // Convert to Cartesian coordinates
+            var displacement = new Vector3(
+                r * Mathf.Sin(phi) * Mathf.Cos(theta),
+                r * Mathf.Cos(phi),                    // Y component for height
+                r * Mathf.Sin(phi) * Mathf.Sin(theta)
             );
+            
             newDestination = position + displacement;
             attempts++;
 
@@ -300,30 +311,32 @@ public partial class SimulationWorld : Node3D
         
         // Check intersection with each boundary plane
         // tMin is the fraction of the displacement that would bring the intended position to the boundary
-        // Currently only works for 
         
-        // X minimum boundary
-        if (currentPosition.X + displacement.X < _worldMin.X)
+        // X boundaries
+        if (displacement.X != 0)
         {
-            tMin = Mathf.Min(tMin, (_worldMin.X - currentPosition.X) / displacement.X);
+            if (currentPosition.X + displacement.X < _worldMin.X)
+                tMin = Mathf.Min(tMin, (_worldMin.X - currentPosition.X) / displacement.X);
+            if (currentPosition.X + displacement.X > _worldMax.X)
+                tMin = Mathf.Min(tMin, (_worldMax.X - currentPosition.X) / displacement.X);
         }
         
-        // X maximum boundary
-        if (currentPosition.X + displacement.X > _worldMax.X)
+        // Y boundaries
+        if (displacement.Y != 0)
         {
-            tMin = Mathf.Min(tMin, (_worldMax.X - currentPosition.X) / displacement.X);
+            if (currentPosition.Y + displacement.Y < _worldMin.Y)
+                tMin = Mathf.Min(tMin, (_worldMin.Y - currentPosition.Y) / displacement.Y);
+            if (currentPosition.Y + displacement.Y > _worldMax.Y)
+                tMin = Mathf.Min(tMin, (_worldMax.Y - currentPosition.Y) / displacement.Y);
         }
         
-        // Z minimum boundary
-        if (currentPosition.Z + displacement.Z < _worldMin.Y)
+        // Z boundaries
+        if (displacement.Z != 0)
         {
-            tMin = Mathf.Min(tMin, (_worldMin.Y - currentPosition.Z) / displacement.Z);
-        }
-        
-        // Z maximum boundary
-        if (currentPosition.Z + displacement.Z > _worldMax.Y)
-        {
-            tMin = Mathf.Min(tMin, (_worldMax.Y - currentPosition.Z) / displacement.Z);
+            if (currentPosition.Z + displacement.Z < _worldMin.Z)
+                tMin = Mathf.Min(tMin, (_worldMin.Z - currentPosition.Z) / displacement.Z);
+            if (currentPosition.Z + displacement.Z > _worldMax.Z)
+                tMin = Mathf.Min(tMin, (_worldMax.Z - currentPosition.Z) / displacement.Z);
         }
 
         return tMin;
@@ -346,21 +359,6 @@ public partial class SimulationWorld : Node3D
         
         // Calculate the new destination
         return currentPosition + (intendedDestination - currentPosition) * tMin;
-    }
-
-    // Helper method to check if intersection point with a boundary is within the other dimension's bounds
-    private bool IsIntersectionPointWithinBounds(Vector3 origin, Vector3 displacement, float t, int axis)
-    {
-        Vector3 intersection = origin + displacement * t;
-        
-        if (axis == 0) // X-axis boundary, check Z
-        {
-            return intersection.Z >= _worldMin.Y && intersection.Z <= _worldMax.Y;
-        }
-        else // Z-axis boundary, check X
-        {
-            return intersection.X >= _worldMin.X && intersection.X <= _worldMax.X;
-        }
     }
 }
 

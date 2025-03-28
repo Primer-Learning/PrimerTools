@@ -57,7 +57,7 @@ public abstract partial class AgingSimVideoSequence : AnimationSequence
 	    
         SimulationWorld = new SimulationWorld();
         SimulationWorld.Seed = seed;
-        SimulationWorld.WorldDimensions = dimensions.Value;
+        SimulationWorld.WorldDimensions = new Vector3(dimensions.Value.X, 0, dimensions.Value.Y);
         AddChild(SimulationWorld);
         SimulationWorld.Position = position ?? new Vector3(0f, 0, 30);
         SimulationWorld.Name = "SimulationWorld";
