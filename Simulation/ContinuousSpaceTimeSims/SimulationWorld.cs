@@ -196,8 +196,31 @@ public partial class SimulationWorld : Node3D
         
         Ground?.QueueFree();
     }
+    
+    private static SimulationWorld _instance;
+    public static SimulationWorld Instance
+    {
+        get
+        {
+            if (_instance == null)
+            {
+                GD.PrintErr("SimulationWorld instance is null. Make sure a SimulationWorld exists in the scene before accessing it.");
+            }
+            return _instance;
+        }
+    }
+    
     public SimulationWorld()
     {
+        if (_instance != null)
+        {
+            GD.PrintErr("Attempting to create a second SimulationWorld. Only one instance should exist.");
+            QueueFree();
+            return;
+        }
+
+        _instance = this;
+        
         PhysicsServer3D.SetActive(true);
         Engine.PhysicsTicksPerSecond = (int) (_timeScale * PhysicsStepsPerSimSecond);
         _realTimeOfLastStatusPrint = System.Environment.TickCount;
