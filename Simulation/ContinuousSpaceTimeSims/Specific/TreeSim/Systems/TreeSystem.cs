@@ -4,13 +4,14 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text.Json;
+using GladiatorManager.ContinuousSpaceTimeSims.CreatureSim.Visual;
 using Godot;
 using Microsoft.Win32;
 using PrimerTools.Simulation.Components;
 
 namespace PrimerTools.Simulation;
 
-public class TreeSystem : ISystem
+public class TreeSystem : ISystem, IVisualizedSystem
 {
     private EntityRegistry _registry;
     private SimulationWorld _simulationWorld;
@@ -292,5 +293,10 @@ public class TreeSystem : ISystem
             treeComponent.Age = treeData.Age;
             _registry.UpdateComponent(treeComponent);
         }
+    }
+
+    public IVisualEventManager CreateVisualEventManager(VisualEntityRegistry visualEntityRegistry)
+    {
+        return new TreeVisualEventManager(visualEntityRegistry);
     }
 }

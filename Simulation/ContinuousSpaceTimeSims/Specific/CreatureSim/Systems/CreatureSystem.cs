@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using GladiatorManager.ContinuousSpaceTimeSims.CreatureSim.Visual;
 using Godot;
 using PrimerTools.Simulation.Components;
 
 namespace PrimerTools.Simulation.ContinuousSpaceTimeSims.CreatureSim;
 
-public class CreatureSystem : ISystem
+public class CreatureSystem : ISystem, IVisualizedSystem
 {
     private EntityRegistry _registry;
     private SimulationWorld _simulationWorld;
@@ -14,7 +15,11 @@ public class CreatureSystem : ISystem
     public static event Action<EntityId, DeathCause> CreatureDeathEvent;
     public static event Action<EntityId, EntityId, float> CreatureEatEvent; // creatureId, treeId, duration
     public event Action Stepped;
-    
+    public IVisualEventManager CreateVisualEventManager(VisualEntityRegistry visualEntityRegistry)
+    {
+        return new CreatureVisualEventManager(visualEntityRegistry);
+    }
+
     public void Initialize(EntityRegistry registry, SimulationWorld simulationWorld)
     {
         _registry = registry;

@@ -1,11 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using GladiatorManager.BattleSim;
-using GladiatorManager.BattleSim.Visual;
-using GladiatorManager.ContinuousSpaceTimeSims.CreatureSim.Visual;
 using Godot;
-using PrimerTools.Simulation.ContinuousSpaceTimeSims.CreatureSim;
 
 namespace PrimerTools.Simulation;
 
@@ -133,12 +129,8 @@ public partial class SimulationWorld : Node3D
     private KinematicPhysicsSystem _kinematicPhysicsSystem;
     public EntityRegistry Registry => _registry;
     private VisualEntityRegistry _visualEntityRegistry;
-    private CreatureVisualEventManager _creatureVisualEventManager;
-    private TreeVisualEventManager _treeVisualEventManager;
-
-    private CombatantVisualEventManager _combatantVisualEventManager;
-    private WeaponVisualEventManager _weaponVisualEventManager;
-
+    private List<IVisualEventManager> _visualEventManagers = new();
+    
     public T AddSystem<T>() where T : ISystem, new()
     {
         if (_systems.Any(x => x.GetType() == typeof(T)))
@@ -151,22 +143,9 @@ public partial class SimulationWorld : Node3D
         system.Initialize(_registry, this);
         _systems.Add(system);
 
-        // TODO: Make this happen elsewhere. SimulationWorld shouldn't need to know about all the possibilities.
-        if (VisualizationMode == VisualizationMode.NodeCreatures)
+        if (VisualizationMode == VisualizationMode.NodeCreatures && system is IVisualizedSystem visualizedSystem)
         {
-            if (system is CreatureSystem)
-            {
-                _creatureVisualEventManager = new CreatureVisualEventManager(_visualEntityRegistry, this);
-            }
-            if (system is TreeSystem)
-            {
-                _treeVisualEventManager = new TreeVisualEventManager(_visualEntityRegistry, this);
-            }
-            if (system is CombatantSystem)
-            {
-                _combatantVisualEventManager = new CombatantVisualEventManager(_visualEntityRegistry, this);
-                _weaponVisualEventManager = new WeaponVisualEventManager(_visualEntityRegistry, this);
-            }
+            _visualEventManagers.Add(visualizedSystem.CreateVisualEventManager(_visualEntityRegistry));
         }
 
         return system;
@@ -175,9 +154,6 @@ public partial class SimulationWorld : Node3D
     public void Reset()
     {
         Running = false;
-        
-        _creatureVisualEventManager?.Cleanup();
-        _creatureVisualEventManager = null;
 
         foreach (var system in _systems)
         {
@@ -187,6 +163,12 @@ public partial class SimulationWorld : Node3D
             }
         }
         _systems.Clear();
+        
+        foreach (var visualEventManager in _visualEventManagers)
+        {
+            visualEventManager.Cleanup();
+        }
+        _visualEventManagers.Clear();
         
         // Reset physics system
         _areaPhysicsSystem = new AreaPhysicsSystem();

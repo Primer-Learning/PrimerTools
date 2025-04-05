@@ -6,11 +6,11 @@ using PrimerTools.Simulation.Visual;
 
 namespace GladiatorManager.ContinuousSpaceTimeSims.CreatureSim.Visual;
 
-public class CreatureVisualEventManager
+public class CreatureVisualEventManager : IVisualEventManager
 {
     private readonly VisualEntityRegistry _visualRegistry;
 
-    public CreatureVisualEventManager(VisualEntityRegistry visualRegistry, Node parent)
+    public CreatureVisualEventManager(VisualEntityRegistry visualRegistry)
     {
         _visualRegistry = visualRegistry;
         _visualRegistry.RegisterEntityType(new DefaultCreatureFactory());
