@@ -19,13 +19,6 @@ public class TreeSystem : ISystem, IVisualizedSystem
     public static event Action<EntityId> TreeDeathEvent;
     public event Action Stepped;
     
-    public enum SimMode
-    {
-        TreeGrowth,
-        FruitGrowth
-    }
-    public SimMode Mode = SimMode.TreeGrowth;
-    
     public void Initialize(EntityRegistry registry, SimulationWorld simulationWorld)
     {
         _registry = registry;
@@ -88,7 +81,6 @@ public class TreeSystem : ISystem, IVisualizedSystem
             var tree = immutableTree;
             if (!tree.Alive)
             {
-                // GD.Print("Hey wait there's a dead tree here. Wtf.");
                 if (treesThatShouldBeGone.Contains(tree.EntityId))
                 {
                     GD.Print($"I swear I killed tree {tree.EntityId.Value}.");
@@ -96,28 +88,24 @@ public class TreeSystem : ISystem, IVisualizedSystem
                 continue;
             }
             
-            switch (Mode)
+            // Run fruit growth logic for all trees
+            UpdateFruit(ref tree);
+            
+            // Run tree growth logic
+            var physicsComponent = _registry.GetComponent<AreaPhysicsComponent>(tree.EntityId);
+            if (!UpdateTree(ref tree, ref physicsComponent, _simulationWorld.GetWorld3D().Space))
             {
-                case SimMode.FruitGrowth:
-                    UpdateFruit(ref tree);
-                    break;
-                case SimMode.TreeGrowth:
-                    var physicsComponent = _registry.GetComponent<AreaPhysicsComponent>(tree.EntityId);
-                    if (!UpdateTree(ref tree, ref physicsComponent, _simulationWorld.GetWorld3D().Space))
-                    {
-                        continue;
-                    }
-                    if (tree is { IsMature: true, TimeSinceLastSpawn: 0 })
-                    {
-                        var newPosition = TryGenerateNewTreePosition(physicsComponent);
-                        if (_simulationWorld.IsWithinWorldBounds(newPosition))
-                        {
-                            newTreePositions.Add(newPosition);
-                        }
-                    }
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
+                continue;
+            }
+            
+            // Handle tree reproduction
+            if (tree is { IsMature: true, TimeSinceLastSpawn: 0 })
+            {
+                var newPosition = TryGenerateNewTreePosition(physicsComponent);
+                if (_simulationWorld.IsWithinWorldBounds(newPosition))
+                {
+                    newTreePositions.Add(newPosition);
+                }
             }
 
             _registry.UpdateComponent(tree);
@@ -188,6 +176,7 @@ public class TreeSystem : ISystem, IVisualizedSystem
                 tree.HasFruit = true;
             }
         }
+        // Note: Future enhancement could include fruit lifecycle (falling, decay, etc.)
     }
 
     private bool IsTooCloseToMatureTree(AreaPhysicsComponent areaPhysicsComponent, Rid space)
