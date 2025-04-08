@@ -18,9 +18,9 @@ public class FruitTreeSimSettings
     public static float FruitGrowthTime = 4f;
     public static float NodeFruitGrowthDelay = 2f; // This is only visual. Kinda doesn't belong here.
 
-    public const float SaplingDeathProbabilityBase = 0.0001f;
+    public const float SaplingDeathProbabilityBase = 0.00001f;
     public const float SaplingDeathProbabilityPerNeighbor = 0.001f;
-    public const float MatureTreeDeathProbabilityBase = 0.0001f;
-    public const float MatureTreeDeathProbabilityPerNeighbor = 0.0002f;
+    public const float MatureTreeDeathProbabilityBase = 0.00001f;
+    public const float MatureTreeDeathProbabilityPerNeighbor = 0.00002f;
     #endregion
 }

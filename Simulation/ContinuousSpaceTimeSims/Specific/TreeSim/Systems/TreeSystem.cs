@@ -8,6 +8,7 @@ using GladiatorManager.ContinuousSpaceTimeSims.CreatureSim.Visual;
 using Godot;
 using Microsoft.Win32;
 using PrimerTools.Simulation.Components;
+using PrimerTools.Utilities;
 
 namespace PrimerTools.Simulation;
 
@@ -33,13 +34,7 @@ public class TreeSystem : ISystem, IVisualizedSystem
             posList = new List<Vector3>();
             for (var i = 0; i < 30; i++) // We can make this configurable later
             {
-                posList.Add(
-                    new Vector3(
-                        _simulationWorld.Rng.RangeFloat(_simulationWorld.WorldMin.X, _simulationWorld.WorldMax.X),
-                        0,
-                        _simulationWorld.Rng.RangeFloat(_simulationWorld.WorldMin.Y, _simulationWorld.WorldMax.Y)
-                    )
-                );
+                posList.Add(VectorUtilities.RandomVector3(_simulationWorld.WorldMin, _simulationWorld.WorldMax, _simulationWorld.Rng));
             }
         }
         else
@@ -61,10 +56,17 @@ public class TreeSystem : ISystem, IVisualizedSystem
     {
         var entityId = _registry.CreateEntity();
         
+        // Ground position. Just make y zero for now. Eventually probably raycast to find the ground.
+        var groundedPosition = new Vector3(
+            position.X,
+            0,
+            position.Z
+        );
+        
         // Physics first so it exists when the VisualSystem gets the event
         var physicsComponent = new AreaPhysicsComponent(
             _simulationWorld.World3D.Space,
-            position,
+            groundedPosition,
             new SphereShape3D { Radius = 1.0f }
         );
         _registry.AddComponent(entityId, physicsComponent);
