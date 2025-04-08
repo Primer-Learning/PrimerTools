@@ -5,12 +5,12 @@ namespace PrimerTools.Simulation;
 
 public class HeldItemRigidBodyLiaison
 {
-    public Transform3D LastTransform => Body.GetTransform3D();
+    public Transform3D LastTransform => Body.Transform;
     public Vector3 LastPosition => LastTransform.Origin;
     public Vector3 LastVelocity => (Vector3)PhysicsServer3D.BodyGetState(Rid, PhysicsServer3D.BodyState.LinearVelocity);
     public Vector3 LastAngularVelocity => (Vector3)PhysicsServer3D.BodyGetState(Rid, PhysicsServer3D.BodyState.AngularVelocity);
     
-    public BodyComponent Body;
+    public BodyHandler Body;
     public Vector3 IntendedRelativePosition; 
     public CharacterRigidBodyLiaison MainBody;
 
@@ -231,14 +231,14 @@ public class HeldItemRigidBodyLiaison
     
     public void AddCollisionException(CharacterRigidBodyLiaison exception)
     {
-        PhysicsServer3D.BodyAddCollisionException(Body.Body, exception.Body.Body);
+        PhysicsServer3D.BodyAddCollisionException(Body.Rid, exception.Body.Rid);
     }
     public void RemoveCollisionException(CharacterRigidBodyLiaison exception)
     {
-        PhysicsServer3D.BodyRemoveCollisionException(Body.Body, exception.Body.Body);
+        PhysicsServer3D.BodyRemoveCollisionException(Body.Rid, exception.Body.Rid);
     }
 
-    public Rid Rid => Body.Body;
+    public Rid Rid => Body.Rid;
 
     public void CleanUp()
     {

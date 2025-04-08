@@ -19,7 +19,7 @@ public abstract partial class VisualEntity : Node3D, IVisualEntity
     }
 
     public abstract void Update(EntityRegistry registry);
-    public void AddDebugNodes(params IPhysicsComponent[] bodyComponents)
+    public void AddDebugNodes(params IPhysicsObjectHandler[] bodyComponents)
     {
         foreach (var phys in bodyComponents)
         {

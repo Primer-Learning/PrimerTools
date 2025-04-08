@@ -38,9 +38,8 @@ public partial class TreeVisualEntity : VisualEntity
 		
 		if (registry.TryGetComponent<TreeComponent>(entityId, out var tree))
 		{
-			Scale = Vector3.Zero;
-			Position = registry.GetComponent<AreaPhysicsComponent>(entityId).Position;
-			Rotation = new Vector3(0, tree.Angle, 0);
+			Scale = ScaleFromAge(tree.Age);
+			Transform = tree.Body.Transform;
 		}
 	}
 

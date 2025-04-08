@@ -2,7 +2,7 @@ using Godot;
 
 namespace PrimerTools.Simulation;
 
-public struct AreaComponent : IPhysicsComponent
+public struct AreaComponent : IPhysicsObjectHandler
 {
     public Rid Area { get; private set; }
     public Shape3D Shape { get; private set; }

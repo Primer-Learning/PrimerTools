@@ -2,11 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Text.Json;
 using GladiatorManager.ContinuousSpaceTimeSims.CreatureSim.Visual;
 using Godot;
-using Microsoft.Win32;
 using PrimerTools.Simulation.Components;
 using PrimerTools.Utilities;
 
@@ -48,31 +46,38 @@ public class TreeSystem : ISystem, IVisualizedSystem
             {
                 Age = FruitTreeSimSettings.TreeMaturationTime
             };
-            RegisterAndPlaceTreeEntity(newTree, pos);
+            RegisterAndPlaceTreeEntity(
+                newTree,
+                new Transform3D(
+                    Basis.Identity.Rotated(Vector3.Up, _simulationWorld.Rng.RangeFloat(0, Mathf.Tau)),
+                    pos
+                )
+            );
         }
     }
 
-    private TreeComponent RegisterAndPlaceTreeEntity(TreeComponent treeComponent, Vector3 position)
+    private TreeComponent RegisterAndPlaceTreeEntity(TreeComponent treeComponent, Transform3D transform)
     {
         var entityId = _registry.CreateEntity();
         
         // Ground position. Just make y zero for now. Eventually probably raycast to find the ground.
         var groundedPosition = new Vector3(
-            position.X,
+            transform.Origin.X,
             0,
-            position.Z
+            transform.Origin.Z
         );
         
-        // Physics first so it exists when the VisualSystem gets the event
-        var physicsComponent = new AreaPhysicsComponent(
+        treeComponent.Body = new BodyHandler(
             _simulationWorld.World3D.Space,
-            groundedPosition,
+            new Transform3D(
+                transform.Basis,
+                groundedPosition
+            ),
+            Transform3D.Identity,
             new SphereShape3D { Radius = 1.0f }
         );
-        _registry.AddComponent(entityId, physicsComponent);
-        CollisionRegistry.RegisterBody(physicsComponent.GetBodyRid(), typeof(TreeComponent), entityId);
-
-        treeComponent.Angle = _simulationWorld.Rng.RangeFloat(0, Mathf.Tau);
+        
+        CollisionRegistry.RegisterBody(treeComponent.Body.Rid, typeof(TreeComponent), entityId);
         _registry.AddComponent(entityId, treeComponent);
 
         return treeComponent;
@@ -98,8 +103,7 @@ public class TreeSystem : ISystem, IVisualizedSystem
             UpdateFruit(ref tree);
             
             // Run tree growth logic
-            var physicsComponent = _registry.GetComponent<AreaPhysicsComponent>(tree.EntityId);
-            if (!UpdateTree(ref tree, ref physicsComponent, _simulationWorld.GetWorld3D().Space))
+            if (!UpdateTree(ref tree))
             {
                 continue;
             }
@@ -107,7 +111,7 @@ public class TreeSystem : ISystem, IVisualizedSystem
             // Handle tree reproduction
             if (tree is { IsMature: true, TimeSinceLastSpawn: 0 })
             {
-                var newPosition = TryGenerateNewTreePosition(physicsComponent);
+                var newPosition = TryGenerateNewTreePosition(tree.Body.Transform.Origin);
                 if (_simulationWorld.IsWithinWorldBounds(newPosition))
                 {
                     newTreePositions.Add(newPosition);
@@ -118,14 +122,20 @@ public class TreeSystem : ISystem, IVisualizedSystem
         }
         foreach (var newTreePosition in newTreePositions)
         {
-            RegisterAndPlaceTreeEntity(new TreeComponent(), newTreePosition);
+            RegisterAndPlaceTreeEntity(
+                new TreeComponent(),
+                new Transform3D(
+                    Basis.Identity.Rotated(Vector3.Up, _simulationWorld.Rng.RangeFloat(0, Mathf.Tau)),
+                    newTreePosition
+                )
+            );
         }
         Stepped?.Invoke();
     }
 
     private List<EntityId> treesThatShouldBeGone = new();
     
-    public bool UpdateTree(ref TreeComponent tree, ref AreaPhysicsComponent areaPhysicsComponent, Rid space)
+    public bool UpdateTree(ref TreeComponent tree)
     {
         // Store previous age to detect when we cross check thresholds
         var previousAge = tree.Age;
@@ -139,7 +149,7 @@ public class TreeSystem : ISystem, IVisualizedSystem
         
         if (!tree.IsMature)
         {
-            if (IsTooCloseToMatureTree(areaPhysicsComponent, space))
+            if (IsTooCloseToMatureTree(tree))
             {
                 tree.Alive = false;
                 TreeDeathEvent?.Invoke(tree.EntityId);
@@ -150,7 +160,7 @@ public class TreeSystem : ISystem, IVisualizedSystem
             
             if (shouldCheckDeath)
             {
-                var neighborCount = CountNeighbors(areaPhysicsComponent, space);
+                var neighborCount = CountNeighbors(tree);
                 var deathProbability = FruitTreeSimSettings.SaplingDeathProbabilityBase +
                                        neighborCount * FruitTreeSimSettings.SaplingDeathProbabilityPerNeighbor;
 
@@ -175,7 +185,7 @@ public class TreeSystem : ISystem, IVisualizedSystem
             // Only check mature tree death at intervals
             if (shouldCheckDeath)
             {
-                var neighborCount = CountNeighbors(areaPhysicsComponent, space);
+                var neighborCount = CountNeighbors(tree);
                 var deathProbability = FruitTreeSimSettings.MatureTreeDeathProbabilityBase +
                                        neighborCount * FruitTreeSimSettings.MatureTreeDeathProbabilityPerNeighbor;
                 if (_simulationWorld.Rng.rand.NextDouble() < deathProbability)
@@ -206,15 +216,13 @@ public class TreeSystem : ISystem, IVisualizedSystem
         // Note: Future enhancement could include fruit lifecycle (falling, decay, etc.)
     }
 
-    private bool IsTooCloseToMatureTree(AreaPhysicsComponent areaPhysicsComponent, Rid space)
+    private bool IsTooCloseToMatureTree(TreeComponent tree)
     {
-        var transform = Transform3D.Identity.Translated(areaPhysicsComponent.Position);
-        transform = transform.ScaledLocal(Vector3.One * FruitTreeSimSettings.MinimumTreeDistance);
-
-        var nearbyEntities = CollisionDetector.GetOverlappingEntitiesWithArea(
-            areaPhysicsComponent.Body.Area,
-            transform,
-            space
+        var nearbyEntities = CollisionDetector.GetEntitiesWithinRange(
+            FruitTreeSimSettings.MinimumTreeDistance,
+            tree.Body.Transform,
+            SimulationWorld.Instance.World3D.Space,
+            tree.Body.Rid
         );
         
         return nearbyEntities
@@ -223,15 +231,14 @@ public class TreeSystem : ISystem, IVisualizedSystem
             .Any(t => t.IsMature);
     }
 
-    private int CountNeighbors(AreaPhysicsComponent areaPhysicsComponent, Rid space)
+    private int CountNeighbors(TreeComponent tree)
     {
-        var transform = Transform3D.Identity.Translated(areaPhysicsComponent.Position);
-        transform = transform.ScaledLocal(Vector3.One * FruitTreeSimSettings.TreeCompetitionRadius);
         
-        var nearbyEntities = CollisionDetector.GetOverlappingEntitiesWithArea(
-            areaPhysicsComponent.Body.Area,
-            transform,
-            space
+        var nearbyEntities = CollisionDetector.GetEntitiesWithinRange(
+            FruitTreeSimSettings.TreeCompetitionRadius,
+            tree.Body.Transform,
+            SimulationWorld.Instance.World3D.Space,
+            tree.Body.Rid
         );
         
         return nearbyEntities
@@ -240,12 +247,12 @@ public class TreeSystem : ISystem, IVisualizedSystem
             .Count(t => t.Alive);
     }
     
-    public Vector3 TryGenerateNewTreePosition(AreaPhysicsComponent areaPhysicsComponent)
+    public Vector3 TryGenerateNewTreePosition(Vector3 position)
     {
         var angle = _simulationWorld.Rng.RangeFloat(0, Mathf.Tau);
         var distance = _simulationWorld.Rng.RangeFloat(FruitTreeSimSettings.MinTreeSpawnRadius, FruitTreeSimSettings.MaxTreeSpawnRadius);
         var offset = new Vector3(Mathf.Cos(angle) * distance, 0, Mathf.Sin(angle) * distance);
-        return areaPhysicsComponent.Position + offset;
+        return position + offset;
     }
     #endregion
 
@@ -264,7 +271,7 @@ public class TreeSystem : ISystem, IVisualizedSystem
 
         var treesToSave = _registry.GetComponents<TreeComponent>()
             .Where(tree => tree.Alive)
-            .Select(tree => new TreeDistributionData.TreeData(tree, _registry.GetComponent<AreaPhysicsComponent>(tree.EntityId)))
+            .Select(tree => new TreeDistributionData.TreeData(tree))
             .ToList();
         
         var distribution = new TreeDistributionData
@@ -304,8 +311,7 @@ public class TreeSystem : ISystem, IVisualizedSystem
         
         foreach (var treeData in distribution.Trees)
         {
-            var treeComponent = RegisterAndPlaceTreeEntity(new TreeComponent(), treeData.Position);
-            treeComponent.Angle = treeData.Angle;
+            var treeComponent = RegisterAndPlaceTreeEntity(new TreeComponent(), treeData.Transform);
             treeComponent.Age = treeData.Age;
             _registry.UpdateComponent(treeComponent);
         }

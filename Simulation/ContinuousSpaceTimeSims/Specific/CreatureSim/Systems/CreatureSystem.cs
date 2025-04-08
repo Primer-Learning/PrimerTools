@@ -67,11 +67,7 @@ public class CreatureSystem : ISystem, IVisualizedSystem
             new CapsuleShape3D { Height = 1.0f, Radius = 0.25f },
             new Vector3(0, 0.5f, 0)
         );
-        physicsComponent.AddAwareness(
-            _simulationWorld.World3D.Space,
-            creature.Genome.GetTrait<float>("AwarenessRadius").ExpressedValue,
-            new Vector3(0, 0.5f, 0)
-        );
+        
         _registry.AddComponent(entityId, physicsComponent);
         CollisionRegistry.RegisterBody(physicsComponent.GetBodyRid(), typeof(CreatureComponent), entityId);
             

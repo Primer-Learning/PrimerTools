@@ -68,6 +68,17 @@ public static class CollisionDetector
             exclusions
         );
     }
+    public static List<TypedCollision> GetOverlappingEntitiesWithArea(
+        Rid detectionArea,
+        params Rid[] exclusions)
+    {
+        return GetOverlappingEntitiesWithArea(
+            detectionArea,
+            PhysicsServer3D.AreaGetTransform(detectionArea),
+            SimulationWorld.Instance.World3D.Space,
+            exclusions
+        );
+    }
     
     // There's not a clean way to figure out what an Rid corresponds to, that I know of
     // So we have separate methods for body and area collision detection
