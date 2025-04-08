@@ -14,7 +14,31 @@ public enum VisualizationMode
 [Tool]
 public partial class SimulationWorld : Node3D
 {
-    private PackedScene _groundScene = ResourceLoader.Load<PackedScene>("res://addons/PrimerTools/Simulation/Models/Ground/round_ground.tscn");
+    private PackedScene _defaultGroundScene = ResourceLoader.Load<PackedScene>("res://addons/PrimerTools/Simulation/Models/Ground/round_ground.tscn");
+    public const string GroundNameString = "Ground";
+
+    private Node3D _ground;
+    public Node3D Ground
+    {
+        get => _ground ?? GetNodeOrNull<Node3D>("../" + GroundNameString);
+        set
+        {
+            // Free existing ground if it exists
+            var existingGround = GetNodeOrNull<Node3D>("../" + GroundNameString);
+            if (existingGround != null && IsInstanceValid(existingGround))
+            {
+                existingGround.Free();
+            }
+
+            _ground = value;
+            if (_ground != null)
+            {
+                GetParent().AddChild(_ground);
+                _ground.Name = GroundNameString;
+            }
+        }
+    }
+    
     
     #region Editor controls
 
@@ -71,10 +95,6 @@ public partial class SimulationWorld : Node3D
         get => _worldMax;
         set => _worldMax = value;
     }
-    
-    
-
-    public Node3D Ground; 
 
     // TODO: Track down some inconsistency with different time scales
     // It was happening in a scene and could be the scene's fault, but I'm not sure.
@@ -125,8 +145,6 @@ public partial class SimulationWorld : Node3D
     private readonly List<ISystem> _systems = new();
     public IReadOnlyList<ISystem> Systems => _systems.AsReadOnly();
     private EntityRegistry _registry;
-    private AreaPhysicsSystem _areaPhysicsSystem;
-    private KinematicPhysicsSystem _kinematicPhysicsSystem;
     public EntityRegistry Registry => _registry;
     private VisualEntityRegistry _visualEntityRegistry;
     private List<IVisualEventManager> _visualEventManagers = new();
@@ -169,14 +187,6 @@ public partial class SimulationWorld : Node3D
             visualEventManager.Cleanup();
         }
         _visualEventManagers.Clear();
-        
-        // Reset physics system
-        _areaPhysicsSystem = new AreaPhysicsSystem();
-        _areaPhysicsSystem.Initialize(_registry, this);
-        _kinematicPhysicsSystem = new KinematicPhysicsSystem();
-        _kinematicPhysicsSystem.Initialize(_registry, this);
-        
-        Ground?.QueueFree();
     }
     
     private static SimulationWorld _instance;
@@ -211,26 +221,21 @@ public partial class SimulationWorld : Node3D
         _visualEntityRegistry = new VisualEntityRegistry(_registry);
         AddChild(_visualEntityRegistry);
         _visualEntityRegistry.Name = "Entity Node Parent";
-
-        // Add the physics system by default
-        _areaPhysicsSystem = new AreaPhysicsSystem();
-        _areaPhysicsSystem.Initialize(_registry, this);
-        _kinematicPhysicsSystem = new KinematicPhysicsSystem();
-        _kinematicPhysicsSystem.Initialize(_registry, this);
     }
 
     public override void _Ready()
     {
-        if (Ground != null && IsInstanceValid(Ground)) Ground.Free();
-        Ground = _groundScene.Instantiate<Node3D>();
-        AddChild(Ground);
-        Ground.Name = "Ground";
-        Ground.Scale = new Vector3(WorldDimensions.X, WorldDimensions.Y, WorldDimensions.Z);
-        Ground.Position = new Vector3(
-            (_worldMax.X + _worldMin.X) / 2,
-            _worldMin.Y,
-            (_worldMax.Z + _worldMin.Z) / 2
-        );
+        // Only create ground if it doesn't already exist
+        if (Ground == null)
+        {
+            Ground = _defaultGroundScene.Instantiate<Node3D>();
+            Ground.Scale = new Vector3(WorldDimensions.X, WorldDimensions.Y, WorldDimensions.Z);
+            Ground.Position = new Vector3(
+                (_worldMax.X + _worldMin.X) / 2,
+                _worldMin.Y,
+                (_worldMax.Z + _worldMin.Z) / 2
+            );
+        }
     }
 
     private int _realTimeOfLastStatusPrint;
@@ -246,8 +251,6 @@ public partial class SimulationWorld : Node3D
             system.Update((float)delta);
         }
         // Update physics after other systems
-        _areaPhysicsSystem.Update((float)delta);
-        _kinematicPhysicsSystem.Update((float)delta);
         PhysicsStepsTaken++;
         
         if (_statusPrintSimTimeInterval == 0) return;
