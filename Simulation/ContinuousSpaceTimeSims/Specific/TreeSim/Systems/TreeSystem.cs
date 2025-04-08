@@ -127,22 +127,41 @@ public class TreeSystem : ISystem, IVisualizedSystem
     
     public bool UpdateTree(ref TreeComponent tree, ref AreaPhysicsComponent areaPhysicsComponent, Rid space)
     {
+        // Store previous age to detect when we cross check thresholds
+        var previousAge = tree.Age;
+        
+        // Update age
         tree.Age += 1f / SimulationWorld.PhysicsStepsPerSimSecond;
+        
+        // Check if we've crossed a death check interval threshold
+        var shouldCheckDeath = (int)(previousAge / FruitTreeSimSettings.DeathCheckInterval) < 
+                               (int)(tree.Age / FruitTreeSimSettings.DeathCheckInterval);
+        
         if (!tree.IsMature)
         {
-            var neighborCount = CountNeighbors(areaPhysicsComponent, space);
-            var deathProbability = FruitTreeSimSettings.SaplingDeathProbabilityBase +
-                                   neighborCount * FruitTreeSimSettings.SaplingDeathProbabilityPerNeighbor;
-
-            // Check if sapling is too close to a mature tree
-            if (IsTooCloseToMatureTree(areaPhysicsComponent, space) || _simulationWorld.Rng.rand.NextDouble() < deathProbability)
+            if (IsTooCloseToMatureTree(areaPhysicsComponent, space))
             {
                 tree.Alive = false;
                 TreeDeathEvent?.Invoke(tree.EntityId);
                 _registry.DestroyEntity(tree.EntityId);
                 treesThatShouldBeGone.Add(tree.EntityId);
-                // GD.Print($"Called DestroyEntity on {tree.EntityId.Value}");
                 return false;
+            }
+            
+            if (shouldCheckDeath)
+            {
+                var neighborCount = CountNeighbors(areaPhysicsComponent, space);
+                var deathProbability = FruitTreeSimSettings.SaplingDeathProbabilityBase +
+                                       neighborCount * FruitTreeSimSettings.SaplingDeathProbabilityPerNeighbor;
+
+                if (_simulationWorld.Rng.rand.NextDouble() < deathProbability)
+                {
+                    tree.Alive = false;
+                    TreeDeathEvent?.Invoke(tree.EntityId);
+                    _registry.DestroyEntity(tree.EntityId);
+                    treesThatShouldBeGone.Add(tree.EntityId);
+                    return false;
+                }
             }
         }
         else
@@ -151,20 +170,22 @@ public class TreeSystem : ISystem, IVisualizedSystem
             if (tree.TimeSinceLastSpawn >= FruitTreeSimSettings.TreeSpawnInterval)
             {
                 tree.TimeSinceLastSpawn = 0;
-                // Note: TryGenerateNewTreePosition is not implemented here as it requires access to the list of new trees
             }
 
-            var neighborCount = CountNeighbors(areaPhysicsComponent, space);
-            var deathProbability = FruitTreeSimSettings.MatureTreeDeathProbabilityBase +
-                                   neighborCount * FruitTreeSimSettings.MatureTreeDeathProbabilityPerNeighbor;
-            if (_simulationWorld.Rng.rand.NextDouble() < deathProbability)
+            // Only check mature tree death at intervals
+            if (shouldCheckDeath)
             {
-                tree.Alive = false;
-                TreeDeathEvent?.Invoke(tree.EntityId);
-                _registry.DestroyEntity(tree.EntityId);
-                treesThatShouldBeGone.Add(tree.EntityId);
-                // GD.Print($"Called DestroyEntity on {tree.EntityId.Value}");
-                return false;
+                var neighborCount = CountNeighbors(areaPhysicsComponent, space);
+                var deathProbability = FruitTreeSimSettings.MatureTreeDeathProbabilityBase +
+                                       neighborCount * FruitTreeSimSettings.MatureTreeDeathProbabilityPerNeighbor;
+                if (_simulationWorld.Rng.rand.NextDouble() < deathProbability)
+                {
+                    tree.Alive = false;
+                    TreeDeathEvent?.Invoke(tree.EntityId);
+                    _registry.DestroyEntity(tree.EntityId);
+                    treesThatShouldBeGone.Add(tree.EntityId);
+                    return false;
+                }
             }
         }
 
