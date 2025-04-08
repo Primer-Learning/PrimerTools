@@ -49,11 +49,15 @@ public class TreeSystem : ISystem, IVisualizedSystem
 
         foreach (var pos in posList)
         {
-            CreateAndRegisterTreeEntity(pos);
+            var newTree = new TreeComponent
+            {
+                Age = FruitTreeSimSettings.TreeMaturationTime
+            };
+            RegisterAndPlaceTreeEntity(newTree, pos);
         }
     }
 
-    private TreeComponent CreateAndRegisterTreeEntity(Vector3 position)
+    private TreeComponent RegisterAndPlaceTreeEntity(TreeComponent treeComponent, Vector3 position)
     {
         var entityId = _registry.CreateEntity();
         
@@ -65,8 +69,8 @@ public class TreeSystem : ISystem, IVisualizedSystem
         );
         _registry.AddComponent(entityId, physicsComponent);
         CollisionRegistry.RegisterBody(physicsComponent.GetBodyRid(), typeof(TreeComponent), entityId);
-        
-        var treeComponent = new TreeComponent(_simulationWorld.Rng.RangeFloat(0, Mathf.Tau));
+
+        treeComponent.Angle = _simulationWorld.Rng.RangeFloat(0, Mathf.Tau);
         _registry.AddComponent(entityId, treeComponent);
 
         return treeComponent;
@@ -112,7 +116,7 @@ public class TreeSystem : ISystem, IVisualizedSystem
         }
         foreach (var newTreePosition in newTreePositions)
         {
-            CreateAndRegisterTreeEntity(newTreePosition);
+            RegisterAndPlaceTreeEntity(new TreeComponent(), newTreePosition);
         }
         Stepped?.Invoke();
     }
@@ -277,7 +281,7 @@ public class TreeSystem : ISystem, IVisualizedSystem
         
         foreach (var treeData in distribution.Trees)
         {
-            var treeComponent = CreateAndRegisterTreeEntity(treeData.Position);
+            var treeComponent = RegisterAndPlaceTreeEntity(new TreeComponent(), treeData.Position);
             treeComponent.Angle = treeData.Angle;
             treeComponent.Age = treeData.Age;
             _registry.UpdateComponent(treeComponent);

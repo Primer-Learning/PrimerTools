@@ -12,10 +12,9 @@ public struct TreeComponent : IComponent
     public bool HasFruit;
     public float FruitGrowthProgress;
     
-    public TreeComponent(float angle) : this()
+    public TreeComponent()
     {
         Alive = true;
-        Angle = angle;
     }
     
     public void CleanUp() {}
