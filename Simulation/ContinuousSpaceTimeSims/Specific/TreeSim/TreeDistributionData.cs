@@ -10,6 +10,7 @@ public class TreeDistributionData
 {
     public List<TreeData> Trees { get; set; }
 
+    // TODO: Just make this use the whole TreeComponent class?
     [Serializable]
     public struct TreeData
     {

@@ -51,7 +51,7 @@ public partial class CameraRig : Node3D
     public float PanSensitivity { get; set; } = 0.02f;
     public float ZoomSensitivity { get; set; } = 0.1f;
     public float ZoomMin { get; set; } = 1.0f;
-    public float ZoomMax { get; set; } = 50.0f;
+    public float ZoomMax { get; set; } = 1000.0f;
     public bool EnableDragRotation { get; set; } = true;
     public bool EnablePanning { get; set; } = true;
     public bool EnableZooming { get; set; } = true;

@@ -44,7 +44,9 @@ public class TreeSystem : ISystem, IVisualizedSystem
         {
             var newTree = new TreeComponent
             {
-                Age = FruitTreeSimSettings.TreeMaturationTime
+                Age = FruitTreeSimSettings.TreeMaturationTime,
+                // Randomize the spawn time so they don't all reproduce in sync
+                TimeSinceLastSpawn = _simulationWorld.Rng.RangeFloat(0, FruitTreeSimSettings.TreeSpawnInterval)
             };
             RegisterAndPlaceTreeEntity(
                 newTree,
@@ -100,23 +102,52 @@ public class TreeSystem : ISystem, IVisualizedSystem
             }
             
             // Run fruit growth logic for all trees
-            UpdateFruit(ref tree);
-            
+            // UpdateFruit(ref tree);
             // Run tree growth logic
             if (!UpdateTree(ref tree))
             {
                 continue;
             }
             
-            // Handle tree reproduction
-            if (tree is { IsMature: true, TimeSinceLastSpawn: 0 })
+            if (tree.IsMature)
             {
-                var newPosition = TryGenerateNewTreePosition(tree.Body.Transform.Origin);
-                if (_simulationWorld.IsWithinWorldBounds(newPosition))
+                // Handle tree reproduction
+                if (tree.TimeSinceLastSpawn == 0) // A bit weird that TimeSinceLastSpawn is set to
+                                                  // zero in UpdateTree above and then checked here
                 {
-                    newTreePositions.Add(newPosition);
+                    var newPosition = TryGenerateNewTreePosition(tree.Body.Transform.Origin);
+                    if (_simulationWorld.IsWithinWorldBounds(newPosition))
+                    {
+                        newTreePositions.Add(newPosition);
+                    }
+                }
+                
+                // Check for new fruit at regular intervals
+                tree.TimeSinceLastFruitCheck += deltaTime;
+                if (tree.TimeSinceLastFruitCheck >= 1.0f)
+                {
+                    tree.TimeSinceLastFruitCheck = 0;
+                
+                    // Check each potential fruit position
+                    for (var i = 0; i < tree.AttachedFruits.Length; i++)
+                    {
+                        // If position is empty, consider creating a new fruit
+                        if (tree.AttachedFruits[i] == new EntityId())
+                        {
+                            // Random chance to create a new fruit
+                            if (_simulationWorld.Rng.RangeFloat(0, 1) < 0.1f) // 10% chance per second
+                            {
+                                var fruitEntityId = CreateFruit(tree, i);
+                                tree.AttachedFruits[i] = fruitEntityId;
+                            }
+                        }
+                    }
                 }
             }
+            
+            
+            
+            
 
             _registry.UpdateComponent(tree);
         }
@@ -202,18 +233,38 @@ public class TreeSystem : ISystem, IVisualizedSystem
         return true;
     }
     #region Behaviors
-
-    public static void UpdateFruit(ref TreeComponent tree)
+    // private static readonly Shape3D MangoShape = 
+    //     ResourceLoader.Load<Shape3D>("res://addons/PrimerTools/Simulation/Models/Mango/mango_shape_simplified.tres");
+    private static readonly Shape3D MangoShape = 
+        ResourceLoader.Load<Shape3D>("res://addons/PrimerTools/Simulation/Models/Mango/mango_shape.tres");
+    public EntityId CreateFruit(TreeComponent tree, int positionIndex)
     {
-        if (tree.IsMature && !tree.HasFruit)
+        var entityId = _registry.CreateEntity();
+        var fruitLocalPosition = FruitTreeSimSettings.StandardFruitPositions[positionIndex];
+        var globalPosition = tree.Body.Transform.Origin + tree.Body.Transform.Basis * fruitLocalPosition;
+        
+        var fruitComponent = new FruitComponent(tree.EntityId, positionIndex)
         {
-            tree.FruitGrowthProgress += 1f / SimulationWorld.PhysicsStepsPerSimSecond;
-            if (tree.FruitGrowthProgress >= FruitTreeSimSettings.FruitGrowthTime)
-            {
-                tree.HasFruit = true;
-            }
-        }
-        // Note: Future enhancement could include fruit lifecycle (falling, decay, etc.)
+            EntityId = entityId,
+            IsAttached = true
+        };
+        
+        fruitComponent.Body = new BodyHandler(
+            _simulationWorld.World3D.Space,
+            new Transform3D(Basis.Identity, globalPosition),
+            new Transform3D(
+                Basis.FromEuler(new Vector3(-12f, 0, 5.7f) * Mathf.Pi / 180, EulerOrder.Xyz),
+                new Vector3(0.012f, -0.444f, 0.006f)
+            ),
+            MangoShape
+        );
+        
+        PhysicsServer3D.BodySetParam(fruitComponent.Body.Rid, PhysicsServer3D.BodyParameter.Mass, FruitTreeSimSettings.FruitMass);
+        PhysicsServer3D.BodySetMode(fruitComponent.Body.Rid, PhysicsServer3D.BodyMode.Kinematic);
+        CollisionRegistry.RegisterBody(fruitComponent.Body.Rid, typeof(FruitComponent), entityId);
+        
+        _registry.AddComponent(entityId, fruitComponent);
+        return entityId;
     }
 
     private bool IsTooCloseToMatureTree(TreeComponent tree)
