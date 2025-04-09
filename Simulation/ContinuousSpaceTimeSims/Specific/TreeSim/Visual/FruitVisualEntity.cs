@@ -1,3 +1,4 @@
+using System.Linq;
 using Godot;
 using PrimerTools.Simulation.Components;
 
@@ -75,16 +76,21 @@ public partial class FruitVisualEntity : VisualEntity
     //     );
     // }
     
-    // public void HandleDecayed()
-    // {
-    //     // Visual effect for decay (fade out and remove)
-    //     var tween = CreateTween();
-    //     tween.TweenProperty(
-    //         this,
-    //         "modulate:a", // Alpha channel
-    //         0.0f,
-    //         0.5f
-    //     );
-    //     tween.TweenCallback(Callable.From(() => QueueFree()));
-    // }
+    public void HandleDecayed()
+    {
+        // Do this first because the areas don't like having zero scale
+        foreach (var areaNode in GetChildren().OfType<Area3D>())
+        {
+            areaNode.QueueFree();
+        }
+        // Visual effect for decay (fade out and remove)
+        var tween = CreateTween();
+        tween.TweenProperty(
+            this,
+            "scale", // Alpha channel
+            Vector3.Zero,
+            0.5f
+        );
+        tween.TweenCallback(Callable.From(() => QueueFree()));
+    }
 }

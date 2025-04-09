@@ -96,18 +96,27 @@ public class FruitSystem : ISystem, IVisualizedSystem
     /// <returns></returns>
     private bool UpdateDetachedFruit(ref FruitComponent fruit, float deltaTime)
     {
-        // Update time since detachment
         fruit.DetachedTime += deltaTime;
         
-        // Check for decay
-        if (fruit.DetachedTime >= FruitTreeSimSettings.FruitDecayTime)
+        if (!(fruit.DetachedTime >= FruitTreeSimSettings.FruitDecayTime)) return true;
+        
+        // Plant a tree if the mango is inside the world.
+        if (SimulationWorld.Instance.IsWithinWorldBounds(fruit.Body.Transform.Origin))
         {
-            FruitDecayedEvent?.Invoke(fruit.EntityId);
-            _registry.DestroyEntity(fruit.EntityId);
-            return false;
+            TreeSystem.RegisterAndPlaceTreeEntity(
+                new TreeComponent(),
+                new Transform3D(
+                    Basis.Identity.Rotated(Vector3.Up, _simulationWorld.Rng.RangeFloat(0, Mathf.Tau)),
+                    fruit.Body.Transform.Origin
+                )
+            );
         }
+            
+        FruitDecayedEvent?.Invoke(fruit.EntityId);
+        _registry.DestroyEntity(fruit.EntityId);
+            
+        return false;
 
-        return true;
     }
     
     private void DetachFruit(ref FruitComponent fruit)

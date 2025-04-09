@@ -58,9 +58,9 @@ public class TreeSystem : ISystem, IVisualizedSystem
         }
     }
 
-    private TreeComponent RegisterAndPlaceTreeEntity(TreeComponent treeComponent, Transform3D transform)
+    public static TreeComponent RegisterAndPlaceTreeEntity(TreeComponent treeComponent, Transform3D transform)
     {
-        var entityId = _registry.CreateEntity();
+        var entityId = EntityRegistry.Instance.CreateEntity();
         
         // Ground position. Just make y zero for now. Eventually probably raycast to find the ground.
         var groundedPosition = new Vector3(
@@ -70,7 +70,7 @@ public class TreeSystem : ISystem, IVisualizedSystem
         );
         
         treeComponent.Body = new BodyHandler(
-            _simulationWorld.World3D.Space,
+            SimulationWorld.Instance.World3D.Space,
             new Transform3D(
                 transform.Basis,
                 groundedPosition
@@ -80,7 +80,7 @@ public class TreeSystem : ISystem, IVisualizedSystem
         );
         
         CollisionRegistry.RegisterBody(treeComponent.Body.Rid, typeof(TreeComponent), entityId);
-        _registry.AddComponent(entityId, treeComponent);
+        EntityRegistry.Instance.AddComponent(entityId, treeComponent);
 
         return treeComponent;
     }
@@ -111,17 +111,6 @@ public class TreeSystem : ISystem, IVisualizedSystem
             
             if (tree.IsMature)
             {
-                // Handle tree reproduction
-                if (tree.TimeSinceLastSpawn == 0) // A bit weird that TimeSinceLastSpawn is set to
-                                                  // zero in UpdateTree above and then checked here
-                {
-                    var newPosition = TryGenerateNewTreePosition(tree.Body.Transform.Origin);
-                    if (_simulationWorld.IsWithinWorldBounds(newPosition))
-                    {
-                        newTreePositions.Add(newPosition);
-                    }
-                }
-                
                 // Check for new fruit at regular intervals
                 tree.TimeSinceLastFruitCheck += deltaTime;
                 if (tree.TimeSinceLastFruitCheck >= 1.0f)
@@ -151,16 +140,6 @@ public class TreeSystem : ISystem, IVisualizedSystem
 
             _registry.UpdateComponent(tree);
         }
-        foreach (var newTreePosition in newTreePositions)
-        {
-            RegisterAndPlaceTreeEntity(
-                new TreeComponent(),
-                new Transform3D(
-                    Basis.Identity.Rotated(Vector3.Up, _simulationWorld.Rng.RangeFloat(0, Mathf.Tau)),
-                    newTreePosition
-                )
-            );
-        }
         Stepped?.Invoke();
     }
 
@@ -180,14 +159,14 @@ public class TreeSystem : ISystem, IVisualizedSystem
         
         if (!tree.IsMature)
         {
-            if (IsTooCloseToMatureTree(tree))
-            {
-                tree.Alive = false;
-                TreeDeathEvent?.Invoke(tree.EntityId);
-                _registry.DestroyEntity(tree.EntityId);
-                treesThatShouldBeGone.Add(tree.EntityId);
-                return false;
-            }
+            // if (IsTooCloseToMatureTree(tree))
+            // {
+            //     tree.Alive = false;
+            //     TreeDeathEvent?.Invoke(tree.EntityId);
+            //     _registry.DestroyEntity(tree.EntityId);
+            //     treesThatShouldBeGone.Add(tree.EntityId);
+            //     return false;
+            // }
             
             if (shouldCheckDeath)
             {
@@ -284,7 +263,6 @@ public class TreeSystem : ISystem, IVisualizedSystem
 
     private int CountNeighbors(TreeComponent tree)
     {
-        
         var nearbyEntities = CollisionDetector.GetEntitiesWithinRange(
             FruitTreeSimSettings.TreeCompetitionRadius,
             tree.Body.Transform,

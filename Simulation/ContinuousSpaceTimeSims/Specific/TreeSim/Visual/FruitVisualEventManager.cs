@@ -18,7 +18,7 @@ public class FruitVisualEventManager : IVisualEventManager
         // Subscribe to fruit events
         // FruitSystem.FruitRipenedEvent += OnFruitRipened;
         // FruitSystem.FruitDetachedEvent += OnFruitDetached;
-        // FruitSystem.FruitDecayedEvent += OnFruitDecayed;
+        FruitSystem.FruitDecayedEvent += OnFruitDecayed;
     }
     
     // private void OnFruitRipened(EntityId entityId)
@@ -37,18 +37,15 @@ public class FruitVisualEventManager : IVisualEventManager
     //     }
     // }
     //
-    // private void OnFruitDecayed(EntityId entityId)
-    // {
-    //     if (_visualRegistry.TryGetVisualEntity<FruitVisualEntity>(entityId, out var fruitVisual))
-    //     {
-    //         fruitVisual.HandleDecayed();
-    //     }
-    // }
+    private void OnFruitDecayed(EntityId entityId)
+    {
+        _visualRegistry.GetVisualEntity<FruitVisualEntity>(entityId).HandleDecayed();
+    }
 
     public void Cleanup()
     {
         // FruitSystem.FruitRipenedEvent -= OnFruitRipened;
         // FruitSystem.FruitDetachedEvent -= OnFruitDetached;
-        // FruitSystem.FruitDecayedEvent -= OnFruitDecayed;
+        FruitSystem.FruitDecayedEvent -= OnFruitDecayed;
     }
 }

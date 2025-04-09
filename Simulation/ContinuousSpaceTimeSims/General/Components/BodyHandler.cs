@@ -42,7 +42,10 @@ public struct BodyHandler : IPhysicsObjectHandler
 
     public void CleanUp()
     {
-        Shape?.Dispose();
+        if (Shape != null && Shape.GetReferenceCount() == 1)
+        {
+            Shape.Dispose();
+        } 
         if (Rid == default) return; 
         PhysicsServer3D.FreeRid(Rid);
     }

@@ -27,7 +27,7 @@ public class FruitTreeSimSettings
     #region Fruit Settings
     // Growth and lifecycle
     public static float FruitRipeningTime = 5.0f; // Time to ripen after fully grown
-    public static float FruitDecayTime = 30.0f; // Time until fruit decays after falling
+    public static float FruitDecayTime = 10.0f; // Time until fruit decays after falling
     
     public static float FruitGrowthTime = 4f;
     public static float NodeFruitGrowthDelay = 2f; // This is only visual. Kinda doesn't belong here.

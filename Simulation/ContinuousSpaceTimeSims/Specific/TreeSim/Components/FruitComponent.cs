@@ -29,6 +29,9 @@ public struct FruitComponent : IComponent
         IsAttached = true;
         DetachedTime = 0;
     }
-    
-    public void CleanUp() {}
+
+    public void CleanUp()
+    {
+        Body.CleanUp();
+    }
 }

@@ -11,6 +11,30 @@ public class EntityRegistry
     private readonly Dictionary<Type, IComponentStorage> _componentStorages = new();
     private readonly HashSet<EntityId> _activeEntities = new();
 
+    private static EntityRegistry _instance;
+    public static EntityRegistry Instance
+    {
+        get
+        {
+            if (_instance == null)
+            {
+                GD.PrintErr("EntityRegistry instance is null. Make sure a EntityRegistry exists before accessing it.");
+            }
+            return _instance;
+        }
+    }
+
+    public EntityRegistry()
+    {
+        if (_instance != null)
+        {
+            GD.PrintErr("Attempting to create a second EntityRegistry. Only one instance should exist.");
+            return;
+        }
+
+        _instance = this;
+    }
+
     public EntityId CreateEntity()
     {
         var entityId = new EntityId(_nextEntityId++);
