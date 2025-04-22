@@ -14,6 +14,20 @@ public partial class SurfacePlot : MeshInstance3D, IPrimerGraphData
     public Transformation TransformPointFromDataSpaceToPositionSpace = point => point;
     #endregion
 
+    #region Appearance
+    private StandardMaterial3D _materialCache;
+    private StandardMaterial3D Material
+    {
+        get => _materialCache ??= new StandardMaterial3D();
+        set => _materialCache = value;
+    }
+    
+    public void SetColor(Color color)
+    {
+        Material.AlbedoColor = color;
+    }
+    #endregion
+    
     #region Data
     private Vector3[,] _data;
     public delegate Vector3[,] DataFetch();
@@ -138,6 +152,7 @@ public partial class SurfacePlot : MeshInstance3D, IPrimerGraphData
 
         arrayMesh.AddSurfaceFromArrays(Mesh.PrimitiveType.Triangles, arrays);
         Mesh = arrayMesh;
+        Mesh.SurfaceSetMaterial(0, Material);
     }
     
     private Vector3[] CalculateNormals(List<Vector3> vertices, List<int> indices)
