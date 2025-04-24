@@ -51,7 +51,7 @@ public class DeleteriousTrait : Trait<bool>
     {
         if (!ExpressedValue || age < ActivationAge) return false;
 
-        return rng.rand.NextDouble() < MortalityRatePerStep;
+        return rng.Random.NextDouble() < MortalityRatePerStep;
     }
     
     public static DeleteriousTrait CreateNew(float activationAge, float mortalityRate, List<bool> alleles, string name = "")

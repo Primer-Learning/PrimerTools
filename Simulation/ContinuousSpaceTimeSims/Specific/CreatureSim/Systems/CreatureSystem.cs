@@ -351,7 +351,7 @@ public class CreatureSystem : ISystem, IVisualizedSystem
         if (apTrait is { ExpressedValue: true } && creature.Age > CreatureSimSettings.Instance.MaturationTime)
         {
             var apDeathRate = 0.03f;
-            if (rng.rand.NextDouble() < 1 - Mathf.Pow(1 - apDeathRate, 1f / SimulationWorld.PhysicsStepsPerSimSecond))
+            if (rng.Random.NextDouble() < 1 - Mathf.Pow(1 - apDeathRate, 1f / SimulationWorld.PhysicsStepsPerSimSecond))
             {
                 return DeathCause.Aging;
             }

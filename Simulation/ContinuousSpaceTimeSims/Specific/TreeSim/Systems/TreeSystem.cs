@@ -174,7 +174,7 @@ public class TreeSystem : ISystem, IVisualizedSystem
                 var deathProbability = FruitTreeSimSettings.SaplingDeathProbabilityBase +
                                        neighborCount * FruitTreeSimSettings.SaplingDeathProbabilityPerNeighbor;
 
-                if (_simulationWorld.Rng.rand.NextDouble() < deathProbability)
+                if (_simulationWorld.Rng.Random.NextDouble() < deathProbability)
                 {
                     tree.Alive = false;
                     TreeDeathEvent?.Invoke(tree.EntityId);
@@ -198,7 +198,7 @@ public class TreeSystem : ISystem, IVisualizedSystem
                 var neighborCount = CountNeighbors(tree);
                 var deathProbability = FruitTreeSimSettings.MatureTreeDeathProbabilityBase +
                                        neighborCount * FruitTreeSimSettings.MatureTreeDeathProbabilityPerNeighbor;
-                if (_simulationWorld.Rng.rand.NextDouble() < deathProbability)
+                if (_simulationWorld.Rng.Random.NextDouble() < deathProbability)
                 {
                     tree.Alive = false;
                     TreeDeathEvent?.Invoke(tree.EntityId);
