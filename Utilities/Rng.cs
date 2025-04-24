@@ -1,4 +1,3 @@
-using Godot;
 using System;
 
 namespace PrimerTools
@@ -51,12 +50,12 @@ namespace PrimerTools
         }
 
         // instance
-        public Random rand { get; }
+        public Random Random { get; }
         public int CallCount;
 
-        public Rng(Random rand)
+        public Rng(Random random)
         {
-            this.rand = rand;
+            Random = random;
             CallCount = 0;
         }
 
@@ -73,7 +72,7 @@ namespace PrimerTools
 
         public static int RangeInt(this Rng rng, int minInclusive, int maxExclusive)
         {
-            var rand = rng?.rand;
+            var rand = rng?.Random;
             
             if (rand != null)
             {
@@ -92,7 +91,7 @@ namespace PrimerTools
 
         public static float RangeFloat(this Rng rng, float minInclusive, float maxExclusive)
         {
-            var rand = rng?.rand;
+            var rand = rng?.Random;
 
             if (rand != null)
             {
