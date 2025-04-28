@@ -67,10 +67,10 @@ public partial class CameraRig : Node3D
     public override void _Ready()
     {
         base._Ready();
-        SetProcessInput(true);
+        SetProcessUnhandledInput(true);
     }
     
-    public override void _Input(InputEvent @event)
+    public override void _UnhandledInput(InputEvent @event)
     {
         if (@event is InputEventMouseButton mouseButtonEvent)
         {
