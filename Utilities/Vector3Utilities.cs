@@ -20,4 +20,20 @@ public static class VectorUtilities
             rng.RangeFloat(min.Z, max.Z)
         );
     }
+    
+    public static Vector3 RandomXYZEulerRotationVector(Rng rng = null)
+    {
+        var x = rng.RangeFloat(-1, 1);
+        x = Mathf.Asin(x);
+        var y = rng.RangeFloat(0, Mathf.Pi * 2); 
+        var z = rng.RangeFloat(0, Mathf.Pi * 2); 
+        
+        return new Vector3(x, y, z);
+    }
+
+    public static Vector3 RandomlyRotatedUnitVector(Rng rng = null)
+    {
+        return Quaternion.FromEuler(RandomXYZEulerRotationVector(rng)) * Vector3.Forward;
+    }
+
 }
