@@ -343,7 +343,10 @@ public partial class Graph : Node3D
             YAxis.Min * YAxis.DataSpaceScale,
             ZAxis.Min * ZAxis.DataSpaceScale
         );
-        line.Owner = GetTree().EditedSceneRoot;
+        if (Engine.IsEditorHint())
+        {
+            line.Owner = GetTree().EditedSceneRoot;
+        }
         line.Name = name;
         return line;
     }

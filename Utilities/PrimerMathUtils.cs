@@ -23,7 +23,7 @@ public static class PrimerMathUtils
         Vector3 axis = from.Cross(to).Normalized();
         if (axis.Length() == 0)
         {
-            GD.Print($"Vectors that cross to zero: {from}, {to}");
+            // GD.Print($"Vectors that cross to zero: {from}, {to}");
             return from.Lerp(to, weight);
         }
         return from.Rotated(axis, angle * weight) * (num1 / s1);

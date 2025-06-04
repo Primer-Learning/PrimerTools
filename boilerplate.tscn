@@ -1,0 +1,33 @@
+[gd_scene load_steps=4 format=3 uid="uid://dqncverqnh4kn"]
+
+[ext_resource type="Script" uid="uid://cmyih6anxr6g7" path="res://addons/PrimerTools/Camera/CameraRig.cs" id="1_tea2c"]
+[ext_resource type="Script" uid="uid://b574a0jrxvcix" path="res://addons/PrimerTools/Utilities/FPSViewer.cs" id="2_y5nfq"]
+[ext_resource type="Environment" uid="uid://xpav3hoy6ldu" path="res://addons/PrimerTools/primer_environment.tres" id="3_mfiyt"]
+
+[node name="Boilerplate" type="Node3D"]
+
+[node name="CameraRig" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.956305, 0.292372, 0, -0.292372, 0.956305, 0, 0, 0)
+script = ExtResource("1_tea2c")
+Distance = 10.0
+
+[node name="Camera3D" type="Camera3D" parent="CameraRig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 24.775)
+fov = 30.0
+
+[node name="Label" type="Label" parent="CameraRig"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -59.0
+offset_bottom = 23.0
+grow_horizontal = 0
+text = "142 FPS"
+script = ExtResource("2_y5nfq")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = ExtResource("3_mfiyt")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.588477, 0.808514, 0, -0.808514, 0.588477, 0, 5.55125, 8.78822)
+shadow_enabled = true

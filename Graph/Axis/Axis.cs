@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
@@ -200,6 +201,12 @@ public partial class Axis : Node3D
 			AnimationUtilities.Parallel(newTicAnimations.ToArray())
 		);
 	}
+
+	private int GetLeadingDigit(float number)
+	{
+		var magnitude = Math.Pow(10, Math.Floor(Math.Log10(TicStep)));
+		return (int)(number / magnitude);
+	}
 	
 	private void UpdateTicStep()
 	{
@@ -208,21 +215,48 @@ public partial class Axis : Node3D
             
 		// This looks at the existing tic step because it's meant to avoid destroying existing tics 
 		// as much as possible.
-		while (Max / TicStep > AutoTicCount)
+		if (Max / TicStep > AutoTicCount)
 		{
-			switch (TicStep.ToString()[0])
+			while (Max / TicStep > AutoTicCount)
 			{
-				case '1':
-					TicStep *= 2;
-					break;
-				case '2':
-					TicStep = Mathf.RoundToInt(TicStep * 2.5f);
-					break;
-				case '5':
-					TicStep *= 2;
-					break;
+				switch (GetLeadingDigit(TicStep))
+				{
+					case 1:
+						TicStep *= 2;
+						break;
+					case 2:
+						TicStep = Mathf.RoundToInt(TicStep * 2.5f);
+						break;
+					case 5:
+						TicStep *= 2;
+						break;
+				}
 			}
 		}
+		else
+		{
+			// Then check if we need to decrease the tic step (when Max is decreasing)
+			while (Max / TicStep * 2 < AutoTicCount && TicStep > 1)
+			{
+				switch (GetLeadingDigit(TicStep))
+				{
+					case 1:
+						TicStep = Mathf.Round(TicStep / 2);
+						break;
+					case 2:
+						TicStep = Mathf.Round(TicStep / 2);
+						break;
+					case 5:
+						TicStep = Mathf.Round(TicStep / 2.5f);
+						break;
+				}
+				
+				// Safety check to prevent going below 1
+				if (TicStep < 1)
+					TicStep = 1;
+			}
+		}
+		
 	}
 	
 	private List<TicData> CalculateTics()

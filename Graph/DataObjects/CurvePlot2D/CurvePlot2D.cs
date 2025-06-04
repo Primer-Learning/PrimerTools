@@ -110,6 +110,10 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
     {
         _dataPoints.Add(newDataPoint);
     }
+    public void AddDataPoint(float newDataPoint)
+    {
+        _dataPoints.Add(new Vector3(_dataPoints.Count, newDataPoint, 0));
+    }
 
     #endregion
     
@@ -226,6 +230,7 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
     /// <returns></returns>
     public Animation Transition(double duration = AnimationUtilities.DefaultDuration)
     {
+        if (_dataPoints.Count == 0) return new Animation(); 
         // If there's not a previous stage, add the first point of the data as the first stage
         if (pointsOfStages.Count == 0)
             pointsOfStages.Add(new[] { TransformPointFromDataSpaceToPositionSpace(_dataPoints[0]) });
