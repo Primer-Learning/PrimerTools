@@ -236,7 +236,7 @@ public partial class Axis : Node3D
 		else
 		{
 			// Then check if we need to decrease the tic step (when Max is decreasing)
-			while (Max / TicStep * 2 < AutoTicCount && TicStep > 1)
+			while (Max / TicStep * 2.5 < AutoTicCount && TicStep > 1)
 			{
 				switch (GetLeadingDigit(TicStep))
 				{
