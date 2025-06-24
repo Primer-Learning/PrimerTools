@@ -3,26 +3,63 @@ using System.Collections.Generic;
 using System.Linq;
 using Godot;
 
-public interface IAnimationCommand
-{
-    double StartTime { get; }
-    double EndTime { get; }
-    void Execute(double fromTime = 0);
-    void ApplyEndState();
-    // Revert might be added later for back-seeking
-}
-
 public abstract partial class TweenSequence : Node
 {
+    private struct FlattenedAnimation
+    {
+        public IAnimatedStateChange Animation { get; }
+        public double AbsoluteStartTime { get; }
+        public double AbsoluteEndTime => AbsoluteStartTime + Animation.Duration;
+        
+        public FlattenedAnimation(IAnimatedStateChange animation, double absoluteStartTime)
+        {
+            Animation = animation;
+            AbsoluteStartTime = absoluteStartTime;
+        }
+    }
+    
     [Export] private double _startFromTime = 0;
     
-    private List<IAnimationCommand> _commands = new();
+    private readonly CompositeStateChange _rootComposite = new();
+    private List<FlattenedAnimation> _flattenedAnimations;
+    private double _timeAccumulator = 0;
     private double _currentTime = 0;
     private bool _isPlaying = false;
+    private Tween _masterTween;
+    
+    public bool IsPlaying => _isPlaying;
+    public double CurrentTime => _currentTime;
+    public double TotalDuration => _rootComposite.Duration;
+    
+    [Export] private double _playbackSpeed = 1.0;
+    public double PlaybackSpeed
+    {
+        get => _playbackSpeed;
+        set => _playbackSpeed = Mathf.Max(0.1, value);
+    }
     
     public override void _Ready()
     {
         Define();
+
+        // Flatten the entire animation tree once
+        _flattenedAnimations = _rootComposite.Flatten()
+            .Select(f => new FlattenedAnimation(f.change, f.absoluteStartTime))
+            .OrderBy(f => f.AbsoluteStartTime)
+            .ToList();
+
+        // Record all the start states and then revert
+        foreach (var animation in _flattenedAnimations)
+        {
+            animation.Animation.RecordStartState();
+            animation.Animation.ApplyEndState();
+        }
+        
+        // Revert in reverse order
+        for (var i = _flattenedAnimations.Count - 1; i >= 0; i--)
+        {
+            _flattenedAnimations[i].Animation.Revert();
+        }
         
         if (_startFromTime > 0)
         {
@@ -32,225 +69,211 @@ public abstract partial class TweenSequence : Node
         Play();
     }
     
+    public override void _Process(double delta)
+    {
+        if (_isPlaying && _masterTween != null && _masterTween.IsValid())
+        {
+            _timeAccumulator += delta;
+            _currentTime = Math.Min(_startFromTime + _timeAccumulator, TotalDuration);
+
+            // Stop if we've reached the end
+            if (_currentTime >= TotalDuration)
+            {
+                _currentTime = TotalDuration;
+                _isPlaying = false;
+            }
+        }
+    }
+    
     protected abstract void Define();
     
     public void SeekTo(double time)
     {
-        foreach (var processedTween in GetTree().GetProcessedTweens())
+        KillAllTweens();
+        
+        // Revert animations that haven't started yet
+        foreach (var animation in _flattenedAnimations.Where(a => a.AbsoluteStartTime > time).Reverse())
         {
-            processedTween.Kill();
+            animation.Animation.Revert();
         }
         
-        // Apply all commands that should be complete by this time
-        foreach (var command in _commands.Where(c => c.EndTime <= time))
+        // Apply all animations that should be complete by this time
+        foreach (var animation in _flattenedAnimations.Where(a => a.AbsoluteEndTime <= time))
         {
-            command.ApplyEndState();
+            animation.Animation.ApplyEndState();
         }
         
-        // Execute commands that should be in progress
-        foreach (var command in _commands.Where(c => c.StartTime <= time && c.EndTime > time))
+        // Evaluate animations that we're in the middle of
+        foreach (var animation in _flattenedAnimations.Where(a => a.AbsoluteStartTime <= time && a.AbsoluteEndTime > time))
         {
-            command.Execute(time);
+            var elapsedTime = time - animation.AbsoluteStartTime;
+            animation.Animation.EvaluateAtTime(elapsedTime);
         }
         
         _currentTime = time;
+        _timeAccumulator = 0;
+        _startFromTime = time;
+
+        if (_isPlaying)
+        {
+            Play();
+        }
+    }
+    // Add pause/resume methods
+    public void Pause()
+    {
+        if (!_isPlaying) return;
+
+        _isPlaying = false;
+        
+        // Pause all tweens
+        foreach (var tween in GetTree().GetProcessedTweens())
+        {
+            if (tween.IsValid())
+            {
+                tween.Pause();
+            }
+        }
+    }
+
+    public void Resume()
+    {
+        if (_isPlaying) return;
+
+        _isPlaying = true;
+        
+        // Resume all tweens
+        var hasValidTweens = false;
+        foreach (var tween in GetTree().GetProcessedTweens())
+        {
+            if (tween.IsValid())
+            {
+                tween.Play();
+                hasValidTweens = true;
+            }
+        }
+        
+        if (!hasValidTweens)
+        {
+            Play();
+        }
     }
     
-    public void Play()
+    private void Play()
     {
         _isPlaying = true;
-        GD.Print("Playing");
+        _timeAccumulator = 0;
+        Engine.TimeScale = _playbackSpeed;
         
-        // Schedule future commands
-        foreach (var command in _commands.Where(c => c.StartTime >= _currentTime))
-        {
-            GD.Print("Command");
-            var delay = command.StartTime - _currentTime;
-            GetTree().CreateTimer((float)delay).Timeout += () => command.Execute();
-        }
-    }
-    
-    // Registration methods
-    public PropertyAnimation AnimateProperty(Node target, string property, Variant endValue, double duration = 0.5)
-    {
-        var startTime = GetNextAvailableTime();
-        var cmd = new PropertyAnimation(target, property, endValue, startTime, duration);
-        RegisterCommand(cmd);
-        return cmd;
-    }
-    
-    public PropertyAnimation AnimatePropertyAt(double time, Node target, string property, Variant endValue, double duration = 0.5)
-    {
-        var cmd = new PropertyAnimation(target, property, endValue, time, duration);
-        RegisterCommand(cmd);
-        return cmd;
-    }
-    
-    private void RegisterCommand(IAnimationCommand command)
-    {
-        // Warning for out-of-order registration
-        if (_commands.Count > 0 && command.StartTime < _commands.Last().StartTime)
-        {
-            GD.PushWarning($"Command registered with start time {command.StartTime} before previous command at {_commands.Last().StartTime}");
-        }
+        // Kill all existing tweens
+        KillAllTweens();
         
-        _commands.Add(command);
-    }
-    
-    private double GetNextAvailableTime()
-    {
-        if (_commands.Count == 0) return 0;
-        return _commands.Max(c => c.EndTime);
-    }
-}
-
-// Basic property animation command
-public class PropertyAnimation : IAnimationCommand
-{
-    private Node _target;
-    private string _property;
-    private Variant _startValue;
-    private Variant _endValue;
-    private double _duration;
-    private Tween.TransitionType _transition;
-    private Tween.EaseType _ease;
-    
-    public double StartTime { get; private set; }
-    public double EndTime => StartTime + _duration;
-    
-    public PropertyAnimation(Node target, string property, Variant endValue, double startTime, double duration)
-    {
-        _target = target;
-        _property = property;
-        _endValue = endValue;
-        StartTime = startTime;
-        _duration = duration;
-        _transition = Tween.TransitionType.Cubic;
-        _ease = Tween.EaseType.InOut;
-    }
-    
-    public void Execute(double fromTime = 0)
-    {
-        var elapsedTime = Math.Max(0, fromTime - StartTime);
-        var remainingDuration = _duration - elapsedTime;
+        var remainingDuration = TotalDuration - _currentTime;
+        if (remainingDuration <= 0) return;
         
-        if (remainingDuration <= 0)
-        {
-            ApplyEndState();
-            return;
-        }
+        // Filter animations that haven't finished yet
+        var futureAnimations = _flattenedAnimations
+            .Where(a => a.AbsoluteEndTime > _currentTime)
+            .ToList();
         
-        // If starting partway through, interpolate to find current value
-        if (elapsedTime > 0)
-        {
-            var currentValue =
-                Tween.InterpolateValue(_startValue, _endValue, elapsedTime, _duration, _transition, _ease);
-            _target.Set(_property, currentValue);
-        }
+        if (futureAnimations.Count == 0) return;
         
-        var tween = _target.GetTree().CreateTween();
-        tween.TweenProperty(_target, _property, _endValue, remainingDuration)
-            .SetTrans(_transition)
-            .SetEase(_ease);
-    }
-    
-    public void ApplyEndState()
-    {
-        _target.Set(_property, _endValue);
-    }
-    
-    // Fluent API for configuration
-    public PropertyAnimation WithTransition(Tween.TransitionType transition)
-    {
-        _transition = transition;
-        return this;
-    }
-    
-    public PropertyAnimation WithEase(Tween.EaseType ease)
-    {
-        _ease = ease;
-        return this;
-    }
-}
-
-// Composite commands for Series and Parallel
-public class CompositeAnimation : IAnimationCommand
-{
-    protected List<IAnimationCommand> _children = new();
-    
-    public virtual double StartTime => _children.Count > 0 ? _children.Min(c => c.StartTime) : 0;
-    public virtual double EndTime => _children.Count > 0 ? _children.Max(c => c.EndTime) : 0;
-    
-    public virtual void Execute(double fromTime = 0)
-    {
-        foreach (var child in _children)
+        // Group animations into non-overlapping tracks
+        var tracks = BuildTracks(futureAnimations);
+        
+        GD.Print($"Created {tracks.Count} tracks for {futureAnimations.Count} animations");
+        
+        // Create a tween for each track
+        for (int i = 0; i < tracks.Count; i++)
         {
-            if (child.StartTime >= fromTime)
+            var track = tracks[i];
+            var trackTween = i == 0 ? CreateTween() : GetTree().CreateTween();
+            
+            if (i == 0)
             {
-                // Schedule future execution
-                var delay = child.StartTime - fromTime;
-                if (delay > 0)
-                {
-                    // You'd need a reference to the scene tree here
-                    // Could be passed in constructor or accessed via singleton
-                }
-                else
-                {
-                    child.Execute(fromTime);
-                }
+                _masterTween = trackTween;
             }
-            else if (child.EndTime > fromTime)
+            
+            var trackCurrentTime = _currentTime;
+            
+            foreach (var animation in track.OrderBy(a => a.AbsoluteStartTime))
             {
-                // Already in progress
-                child.Execute(fromTime);
+                // Add delay to reach this animation's start time
+                if (animation.AbsoluteStartTime > trackCurrentTime)
+                {
+                    var delay = animation.AbsoluteStartTime - trackCurrentTime;
+                    trackTween.TweenInterval(delay);
+                    trackCurrentTime = animation.AbsoluteStartTime;
+                }
+                
+                // Calculate elapsed time for this specific animation
+                var changeElapsedTime = Math.Max(0, _currentTime - animation.AbsoluteStartTime);
+                animation.Animation.AppendTweener(trackTween, changeElapsedTime);
+                
+                GD.Print($"  Added {animation.Animation.Name} to track {i} at {animation.AbsoluteStartTime}s");
+                
+                trackCurrentTime = animation.AbsoluteEndTime;
             }
         }
+        
+        // Add a final callback to the main tween to mark completion
+        _masterTween.TweenCallback(Callable.From(() => 
+        {
+            _currentTime = TotalDuration;
+            _isPlaying = false;
+            GD.Print("Sequence completed");
+        }));
+        GD.Print("Finished starting of the playing");
     }
     
-    public virtual void ApplyEndState()
+    private List<List<FlattenedAnimation>> BuildTracks(List<FlattenedAnimation> animations)
     {
-        foreach (var child in _children)
+        var tracks = new List<List<FlattenedAnimation>>();
+        
+        foreach (var animation in animations)
         {
-            child.ApplyEndState();
+            // Find a track where this animation doesn't overlap with existing animations
+            var track = tracks.FirstOrDefault(t => 
+                !t.Any(existing => 
+                    animation.AbsoluteStartTime < existing.AbsoluteEndTime && 
+                    animation.AbsoluteEndTime > existing.AbsoluteStartTime));
+            
+            if (track == null)
+            {
+                // Create a new track if no non-overlapping track exists
+                track = new List<FlattenedAnimation>();
+                tracks.Add(track);
+            }
+            
+            track.Add(animation);
+        }
+        
+        return tracks;
+    }
+    
+    private void KillAllTweens()
+    {
+        foreach (var tween in GetTree().GetProcessedTweens())
+        {
+            tween.Kill();
         }
     }
-}
-
-public class SeriesAnimation : CompositeAnimation
-{
-    private double _timeOffset = 0;
     
-    public void Add(IAnimationCommand command)
+    public void AddStateChange(IStateChange stateChange, double delay = 0)
     {
-        // Shift command timing to run after previous commands
-        var shiftedCommand = new TimeShiftedCommand(command, _timeOffset);
-        _children.Add(shiftedCommand);
-        _timeOffset = shiftedCommand.EndTime;
-    }
-}
-
-// Helper wrapper to shift timing
-public class TimeShiftedCommand : IAnimationCommand
-{
-    private IAnimationCommand _inner;
-    private double _offset;
-    
-    public double StartTime => _inner.StartTime + _offset;
-    public double EndTime => _inner.EndTime + _offset;
-    
-    public TimeShiftedCommand(IAnimationCommand inner, double offset)
-    {
-        _inner = inner;
-        _offset = offset;
+        _rootComposite.AddStateChange(stateChange, delay);
+        // GD.Print($"Added sequential: {stateChange.Name} (delay: {delay}s)");
     }
     
-    public void Execute(double fromTime = 0)
+    public void AddStateChangeAt(IStateChange stateChange, double absoluteTime)
     {
-        _inner.Execute(fromTime - _offset);
+        _rootComposite.AddStateChangeAt(stateChange, absoluteTime);
+        // GD.Print($"Added at {absoluteTime}s: {stateChange.Name}");
     }
     
-    public void ApplyEndState()
+    public void AddStateChangeInParallel(IStateChange stateChange, double delay = 0)
     {
-        _inner.ApplyEndState();
+        _rootComposite.AddStateChangeInParallel(stateChange, delay);
+        // GD.Print($"Added in parallel: {stateChange.Name}");
     }
 }
