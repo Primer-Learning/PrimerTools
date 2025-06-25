@@ -44,7 +44,7 @@ public partial class PointData : Node3D, IPrimerGraphData
         var transitionAnimations = new List<Animation>();
         foreach (var (position, node) in pointObjects)
         {
-            transitionAnimations.Add(node.MoveTo(Graph.GetDataSpaceToPositionSpaceFromSettings(position)));
+            transitionAnimations.Add(node.MoveToAnimation(Graph.GetDataSpaceToPositionSpaceFromSettings(position)));
         }
 
         return transitionAnimations.InParallel();

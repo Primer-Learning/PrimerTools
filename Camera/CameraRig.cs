@@ -43,7 +43,7 @@ public partial class CameraRig : Node3D
 
     public Animation ZoomTo(float distance)
     {
-        return Camera.MoveTo(new Vector3(Camera.Position.X, Camera.Position.Y, distance));
+        return Camera.MoveToAnimation(new Vector3(Camera.Position.X, Camera.Position.Y, distance));
     }
 
     #region Manipulation in play mode

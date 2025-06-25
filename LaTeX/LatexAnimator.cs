@@ -84,7 +84,7 @@ public partial class LatexAnimator : Node3D
         for (var i = 0; i < copiesOfCurrentExpressionCharacters.Count; i++)
         {
             if (preservedFromIndices.Contains(i)) continue;
-            disappearAnimations.Add(copiesOfCurrentExpressionCharacters[i].ScaleTo(0));
+            disappearAnimations.Add(copiesOfCurrentExpressionCharacters[i].ScaleToAnimation(0));
         }
 
         // Move the preserved characters from their current position to their next position.
@@ -95,7 +95,7 @@ public partial class LatexAnimator : Node3D
 
             var movementIndex = preservedFromIndices.IndexOf(i);
             var indexInNextExpression = preservedToIndices[movementIndex];
-            movementAnimations.Add(copiesOfCurrentExpressionCharacters[i].MoveTo(copiesOfNextExpressionCharacters[indexInNextExpression].Position));
+            movementAnimations.Add(copiesOfCurrentExpressionCharacters[i].MoveToAnimation(copiesOfNextExpressionCharacters[indexInNextExpression].Position));
         }
 
         // Scale up the new characters
@@ -103,7 +103,7 @@ public partial class LatexAnimator : Node3D
         for (var i = 0; i < copiesOfNextExpressionCharacters.Count; i++)
         {
             if (preservedToIndices.Contains(i)) continue;
-            appearanceAnimations.Add(copiesOfNextExpressionCharacters[i].ScaleTo(1));
+            appearanceAnimations.Add(copiesOfNextExpressionCharacters[i].ScaleToAnimation(1));
         }
 
         // Swap visibility to new expression

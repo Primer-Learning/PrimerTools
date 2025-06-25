@@ -1,6 +1,7 @@
 using Godot;
+using PrimerTools;
 
-namespace GladiatorManager.addons.PrimerTools.TweenSystem;
+namespace PrimerTools.TweenSystem;
 
 public partial class TestTweenSequence : TweenSequence
 {
@@ -14,20 +15,23 @@ public partial class TestTweenSequence : TweenSequence
         sphere.Mesh = new SphereMesh();
         AddChild(sphere);
 
-        // Sequential animations for cube
-        AddStateChange(new PropertyAnimation(cube, "position", new Vector3(100, 0, 0), 1));
-        AddStateChange(new PropertyAnimation(sphere, "position", new Vector3(100, 50, 0), 1));
-        AddStateChange(new PropertyAnimation(cube, "position", new Vector3(0, 50, 0), 2));
-        AddStateChangeInParallel(new PropertyAnimation(sphere, "position", new Vector3(50, 25, 0), 1), delay: 1);
+        AddStateChange(cube.WalkTo(new Vector3(100, 0, 0)).WithDuration(1));
+        AddStateChange(sphere.MoveTo(new Vector3(100, 50, 0)).WithDuration(1));
+        AddStateChange(cube.WalkTo(new Vector3(0, 50, 0)).WithDuration(2));
+        AddStateChangeInParallel(sphere.MoveTo(new Vector3(50, 25, 0)).WithDuration(1), delay: 1);
         
-        // Works correctly, playing these animations together after the previous ones
-        // AddStateChange(new PropertyAnimation(cube, "position", new Vector3(100, 25, 0), 1));
-        // AddStateChangeInParallel(new PropertyAnimation(sphere, "position", new Vector3(100, 25, 0), 1));
+        // Test rotation
+        AddStateChange(cube.RotateTo(0, 90, 0).WithDuration(1));
         
-        // Instead of working like above, the sphere change happens immediately, even before the sphere change above
+        // Test WalkTo (combines rotation and movement)
+        AddStateChange(cube.WalkTo(new Vector3(50, 0, 0)).WithDuration(2));
+        
+        // Test Pulse
+        AddStateChange(cube.Pulse(scaleFactor: 1.5f, attack: 0.3, hold: 0.2, decay: 0.3));
+        
         var composite = new CompositeStateChange();
-        composite.AddStateChange(new PropertyAnimation(cube, "position", new Vector3(100, 25, 0), 1));
-        composite.AddStateChangeInParallel(new PropertyAnimation(sphere, "position", new Vector3(100, 25, 0), 1));
-        AddStateChangeAt(composite, 8);
+        composite.AddStateChange(cube.MoveTo(new Vector3(100, 25, 0)).WithDuration(1));
+        composite.AddStateChangeInParallel(sphere.MoveTo(new Vector3(100, 25, 0)).WithDuration(1));
+        AddStateChange(composite, 1);
     }
 }

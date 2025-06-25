@@ -196,10 +196,10 @@ public partial class StackedBarPlot : Node3D, IPrimerGraphData
                         cumulativeHeight + segmentHeight * parentGraphSize.Y / 10,
                         0.01f
                     );
-                    animations.Add(theLabel.MoveTo(targetLabelPos));
+                    animations.Add(theLabel.MoveToAnimation(targetLabelPos));
                 
                     var targetLabelScale = BarLabelScaleFactor * segment.Item3 / 2 * Vector3.One;
-                    animations.Add(theLabel.ScaleTo(targetLabelScale));
+                    animations.Add(theLabel.ScaleToAnimation(targetLabelScale));
 
                     theLabel.numberSuffix = BarLabelSuffix;
                     theLabel.numberPrefix = BarLabelPrefix;

@@ -1,9 +1,9 @@
 using System;
 using Godot;
 
-namespace GladiatorManager.addons.PrimerTools.TweenSystem;
+namespace PrimerTools.TweenSystem;
 
-public class PropertyAnimation : IAnimatedStateChange
+public class PropertyStateChange : IAnimatedStateChange
 {
     private Node _target;
     private string _property;
@@ -35,12 +35,12 @@ public class PropertyAnimation : IAnimatedStateChange
     public double Duration => _duration;
     
     // Analogous to AnimationUtilities.AnimateValue
-    public PropertyAnimation(Node target, string property, Variant endValue, double duration = 0.5f)
+    public PropertyStateChange(Node target, string property, Variant endValue)
     {
         _target = target;
         _property = property;
         _endValue = endValue;
-        _duration = duration;
+        _duration = Node3DStateChangeExtensions.DefaultDuration;
         _transition = Tween.TransitionType.Cubic;
         _ease = Tween.EaseType.InOut;
     }
@@ -94,19 +94,30 @@ public class PropertyAnimation : IAnimatedStateChange
     }
 
     // Fluent API for configuration
-    public PropertyAnimation WithTransition(Tween.TransitionType transition)
+    public PropertyStateChange WithDuration(double duration)
+    {
+        _duration = duration;
+        return this;
+    }
+    
+    IStateChange IStateChange.WithDuration(double duration)
+    {
+        return WithDuration(duration);
+    }
+    
+    public PropertyStateChange WithTransition(Tween.TransitionType transition)
     {
         _transition = transition;
         return this;
     }
     
-    public PropertyAnimation WithEase(Tween.EaseType ease)
+    public PropertyStateChange WithEase(Tween.EaseType ease)
     {
         _ease = ease;
         return this;
     }
     
-    public PropertyAnimation WithName(string name)
+    public PropertyStateChange WithName(string name)
     {
         _customName = name;
         return this;
@@ -122,6 +133,7 @@ public class PropertyAnimation : IAnimatedStateChange
             Variant.Type.Vector2 => Tween.InterpolateValue(start.AsVector2(), _endValue.AsVector2() - start.AsVector2(), elapsedTime, duration, _transition, _ease),
             Variant.Type.Vector3 => Tween.InterpolateValue(start.AsVector3(), _endValue.AsVector3() - start.AsVector3(), elapsedTime, duration, _transition, _ease),
             Variant.Type.Color => Tween.InterpolateValue(start.AsColor(), _endValue.AsColor() - start.AsColor(), elapsedTime, duration, _transition, _ease),
+            Variant.Type.Quaternion => start.AsQuaternion().Slerp(_endValue.AsQuaternion(), (float)(elapsedTime / duration)), // _transition, _ease // No transition or ease here for now
             _ => end // For non-interpolatable types, just use end value
         };
     }

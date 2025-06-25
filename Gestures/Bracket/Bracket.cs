@@ -100,13 +100,13 @@ public partial class Bracket : Node3D
 		var parameters = CalculateUpdateParameters();
 
 		return AnimationUtilities.Parallel(
-			this.MoveTo(StemPosition),
-			this.RotateTo(parameters.rotation),
-			this.ScaleTo(parameters.scale),
-			LTip.MoveTo(new Vector3(-parameters.lLength, 0, 1)),
-			RTip.MoveTo(new Vector3(parameters.rLength, 0, 1)),
-			LBar.ScaleTo(new Vector3(parameters.lBarLength, LBar.Scale.Y, LBar.Scale.Z)),
-			RBar.ScaleTo(new Vector3(parameters.rBarLength, RBar.Scale.Y, RBar.Scale.Z))
+			this.MoveToAnimation(StemPosition),
+			this.RotateToAnimation(parameters.rotation),
+			this.ScaleToAnimation(parameters.scale),
+			LTip.MoveToAnimation(new Vector3(-parameters.lLength, 0, 1)),
+			RTip.MoveToAnimation(new Vector3(parameters.rLength, 0, 1)),
+			LBar.ScaleToAnimation(new Vector3(parameters.lBarLength, LBar.Scale.Y, LBar.Scale.Z)),
+			RBar.ScaleToAnimation(new Vector3(parameters.rBarLength, RBar.Scale.Y, RBar.Scale.Z))
 		);
 	}
 
@@ -115,7 +115,7 @@ public partial class Bracket : Node3D
 		Transition();
 		var scale = Scale;
 		Scale = Vector3.Zero;
-		return this.ScaleTo(scale);
+		return this.ScaleToAnimation(scale);
 	}
 
 	public Tween TweenTransition(double duration = AnimationUtilities.DefaultDuration)

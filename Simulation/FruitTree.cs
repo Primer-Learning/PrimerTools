@@ -26,16 +26,16 @@ public partial class FruitTree : Node3D
 			RotateFlowerRandomly(flowerIndex);
 			return AnimationUtilities.Series(
 				AnimationUtilities.Parallel(
-					fruit.MoveTo(Vector3.Zero).WithDuration(0),
-					fruit.ScaleTo(0).WithDuration(0)
+					fruit.MoveToAnimation(Vector3.Zero).WithDuration(0),
+					fruit.ScaleToAnimation(0).WithDuration(0)
 				),
-				fruit.ScaleTo(1)
+				fruit.ScaleToAnimation(1)
 			);
 		}
 
 		if (!IsFruitMature(fruit))
 		{
-			return fruit.ScaleTo(1);
+			return fruit.ScaleToAnimation(1);
 		}
 
 		return new Animation();

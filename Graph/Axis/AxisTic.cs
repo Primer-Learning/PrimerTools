@@ -1,5 +1,6 @@
 using Godot;
 using PrimerTools.LaTeX;
+using PrimerTools.TweenSystem;
 
 namespace PrimerTools.Graph;
 
@@ -24,6 +25,11 @@ public partial class AxisTic : Node3D
 
     public Animation AnimateLabelScale(float scale)
     {
+        return latexNode.ScaleToAnimation(scale);
+    }
+
+    public IStateChange AnimateLabelScaleStateChange(float scale)
+    {
         return latexNode.ScaleTo(scale);
     }
 
@@ -37,6 +43,16 @@ public partial class AxisTic : Node3D
     }
 
     public Animation AnimateLabelDistance(float? distance)
+    {
+        if (!distance.HasValue)
+            return null;
+            
+        return latexNode.MoveToAnimation(
+            new Vector3(latexNode.Position.X, -distance.Value, latexNode.Position.Z)
+        );
+    }
+
+    public IStateChange AnimateLabelDistanceStateChange(float? distance)
     {
         if (!distance.HasValue)
             return null;

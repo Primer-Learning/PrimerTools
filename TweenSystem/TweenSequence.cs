@@ -210,7 +210,7 @@ public abstract partial class TweenSequence : Node
                 var changeElapsedTime = Math.Max(0, _currentTime - animation.AbsoluteStartTime);
                 animation.Animation.AppendTweener(trackTween, changeElapsedTime);
                 
-                GD.Print($"  Added {animation.Animation.Name} to track {i} at {animation.AbsoluteStartTime}s");
+                // GD.Print($"  Added {animation.Animation.Name} to track {i} at {animation.AbsoluteStartTime}s");
                 
                 trackCurrentTime = animation.AbsoluteEndTime;
             }

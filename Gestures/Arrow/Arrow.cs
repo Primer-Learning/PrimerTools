@@ -155,14 +155,14 @@ public partial class Arrow : Node3D
 
         // return animations.InParallel().WithDuration(duration);
         return AnimationUtilities.Parallel(
-            this.MoveTo(finalPosition),
-            this.RotateTo(finalRotation, interpolationType: rotationInterpolationType),
-            shaftObject.MoveTo(finalShaftPosition),
-            shaftObject.ScaleTo(finalShaftScale),
-            headObject.MoveTo(finalHeadObjectPosition),
-            headObject.ScaleTo(finalHeadScale),
-            tailObject.MoveTo(finalTailObjectPosition),
-            tailObject.ScaleTo(finalTailObjectScale)
+            this.MoveToAnimation(finalPosition),
+            this.RotateToAnimation(finalRotation, interpolationType: rotationInterpolationType),
+            shaftObject.MoveToAnimation(finalShaftPosition),
+            shaftObject.ScaleToAnimation(finalShaftScale),
+            headObject.MoveToAnimation(finalHeadObjectPosition),
+            headObject.ScaleToAnimation(finalHeadScale),
+            tailObject.MoveToAnimation(finalTailObjectPosition),
+            tailObject.ScaleToAnimation(finalTailObjectScale)
         ).WithDuration(duration);
     }
     
@@ -315,15 +315,15 @@ public partial class Arrow : Node3D
         Position += Transform.Basis.X * (Length - TailPadding);
         Scale = Vector3.Zero;
         return AnimationUtilities.Parallel(
-            this.ScaleTo(Vector3.One),
-            this.MoveTo(finalPosition)
+            this.ScaleToAnimation(Vector3.One),
+            this.MoveToAnimation(finalPosition)
         );
     }
     public Animation ScaleDownToTail()
     {
         return AnimationUtilities.Parallel(
-            this.ScaleTo(Vector3.Zero),
-            this.MoveTo(Position + tailPoint)
+            this.ScaleToAnimation(Vector3.Zero),
+            this.MoveToAnimation(Position + tailPoint)
         );
     }
     // public Tween ScaleDownToTail()

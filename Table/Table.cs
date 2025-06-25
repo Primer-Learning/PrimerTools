@@ -87,7 +87,7 @@ public partial class Table : Node3D
     public Animation ScaleCellToDefault(int row, int column)
     {
         if (cells[column][row] is not null)
-            return cells[column][row].ScaleTo(row == 0 || column == 0 ? HeaderLatexScale : CellLatexScale);
+            return cells[column][row].ScaleToAnimation(row == 0 || column == 0 ? HeaderLatexScale : CellLatexScale);
         
         GD.PrintErr("No cell at that position");
         return null;

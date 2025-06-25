@@ -2,6 +2,7 @@ using Godot;
 using System.Collections.Generic;
 using System.Linq;
 using PrimerTools.LaTeX;
+using PrimerTools.TweenSystem;
 
 namespace PrimerTools.Graph;
 
@@ -203,8 +204,8 @@ public partial class Graph : Node3D
         
         // Update data space markers
         // This happens during remove with zero (epsilon) duration, because the sooner the better.
-        removeTransitions.Add(_dataSpaceMin.MoveTo(new Vector3(XAxis.Min, YAxis.Min, ZAxis.Min), duration: 0));
-        removeTransitions.Add(_dataSpaceMax.MoveTo(new Vector3(XAxis.Max, YAxis.Max, ZAxis.Max), duration: 0));
+        removeTransitions.Add(_dataSpaceMin.MoveToAnimation(new Vector3(XAxis.Min, YAxis.Min, ZAxis.Min), duration: 0));
+        removeTransitions.Add(_dataSpaceMax.MoveToAnimation(new Vector3(XAxis.Max, YAxis.Max, ZAxis.Max), duration: 0));
 
         foreach (var axis in Axes)
         {
@@ -227,14 +228,14 @@ public partial class Graph : Node3D
         if (XAxisLabelLatexNode is not null && IsInstanceValid(XAxisLabelLatexNode))
         {
             updateTransitions.Add(
-                XAxisLabelLatexNode.MoveTo(
+                XAxisLabelLatexNode.MoveToAnimation(
                     XAxisLabelAlignment == AxisLabelAlignmentOptions.Along
                         ? new Vector3(XAxis.LengthMinusPadding / 2, -XAxisLabelOffset, 0)
                         : new Vector3(XAxis.LengthMinusPadding + XAxisLabelOffset, 0, 0)
                 )
             );
             updateTransitions.Add(        
-                XAxisLabelLatexNode.ScaleTo(Vector3.One * XAxisLabelScale)
+                XAxisLabelLatexNode.ScaleToAnimation(Vector3.One * XAxisLabelScale)
             );
         }
         else
@@ -251,27 +252,27 @@ public partial class Graph : Node3D
                     : new Vector3(XAxis.LengthMinusPadding + XAxisLabelOffset, 0, 0);
             XAxisLabelLatexNode.Scale = Vector3.Zero;
             AddChild(XAxisLabelLatexNode);
-            addTransitions.Add(XAxisLabelLatexNode.ScaleTo(Vector3.One * XAxisLabelScale));
+            addTransitions.Add(XAxisLabelLatexNode.ScaleToAnimation(Vector3.One * XAxisLabelScale));
         }
         
         if (YAxisLabelLatexNode is not null && IsInstanceValid(YAxisLabelLatexNode))
         {
             updateTransitions.Add(
-                YAxisLabelLatexNode.MoveTo(
+                YAxisLabelLatexNode.MoveToAnimation(
                     YAxisLabelAlignment == AxisLabelAlignmentOptions.Along
                         ? new Vector3(-YAxisLabelOffset, YAxis.LengthMinusPadding / 2, 0)
                         : new Vector3(0, YAxis.LengthMinusPadding + YAxisLabelOffset, 0)
                 )
             );
             updateTransitions.Add(
-                YAxisLabelLatexNode.RotateTo(
+                YAxisLabelLatexNode.RotateToAnimation(
                     YAxisLabelAlignment == AxisLabelAlignmentOptions.Along
                         ? new Vector3(0, 0, 90)
                         : Vector3.Zero
                 )
             );
             updateTransitions.Add(        
-                YAxisLabelLatexNode.ScaleTo(Vector3.One * YAxisLabelScale)
+                YAxisLabelLatexNode.ScaleToAnimation(Vector3.One * YAxisLabelScale)
             );
         }
         else
@@ -288,7 +289,7 @@ public partial class Graph : Node3D
             
             YAxisLabelLatexNode.Scale = Vector3.Zero;
             AddChild(YAxisLabelLatexNode);
-            addTransitions.Add(YAxisLabelLatexNode.ScaleTo(Vector3.One * YAxisLabelScale));
+            addTransitions.Add(YAxisLabelLatexNode.ScaleToAnimation(Vector3.One * YAxisLabelScale));
         }
         
         if (ZAxisLabelLatexNode is not null && IsInstanceValid(ZAxisLabelLatexNode))
@@ -301,7 +302,7 @@ public partial class Graph : Node3D
             //     )
             // );
             updateTransitions.Add(        
-                ZAxisLabelLatexNode.ScaleTo(Vector3.One * ZAxisLabelScale)
+                ZAxisLabelLatexNode.ScaleToAnimation(Vector3.One * ZAxisLabelScale)
             );
         }
         else
@@ -314,7 +315,7 @@ public partial class Graph : Node3D
             
             ZAxisLabelLatexNode.Scale = Vector3.Zero;
             AddChild(ZAxisLabelLatexNode);
-            addTransitions.Add(ZAxisLabelLatexNode.ScaleTo(Vector3.One * ZAxisLabelScale));
+            addTransitions.Add(ZAxisLabelLatexNode.ScaleToAnimation(Vector3.One * ZAxisLabelScale));
         }
         
         return AnimationUtilities.Series(
@@ -322,6 +323,161 @@ public partial class Graph : Node3D
             updateTransitions.InParallel().WithDuration(updateDuration),
             addTransitions.InParallel().WithDuration(addDuration)
         );
+    }
+    
+    
+    
+    public CompositeStateChange TransitionStateChange(double duration =
+    AnimationUtilities.DefaultDuration)
+    {
+        return TransitionStateChange(duration, duration, duration);
+    }
+
+    public CompositeStateChange TransitionStateChange(double removeDuration, double updateDuration, double addDuration)
+    {
+        var composite = new CompositeStateChange().WithName("Graph Transition");
+
+        // Remove phase
+        var removePhase = new CompositeStateChange().WithName("Remove Phase");
+
+        // Update data space markers (happens during remove with zero duration)
+        removePhase.AddStateChange(_dataSpaceMin.MoveTo(new Vector3(XAxis.Min, YAxis.Min, ZAxis.Min)).WithDuration(0));
+        removePhase.AddStateChange(_dataSpaceMax.MoveTo(new Vector3(XAxis.Max, YAxis.Max, ZAxis.Max)).WithDuration(0));
+
+        // Add axis remove transitions
+        foreach (var axis in Axes)
+        {
+            var axisTransition = axis.UpdateChildrenStateChange();
+            removePhase.AddStateChangeInParallel(axisTransition.Remove);
+        }
+
+        composite.AddStateChange(removePhase.WithDuration(removeDuration));
+
+        // Update phase
+        var updatePhase = new CompositeStateChange().WithName("Update Phase");
+
+        // Add axis update transitions
+        foreach (var axis in Axes)
+        {
+            var axisTransition = axis.UpdateChildrenStateChange();
+            updatePhase.AddStateChange(axisTransition.Update);
+        }
+
+        // Update data objects
+        foreach (var dataObject in GetChildren().OfType<IPrimerGraphData>())
+        {
+            // TODO: Convert IPrimerGraphData.Transition to return IStateChange
+            // For now, we'll skip this
+            //updatePhase.AddStateChangeInParallel(dataObject.TransitionStateChange(updateDuration));
+        }
+
+        // Update axis labels
+        UpdateAxisLabelsStateChanges(updatePhase);
+
+        composite.AddStateChange(updatePhase.WithDuration(updateDuration));
+
+        // Add phase
+        var addPhase = new CompositeStateChange().WithName("Add Phase");
+
+        // Add axis add transitions
+        foreach (var axis in Axes)
+        {
+            var axisTransition = axis.UpdateChildrenStateChange();
+            addPhase.AddStateChangeInParallel(axisTransition.Add);
+        }
+
+        // Add new axis labels
+        AddAxisLabelsStateChanges(addPhase);
+
+        composite.AddStateChange(addPhase.WithDuration(addDuration));
+
+        return composite;
+    }
+
+    private void UpdateAxisLabelsStateChanges(CompositeStateChange updatePhase)
+    {
+        // X Axis Label
+        if (XAxisLabelLatexNode is not null && IsInstanceValid(XAxisLabelLatexNode))
+        {
+            var targetPos = XAxisLabelAlignment == AxisLabelAlignmentOptions.Along
+                ? new Vector3(XAxis.LengthMinusPadding / 2, -XAxisLabelOffset, 0)
+                : new Vector3(XAxis.LengthMinusPadding + XAxisLabelOffset, 0, 0);
+
+            updatePhase.AddStateChangeInParallel(XAxisLabelLatexNode.MoveTo(targetPos));
+            updatePhase.AddStateChangeInParallel(XAxisLabelLatexNode.ScaleTo(Vector3.One * XAxisLabelScale));
+        }
+
+        // Y Axis Label
+        if (YAxisLabelLatexNode is not null && IsInstanceValid(YAxisLabelLatexNode))
+        {
+            var targetPos = YAxisLabelAlignment == AxisLabelAlignmentOptions.Along
+                ? new Vector3(-YAxisLabelOffset, YAxis.LengthMinusPadding / 2, 0)
+                : new Vector3(0, YAxis.LengthMinusPadding + YAxisLabelOffset, 0);
+
+            var targetRot = YAxisLabelAlignment == AxisLabelAlignmentOptions.Along
+                ? new Vector3(0, 0, 90)
+                : Vector3.Zero;
+
+            updatePhase.AddStateChangeInParallel(YAxisLabelLatexNode.MoveTo(targetPos));
+            updatePhase.AddStateChangeInParallel(YAxisLabelLatexNode.RotateTo(targetRot));
+            updatePhase.AddStateChangeInParallel(YAxisLabelLatexNode.ScaleTo(Vector3.One * YAxisLabelScale));
+        }
+
+        // Z Axis Label
+        if (ZAxisLabelLatexNode is not null && IsInstanceValid(ZAxisLabelLatexNode))
+        {
+            updatePhase.AddStateChangeInParallel(ZAxisLabelLatexNode.ScaleTo(Vector3.One * ZAxisLabelScale));
+        }
+    }
+
+    private void AddAxisLabelsStateChanges(CompositeStateChange addPhase)
+    {
+        // X Axis Label
+        if (XAxisLabelLatexNode is null || !IsInstanceValid(XAxisLabelLatexNode))
+        {
+            XAxisLabelLatexNode = LatexNode.Create(_xAxisLabel);
+            if (XAxisLabelAlignment == AxisLabelAlignmentOptions.End)
+            {
+                XAxisLabelLatexNode.HorizontalAlignment = LatexNode.HorizontalAlignmentOptions.Left;
+            }
+
+            XAxisLabelLatexNode.Position = XAxisLabelAlignment == AxisLabelAlignmentOptions.Along
+                ? new Vector3(XAxis.LengthMinusPadding / 2, -XAxisLabelOffset, 0)
+                : new Vector3(XAxis.LengthMinusPadding + XAxisLabelOffset, 0, 0);
+            XAxisLabelLatexNode.Scale = Vector3.Zero;
+            AddChild(XAxisLabelLatexNode);
+
+            addPhase.AddStateChangeInParallel(XAxisLabelLatexNode.ScaleTo(Vector3.One * XAxisLabelScale));
+        }
+
+        // Y Axis Label
+        if (YAxisLabelLatexNode is null || !IsInstanceValid(YAxisLabelLatexNode))
+        {
+            YAxisLabelLatexNode = LatexNode.Create(_yAxisLabel);
+            YAxisLabelLatexNode.Position = YAxisLabelAlignment == AxisLabelAlignmentOptions.Along
+                ? new Vector3(-YAxisLabelOffset, YAxis.LengthMinusPadding / 2, 0)
+                : new Vector3(0, YAxis.LengthMinusPadding + YAxisLabelOffset, 0);
+            YAxisLabelLatexNode.RotationDegrees = YAxisLabelAlignment == AxisLabelAlignmentOptions.Along
+                ? new Vector3(0, 0, 90)
+                : Vector3.Zero;
+            YAxisLabelLatexNode.Scale = Vector3.Zero;
+            AddChild(YAxisLabelLatexNode);
+
+            addPhase.AddStateChangeInParallel(YAxisLabelLatexNode.ScaleTo(Vector3.One * YAxisLabelScale));
+        }
+
+        // Z Axis Label
+        if (ZAxisLabelLatexNode is null || !IsInstanceValid(ZAxisLabelLatexNode))
+        {
+            ZAxisLabelLatexNode = LatexNode.Create(_zAxisLabel);
+            ZAxisLabelLatexNode.Position = ZAxisLabelAlignment == AxisLabelAlignmentOptions.Along
+                ? new Vector3(0, -ZAxisLabelOffset, ZAxis.LengthMinusPadding / 2)
+                : new Vector3(-12.5f, -4.5f, ZAxis.LengthMinusPadding);
+            ZAxisLabelLatexNode.Scale = Vector3.Zero;
+            AddChild(ZAxisLabelLatexNode);
+
+            addPhase.AddStateChangeInParallel(ZAxisLabelLatexNode.ScaleTo(Vector3.One * ZAxisLabelScale));
+        }
     }
 
     // public Tween ShrinkPlottedDataToEnd()

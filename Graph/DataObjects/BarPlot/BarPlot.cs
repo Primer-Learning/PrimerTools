@@ -109,10 +109,10 @@ public partial class BarPlot : Node3D, IPrimerGraphData
                 
                 var targetLabelPos = new Vector3(rectProperties[i].Item1,
                     rectProperties[i].Item2 + BarLabelVerticalOffset * parentGraphSize.Y / 10, 0);
-                animations.Add(theLabel.MoveTo(targetLabelPos));
+                animations.Add(theLabel.MoveToAnimation(targetLabelPos));
             
                 var targetLabelScale = BarLabelScaleFactor * rectProperties[i].Item3 / 2 * Vector3.One;
-                animations.Add(theLabel.ScaleTo(targetLabelScale));
+                animations.Add(theLabel.ScaleToAnimation(targetLabelScale));
 
                 theLabel.numberSuffix = BarLabelSuffix;
                 theLabel.numberPrefix = BarLabelPrefix;
@@ -137,7 +137,7 @@ public partial class BarPlot : Node3D, IPrimerGraphData
                 var labelName = $"Label {child.Name.ToString().Split(' ')[1]}";
                 if (GetNodeOrNull<LatexNode>(labelName) is { } label)
                 {
-                    animations.Add(label.ScaleTo(Vector3.Zero));
+                    animations.Add(label.ScaleToAnimation(Vector3.Zero));
                 }
             }
         }

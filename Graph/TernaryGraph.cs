@@ -129,30 +129,30 @@ public partial class TernaryGraph : Node3D
     public Animation ScaleBoundingObjectsUpFromZero()
     {
         return AnimationUtilities.Series(
-            BoundingObjects.Select(x => x.ScaleTo(0)).InParallel().WithDuration(AnimationUtilities.TimeEpsilon),
-            BoundingObjects.Select(x => x.ScaleTo(1)).InParallel()
+            BoundingObjects.Select(x => x.ScaleToAnimation(0)).InParallel().WithDuration(AnimationUtilities.TimeEpsilon),
+            BoundingObjects.Select(x => x.ScaleToAnimation(1)).InParallel()
         );
     }
     public Animation ScaleBoundingObjectsDownToZero()
     {
         return AnimationUtilities.Series(
-            BoundingObjects.Select(x => x.ScaleTo(1)).InParallel().WithDuration(AnimationUtilities.TimeEpsilon),
-            BoundingObjects.Select(x => x.ScaleTo(0)).InParallel()
+            BoundingObjects.Select(x => x.ScaleToAnimation(1)).InParallel().WithDuration(AnimationUtilities.TimeEpsilon),
+            BoundingObjects.Select(x => x.ScaleToAnimation(0)).InParallel()
         );
     }
 
     public Animation ScaleLabelsUpFromZero()
     {
         return AnimationUtilities.Series(
-            Labels.Select(x => x.ScaleTo(0)).InParallel().WithDuration(AnimationUtilities.TimeEpsilon),
-            Labels.Select(x => x.ScaleTo(LabelScale)).InParallel()
+            Labels.Select(x => x.ScaleToAnimation(0)).InParallel().WithDuration(AnimationUtilities.TimeEpsilon),
+            Labels.Select(x => x.ScaleToAnimation(LabelScale)).InParallel()
         );
     }
     public Animation ScaleLabelsDownToZero()
     {
         return AnimationUtilities.Series(
-            Labels.Select(x => x.ScaleTo(LabelScale)).InParallel().WithDuration(AnimationUtilities.TimeEpsilon),
-            Labels.Select(x => x.ScaleTo(0)).InParallel()
+            Labels.Select(x => x.ScaleToAnimation(LabelScale)).InParallel().WithDuration(AnimationUtilities.TimeEpsilon),
+            Labels.Select(x => x.ScaleToAnimation(0)).InParallel()
         );
     }
     

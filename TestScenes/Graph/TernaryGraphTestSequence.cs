@@ -17,7 +17,7 @@ public partial class TernaryGraphTestSequence : AnimationSequence
 		AddChild(ternaryPlot);
 		ternaryPlot.CreateBounds();
 
-		RegisterAnimation(ternaryPlot.ScaleTo(1));
+		RegisterAnimation(ternaryPlot.ScaleToAnimation(1));
 
 		ternaryPlot.BarsPerSide = 11;
 		

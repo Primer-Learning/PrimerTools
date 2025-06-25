@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
+using PrimerTools;
+using PrimerTools.TweenSystem;
 
 public class CompositeStateChange : IStateChange
 {
@@ -59,6 +61,36 @@ public class CompositeStateChange : IStateChange
     {
         _customName = name;
         return this;
+    }
+    
+    public CompositeStateChange WithDuration(double newDuration)
+    {
+        var currentDuration = Duration;
+        if (currentDuration <= 0) return this; // Can't scale zero duration
+        
+        var scaleFactor = newDuration / currentDuration;
+        
+        // Create new list with scaled times
+        var scaledChanges = new List<TimedStateChange>();
+        foreach (var timedChange in _timedChanges)
+        {
+            var scaledChange = new TimedStateChange(
+                timedChange.StateChange.WithDuration(timedChange.StateChange.Duration * scaleFactor),
+                timedChange.StartTime * scaleFactor
+            );
+            scaledChanges.Add(scaledChange);
+        }
+        
+        _timedChanges.Clear();
+        _timedChanges.AddRange(scaledChanges);
+        _currentEndTime *= scaleFactor;
+        
+        return this;
+    }
+    
+    IStateChange IStateChange.WithDuration(double duration)
+    {
+        return WithDuration(duration);
     }
     
     public IEnumerable<(IAnimatedStateChange change, double absoluteStartTime)> Flatten(double baseTime = 0)

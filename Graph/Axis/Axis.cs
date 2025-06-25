@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Godot;
 using PrimerTools;
+using PrimerTools.TweenSystem;
 
 namespace PrimerTools.Graph;
 
@@ -97,8 +98,8 @@ public partial class Axis : Node3D
 		if (!ShowRod) { rod.Visible = false; }
 
 		return AnimationUtilities.Parallel(
-			rod.MoveTo(new Vector3(-Padding.X + Min * DataSpaceScale, 0f, 0f), duration: duration),
-			rod.ScaleTo(length == 0 
+			rod.MoveToAnimation(new Vector3(-Padding.X + Min * DataSpaceScale, 0f, 0f), duration: duration),
+			rod.ScaleToAnimation(length == 0 
 				? Vector3.Zero
 				: new Vector3(length, Chonk, Chonk), duration)
 		);
@@ -123,9 +124,138 @@ public partial class Axis : Node3D
 		}
 
 		return AnimationUtilities.Parallel(
-			startArrow.MoveTo(new Vector3(-padding.X + Min * DataSpaceScale, 0f, 0f)),
-			endArrow.MoveTo(new Vector3(length - padding.X + Min * DataSpaceScale, 0f, 0f))
+			startArrow.MoveToAnimation(new Vector3(-padding.X + Min * DataSpaceScale, 0f, 0f)),
+			endArrow.MoveToAnimation(new Vector3(length - padding.X + Min * DataSpaceScale, 0f, 0f))
 		);
+	}
+	
+	internal (CompositeStateChange Remove, CompositeStateChange Update, CompositeStateChange Add) UpdateChildrenStateChange(float duration = 0.5f)
+	{
+	    var (removeTics, updateTics, addTics) = UpdateTicsStateChange(duration);
+
+	    var removeComposite = new CompositeStateChange().WithName($"{Name} Remove");
+	    removeComposite.AddStateChange(removeTics);
+
+	    var updateComposite = new CompositeStateChange().WithName($"{Name} Update");
+	    updateComposite.AddStateChange(UpdateArrowsStateChange(duration));
+	    updateComposite.AddStateChangeInParallel(UpdateRodStateChange(duration));
+	    updateComposite.AddStateChangeInParallel(updateTics);
+
+	    var addComposite = new CompositeStateChange().WithName($"{Name} Add");
+	    addComposite.AddStateChange(addTics);
+
+	    return (removeComposite, updateComposite, addComposite);
+	}
+
+	private CompositeStateChange UpdateRodStateChange(float duration)
+	{
+	    var composite = new CompositeStateChange().WithName("Update Rod");
+	    var rod = GetNode<Node3D>("Rod");
+
+	    if (!ShowRod) { rod.Visible = false; }
+
+	    composite.AddStateChange(rod.MoveTo(new Vector3(-Padding.X + Min * DataSpaceScale, 0f, 0f)).WithDuration(duration));
+	    composite.AddStateChangeInParallel(
+	        rod.ScaleTo(length == 0
+	            ? Vector3.Zero
+	            : new Vector3(length, Chonk, Chonk))
+	        .WithDuration(duration)
+	    );
+
+	    return composite;
+	}
+
+	private CompositeStateChange UpdateArrowsStateChange(float duration)
+	{
+	    var composite = new CompositeStateChange().WithName("Update Arrows");
+	    var endArrow = GetNode<Node3D>("Head");
+	    var startArrow = GetNode<Node3D>("Tail");
+
+	    if (!ShowArrows)
+	    {
+	        endArrow.Visible = false;
+	        startArrow.Visible = false;
+	    }
+
+	    endArrow.Scale = Vector3.One * Chonk * ArrowHeadScaleFactor;
+	    startArrow.Scale = Vector3.One * Chonk * ArrowHeadScaleFactor;
+	    if (length == 0)
+	    {
+	        endArrow.Scale = Vector3.Zero;
+	        startArrow.Scale = Vector3.Zero;
+	    }
+
+	    composite.AddStateChange(startArrow.MoveTo(new Vector3(-padding.X + Min * DataSpaceScale, 0f, 0f)).WithDuration(duration));
+	    composite.AddStateChangeInParallel(endArrow.MoveTo(new Vector3(length - padding.X + Min * DataSpaceScale, 0f, 0f)).WithDuration(duration));
+
+	    return composite;
+	}
+
+	private (CompositeStateChange remove, CompositeStateChange update, CompositeStateChange add) UpdateTicsStateChange(float duration)
+	{
+	    Vector3 GetPosition(AxisTic tic) => new(tic.data.value * DataSpaceScale, 0, 0);
+
+	    var ticsToRemove = GetChildren().Select(x => x as AxisTic).Where(x => x != null).ToList();
+	    var removeComposite = new CompositeStateChange().WithName("Remove Tics");
+	    var updateComposite = new CompositeStateChange().WithName("Update Tics");
+	    var addComposite = new CompositeStateChange().WithName("Add Tics");
+
+	    foreach (var data in PrepareTics())
+	    {
+	        var name = $"Tic {data.label}".ToValidNodeName();
+	        var tic = GetNodeOrNull<AxisTic>(name);
+
+	        if (tic == null)
+	        {
+	            tic = TicScene.Instantiate<AxisTic>();
+	            tic.data = data;
+	            AddChild(tic);
+	            tic.Name = name;
+	            tic.Owner = GetTree().EditedSceneRoot;
+	            tic.SceneFilePath = "";
+	            tic.MakeSelfAndChildrenLocal(GetTree().EditedSceneRoot);
+
+	            tic.Position = GetPosition(tic);
+	            tic.Scale = Vector3.Zero;
+	            addComposite.AddStateChangeInParallel(tic.ScaleTo(Chonk).WithDuration(duration));
+	            tic.SetLabel();
+	            tic.SetLabelScale(0);
+	            tic.SetLabelDistance(TicLabelDistance);
+	            if (!ShowTicCylinders) tic.GetNode<MeshInstance3D>("MeshInstance3D").Visible
+	= false;
+	        }
+	        else
+	        {
+	            tic.data = data;
+	            ticsToRemove.Remove(tic);
+	        }
+
+	        updateComposite.AddStateChangeInParallel(tic.MoveTo(GetPosition(tic)).WithDuration(duration));
+	        updateComposite.AddStateChangeInParallel(tic.ScaleTo(Chonk).WithDuration(duration));
+
+	        updateComposite.AddStateChangeInParallel(tic.AnimateLabelScaleStateChange(0.2f).WithDuration(duration));
+        
+	        if (TicLabelDistance.HasValue)
+	        {
+	            var labelDistanceChange = tic.AnimateLabelDistanceStateChange(TicLabelDistance);
+	            if (labelDistanceChange != null)
+	            {
+	                updateComposite.AddStateChangeInParallel(labelDistanceChange.WithDuration(duration));
+	            }
+	        }
+
+	        if (length == 0)
+	        {
+	            tic.Scale = Vector3.Zero;
+	        }
+	    }
+
+	    foreach (var tic in ticsToRemove)
+	    {
+	        removeComposite.AddStateChangeInParallel(tic.ScaleTo(0).WithDuration(duration));
+	    }
+
+	    return (removeComposite, updateComposite, addComposite);
 	}
 
 	#region Tics
@@ -167,7 +297,7 @@ public partial class Axis : Node3D
 				
 				tic.Position = GetPosition(tic);
 				tic.Scale = Vector3.Zero;
-				newTicAnimations.Add(tic.ScaleTo(Chonk, duration));
+				newTicAnimations.Add(tic.ScaleToAnimation(Chonk, duration));
 				tic.SetLabel();
 				tic.SetLabelScale(0);
 				tic.SetLabelDistance(TicLabelDistance);
@@ -179,8 +309,8 @@ public partial class Axis : Node3D
 				ticsToRemove.Remove(tic);
 			}
 			
-			ticMovementAnimations.Add(tic.MoveTo(GetPosition(tic)));
-			ticMovementAnimations.Add(tic.ScaleTo(Chonk, duration));
+			ticMovementAnimations.Add(tic.MoveToAnimation(GetPosition(tic)));
+			ticMovementAnimations.Add(tic.ScaleToAnimation(Chonk, duration));
 			ticMovementAnimations.Add(tic.AnimateLabelScale(0.2f));
 			if (TicLabelDistance.HasValue)
 			{
@@ -193,7 +323,7 @@ public partial class Axis : Node3D
 			}
 		}
 
-		var ticRemovalAnimations = ticsToRemove.Select(tic => tic.ScaleTo(0, duration));
+		var ticRemovalAnimations = ticsToRemove.Select(tic => tic.ScaleToAnimation(0, duration));
 
 		return (
 			AnimationUtilities.Parallel(ticRemovalAnimations.ToArray()),

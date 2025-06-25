@@ -158,7 +158,7 @@ public static class AnimationUtilities
         animation.TrackInsertKey(0, 0, methodCall);
         return animation;
     }
-    public static Animation MoveTo(this Node3D node, Vector3 destination, float stopDistance = 0, double duration = DefaultDuration, bool global = false)
+    public static Animation MoveToAnimation(this Node3D node, Vector3 destination, float stopDistance = 0, double duration = DefaultDuration, bool global = false)
     {
         // If destination was given in global space, figure out the equivalent point expressed in local space.
         // The reason for doing this instead of animating global_position is that those keyframes fight with local
@@ -176,30 +176,30 @@ public static class AnimationUtilities
     }
 
     
-    public static Animation MoveBy(this Node3D node, Vector3 displacement, double duration = DefaultDuration,
+    public static Animation MoveByAnimation(this Node3D node, Vector3 displacement, double duration = DefaultDuration,
         bool global = false)
     {
         var finalPos = global
             ? node.GlobalPosition + displacement
             : node.Position + displacement;
 
-        return node.MoveTo(finalPos, duration: duration, global: global);
+        return node.MoveToAnimation(finalPos, duration: duration, global: global);
     } 
     
-    public static Animation RotateTo(this Node3D node, float xDeg, float yDeg, float zDeg, bool global = false, double duration = DefaultDuration, Animation.InterpolationType interpolationType = Animation.InterpolationType.CubicAngle)
+    public static Animation RotateToAnimation(this Node3D node, float xDeg, float yDeg, float zDeg, bool global = false, double duration = DefaultDuration, Animation.InterpolationType interpolationType = Animation.InterpolationType.CubicAngle)
     {
-        return node.RotateTo(new Vector3(xDeg, yDeg, zDeg), global: global, duration, interpolationType);
+        return node.RotateToAnimation(new Vector3(xDeg, yDeg, zDeg), global: global, duration, interpolationType);
     }
-    public static Animation RotateTo(this Node3D node, Vector3 eulerAnglesInDegrees, bool global = false, double duration = DefaultDuration, Animation.InterpolationType interpolationType = Animation.InterpolationType.CubicAngle)
+    public static Animation RotateToAnimation(this Node3D node, Vector3 eulerAnglesInDegrees, bool global = false, double duration = DefaultDuration, Animation.InterpolationType interpolationType = Animation.InterpolationType.CubicAngle)
     {
         var eulerAnglesInRadians = new Vector3(
             Mathf.DegToRad(eulerAnglesInDegrees.X),
             Mathf.DegToRad(eulerAnglesInDegrees.Y),
             Mathf.DegToRad(eulerAnglesInDegrees.Z)
         );
-        return node.RotateTo(Quaternion.FromEuler(eulerAnglesInRadians), global: global, duration, interpolationType);
+        return node.RotateToAnimation(Quaternion.FromEuler(eulerAnglesInRadians), global: global, duration, interpolationType);
     }
-    public static Animation RotateTo(this Node3D node, Quaternion destination, bool global = false, double duration = DefaultDuration, Animation.InterpolationType interpolationType = Animation.InterpolationType.CubicAngle)
+    public static Animation RotateToAnimation(this Node3D node, Quaternion destination, bool global = false, double duration = DefaultDuration, Animation.InterpolationType interpolationType = Animation.InterpolationType.CubicAngle)
     {
         if (duration == 0) duration = TimeEpsilon;
 
@@ -238,19 +238,19 @@ public static class AnimationUtilities
 
         return animation;
     }
-    public static Animation WalkTo(this Node3D node, Vector3 destination, float stopDistance = 0, double duration = DefaultDuration, double prepTurnDuration = 0.1)
+    public static Animation WalkToAnimation(this Node3D node, Vector3 destination, float stopDistance = 0, double duration = DefaultDuration, double prepTurnDuration = 0.1)
     {
         var difference = destination - node.Position;
         
-        var prepRotation = node.RotateTo(new Quaternion(Vector3.Back, difference.Normalized()), global: false, prepTurnDuration);
-        var move = node.MoveTo(destination, stopDistance, duration);
+        var prepRotation = node.RotateToAnimation(new Quaternion(Vector3.Back, difference.Normalized()), global: false, prepTurnDuration);
+        var move = node.MoveToAnimation(destination, stopDistance, duration);
 
         return Parallel(
             prepRotation,
             move
         );
     }
-    public static Animation ScaleTo(this Node3D node, Vector3 finalScale, double duration = DefaultDuration)
+    public static Animation ScaleToAnimation(this Node3D node, Vector3 finalScale, double duration = DefaultDuration)
     {
         // True zero scale causes the rotation to be set to identity. So we'll use a small value instead.
         if (finalScale == Vector3.Zero) finalScale = Vector3.One * LengthEpsilon;
@@ -258,18 +258,18 @@ public static class AnimationUtilities
         
         return node.AnimateValue(finalScale, "scale", duration);
     }
-    public static Animation ScaleTo(this Node3D node, float finalScale, double duration = DefaultDuration)
+    public static Animation ScaleToAnimation(this Node3D node, float finalScale, double duration = DefaultDuration)
     {
-        return node.ScaleTo(Vector3.One * finalScale, duration);
+        return node.ScaleToAnimation(Vector3.One * finalScale, duration);
     }
 
-    public static Animation Pulse(this Node3D node, float scaleFactor = 1.2f, double attack = 0.5, double hold = 0, double decay = 0.5)
+    public static Animation PulseAnimation(this Node3D node, float scaleFactor = 1.2f, double attack = 0.5, double hold = 0, double decay = 0.5)
     {
         var originalScale = node.Scale; 
         return Series(
-            node.ScaleTo(originalScale * 1.2f).WithDuration(attack),
+            node.ScaleToAnimation(originalScale * 1.2f).WithDuration(attack),
             new Animation().WithDuration(hold),
-            node.ScaleTo(originalScale).WithDuration(decay)
+            node.ScaleToAnimation(originalScale).WithDuration(decay)
         );
     }
     
@@ -325,7 +325,7 @@ public static class AnimationUtilities
         return rigidBody.AnimateBool(value, "freeze", resetAtEnd, duration);
     }
     
-    public static Animation MoveTo(this RigidBody3D rigidBody,
+    public static Animation MoveToAnimation(this RigidBody3D rigidBody,
         Vector3 destination,
         float stopDistance = 0,
         double duration = DefaultDuration,
@@ -363,26 +363,26 @@ public static class AnimationUtilities
         }
 
         return Parallel(
-            rigidBody.GetMeshInstanceForRigidBody().MoveTo(destination, stopDistance: stopDistance, duration: duration, global: false),
-            rigidBody.GetNode<Node3D>("CollisionShape3D").MoveTo(destination, stopDistance: stopDistance, duration: duration, global: false)
+            rigidBody.GetMeshInstanceForRigidBody().MoveToAnimation(destination, stopDistance: stopDistance, duration: duration, global: false),
+            rigidBody.GetNode<Node3D>("CollisionShape3D").MoveToAnimation(destination, stopDistance: stopDistance, duration: duration, global: false)
         );
     }
     
-    public static Animation RotateTo(this RigidBody3D rigidBody, float xDeg, float yDeg, float zDeg, double duration = DefaultDuration)
+    public static Animation RotateToAnimation(this RigidBody3D rigidBody, float xDeg, float yDeg, float zDeg, double duration = DefaultDuration)
     {
-        return rigidBody.RotateTo(new Vector3(xDeg, yDeg, zDeg), duration);
+        return rigidBody.RotateToAnimation(new Vector3(xDeg, yDeg, zDeg), duration);
     }
-    public static Animation RotateTo(this RigidBody3D rigidBody, Vector3 eulerAnglesInDegrees, double duration = DefaultDuration)
+    public static Animation RotateToAnimation(this RigidBody3D rigidBody, Vector3 eulerAnglesInDegrees, double duration = DefaultDuration)
     {
         var eulerAnglesInRadians = new Vector3(
             Mathf.DegToRad(eulerAnglesInDegrees.X),
             Mathf.DegToRad(eulerAnglesInDegrees.Y),
             Mathf.DegToRad(eulerAnglesInDegrees.Z)
         );
-        return rigidBody.RotateTo(Quaternion.FromEuler(eulerAnglesInRadians), duration);
+        return rigidBody.RotateToAnimation(Quaternion.FromEuler(eulerAnglesInRadians), duration);
     }
     
-    public static Animation RotateTo(this RigidBody3D rigidBody,
+    public static Animation RotateToAnimation(this RigidBody3D rigidBody,
         Quaternion destination,
         double duration = DefaultDuration,
         bool global = false)
@@ -418,11 +418,11 @@ public static class AnimationUtilities
         }
         
         return Parallel(
-            rigidBody.GetMeshInstanceForRigidBody().RotateTo(destination, duration: duration),
-            rigidBody.GetNode<Node3D>("CollisionShape3D").RotateTo(destination, duration: duration)
+            rigidBody.GetMeshInstanceForRigidBody().RotateToAnimation(destination, duration: duration),
+            rigidBody.GetNode<Node3D>("CollisionShape3D").RotateToAnimation(destination, duration: duration)
         );
     }
-    public static Animation ScaleTo(this RigidBody3D rigidBody,
+    public static Animation ScaleToAnimation(this RigidBody3D rigidBody,
         Vector3 destination,
         double duration = DefaultDuration)
     {
@@ -432,8 +432,8 @@ public static class AnimationUtilities
         // will also effectively override the physics updates.
 
         return Parallel(
-            rigidBody.GetMeshInstanceForRigidBody().ScaleTo(destination, duration: duration),
-            rigidBody.GetNode<Node3D>("CollisionShape3D").ScaleTo(destination, duration: duration)
+            rigidBody.GetMeshInstanceForRigidBody().ScaleToAnimation(destination, duration: duration),
+            rigidBody.GetNode<Node3D>("CollisionShape3D").ScaleToAnimation(destination, duration: duration)
         );
     }
 

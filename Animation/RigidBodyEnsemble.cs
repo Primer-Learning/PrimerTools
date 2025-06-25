@@ -36,14 +36,14 @@ public partial class RigidBodyEnsemble : Node3D
 			childDestinations[i] = (finalGlobalTransformation * rigidChildren[i].Transform).Origin;
 		}
 
-		return rigidChildren.Select((x, i) => x.MoveTo(childDestinations[i], duration: duration, global: global))
+		return rigidChildren.Select((x, i) => x.MoveToAnimation(childDestinations[i], duration: duration, global: global))
 			.InParallel();
 	}
 	
 	public Animation ScaleTo(Vector3 finalScale, float duration = 0.5f)
 	{
 		var rigidChildren = GetChildren().OfType<RigidBody3D>();
-		return rigidChildren.Select(x => x.ScaleTo(finalScale, duration: duration)).InParallel();
+		return rigidChildren.Select(x => x.ScaleToAnimation(finalScale, duration: duration)).InParallel();
 	}
 	public Animation ScaleTo(float finalScale, float duration = 0.5f)
 	{

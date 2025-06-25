@@ -117,10 +117,10 @@ public partial class BarPlot3D : Node3D, IPrimerGraphData
             var bar = EnsureBarExists(x, y);
             
             // Position the bar
-            animations.Add(bar.MoveTo(CalculateBarPosition(x, y)));
+            animations.Add(bar.MoveToAnimation(CalculateBarPosition(x, y)));
             
             // Scale the bar
-            animations.Add(bar.ScaleTo(CalculateBarScale(_data[x, y])));
+            animations.Add(bar.ScaleToAnimation(CalculateBarScale(_data[x, y])));
         }
 
         return animations.InParallel().WithDuration(duration);
@@ -168,7 +168,7 @@ public partial class BarPlot3D : Node3D, IPrimerGraphData
         {
             var bar = GetBar(x, y);
             if (bar == null) continue;
-            animations.Add(bar.ScaleTo(Vector3.Zero));
+            animations.Add(bar.ScaleToAnimation(Vector3.Zero));
         }
 
         return animations.InParallel();
