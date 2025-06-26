@@ -99,12 +99,14 @@ public partial class LatexNode : Node3D
 		}
 		
 		var path = await latexToMesh.MeshFromExpression(Latex, openBlender);
+		if (Engine.IsEditorHint())
+		{
+			EditorInterface.Singleton.GetResourceFilesystem().UpdateFile(path);
+			EditorInterface.Singleton.GetResourceFilesystem().ReimportFiles(new string[] {path});
+		}
 		var newNode = ResourceLoader.Load<PackedScene>(path).Instantiate<Node3D>();
 		
-		/* TODO: Try triggering reload here
-		 * https://docs.godotengine.org/en/stable/classes/class_editorfilesystem.html#class-editorfilesystem-method-reimport-files
-		 * Beware the singleton (read top of documentation page)
-		 */
+		
 		
 		
 		AddChild(newNode);
