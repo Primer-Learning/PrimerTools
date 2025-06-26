@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://cs00kuudx2xtn"]
+
+[ext_resource type="Script" uid="uid://7j51f8p2lbni" path="res://addons/PrimerTools/TestScenes/tween_test.gd" id="1_csn08"]
+
+[node name="TweenTest" type="Node2D"]
+script = ExtResource("1_csn08")
