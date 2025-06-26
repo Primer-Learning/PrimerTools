@@ -26,6 +26,8 @@ public abstract partial class TweenSequence : Node
     private double _currentTime = 0;
     private bool _isPlaying = false;
     private Tween _masterTween;
+
+    public double LastStateChangeTime => _rootComposite.CurrentEndTime;
     
     public bool IsPlaying => _isPlaying;
     public double CurrentTime => _currentTime;

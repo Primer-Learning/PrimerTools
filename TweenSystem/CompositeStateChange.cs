@@ -24,6 +24,7 @@ public class CompositeStateChange : IStateChange
         }
     }
     private double _currentEndTime = 0;
+    public double CurrentEndTime => _currentEndTime;
     private string _customName;
     
     public string Name => _customName ?? (_timedChanges.Count > 0 
