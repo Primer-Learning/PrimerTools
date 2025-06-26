@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
-using PrimerTools;
+using PrimerTools.LaTeX;
 using PrimerTools.TweenSystem;
 
 namespace PrimerTools.Graph;
@@ -14,6 +14,31 @@ public partial class Axis : Node3D
 	private int animationsMade = 0;
 
 	private const float ArrowHeadScaleFactor = 0.07f;
+	
+	// Axis type enum
+	public enum AxisType { X, Y, Z }
+	[Export] public AxisType Type { get; set; }
+	
+	// Label properties
+	[Export] private string _label = "";
+	public string Label
+	{
+		get => _label;
+		set
+		{
+			_label = value;
+			// Free the previous node so it will be remade on transition
+			if (IsInstanceValid(_labelNode))
+			{
+				_labelNode.Free();
+			}
+		}
+	}
+	[Export] public float LabelOffset = 1;
+	[Export] public float LabelScale = 1;
+	[Export] public Graph.AxisLabelAlignmentOptions LabelAlignment = Graph.AxisLabelAlignmentOptions.End;
+	
+	private LatexNode _labelNode;
 	
 	[Export] public float Min = 0;
 	// [Export] private float Min {
@@ -132,17 +157,21 @@ public partial class Axis : Node3D
 	internal (CompositeStateChange Remove, CompositeStateChange Update, CompositeStateChange Add) UpdateChildrenStateChange(float duration = 0.5f)
 	{
 	    var (removeTics, updateTics, addTics) = UpdateTicsStateChange(duration);
+	    var (removeLabel, updateLabel, addLabel) = UpdateLabelStateChange(duration);
 
 	    var removeComposite = new CompositeStateChange().WithName($"{Name} Remove");
 	    removeComposite.AddStateChange(removeTics);
+	    removeComposite.AddStateChangeInParallel(removeLabel);
 
 	    var updateComposite = new CompositeStateChange().WithName($"{Name} Update");
 	    updateComposite.AddStateChange(UpdateArrowsStateChange(duration));
 	    updateComposite.AddStateChangeInParallel(UpdateRodStateChange(duration));
 	    updateComposite.AddStateChangeInParallel(updateTics);
+	    updateComposite.AddStateChangeInParallel(updateLabel);
 
 	    var addComposite = new CompositeStateChange().WithName($"{Name} Add");
 	    addComposite.AddStateChange(addTics);
+	    addComposite.AddStateChangeInParallel(addLabel);
 
 	    return (removeComposite, updateComposite, addComposite);
 	}
@@ -256,6 +285,87 @@ public partial class Axis : Node3D
 	    }
 
 	    return (removeComposite, updateComposite, addComposite);
+	}
+	
+	private (CompositeStateChange remove, CompositeStateChange update, CompositeStateChange add) UpdateLabelStateChange(float duration)
+	{
+		var removeComposite = new CompositeStateChange().WithName("Remove Label");
+		var updateComposite = new CompositeStateChange().WithName("Update Label");
+		var addComposite = new CompositeStateChange().WithName("Add Label");
+		
+		if (_labelNode is not null && IsInstanceValid(_labelNode))
+		{
+			// Update existing label
+			var (position, rotation) = GetLabelTransform();
+			updateComposite.AddStateChange(_labelNode.MoveTo(position).WithDuration(duration));
+			updateComposite.AddStateChangeInParallel(_labelNode.RotateTo(rotation).WithDuration(duration));
+			updateComposite.AddStateChangeInParallel(_labelNode.ScaleTo(Vector3.One * LabelScale).WithDuration(duration));
+		}
+		else if (!string.IsNullOrEmpty(_label))
+		{
+			// Create new label
+			_labelNode = LatexNode.Create(_label);
+			UpdateLabelAlignmentSettings();
+			
+			var (position, rotation) = GetLabelTransform();
+			_labelNode.Position = position;
+			_labelNode.RotationDegrees = rotation;
+			_labelNode.Scale = Vector3.Zero;
+			AddChild(_labelNode);
+			
+			addComposite.AddStateChange(_labelNode.ScaleTo(Vector3.One * LabelScale).WithDuration(duration));
+		}
+		
+		return (removeComposite, updateComposite, addComposite);
+	}
+	
+	private void UpdateLabelAlignmentSettings()
+	{
+		if (_labelNode == null) return;
+		
+		if (Type == AxisType.X && LabelAlignment == Graph.AxisLabelAlignmentOptions.End)
+		{
+			_labelNode.HorizontalAlignment = LatexNode.HorizontalAlignmentOptions.Left;
+		}
+		else if (Type == AxisType.X && LabelAlignment == Graph.AxisLabelAlignmentOptions.Along)
+		{
+			_labelNode.HorizontalAlignment = LatexNode.HorizontalAlignmentOptions.Center;
+		}
+	}
+	
+	private (Vector3 position, Vector3 rotation) GetLabelTransform()
+	{
+		switch (Type)
+		{
+			case AxisType.X:
+				return (
+					LabelAlignment == Graph.AxisLabelAlignmentOptions.Along
+						? new Vector3(LengthMinusPadding / 2, -LabelOffset, 0)
+						: new Vector3(LengthMinusPadding + LabelOffset, 0, 0),
+					Vector3.Zero
+				);
+				
+			case AxisType.Y:
+				return (
+					LabelAlignment == Graph.AxisLabelAlignmentOptions.Along
+						? new Vector3(-LabelOffset, LengthMinusPadding / 2, 0)
+						: new Vector3(0, LengthMinusPadding + LabelOffset, 0),
+					LabelAlignment == Graph.AxisLabelAlignmentOptions.Along
+						? new Vector3(0, 0, 90)
+						: Vector3.Zero
+				);
+				
+			case AxisType.Z:
+				return (
+					LabelAlignment == Graph.AxisLabelAlignmentOptions.Along
+						? new Vector3(0, -LabelOffset, LengthMinusPadding / 2)
+						: new Vector3(-12.5f, -4.5f, LengthMinusPadding),
+					Vector3.Zero
+				);
+				
+			default:
+				return (Vector3.Zero, Vector3.Zero);
+		}
 	}
 
 	#region Tics

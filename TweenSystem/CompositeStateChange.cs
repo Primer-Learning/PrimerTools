@@ -7,6 +7,8 @@ using PrimerTools.TweenSystem;
 
 public class CompositeStateChange : IStateChange
 {
+    private const float TimeEpsilon = 0.001f;
+    
     private readonly List<TimedStateChange> _timedChanges = new();
     
     private struct TimedStateChange
@@ -65,6 +67,8 @@ public class CompositeStateChange : IStateChange
     
     public CompositeStateChange WithDuration(double newDuration)
     {
+        newDuration = Mathf.Max(TimeEpsilon, newDuration);
+        
         var currentDuration = Duration;
         if (currentDuration <= 0) return this; // Can't scale zero duration
         
