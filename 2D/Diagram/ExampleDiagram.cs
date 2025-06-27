@@ -9,6 +9,6 @@ public partial class ExampleDiagram : DiagramSystem
     {
         // Add two circles
         AddElement(new CircleElement(new Vector2(-1, 1), 0.7f));
-        AddElement(new CircleElement(new Vector2(1, 0), 0.7f));
+        AddElement(new CircleElement(new Vector2(1, 0), 3f));
     }
 }

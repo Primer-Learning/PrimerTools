@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://bs80fh31y35u1"]
+[gd_scene load_steps=11 format=3 uid="uid://bs80fh31y35u1"]
 
 [ext_resource type="Script" uid="uid://cmyih6anxr6g7" path="res://addons/PrimerTools/Camera/CameraRig.cs" id="1_i4ttt"]
 [ext_resource type="Script" uid="uid://b574a0jrxvcix" path="res://addons/PrimerTools/Utilities/FPSViewer.cs" id="2_ep767"]
@@ -6,39 +6,41 @@
 [ext_resource type="Environment" uid="uid://xpav3hoy6ldu" path="res://addons/PrimerTools/primer_environment.tres" id="3_1vqf3"]
 [ext_resource type="Shader" uid="uid://cl6qolnr47avv" path="res://addons/PrimerTools/2D/sdf_shape_2d.gdshader" id="5_h6344"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_41dll"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_i4ttt"]
 render_priority = 0
 shader = ExtResource("5_h6344")
 shader_parameter/shape_color = Color(1, 0.5, 0, 1)
 shader_parameter/background_color = Color(0, 0, 0, 0)
-shader_parameter/thickness = 0.1
+shader_parameter/thickness = 0.01
 shader_parameter/smoothness = 0.01
 shader_parameter/shape_type = 0
 shader_parameter/triangle_p1 = Vector2(0, -0.7)
 shader_parameter/triangle_p2 = Vector2(-0.6, 0.5)
 shader_parameter/triangle_p3 = Vector2(0.6, 0.5)
 
-[sub_resource type="PlaneMesh" id="PlaneMesh_i8vr5"]
-size = Vector2(1.8, 1.8)
+[sub_resource type="PlaneMesh" id="PlaneMesh_ep767"]
+size = Vector2(1.4, 1.4)
 subdivide_width = 1
 subdivide_depth = 1
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_3ac6h"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_1vqf3"]
 render_priority = 0
 shader = ExtResource("5_h6344")
 shader_parameter/shape_color = Color(1, 0.5, 0, 1)
 shader_parameter/background_color = Color(0, 0, 0, 0)
-shader_parameter/thickness = 0.1
+shader_parameter/thickness = 0.01
 shader_parameter/smoothness = 0.01
 shader_parameter/shape_type = 0
 shader_parameter/triangle_p1 = Vector2(0, -0.7)
 shader_parameter/triangle_p2 = Vector2(-0.6, 0.5)
 shader_parameter/triangle_p3 = Vector2(0.6, 0.5)
 
-[sub_resource type="PlaneMesh" id="PlaneMesh_43vym"]
-size = Vector2(1.8, 1.8)
+[sub_resource type="PlaneMesh" id="PlaneMesh_h6344"]
+size = Vector2(6, 6)
 subdivide_width = 1
 subdivide_depth = 1
+
+[sub_resource type="SphereMesh" id="SphereMesh_41dll"]
 
 [node name="DiagramTest" type="Node3D"]
 
@@ -60,7 +62,7 @@ anchor_right = 1.0
 offset_left = -59.0
 offset_bottom = 23.0
 grow_horizontal = 0
-text = "143 FPS"
+text = "145 FPS"
 script = ExtResource("2_ep767")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="Boilerplate"]
@@ -72,13 +74,19 @@ shadow_enabled = true
 
 [node name="ExampleDiagram" type="Node3D" parent="."]
 script = ExtResource("2_m6nep")
+ShaderPath = "res://addons/PrimerTools/2D/sdf_shape_2d.gdshader"
+DefaultThickness = 0.01
 
 [node name="DiagramElement_CircleElement" type="MeshInstance3D" parent="ExampleDiagram"]
-transform = Transform3D(1, 0, 0, 0, 0.0697565, -0.997564, 0, 0.997564, 0.0697565, -1, 1, 0)
-material_override = SubResource("ShaderMaterial_41dll")
-mesh = SubResource("PlaneMesh_i8vr5")
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, -1, 1, 0)
+material_override = SubResource("ShaderMaterial_i4ttt")
+mesh = SubResource("PlaneMesh_ep767")
 
-[node name="@MeshInstance3D@39883" type="MeshInstance3D" parent="ExampleDiagram"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0)
-material_override = SubResource("ShaderMaterial_3ac6h")
-mesh = SubResource("PlaneMesh_43vym")
+[node name="@MeshInstance3D@55011" type="MeshInstance3D" parent="ExampleDiagram"]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 1, 0, 0)
+material_override = SubResource("ShaderMaterial_1vqf3")
+mesh = SubResource("PlaneMesh_h6344")
+
+[node name="TestSphere" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 1, 0.395887)
+mesh = SubResource("SphereMesh_41dll")

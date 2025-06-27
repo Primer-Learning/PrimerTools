@@ -7,8 +7,7 @@ using PrimerTools._2D.Diagram;
 [Tool]
 public partial class DiagramSystem : Node3D
 {
-    [Export] public string ShaderPath = "res://addons/PrimerTools/2D/sdf_shape_2d.gdshader";
-    [Export] public float ElementPadding = 0.2f; // Padding around each element
+    public string ShaderPath = "res://addons/PrimerTools/2D/Diagram/ShapeShaders/circle_shader.gdshader";
     [Export] public Color DefaultShapeColor = new Color(1.0f, 0.5f, 0.0f, 1.0f);
     [Export] public Color DefaultBackgroundColor = new Color(0.0f, 0.0f, 0.0f, 0.0f);
     [Export] public float DefaultThickness = 0.1f;
@@ -67,30 +66,28 @@ public partial class DiagramSystem : Node3D
         
         this.MakeSelfAndChildrenLocal();
     }
-
+    
     private void CreateMeshForElement(DiagramElement element)
     {
         // Get element bounds
         var bounds = element.GetBounds();
 
-        // Add padding
-        bounds = bounds.Grow(ElementPadding);
-
         // Create mesh instance
         var meshInstance = new MeshInstance3D();
-        meshInstance.Name = $"DiagramElement_{element.GetType().Name}";
         meshInstance.RotationDegrees = new Vector3(90, 0, 0);
         AddChild(meshInstance);
+        meshInstance.Name = $"DiagramElement_{element.GetType().Name}";
 
-        // Create plane mesh sized to fit the element
+        // Create plane mesh sized to fit the element's bounding box
         var planeMesh = new PlaneMesh();
         planeMesh.Size = bounds.Size;
         planeMesh.SubdivideWidth = 1;
         planeMesh.SubdivideDepth = 1;
         meshInstance.Mesh = planeMesh;
 
-        // Position the mesh in local space
-        meshInstance.Position = new Vector3(bounds.GetCenter().X, bounds.GetCenter().Y, 0);
+        // Position the mesh so its center aligns with the bounds center
+        meshInstance.Position = new Vector3(bounds.GetCenter().X, bounds.GetCenter().Y,
+            0);
 
         // Create and configure shader material
         var shader = GD.Load<Shader>(ShaderPath);
@@ -103,21 +100,71 @@ public partial class DiagramSystem : Node3D
         var shaderMaterial = new ShaderMaterial();
         shaderMaterial.Shader = shader;
 
-        // Set shader parameters
+        // Set common shader parameters
         shaderMaterial.SetShaderParameter("shape_color", DefaultShapeColor);
         shaderMaterial.SetShaderParameter("background_color", DefaultBackgroundColor);
         shaderMaterial.SetShaderParameter("thickness", DefaultThickness);
         shaderMaterial.SetShaderParameter("smoothness", DefaultSmoothness);
         shaderMaterial.SetShaderParameter("shape_type", element.GetShapeType());
 
-        // Calculate UV offset to position the shape correctly
-        // The shader expects UV coordinates from 0-1, which map to -1 to 1 in shader space
-        // We need to transform the element's position relative to the mesh's bounds
-        var relativePos = (element.Position - bounds.GetCenter()) / bounds.Size;
+        // Set shape center in object space (relative to mesh center)
+        var shapeCenter = element.Position - bounds.GetCenter();
+        shaderMaterial.SetShaderParameter("shape_center", shapeCenter);
 
-        // For now, since the shader doesn't support position offset, we rely on mesh positioning
-        // In the future, you might want to add uniform parameters to the shader for offset
+        // Set shape-specific parameters
+        if (element is CircleElement circle)
+        {
+            shaderMaterial.SetShaderParameter("circle_radius", circle.Radius);
+        }
+        // Add other shape types as needed
 
-        meshInstance.MaterialOverride = shaderMaterial;
+        meshInstance.SetSurfaceOverrideMaterial(0, shaderMaterial);
     }
+
+    // private void CreateMeshForElement(DiagramElement element)
+    // {
+    //     // Get element bounds
+    //     var bounds = element.GetBounds();
+    //
+    //     // Create mesh instance
+    //     var meshInstance = new MeshInstance3D();
+    //     meshInstance.Name = $"DiagramElement_{element.GetType().Name}";
+    //     meshInstance.RotationDegrees = new Vector3(90, 0, 0);
+    //     AddChild(meshInstance);
+    //
+    //     // Create plane mesh sized to fit the element
+    //     var planeMesh = new PlaneMesh();
+    //     planeMesh.Size = bounds.Size;
+    //     planeMesh.SubdivideWidth = 1;
+    //     planeMesh.SubdivideDepth = 1;
+    //     meshInstance.Mesh = planeMesh;
+    //
+    //     // Position the mesh in local space
+    //     meshInstance.Position = new Vector3(bounds.GetCenter().X, bounds.GetCenter().Y, 0);
+    //
+    //     // Create and configure shader material
+    //     var shader = GD.Load<Shader>(ShaderPath);
+    //     if (shader == null)
+    //     {
+    //         GD.PrintErr($"Failed to load shader at path: {ShaderPath}");
+    //         return;
+    //     }
+    //
+    //     var shaderMaterial = new ShaderMaterial();
+    //     shaderMaterial.Shader = shader;
+    //
+    //     // Set shader parameters
+    //     shaderMaterial.SetShaderParameter("shape_color", DefaultShapeColor);
+    //     shaderMaterial.SetShaderParameter("background_color", DefaultBackgroundColor);
+    //     shaderMaterial.SetShaderParameter("thickness", DefaultThickness);
+    //     shaderMaterial.SetShaderParameter("smoothness", DefaultSmoothness);
+    //     shaderMaterial.SetShaderParameter("shape_type", element.GetShapeType());
+    //
+    //     // Calculate UV offset to position the shape correctly
+    //     // The shader expects UV coordinates from 0-1, which map to -1 to 1 in shader space
+    //     // We need to transform the element's position relative to the mesh's bounds
+    //     var relativePos = (element.Position - bounds.GetCenter()) / bounds.Size;
+    //
+    //     meshInstance.MaterialOverride = shaderMaterial;
+    // }
 }
