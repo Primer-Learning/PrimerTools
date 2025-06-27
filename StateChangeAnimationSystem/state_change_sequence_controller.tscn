@@ -1,0 +1,105 @@
+[gd_scene load_steps=2 format=3 uid="uid://bxxakhhtmcbbd"]
+
+[ext_resource type="Script" uid="uid://bb532wmd4d8pb" path="res://addons/PrimerTools/StateChangeAnimationSystem/StateChangeSequenceController.cs" id="1_50png"]
+
+[node name="Control" type="Control"]
+custom_minimum_size = Vector2(300, 150)
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+script = ExtResource("1_50png")
+
+[node name="_VBoxContainer_37804" type="VBoxContainer" parent="."]
+layout_mode = 0
+
+[node name="Play_Reset" type="HBoxContainer" parent="_VBoxContainer_37804"]
+layout_mode = 2
+
+[node name="Play" type="Button" parent="_VBoxContainer_37804/Play_Reset"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Play"
+
+[node name="Reset" type="Button" parent="_VBoxContainer_37804/Play_Reset"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Reset"
+
+[node name="Seek" type="HBoxContainer" parent="_VBoxContainer_37804"]
+layout_mode = 2
+
+[node name="_Label_37831" type="Label" parent="_VBoxContainer_37804/Seek"]
+layout_mode = 2
+text = "Seek to:"
+
+[node name="SeekTimeSpinBox" type="SpinBox" parent="_VBoxContainer_37804/Seek"]
+unique_name_in_owner = true
+layout_mode = 2
+max_value = 1.50167
+step = 0.01
+suffix = "s"
+
+[node name="SeekButton" type="Button" parent="_VBoxContainer_37804/Seek"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Seek"
+
+[node name="Speed" type="HBoxContainer" parent="_VBoxContainer_37804"]
+layout_mode = 2
+
+[node name="_Label_37808" type="Label" parent="_VBoxContainer_37804/Speed"]
+layout_mode = 2
+text = "Speed:"
+
+[node name="SpeedSpinBox" type="SpinBox" parent="_VBoxContainer_37804/Speed"]
+unique_name_in_owner = true
+layout_mode = 2
+min_value = 0.1
+max_value = 5.0
+step = 0.1
+value = 1.0
+
+[node name="Time" type="HBoxContainer" parent="_VBoxContainer_37804"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="_VBoxContainer_37804/Time"]
+layout_mode = 2
+text = "Time:"
+
+[node name="TimeDisplay" type="Label" parent="_VBoxContainer_37804/Time"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "0.00 / 1.50"
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -87.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 0
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="Timeline" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+
+[node name="_Label_37857" type="Label" parent="MarginContainer/Timeline"]
+layout_mode = 2
+text = "Timeline"
+
+[node name="TimelineSlider" type="HSlider" parent="MarginContainer/Timeline"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(934, 20)
+layout_mode = 2
+max_value = 1.50167
+step = 0.01

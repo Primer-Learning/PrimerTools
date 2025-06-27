@@ -2,7 +2,7 @@ using System.Linq;
 using Godot;
 
 [Tool]
-public partial class TweenSequenceController : Control
+public partial class StateChangeSequenceController : Control
 {
     private StateChangeSequence _stateChangeSequence;
     private Button _playPauseButton;
