@@ -19,12 +19,12 @@ public partial class DiagramSystem : Node3D
     {
         if (Engine.IsEditorHint())
         {
-            RebuildDiagram();
+            BuildDiagram();
         }
     }
 
     [ExportToolButton("Create")]
-    private Callable Create => Callable.From(RebuildDiagram);
+    private Callable Create => Callable.From(BuildDiagram);
 
     protected virtual void DefineDiagram()
     {
@@ -39,7 +39,7 @@ public partial class DiagramSystem : Node3D
         _elements.Add(element);
     }
 
-    public void RebuildDiagram()
+    public void BuildDiagram()
     {
         // Clear existing meshes
         foreach (var child in GetChildren())
@@ -114,7 +114,8 @@ public partial class DiagramSystem : Node3D
         // Set shape-specific parameters
         if (element is CircleElement circle)
         {
-            shaderMaterial.SetShaderParameter("circle_radius", circle.Radius);
+            shaderMaterial.SetShaderParameter("radius", circle.Radius);
+            shaderMaterial.SetShaderParameter("shape_center", circle.Center);
         }
         // Add other shape types as needed
 
