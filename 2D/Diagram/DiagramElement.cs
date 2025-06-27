@@ -39,6 +39,12 @@ public abstract partial class DiagramElement : Node
     public abstract int GetShapeType();
     public abstract Rect2 GetBounds();
     
+    protected virtual string GetShaderPath()
+    {
+        // Default implementation - derived classes should override
+        return "res://addons/PrimerTools/2D/Diagram/ShapeShaders/circle_shader.gdshader";
+    }
+    
     public virtual void CreateMesh(DiagramSystem parentSystem)
     {
         // Create mesh instance
@@ -56,10 +62,11 @@ public abstract partial class DiagramElement : Node
         _meshInstance.Mesh = planeMesh;
         
         // Create shader material
-        var shader = GD.Load<Shader>(parentSystem.ShaderPath);
+        var shaderPath = GetShaderPath();
+        var shader = GD.Load<Shader>(shaderPath);
         if (shader == null)
         {
-            GD.PrintErr($"Failed to load shader at path: {parentSystem.ShaderPath}");
+            GD.PrintErr($"Failed to load shader at path: {shaderPath}");
             return;
         }
         
@@ -129,6 +136,11 @@ public partial class CircleElement : DiagramElement
         Name = "CircleElement";
     }
 
+    protected override string GetShaderPath()
+    {
+        return "res://addons/PrimerTools/2D/Diagram/ShapeShaders/circle_shader.gdshader";
+    }
+
     public override int GetShapeType() => 0; // Circle type in shader
 
     public override Rect2 GetBounds()
@@ -143,5 +155,60 @@ public partial class CircleElement : DiagramElement
         
         _shaderMaterial.SetShaderParameter("shape_center", Center);
         _shaderMaterial.SetShaderParameter("radius", Radius);
+    }
+}
+
+public partial class RectangleElement : DiagramElement
+{
+    private Vector2 _size;
+    public Vector2 Size 
+    { 
+        get => _size;
+        set
+        {
+            _size = value;
+            UpdateMeshTransform();
+            UpdateShaderParameters();
+        }
+    }
+    
+    private Vector2 _center;
+    public Vector2 Center 
+    { 
+        get => _center;
+        set
+        {
+            _center = value;
+            Position = value; // Update position to match center
+            UpdateShaderParameters();
+        }
+    }
+
+    public RectangleElement(Vector2 center, Vector2 size, float padding = 1) : base(center, padding)
+    {
+        _size = size;
+        _center = center;
+        Name = "RectangleElement";
+    }
+
+    protected override string GetShaderPath()
+    {
+        return "res://addons/PrimerTools/2D/Diagram/ShapeShaders/rectangle_shader.gdshader";
+    }
+
+    public override int GetShapeType() => 1; // Rectangle type in shader
+
+    public override Rect2 GetBounds()
+    {
+        // Return bounding box for the rectangle
+        return new Rect2(Position - Size - Vector2.One * Padding, (Size + Vector2.One * Padding) * 2);
+    }
+    
+    protected override void UpdateShaderParameters()
+    {
+        if (_shaderMaterial == null) return;
+        
+        _shaderMaterial.SetShaderParameter("shape_center", Center);
+        _shaderMaterial.SetShaderParameter("size", Size);
     }
 }

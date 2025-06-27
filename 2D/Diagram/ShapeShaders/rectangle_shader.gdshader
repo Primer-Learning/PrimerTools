@@ -12,7 +12,7 @@ uniform float smoothness : hint_range(0.001, 0.1) = 0.01;
 
 // Shape-specific parameters
 uniform vec2 shape_center = vec2(0.0, 0.0);  // Center in object space
-uniform float radius = 1;
+uniform vec2 size = vec2(1.0, 0.5);  // Half-width and half-height
 
 varying vec2 object_pos;
 
@@ -25,7 +25,7 @@ void fragment() {
     // Use object-space coordinates instead of UV
     vec2 p = object_pos - shape_center;
 
-    float d = sdCircle(p, radius);
+    float d = sdBox(p, size);
     d = applyThickness(d, thickness, inner_thickness);
 
     // Apply smoothstep for antialiasing

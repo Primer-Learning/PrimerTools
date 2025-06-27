@@ -16,8 +16,12 @@ public partial class DiagramSequence : StateChangeSequence
         var circle1 = new CircleElement(new Vector2(-2, 0), 0.5f);
         var circle2 = new CircleElement(new Vector2(2, 0), 0.8f);
         
+        // Create rectangle element
+        var rect1 = new RectangleElement(new Vector2(0, -2), new Vector2(1.0f, 0.5f));
+        
         diagram.AddElement(circle1);
         diagram.AddElement(circle2);
+        diagram.AddElement(rect1);
         diagram.BuildDiagram();
         
         // Animate the circles
@@ -47,6 +51,12 @@ public partial class DiagramSequence : StateChangeSequence
         AddStateChange(
             new PropertyStateChange(circle1, "Radius", 0.2f)
                 .WithDuration(1)
+        );
+        
+        // Animate rectangle size
+        AddStateChange(
+            new PropertyStateChange(rect1, "Size", new Vector2(2.0f, 0.2f))
+                .WithDuration(1.5)
         );
     }
 }
