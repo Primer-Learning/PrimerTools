@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3 uid="uid://cr0auqlg2kiuq"]
 
 [ext_resource type="PackedScene" uid="uid://dmfd4vojv5g8j" path="res://addons/PrimerTools/Gestures/Bracket/bracket.glb" id="1_slkfe"]
-[ext_resource type="Script" path="res://addons/PrimerTools/Gestures/Bracket/Bracket.cs" id="2_rl31f"]
+[ext_resource type="Script" uid="uid://d2prwaixeekti" path="res://addons/PrimerTools/Gestures/Bracket/Bracket.cs" id="2_rl31f"]
 
 [node name="bracket" instance=ExtResource("1_slkfe")]
 script = ExtResource("2_rl31f")

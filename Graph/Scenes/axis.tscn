@@ -1,8 +1,7 @@
 [gd_scene load_steps=5 format=3 uid="uid://dw3ic4fy1t6jc"]
 
 [ext_resource type="PackedScene" uid="uid://d1y06ar34m5qm" path="res://addons/PrimerTools/Graph/Scenes/graph_arrow_head.tscn" id="1_1vsiv"]
-[ext_resource type="Script" path="res://addons/PrimerTools/Graph/Axis/Axis.cs" id="1_gobhs"]
-
+[ext_resource type="Script" uid="uid://cm3l3own6skv3" path="res://addons/PrimerTools/Graph/Axis/Axis.cs" id="1_gobhs"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ntcfd"]
 

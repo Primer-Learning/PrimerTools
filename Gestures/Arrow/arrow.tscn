@@ -1,6 +1,6 @@
 [gd_scene load_steps=4 format=3 uid="uid://tug6o7ke0tmd"]
 
-[ext_resource type="Script" path="res://addons/PrimerTools/Gestures/Arrow/Arrow.cs" id="1_j1bvc"]
+[ext_resource type="Script" uid="uid://buxdena8nbmvj" path="res://addons/PrimerTools/Gestures/Arrow/Arrow.cs" id="1_j1bvc"]
 [ext_resource type="PackedScene" uid="uid://b5orfxct60gxc" path="res://addons/PrimerTools/Gestures/Arrow/arrow_head.blend" id="2_vd7g4"]
 [ext_resource type="PackedScene" uid="uid://cwg812eome4k" path="res://addons/PrimerTools/Gestures/Arrow/arrow_shaft.blend" id="3_ojc82"]
 

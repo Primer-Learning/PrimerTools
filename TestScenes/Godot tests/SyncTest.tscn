@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://d074sqo558hi3"]
 
-[ext_resource type="Script" path="res://addons/PrimerTools/TestScenes/Godot tests/SyncTest.cs" id="1_dxfm1"]
+[ext_resource type="Script" uid="uid://dvs55al8yrnvw" path="res://addons/PrimerTools/TestScenes/Godot tests/SyncTest.cs" id="1_dxfm1"]
 
 [node name="Node3D" type="Node3D"]
 script = ExtResource("1_dxfm1")

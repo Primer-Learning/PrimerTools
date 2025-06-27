@@ -1,7 +1,7 @@
 [gd_scene load_steps=23 format=4 uid="uid://g1o5sr5mtqv1"]
 
-[ext_resource type="Script" path="res://addons/PrimerTools/Gestures/Tests/BracketTestScene.cs" id="1_7p6xo"]
-[ext_resource type="Script" path="res://addons/PrimerTools/Gestures/Bracket/Bracket.cs" id="2_v538i"]
+[ext_resource type="Script" uid="uid://bet47w02svqqo" path="res://addons/PrimerTools/Gestures/Tests/BracketTestScene.cs" id="1_7p6xo"]
+[ext_resource type="Script" uid="uid://d2prwaixeekti" path="res://addons/PrimerTools/Gestures/Bracket/Bracket.cs" id="2_v538i"]
 
 [sub_resource type="Animation" id="Animation_x8ml4"]
 length = 12.0
@@ -18,7 +18,7 @@ tracks/0/keys = {
 
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_fdfnp"]
 _data = {
-"CombinedAnimation": SubResource("Animation_x8ml4")
+&"CombinedAnimation": SubResource("Animation_x8ml4")
 }
 
 [sub_resource type="Animation" id="Animation_xqymw"]
@@ -855,10 +855,10 @@ tracks/18/keys = {
 
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_75kq3"]
 _data = {
-"anim0": SubResource("Animation_xqymw"),
-"anim1": SubResource("Animation_6o8t6"),
-"anim2": SubResource("Animation_iwdny"),
-"anim3": SubResource("Animation_fr3rn")
+&"anim0": SubResource("Animation_xqymw"),
+&"anim1": SubResource("Animation_6o8t6"),
+&"anim2": SubResource("Animation_iwdny"),
+&"anim3": SubResource("Animation_fr3rn")
 }
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_urob4"]

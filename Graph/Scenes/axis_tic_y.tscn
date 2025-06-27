@@ -1,7 +1,7 @@
 [gd_scene load_steps=5 format=3 uid="uid://salehjyt5hwh"]
 
-[ext_resource type="Script" path="res://addons/PrimerTools/Graph/Axis/AxisTic.cs" id="1_xtd3d"]
-[ext_resource type="Script" path="res://addons/PrimerTools/LaTeX/LatexNode.cs" id="2_ecvgd"]
+[ext_resource type="Script" uid="uid://c7lydnaf1yvd0" path="res://addons/PrimerTools/Graph/Axis/AxisTic.cs" id="1_xtd3d"]
+[ext_resource type="Script" uid="uid://cmvfwbhqujfxe" path="res://addons/PrimerTools/LaTeX/LatexNode.cs" id="2_ecvgd"]
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_31fei"]
 

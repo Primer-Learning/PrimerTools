@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://bsm68n5h77ofs"]
 
-[ext_resource type="Script" path="res://addons/PrimerTools/Graph/Testing/StackedBarPlotTest.cs" id="1_meheg"]
+[ext_resource type="Script" uid="uid://c5suyawkyddst" path="res://addons/PrimerTools/Graph/Testing/StackedBarPlotTest.cs" id="1_meheg"]
 
 [node name="StackedBarPlotTestScene" type="Node3D"]
 

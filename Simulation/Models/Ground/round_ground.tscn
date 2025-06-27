@@ -14,8 +14,9 @@ shader_parameter/noise_scale = 1.515
 shader_parameter/noise_influence = 0.115
 shader_parameter/shadow_strength = 1.0
 shader_parameter/shadow_smoothness = 1.0
-shader_parameter/specular_intensity = 0.797
-shader_parameter/specular_shininess = 100.0
+shader_parameter/middle_color = Color(0.4, 0.3, 0.2, 1)
+shader_parameter/middle_band_width = 0.2
+shader_parameter/middle_band_center = 0.5
 
 [sub_resource type="ArrayMesh" id="ArrayMesh_wba64"]
 _surfaces = [{

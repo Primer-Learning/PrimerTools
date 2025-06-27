@@ -1,7 +1,7 @@
 [gd_scene load_steps=11 format=3 uid="uid://xpslpcgxjiyc"]
 
-[ext_resource type="Script" path="res://addons/PrimerTools/TestScenes/Graph/GraphTest.cs" id="1_bnpil"]
-[ext_resource type="Script" path="res://addons/PrimerTools/Camera/CameraRig.cs" id="10_inb6s"]
+[ext_resource type="Script" uid="uid://kcs7ih573co5" path="res://addons/PrimerTools/TestScenes/Graph/GraphTest.cs" id="1_bnpil"]
+[ext_resource type="Script" uid="uid://cmyih6anxr6g7" path="res://addons/PrimerTools/Camera/CameraRig.cs" id="10_inb6s"]
 
 [sub_resource type="Animation" id="Animation_u2hqe"]
 length = 101.004
@@ -18,7 +18,7 @@ tracks/0/keys = {
 
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_gf22v"]
 _data = {
-"CombinedAnimation": SubResource("Animation_u2hqe")
+&"CombinedAnimation": SubResource("Animation_u2hqe")
 }
 
 [sub_resource type="Animation" id="Animation_gfh0s"]
@@ -36,7 +36,7 @@ tracks/0/keys = {
 
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_jr8t7"]
 _data = {
-"CombinedAnimation": SubResource("Animation_gfh0s")
+&"CombinedAnimation": SubResource("Animation_gfh0s")
 }
 
 [sub_resource type="Animation" id="Animation_jrobh"]
@@ -2957,8 +2957,8 @@ tracks/131/keys = {
 
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_mhpja"]
 _data = {
-"anim0": SubResource("Animation_jrobh"),
-"anim1": SubResource("Animation_ysrlk")
+&"anim0": SubResource("Animation_jrobh"),
+&"anim1": SubResource("Animation_ysrlk")
 }
 
 [sub_resource type="Environment" id="Environment_14y1i"]

@@ -1,8 +1,8 @@
 [gd_scene load_steps=22 format=3 uid="uid://qxi8e6os6d7d"]
 
-[ext_resource type="Script" path="res://addons/PrimerTools/Graph/Testing/BarPlot3DTest.cs" id="1_c1oyf"]
-[ext_resource type="Script" path="res://addons/PrimerTools/Graph/Graph.cs" id="2_qawl7"]
-[ext_resource type="Script" path="res://addons/PrimerTools/Graph/DataObjects/BarPlot3D/BarPlot3D.cs" id="3_mk8ns"]
+[ext_resource type="Script" uid="uid://buveb6amheng8" path="res://addons/PrimerTools/Graph/Testing/BarPlot3DTest.cs" id="1_c1oyf"]
+[ext_resource type="Script" uid="uid://colmjfk6vhhcd" path="res://addons/PrimerTools/Graph/Graph.cs" id="2_qawl7"]
+[ext_resource type="Script" uid="uid://dtg8c17pmq8ha" path="res://addons/PrimerTools/Graph/DataObjects/BarPlot3D/BarPlot3D.cs" id="3_mk8ns"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_3k5p2"]
 albedo_color = Color(0.839216, 0.231373, 0.313726, 1)
