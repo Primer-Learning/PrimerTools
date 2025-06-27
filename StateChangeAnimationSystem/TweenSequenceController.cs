@@ -4,7 +4,7 @@ using Godot;
 [Tool]
 public partial class TweenSequenceController : Control
 {
-    private TweenSequence _tweenSequence;
+    private StateChangeSequence _stateChangeSequence;
     private Button _playPauseButton;
     private Label _timeDisplay;
     private HSlider _timelineSlider;
@@ -17,11 +17,11 @@ public partial class TweenSequenceController : Control
     public override void _Ready()
     {
         // Find the TweenSequence
-        _tweenSequence = GetParent().GetChildren()
-            .OfType<TweenSequence>()
+        _stateChangeSequence = GetParent().GetChildren()
+            .OfType<StateChangeSequence>()
             .FirstOrDefault();
 
-        if (_tweenSequence == null)
+        if (_stateChangeSequence == null)
         {
             GD.PrintErr("No tween sequence found");
             return;
@@ -37,7 +37,7 @@ public partial class TweenSequenceController : Control
         _playbackSpeedSpinBox.SetValueNoSignal(1.0);  // Explicitly set without triggering signals
         
         _seekTimeSpinBox = GetNode<SpinBox>("%SeekTimeSpinBox");
-        _seekTimeSpinBox.MaxValue = _tweenSequence.TotalDuration;
+        _seekTimeSpinBox.MaxValue = _stateChangeSequence.TotalDuration;
         
         _seekButton = GetNode<Button>("%SeekButton");
         _seekButton.Pressed += OnSeekButtonPressed;
@@ -48,44 +48,44 @@ public partial class TweenSequenceController : Control
         _timelineSlider.DragStarted += OnSliderDragStarted;
         _timelineSlider.DragEnded += OnSliderDragEnded;
         _timelineSlider.ValueChanged += OnSliderValueChanged;
-        _timelineSlider.MaxValue = _tweenSequence.TotalDuration;
+        _timelineSlider.MaxValue = _stateChangeSequence.TotalDuration;
     }
 
     public override void _Process(double delta)
     {
-        if (_tweenSequence == null) return;
+        if (_stateChangeSequence == null) return;
 
         // Update time display
-        _timeDisplay.Text = $"{_tweenSequence.CurrentTime:F2} / {_tweenSequence.TotalDuration:F2}";
+        _timeDisplay.Text = $"{_stateChangeSequence.CurrentTime:F2} / {_stateChangeSequence.TotalDuration:F2}";
 
         // Update button state
-        _playPauseButton.Text = _tweenSequence.IsPlaying ? "Pause" : "Play";
+        _playPauseButton.Text = _stateChangeSequence.IsPlaying ? "Pause" : "Play";
 
         // Update slider position if not dragging
         if (!_isDragging)
         {
-            _timelineSlider.SetValueNoSignal(_tweenSequence.CurrentTime);
+            _timelineSlider.SetValueNoSignal(_stateChangeSequence.CurrentTime);
         }
 
         // Update playback speed if supported (you'd need to add this to TweenSequence)
-        _tweenSequence.PlaybackSpeed = _playbackSpeedSpinBox.Value;
+        _stateChangeSequence.PlaybackSpeed = _playbackSpeedSpinBox.Value;
     }
 
     private void OnPlayPausePressed()
     {
-        if (_tweenSequence == null) return;
+        if (_stateChangeSequence == null) return;
 
-        if (_tweenSequence.IsPlaying)
-            _tweenSequence.Pause();
+        if (_stateChangeSequence.IsPlaying)
+            _stateChangeSequence.Pause();
         else
-            _tweenSequence.Resume();
+            _stateChangeSequence.Resume();
     }
 
     private void OnResetPressed()
     {
-        if (_tweenSequence == null) return;
+        if (_stateChangeSequence == null) return;
 
-        _tweenSequence.SeekTo(0);
+        _stateChangeSequence.SeekTo(0);
     }
 
     private void OnSliderDragStarted()
@@ -93,9 +93,9 @@ public partial class TweenSequenceController : Control
         _isDragging = true;
 
         // Pause during scrubbing for smoother experience
-        if (_tweenSequence != null && _tweenSequence.IsPlaying)
+        if (_stateChangeSequence != null && _stateChangeSequence.IsPlaying)
         {
-            _tweenSequence.Pause();
+            _stateChangeSequence.Pause();
         }
     }
 
@@ -106,15 +106,15 @@ public partial class TweenSequenceController : Control
 
     private void OnSliderValueChanged(double value)
     {
-        if (_tweenSequence == null || !_isDragging) return;
+        if (_stateChangeSequence == null || !_isDragging) return;
         
-        _tweenSequence.SeekTo(value);
+        _stateChangeSequence.SeekTo(value);
     }
     
     private void OnSeekButtonPressed()
     {
-        if (_tweenSequence == null) return;
+        if (_stateChangeSequence == null) return;
         
-        _tweenSequence.SeekTo(_seekTimeSpinBox.Value);
+        _stateChangeSequence.SeekTo(_seekTimeSpinBox.Value);
     }
 }

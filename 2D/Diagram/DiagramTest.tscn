@@ -47,7 +47,7 @@ shader_parameter/radius = 3.0
 [node name="CameraRig" type="Node3D" parent="Boilerplate"]
 transform = Transform3D(1, 0, 0, 0, 0.956305, 0.292372, 0, -0.292372, 0.956305, 0, 0, 0)
 script = ExtResource("1_i4ttt")
-Distance = 24.775
+Distance = 10.0
 
 [node name="Camera3D" type="Camera3D" parent="Boilerplate/CameraRig"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 24.775)
@@ -60,7 +60,7 @@ anchor_right = 1.0
 offset_left = -59.0
 offset_bottom = 23.0
 grow_horizontal = 0
-text = "145 FPS"
+text = "33 FPS"
 script = ExtResource("2_ep767")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="Boilerplate"]

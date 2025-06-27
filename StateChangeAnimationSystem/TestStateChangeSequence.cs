@@ -3,7 +3,7 @@ using PrimerTools;
 
 namespace PrimerTools.TweenSystem;
 
-public partial class TestTweenSequence : TweenSequence
+public partial class TestStateChangeSequence : StateChangeSequence
 {
     protected override void Define()
     {
