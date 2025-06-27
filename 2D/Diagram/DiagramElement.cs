@@ -212,3 +212,138 @@ public partial class RectangleElement : DiagramElement
         _shaderMaterial.SetShaderParameter("size", Size);
     }
 }
+
+public partial class LineElement : DiagramElement
+{
+    private Vector2 _pointA;
+    public Vector2 PointA 
+    { 
+        get => _pointA;
+        set
+        {
+            _pointA = value;
+            UpdateMeshTransform();
+            UpdateShaderParameters();
+        }
+    }
+    
+    private Vector2 _pointB;
+    public Vector2 PointB 
+    { 
+        get => _pointB;
+        set
+        {
+            _pointB = value;
+            UpdateMeshTransform();
+            UpdateShaderParameters();
+        }
+    }
+
+    public LineElement(Vector2 pointA, Vector2 pointB, float padding = 1) : base((pointA + pointB) / 2, padding)
+    {
+        _pointA = pointA;
+        _pointB = pointB;
+        Name = "LineElement";
+    }
+
+    protected override string GetShaderPath()
+    {
+        return "res://addons/PrimerTools/2D/Diagram/ShapeShaders/line_shader.gdshader";
+    }
+
+    public override int GetShapeType() => 2; // Line type in shader
+
+    public override Rect2 GetBounds()
+    {
+        // Calculate bounding box that contains both points
+        var minX = Mathf.Min(_pointA.X, _pointB.X) - Padding;
+        var minY = Mathf.Min(_pointA.Y, _pointB.Y) - Padding;
+        var maxX = Mathf.Max(_pointA.X, _pointB.X) + Padding;
+        var maxY = Mathf.Max(_pointA.Y, _pointB.Y) + Padding;
+        
+        return new Rect2(minX, minY, maxX - minX, maxY - minY);
+    }
+    
+    protected override void UpdateShaderParameters()
+    {
+        if (_shaderMaterial == null) return;
+        
+        _shaderMaterial.SetShaderParameter("point_a", _pointA);
+        _shaderMaterial.SetShaderParameter("point_b", _pointB);
+    }
+}
+
+public partial class TriangleElement : DiagramElement
+{
+    private Vector2 _pointA;
+    public Vector2 PointA 
+    { 
+        get => _pointA;
+        set
+        {
+            _pointA = value;
+            UpdateMeshTransform();
+            UpdateShaderParameters();
+        }
+    }
+    
+    private Vector2 _pointB;
+    public Vector2 PointB 
+    { 
+        get => _pointB;
+        set
+        {
+            _pointB = value;
+            UpdateMeshTransform();
+            UpdateShaderParameters();
+        }
+    }
+    
+    private Vector2 _pointC;
+    public Vector2 PointC 
+    { 
+        get => _pointC;
+        set
+        {
+            _pointC = value;
+            UpdateMeshTransform();
+            UpdateShaderParameters();
+        }
+    }
+
+    public TriangleElement(Vector2 pointA, Vector2 pointB, Vector2 pointC, float padding = 1) 
+        : base((pointA + pointB + pointC) / 3, padding)
+    {
+        _pointA = pointA;
+        _pointB = pointB;
+        _pointC = pointC;
+        Name = "TriangleElement";
+    }
+
+    protected override string GetShaderPath()
+    {
+        return "res://addons/PrimerTools/2D/Diagram/ShapeShaders/triangle_shader.gdshader";
+    }
+
+    public override int GetShapeType() => 3; // Triangle type in shader
+
+    public override Rect2 GetBounds()
+    {
+        // Calculate bounding box that contains all three points
+        var minX = Mathf.Min(Mathf.Min(_pointA.X, _pointB.X), _pointC.X) - Padding;
+        var minY = Mathf.Min(Mathf.Min(_pointA.Y, _pointB.Y), _pointC.Y) - Padding;
+        var maxX = Mathf.Max(Mathf.Max(_pointA.X, _pointB.X), _pointC.X) + Padding;
+        var maxY = Mathf.Max(Mathf.Max(_pointA.Y, _pointB.Y), _pointC.Y) + Padding;
+        
+        return new Rect2(minX, minY, maxX - minX, maxY - minY);
+    }
+    
+    protected override void UpdateShaderParameters()
+    {
+        if (_shaderMaterial == null) return;
+        
+        _shaderMaterial.SetShaderParameter("point_a", _pointA);
+        _shaderMaterial.SetShaderParameter("point_b", _pointB);
+        _shaderMaterial.SetShaderParameter("point_c", _pointC);
+    }
+}

@@ -19,9 +19,21 @@ public partial class DiagramSequence : StateChangeSequence
         // Create rectangle element
         var rect1 = new RectangleElement(new Vector2(0, -2), new Vector2(1.0f, 0.5f));
         
+        // Create line element
+        var line1 = new LineElement(new Vector2(-3, 1), new Vector2(-1, 3));
+        
+        // Create triangle element
+        var triangle1 = new TriangleElement(
+            new Vector2(3, 1),
+            new Vector2(2, 3),
+            new Vector2(4, 3)
+        );
+        
         diagram.AddElement(circle1);
         diagram.AddElement(circle2);
         diagram.AddElement(rect1);
+        diagram.AddElement(line1);
+        diagram.AddElement(triangle1);
         diagram.BuildDiagram();
         
         // Animate the circles
@@ -57,6 +69,18 @@ public partial class DiagramSequence : StateChangeSequence
         AddStateChange(
             new PropertyStateChange(rect1, "Size", new Vector2(2.0f, 0.2f))
                 .WithDuration(1.5)
+        );
+        
+        // Animate line endpoints
+        AddStateChange(
+            new PropertyStateChange(line1, "PointB", new Vector2(1, 1))
+                .WithDuration(2)
+        );
+        
+        // Animate triangle vertices
+        AddStateChangeInParallel(
+            new PropertyStateChange(triangle1, "PointA", new Vector2(3, -1))
+                .WithDuration(2)
         );
     }
 }
