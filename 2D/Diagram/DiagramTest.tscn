@@ -1,0 +1,84 @@
+[gd_scene load_steps=10 format=3 uid="uid://bs80fh31y35u1"]
+
+[ext_resource type="Script" uid="uid://cmyih6anxr6g7" path="res://addons/PrimerTools/Camera/CameraRig.cs" id="1_i4ttt"]
+[ext_resource type="Script" uid="uid://b574a0jrxvcix" path="res://addons/PrimerTools/Utilities/FPSViewer.cs" id="2_ep767"]
+[ext_resource type="Script" uid="uid://cf7jqo5l5joyv" path="res://addons/PrimerTools/2D/Diagram/ExampleDiagram.cs" id="2_m6nep"]
+[ext_resource type="Environment" uid="uid://xpav3hoy6ldu" path="res://addons/PrimerTools/primer_environment.tres" id="3_1vqf3"]
+[ext_resource type="Shader" uid="uid://cl6qolnr47avv" path="res://addons/PrimerTools/2D/sdf_shape_2d.gdshader" id="5_h6344"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_41dll"]
+render_priority = 0
+shader = ExtResource("5_h6344")
+shader_parameter/shape_color = Color(1, 0.5, 0, 1)
+shader_parameter/background_color = Color(0, 0, 0, 0)
+shader_parameter/thickness = 0.1
+shader_parameter/smoothness = 0.01
+shader_parameter/shape_type = 0
+shader_parameter/triangle_p1 = Vector2(0, -0.7)
+shader_parameter/triangle_p2 = Vector2(-0.6, 0.5)
+shader_parameter/triangle_p3 = Vector2(0.6, 0.5)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_i8vr5"]
+size = Vector2(1.8, 1.8)
+subdivide_width = 1
+subdivide_depth = 1
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_3ac6h"]
+render_priority = 0
+shader = ExtResource("5_h6344")
+shader_parameter/shape_color = Color(1, 0.5, 0, 1)
+shader_parameter/background_color = Color(0, 0, 0, 0)
+shader_parameter/thickness = 0.1
+shader_parameter/smoothness = 0.01
+shader_parameter/shape_type = 0
+shader_parameter/triangle_p1 = Vector2(0, -0.7)
+shader_parameter/triangle_p2 = Vector2(-0.6, 0.5)
+shader_parameter/triangle_p3 = Vector2(0.6, 0.5)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_43vym"]
+size = Vector2(1.8, 1.8)
+subdivide_width = 1
+subdivide_depth = 1
+
+[node name="DiagramTest" type="Node3D"]
+
+[node name="Boilerplate" type="Node3D" parent="."]
+
+[node name="CameraRig" type="Node3D" parent="Boilerplate"]
+transform = Transform3D(1, 0, 0, 0, 0.956305, 0.292372, 0, -0.292372, 0.956305, 0, 0, 0)
+script = ExtResource("1_i4ttt")
+Distance = 24.775
+
+[node name="Camera3D" type="Camera3D" parent="Boilerplate/CameraRig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 24.775)
+fov = 30.0
+
+[node name="Label" type="Label" parent="Boilerplate/CameraRig"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -59.0
+offset_bottom = 23.0
+grow_horizontal = 0
+text = "143 FPS"
+script = ExtResource("2_ep767")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="Boilerplate"]
+environment = ExtResource("3_1vqf3")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="Boilerplate"]
+transform = Transform3D(1, 0, 0, 0, 0.588477, 0.808514, 0, -0.808514, 0.588477, 0, 5.55125, 8.78822)
+shadow_enabled = true
+
+[node name="ExampleDiagram" type="Node3D" parent="."]
+script = ExtResource("2_m6nep")
+
+[node name="DiagramElement_CircleElement" type="MeshInstance3D" parent="ExampleDiagram"]
+transform = Transform3D(1, 0, 0, 0, 0.0697565, -0.997564, 0, 0.997564, 0.0697565, -1, 1, 0)
+material_override = SubResource("ShaderMaterial_41dll")
+mesh = SubResource("PlaneMesh_i8vr5")
+
+[node name="@MeshInstance3D@39883" type="MeshInstance3D" parent="ExampleDiagram"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0)
+material_override = SubResource("ShaderMaterial_3ac6h")
+mesh = SubResource("PlaneMesh_43vym")
