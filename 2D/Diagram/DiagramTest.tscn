@@ -46,27 +46,10 @@ shader_parameter/radius = 3.0
 
 [node name="Boilerplate" type="Node3D" parent="."]
 
-[node name="CameraRig" type="Node3D" parent="Boilerplate" node_paths=PackedStringArray("_camera")]
+[node name="CameraRig" type="Node3D" parent="Boilerplate"]
 transform = Transform3D(1, 0, 0, 0, 0.956305, 0.292372, 0, -0.292372, 0.956305, 0, 0, 0)
 script = ExtResource("1_i4ttt")
 Distance = 24.775
-RotationSensitivity = 0.005
-PanSensitivity = 0.02
-ZoomSensitivity = 0.1
-ZoomMin = 1.0
-ZoomMax = 1000.0
-EnableDragRotation = true
-EnablePanning = true
-EnableZooming = true
-InvertRotationX = false
-InvertRotationY = true
-InvertPanX = false
-InvertPanY = false
-InvertZoom = false
-_camera = NodePath("Camera3D")
-_isRotating = false
-_isPanning = false
-_lastMousePosition = Vector2(0, 0)
 
 [node name="Camera3D" type="Camera3D" parent="Boilerplate/CameraRig"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 24.775)
@@ -79,10 +62,8 @@ anchor_right = 1.0
 offset_left = -59.0
 offset_bottom = 23.0
 grow_horizontal = 0
-text = "138 FPS"
+text = "115 FPS"
 script = ExtResource("2_ep767")
-_printInterval = 1.0
-_timer = 0.0
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="Boilerplate"]
 environment = ExtResource("3_1vqf3")
@@ -94,7 +75,6 @@ shadow_enabled = true
 [node name="ExampleDiagram" type="Node3D" parent="."]
 visible = false
 script = ExtResource("2_m6nep")
-ShaderPath = "res://addons/PrimerTools/2D/Diagram/ShapeShaders/circle_shader.gdshader"
 DefaultThickness = 0.48
 
 [node name="DiagramElement_CircleElement" type="MeshInstance3D" parent="ExampleDiagram"]

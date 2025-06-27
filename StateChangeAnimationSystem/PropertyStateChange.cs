@@ -5,7 +5,7 @@ namespace PrimerTools.TweenSystem;
 
 public class PropertyStateChange : IAnimatedStateChange
 {
-    private Node _target;
+    private GodotObject _target;
     private string _property;
     private Variant _endValue;
     private double _duration;
@@ -30,12 +30,16 @@ public class PropertyStateChange : IAnimatedStateChange
     // It should work to use TweenMethod with a method that takes the easing function and applies Tween.InterpolateValue
     private Tween.TransitionType _transition;
     private Tween.EaseType _ease;
-    
-    public string Name => _customName ?? $"{_target.Name}.{_property} -> {_endValue}";
+
+    public string Name => _customName ??
+                          (_target is Node targetNode
+                              ? $"{targetNode.Name}.{_property} -> {_endValue}"
+                              : $"{_target}.{_property} -> {_endValue}"
+                          );
     public double Duration => _duration;
     
     // Analogous to AnimationUtilities.AnimateValue
-    public PropertyStateChange(Node target, string property, Variant endValue)
+    public PropertyStateChange(GodotObject target, string property, Variant endValue)
     {
         _target = target;
         _property = property;
