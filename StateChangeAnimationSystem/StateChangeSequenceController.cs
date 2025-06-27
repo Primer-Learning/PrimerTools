@@ -1,7 +1,6 @@
 using System.Linq;
 using Godot;
 
-[Tool]
 public partial class StateChangeSequenceController : Control
 {
     private StateChangeSequence _stateChangeSequence;

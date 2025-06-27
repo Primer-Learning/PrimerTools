@@ -2,30 +2,131 @@ using Godot;
 
 namespace PrimerTools._2D.Diagram;
 
-public abstract class DiagramElement
+public abstract partial class DiagramElement : Node
 {
-    public Vector2 Position { get; set; }
-    public float Padding { get; set; }
+    protected MeshInstance3D _meshInstance;
+    protected ShaderMaterial _shaderMaterial;
+    
+    private Vector2 _position;
+    public Vector2 Position 
+    { 
+        get => _position;
+        set
+        {
+            _position = value;
+            UpdateMeshTransform();
+            UpdateShaderParameters();
+        }
+    }
+    
+    private float _padding = 1f;
+    public float Padding 
+    { 
+        get => _padding;
+        set
+        {
+            _padding = value;
+            UpdateMeshTransform();
+        }
+    }
 
     protected DiagramElement(Vector2 position, float padding = 1)
     {
-        Position = position;
-        Padding = padding;
+        _position = position;
+        _padding = padding;
     }
 
     public abstract int GetShapeType();
     public abstract Rect2 GetBounds();
+    
+    public virtual void CreateMesh(DiagramSystem parentSystem)
+    {
+        // Create mesh instance
+        _meshInstance = new MeshInstance3D();
+        _meshInstance.RotationDegrees = new Vector3(90, 0, 0);
+        parentSystem.AddChild(_meshInstance);
+        _meshInstance.Name = $"DiagramElement_{GetType().Name}";
+        
+        // Create plane mesh
+        var bounds = GetBounds();
+        var planeMesh = new PlaneMesh();
+        planeMesh.Size = bounds.Size;
+        planeMesh.SubdivideWidth = 1;
+        planeMesh.SubdivideDepth = 1;
+        _meshInstance.Mesh = planeMesh;
+        
+        // Create shader material
+        var shader = GD.Load<Shader>(parentSystem.ShaderPath);
+        if (shader == null)
+        {
+            GD.PrintErr($"Failed to load shader at path: {parentSystem.ShaderPath}");
+            return;
+        }
+        
+        _shaderMaterial = new ShaderMaterial();
+        _shaderMaterial.Shader = shader;
+        
+        // Set common shader parameters
+        _shaderMaterial.SetShaderParameter("shape_color", parentSystem.DefaultShapeColor);
+        _shaderMaterial.SetShaderParameter("background_color", parentSystem.DefaultBackgroundColor);
+        _shaderMaterial.SetShaderParameter("thickness", parentSystem.DefaultThickness);
+        _shaderMaterial.SetShaderParameter("smoothness", parentSystem.DefaultSmoothness);
+        
+        _meshInstance.SetSurfaceOverrideMaterial(0, _shaderMaterial);
+        
+        // Update transform and shader parameters
+        UpdateMeshTransform();
+        UpdateShaderParameters();
+    }
+    
+    protected virtual void UpdateMeshTransform()
+    {
+        if (_meshInstance == null) return;
+        
+        var bounds = GetBounds();
+        _meshInstance.Position = new Vector3(bounds.GetCenter().X, bounds.GetCenter().Y, 0);
+        
+        // Update mesh size if needed
+        if (_meshInstance.Mesh is PlaneMesh planeMesh)
+        {
+            planeMesh.Size = bounds.Size;
+        }
+    }
+    
+    protected abstract void UpdateShaderParameters();
 }
 
-public class CircleElement : DiagramElement
+public partial class CircleElement : DiagramElement
 {
-    public float Radius { get; set; }
-    public Vector2 Center { get; set; }
+    private float _radius;
+    public float Radius 
+    { 
+        get => _radius;
+        set
+        {
+            _radius = value;
+            UpdateMeshTransform();
+            UpdateShaderParameters();
+        }
+    }
+    
+    private Vector2 _center;
+    public Vector2 Center 
+    { 
+        get => _center;
+        set
+        {
+            _center = value;
+            Position = value; // Update position to match center
+            UpdateShaderParameters();
+        }
+    }
 
     public CircleElement(Vector2 center, float radius, float padding = 1) : base(center, padding)
     {
-        Radius = radius;
-        Center = center;
+        _radius = radius;
+        _center = center;
+        Name = "CircleElement";
     }
 
     public override int GetShapeType() => 0; // Circle type in shader
@@ -34,5 +135,13 @@ public class CircleElement : DiagramElement
     {
         // Return bounding box for the circle
         return new Rect2(Position - Vector2.One * (Radius + Padding), Vector2.One * (Radius + Padding) * 2);
+    }
+    
+    protected override void UpdateShaderParameters()
+    {
+        if (_shaderMaterial == null) return;
+        
+        _shaderMaterial.SetShaderParameter("shape_center", Center);
+        _shaderMaterial.SetShaderParameter("radius", Radius);
     }
 }
