@@ -62,7 +62,7 @@ anchor_right = 1.0
 offset_left = -59.0
 offset_bottom = 23.0
 grow_horizontal = 0
-text = "115 FPS"
+text = "145 FPS"
 script = ExtResource("2_ep767")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="Boilerplate"]
@@ -94,7 +94,5 @@ mesh = SubResource("SphereMesh_41dll")
 
 [node name="DiagramSequence" type="Node" parent="."]
 script = ExtResource("6_ep767")
-_startFromTime = null
-_playbackSpeed = null
 
 [node name="Control" parent="." instance=ExtResource("7_1vqf3")]

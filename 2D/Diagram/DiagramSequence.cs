@@ -34,6 +34,26 @@ public partial class DiagramSequence : StateChangeSequence
         diagram.AddElement(rect1);
         diagram.AddElement(line1);
         diagram.AddElement(triangle1);
+        
+        // Create composite shapes
+        var compositeData1 = new CompositeShapeData(
+            new CircleData(new Vector2(-1, -5), 0.6f),
+            new CircleData(new Vector2(-0.3f, -5), 0.6f),
+            SdfOperation.SmoothUnion,
+            0.3f
+        );
+        
+        var compositeData2 = new CompositeShapeData(
+            new CircleData(new Vector2(2, -5), 0.8f),
+            new RectangleData(new Vector2(2, -5), new Vector2(0.7f, 0.7f)),
+            SdfOperation.SmoothUnion
+        );
+        
+        var composite1 = new DiagramElement(compositeData1);
+        var composite2 = new DiagramElement(compositeData2);
+        
+        diagram.AddElement(composite1);
+        diagram.AddElement(composite2);
         diagram.BuildDiagram();
         
         // Animate the shapes directly
@@ -81,6 +101,18 @@ public partial class DiagramSequence : StateChangeSequence
         AddStateChangeInParallel(
             new PropertyStateChange(triangleData, "PointA", new Vector2(3, -1))
                 .WithDuration(2)
+        );
+        
+        // Animate composite smoothness
+        AddStateChange(
+            new PropertyStateChange(compositeData1, "Smoothness", 0.05f)
+                .WithDuration(2)
+        );
+        
+        // Animate the shapes within the composite
+        AddStateChange(
+            new PropertyStateChange(compositeData1.Shape1 as CircleData, "Radius", 0.3f)
+                .WithDuration(1.5f)
         );
     }
 }

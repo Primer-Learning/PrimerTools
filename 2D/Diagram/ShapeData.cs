@@ -228,3 +228,127 @@ public partial class TriangleData : ShapeData
         material.SetShaderParameter($"{prefix}point_c", _pointC);
     }
 }
+
+public enum SdfOperation
+{
+    Union,
+    SmoothUnion,
+    Subtraction,
+    SmoothSubtraction,
+    Intersection,
+    SmoothIntersection
+}
+
+public partial class CompositeShapeData : ShapeData
+{
+    private ShapeData _shape1;
+    public ShapeData Shape1 
+    { 
+        get => _shape1;
+        set
+        {
+            if (_shape1 != null)
+                _shape1.ShapeChanged -= OnChildShapeChanged;
+            
+            _shape1 = value;
+            
+            if (_shape1 != null)
+                _shape1.ShapeChanged += OnChildShapeChanged;
+            
+            NotifyChanged();
+        }
+    }
+    
+    private ShapeData _shape2;
+    public ShapeData Shape2 
+    { 
+        get => _shape2;
+        set
+        {
+            if (_shape2 != null)
+                _shape2.ShapeChanged -= OnChildShapeChanged;
+            
+            _shape2 = value;
+            
+            if (_shape2 != null)
+                _shape2.ShapeChanged += OnChildShapeChanged;
+            
+            NotifyChanged();
+        }
+    }
+    
+    private SdfOperation _operation = SdfOperation.Union;
+    public SdfOperation Operation 
+    { 
+        get => _operation;
+        set
+        {
+            _operation = value;
+            NotifyChanged();
+        }
+    }
+    
+    private float _smoothness = 0.1f;
+    public float Smoothness 
+    { 
+        get => _smoothness;
+        set
+        {
+            _smoothness = value;
+            NotifyChanged();
+        }
+    }
+
+    public CompositeShapeData(ShapeData shape1, ShapeData shape2, SdfOperation operation = SdfOperation.Union, float smoothness = 0.1f)
+    {
+        Shape1 = shape1;
+        Shape2 = shape2;
+        _operation = operation;
+        _smoothness = smoothness;
+    }
+
+    public CompositeShapeData()
+    {
+    }
+
+    private void OnChildShapeChanged()
+    {
+        NotifyChanged();
+    }
+
+    public override int GetShapeType() => 99; // Special type for composite
+
+    public override Rect2 GetBounds(float padding = 0)
+    {
+        if (_shape1 == null || _shape2 == null)
+            return new Rect2();
+        
+        var bounds1 = _shape1.GetBounds(0);
+        var bounds2 = _shape2.GetBounds(0);
+        
+        // Union the bounds for most operations
+        // For subtraction/intersection, we might want just bounds1, but union is safer
+        var combined = bounds1.Merge(bounds2);
+        
+        // Grow by padding
+        return combined.Grow(padding);
+    }
+    
+    public override void SetShaderParameters(ShaderMaterial material, string prefix = "")
+    {
+        if (_shape1 == null || _shape2 == null)
+            return;
+        
+        // Set operation parameters
+        material.SetShaderParameter($"{prefix}operation", (int)_operation);
+        material.SetShaderParameter($"{prefix}operation_smoothness", _smoothness);
+        
+        // Set shape types
+        material.SetShaderParameter($"{prefix}shape1_type", _shape1.GetShapeType());
+        material.SetShaderParameter($"{prefix}shape2_type", _shape2.GetShapeType());
+        
+        // Set shape-specific parameters
+        _shape1.SetShaderParameters(material, $"{prefix}shape1_");
+        _shape2.SetShaderParameters(material, $"{prefix}shape2_");
+    }
+}

@@ -54,6 +54,7 @@ public partial class DiagramElement : Node
             1 => "res://addons/PrimerTools/2D/Diagram/ShapeShaders/rectangle_shader.gdshader",
             2 => "res://addons/PrimerTools/2D/Diagram/ShapeShaders/line_shader.gdshader",
             3 => "res://addons/PrimerTools/2D/Diagram/ShapeShaders/triangle_shader.gdshader",
+            99 => "res://addons/PrimerTools/2D/Diagram/ShapeShaders/composite_shader.gdshader",
             _ => "res://addons/PrimerTools/2D/Diagram/ShapeShaders/circle_shader.gdshader"
         };
     }

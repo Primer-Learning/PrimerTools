@@ -197,6 +197,14 @@ public abstract partial class StateChangeSequence : Node
             }
             
             var trackCurrentTime = _currentTime;
+
+            // trackTween.TweenCallback(Callable.From(
+            //         () =>
+            //         {
+            //             GD.Print("Starting Tween");
+            //         }
+            //     )
+            // );
             
             foreach (var animation in track.OrderBy(a => a.AbsoluteStartTime))
             {
