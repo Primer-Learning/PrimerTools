@@ -229,6 +229,95 @@ public partial class TriangleData : ShapeData
     }
 }
 
+public partial class ArrowData : ShapeData
+{
+    private Vector2 _start;
+    public Vector2 Start 
+    { 
+        get => _start;
+        set
+        {
+            _start = value;
+            NotifyChanged();
+        }
+    }
+    
+    private Vector2 _end;
+    public Vector2 End 
+    { 
+        get => _end;
+        set
+        {
+            _end = value;
+            NotifyChanged();
+        }
+    }
+    
+    private float _headLength = 10.0f;
+    public float HeadLength 
+    { 
+        get => _headLength;
+        set
+        {
+            _headLength = value;
+            NotifyChanged();
+        }
+    }
+    
+    private float _headAngle = 30.0f; // Angle in degrees
+    public float HeadAngle 
+    { 
+        get => _headAngle;
+        set
+        {
+            _headAngle = value;
+            NotifyChanged();
+        }
+    }
+
+    public ArrowData(Vector2 start, Vector2 end, float headLength = 10.0f, float headAngle = 30.0f)
+    {
+        _start = start;
+        _end = end;
+        _headLength = headLength;
+        _headAngle = headAngle;
+    }
+
+    public ArrowData()
+    {
+    }
+
+    public override int GetShapeType() => 4;
+
+    public override Rect2 GetBounds()
+    {
+        // Calculate bounds including the arrowhead
+        var direction = (_end - _start).Normalized();
+        var perpendicular = new Vector2(-direction.Y, direction.X);
+        var angleRad = Mathf.DegToRad(_headAngle);
+        var headWidth = _headLength * Mathf.Tan(angleRad);
+        
+        // Points to consider for bounds: start, end, and the two arrowhead wing tips
+        var wing1 = _end - direction * _headLength + perpendicular * headWidth;
+        var wing2 = _end - direction * _headLength - perpendicular * headWidth;
+        
+        var minX = Mathf.Min(Mathf.Min(Mathf.Min(_start.X, _end.X), wing1.X), wing2.X);
+        var minY = Mathf.Min(Mathf.Min(Mathf.Min(_start.Y, _end.Y), wing1.Y), wing2.Y);
+        var maxX = Mathf.Max(Mathf.Max(Mathf.Max(_start.X, _end.X), wing1.X), wing2.X);
+        var maxY = Mathf.Max(Mathf.Max(Mathf.Max(_start.Y, _end.Y), wing1.Y), wing2.Y);
+        
+        return new Rect2(minX, minY, maxX - minX, maxY - minY);
+    }
+    
+    public override void SetShaderParameters(ShaderMaterial material, string prefix = "")
+    {
+        material.SetShaderParameter($"{prefix}arrow_start", _start);
+        material.SetShaderParameter($"{prefix}arrow_end", _end);
+        material.SetShaderParameter($"{prefix}head_length", _headLength);
+        material.SetShaderParameter($"{prefix}head_angle", _headAngle);
+    }
+}
+
 public enum SdfOperation
 {
     Union,

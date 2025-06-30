@@ -64,3 +64,28 @@ float sdCapsule(vec2 p, vec2 a, vec2 b, float r) {
     float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
     return length(pa - ba * h) - r;
 }
+
+float sdArrow(vec2 p, vec2 start, vec2 end, float head_len, float head_angle_deg) {
+    // Arrow shaft (line)
+    float shaft = sdLine(p, start, end);
+    
+    // Calculate arrow direction
+    vec2 dir = normalize(end - start);
+    vec2 perp = vec2(-dir.y, dir.x);
+    
+    // Convert angle to radians
+    float angle_rad = radians(head_angle_deg);
+    float head_width = head_len * tan(angle_rad);
+    
+    // Calculate arrowhead points
+    vec2 head_base = end - dir * head_len;
+    vec2 wing1 = head_base + perp * head_width;
+    vec2 wing2 = head_base - perp * head_width;
+    
+    // Arrowhead as two lines
+    float head1 = sdLine(p, end, wing1);
+    float head2 = sdLine(p, end, wing2);
+    
+    // Combine all parts
+    return min(shaft, min(head1, head2));
+}

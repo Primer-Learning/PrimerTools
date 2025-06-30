@@ -1,28 +1,13 @@
 using Godot;
-using System.Collections.Generic;
-using Godot.Collections;
 using PrimerTools;
 using PrimerTools._2D.Diagram;
 
 [Tool]
 public partial class DiagramSystem : Node3D
 {
-    private string ShaderPath = "res://addons/PrimerTools/2D/Diagram/ShapeShaders/circle_shader.gdshader";
-
-    private ShapeStyle DefaultStyle { get; set; }
-
-    private List<DiagramElement> _elements = new List<DiagramElement>();
+    public ShapeStyle DefaultStyle { get; set; } = new ShapeStyle();
     
-    public DiagramSystem()
-    {
-        DefaultStyle = new ShapeStyle(
-            0.1f, 
-            0.01f, 
-            new Color(1.0f, 0.5f, 0.0f, 1.0f),
-            new Color(0.0f, 0.0f, 0.0f, 0.0f),
-            0.1f
-        );
-    }
+    public DiagramSystem() {}
 
     [ExportToolButton("Create")]
     private Callable Create => Callable.From(RebuildDiagram);
@@ -31,13 +16,12 @@ public partial class DiagramSystem : Node3D
 
     public void AddElement(DiagramElement element)
     {
-        _elements.Add(element);
-        
-        // If element doesn't have a style, use a clone of the default
         if (element.Style == null)
         {
             element.Style = DefaultStyle.Clone();
         }
+        
+        element.CreateMesh(this);
     }
 
     public void RebuildDiagram()
@@ -54,7 +38,6 @@ public partial class DiagramSystem : Node3D
                 child.QueueFree();
             }
         }
-        _elements.Clear();
 
         DefineDiagram();
         BuildDiagram();
@@ -62,16 +45,5 @@ public partial class DiagramSystem : Node3D
         if (Engine.IsEditorHint()) this.MakeSelfAndChildrenLocal();
     }
 
-    public void BuildDiagram()
-    {
-        foreach (var element in _elements)
-        {
-            CreateMeshForElement(element);
-        }
-    }
-    
-    private void CreateMeshForElement(DiagramElement element)
-    {
-        element.CreateMesh(this);
-    }
+    public void BuildDiagram() {}
 }

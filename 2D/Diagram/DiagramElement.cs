@@ -4,7 +4,7 @@ namespace PrimerTools._2D.Diagram;
 
 public partial class DiagramElement : Node
 {
-    private ShapeData _shapeData;
+    [Export] private ShapeData _shapeData;
     private MeshInstance3D _meshInstance;
     private ShaderMaterial _shaderMaterial;
     private DiagramSystem _parentSystem;
@@ -42,13 +42,12 @@ public partial class DiagramElement : Node
 
     public DiagramElement(ShapeData shapeData, float padding = 1, ShapeStyle style = null)
     {
-        _shapeData = shapeData;
         _padding = padding;
-        _style = style ?? new ShapeStyle();
         
-        // Subscribe to shape changes
+        _shapeData = shapeData;
         _shapeData.ShapeChanged += OnShapeChanged;
-        _style.StyleChanged += OnStyleChanged;
+
+        if (style != null) Style = style;
     }
 
     public override void _ExitTree()
@@ -84,6 +83,7 @@ public partial class DiagramElement : Node
             1 => "res://addons/PrimerTools/2D/Diagram/ShapeShaders/rectangle_shader.gdshader",
             2 => "res://addons/PrimerTools/2D/Diagram/ShapeShaders/line_shader.gdshader",
             3 => "res://addons/PrimerTools/2D/Diagram/ShapeShaders/triangle_shader.gdshader",
+            4 => "res://addons/PrimerTools/2D/Diagram/ShapeShaders/arrow_shader.gdshader",
             99 => "res://addons/PrimerTools/2D/Diagram/ShapeShaders/composite_shader.gdshader",
             _ => "res://addons/PrimerTools/2D/Diagram/ShapeShaders/circle_shader.gdshader"
         };
