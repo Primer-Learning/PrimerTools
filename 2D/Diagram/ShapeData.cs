@@ -275,7 +275,7 @@ public partial class ArrowData : ShapeData
         }
     }
 
-    public ArrowData(Vector2 start, Vector2 end, float headLength = 10.0f, float headAngle = 30.0f)
+    public ArrowData(Vector2 start, Vector2 end, float headLength = 3.0f, float headAngle = 35.0f)
     {
         _start = start;
         _end = end;
