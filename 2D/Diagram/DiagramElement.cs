@@ -11,7 +11,7 @@ public partial class DiagramElement : Node
     private ShapeStyle _style;
     
     private float _padding = 1f;
-    private float Padding 
+    public float Padding 
     { 
         get => _padding;
         set
@@ -20,6 +20,8 @@ public partial class DiagramElement : Node
             UpdateMeshTransform();
         }
     }
+
+    public ShapeData ShapeData => _shapeData;
     
     public ShapeStyle Style 
     { 
@@ -98,7 +100,7 @@ public partial class DiagramElement : Node
         _meshInstance.Name = $"DiagramElement_{_shapeData.GetType().Name}";
         
         // Create plane mesh
-        var bounds = _shapeData.GetBounds(_padding);
+        var bounds = GetPaddedBounds();
         var planeMesh = new PlaneMesh();
         planeMesh.Size = bounds.Size;
         planeMesh.SubdivideWidth = 1;
@@ -119,8 +121,6 @@ public partial class DiagramElement : Node
         
         // Set common shader parameters
         _style.ApplyToShader(_shaderMaterial);
-        _shaderMaterial.SetShaderParameter("background_color", parentSystem.DefaultBackgroundColor);
-        _shaderMaterial.SetShaderParameter("smoothness", parentSystem.DefaultSmoothness);
         
         _meshInstance.SetSurfaceOverrideMaterial(0, _shaderMaterial);
         
@@ -129,11 +129,26 @@ public partial class DiagramElement : Node
         UpdateShaderParameters();
     }
     
+    private Rect2 GetPaddedBounds()
+    {
+        var bounds = _shapeData.GetBounds();
+        
+        // Calculate total padding including style thickness
+        var totalPadding = _padding;
+        if (_style != null)
+        {
+            totalPadding += _style.Thickness;
+        }
+        
+        // Grow bounds by total padding
+        return bounds.Grow(totalPadding);
+    }
+    
     private void UpdateMeshTransform()
     {
         if (_meshInstance == null) return;
         
-        var bounds = _shapeData.GetBounds(_padding);
+        var bounds = GetPaddedBounds();
         _meshInstance.Position = new Vector3(bounds.GetCenter().X, bounds.GetCenter().Y, 0);
         
         // Update mesh size if needed

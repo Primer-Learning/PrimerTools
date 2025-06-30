@@ -8,8 +8,6 @@ using PrimerTools._2D.Diagram;
 public partial class DiagramSystem : Node3D
 {
     private string ShaderPath = "res://addons/PrimerTools/2D/Diagram/ShapeShaders/circle_shader.gdshader";
-    public Color DefaultBackgroundColor = new Color(0.0f, 0.0f, 0.0f, 0.0f);
-    public float DefaultSmoothness = 0.01f;
 
     private ShapeStyle DefaultStyle { get; set; }
 
@@ -17,7 +15,13 @@ public partial class DiagramSystem : Node3D
     
     public DiagramSystem()
     {
-        DefaultStyle = new ShapeStyle(0.1f, 0.01f, new Color(1.0f, 0.5f, 0.0f, 1.0f));
+        DefaultStyle = new ShapeStyle(
+            0.1f, 
+            0.01f, 
+            new Color(1.0f, 0.5f, 0.0f, 1.0f),
+            new Color(0.0f, 0.0f, 0.0f, 0.0f),
+            0.1f
+        );
     }
 
     [ExportToolButton("Create")]

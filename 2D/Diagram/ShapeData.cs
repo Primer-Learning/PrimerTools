@@ -8,7 +8,7 @@ public abstract partial class ShapeData : GodotObject
     public event Action ShapeChanged;
     
     public abstract int GetShapeType();
-    public abstract Rect2 GetBounds(float padding = 0);
+    public abstract Rect2 GetBounds();
     public abstract void SetShaderParameters(ShaderMaterial material, string prefix = "");
     
     protected void NotifyChanged() => ShapeChanged?.Invoke();
@@ -50,9 +50,9 @@ public partial class CircleData : ShapeData
 
     public override int GetShapeType() => 0;
 
-    public override Rect2 GetBounds(float padding = 0)
+    public override Rect2 GetBounds()
     {
-        return new Rect2(_center - Vector2.One * (_radius + padding), Vector2.One * (_radius + padding) * 2);
+        return new Rect2(_center - Vector2.One * _radius, Vector2.One * _radius * 2);
     }
     
     public override void SetShaderParameters(ShaderMaterial material, string prefix = "")
@@ -98,9 +98,9 @@ public partial class RectangleData : ShapeData
 
     public override int GetShapeType() => 1;
 
-    public override Rect2 GetBounds(float padding = 0)
+    public override Rect2 GetBounds()
     {
-        return new Rect2(_center - _size - Vector2.One * padding, (_size + Vector2.One * padding) * 2);
+        return new Rect2(_center - _size, _size * 2);
     }
     
     public override void SetShaderParameters(ShaderMaterial material, string prefix = "")
@@ -146,12 +146,12 @@ public partial class LineData : ShapeData
 
     public override int GetShapeType() => 2;
 
-    public override Rect2 GetBounds(float padding = 0)
+    public override Rect2 GetBounds()
     {
-        var minX = Mathf.Min(_pointA.X, _pointB.X) - padding;
-        var minY = Mathf.Min(_pointA.Y, _pointB.Y) - padding;
-        var maxX = Mathf.Max(_pointA.X, _pointB.X) + padding;
-        var maxY = Mathf.Max(_pointA.Y, _pointB.Y) + padding;
+        var minX = Mathf.Min(_pointA.X, _pointB.X);
+        var minY = Mathf.Min(_pointA.Y, _pointB.Y);
+        var maxX = Mathf.Max(_pointA.X, _pointB.X);
+        var maxY = Mathf.Max(_pointA.Y, _pointB.Y);
         
         return new Rect2(minX, minY, maxX - minX, maxY - minY);
     }
@@ -211,12 +211,12 @@ public partial class TriangleData : ShapeData
 
     public override int GetShapeType() => 3;
 
-    public override Rect2 GetBounds(float padding = 0)
+    public override Rect2 GetBounds()
     {
-        var minX = Mathf.Min(Mathf.Min(_pointA.X, _pointB.X), _pointC.X) - padding;
-        var minY = Mathf.Min(Mathf.Min(_pointA.Y, _pointB.Y), _pointC.Y) - padding;
-        var maxX = Mathf.Max(Mathf.Max(_pointA.X, _pointB.X), _pointC.X) + padding;
-        var maxY = Mathf.Max(Mathf.Max(_pointA.Y, _pointB.Y), _pointC.Y) + padding;
+        var minX = Mathf.Min(Mathf.Min(_pointA.X, _pointB.X), _pointC.X);
+        var minY = Mathf.Min(Mathf.Min(_pointA.Y, _pointB.Y), _pointC.Y);
+        var maxX = Mathf.Max(Mathf.Max(_pointA.X, _pointB.X), _pointC.X);
+        var maxY = Mathf.Max(Mathf.Max(_pointA.Y, _pointB.Y), _pointC.Y);
         
         return new Rect2(minX, minY, maxX - minX, maxY - minY);
     }
@@ -316,20 +316,17 @@ public partial class CompositeShapeData : ShapeData
 
     public override int GetShapeType() => 99; // Special type for composite
 
-    public override Rect2 GetBounds(float padding = 0)
+    public override Rect2 GetBounds()
     {
         if (_shape1 == null || _shape2 == null)
             return new Rect2();
         
-        var bounds1 = _shape1.GetBounds(0);
-        var bounds2 = _shape2.GetBounds(0);
+        var bounds1 = _shape1.GetBounds();
+        var bounds2 = _shape2.GetBounds();
         
         // Union the bounds for most operations
         // For subtraction/intersection, we might want just bounds1, but union is safer
-        var combined = bounds1.Merge(bounds2);
-        
-        // Grow by padding
-        return combined.Grow(padding);
+        return bounds1.Merge(bounds2);
     }
     
     public override void SetShaderParameters(ShaderMaterial material, string prefix = "")
