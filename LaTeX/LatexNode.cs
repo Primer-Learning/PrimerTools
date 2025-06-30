@@ -90,7 +90,8 @@ public partial class LatexNode : Node3D
 	}
 	
 	private readonly LatexToMesh latexToMesh = new();
-	
+
+	private List<MeshInstance3D> Characters;
 	public async void UpdateCharacters() {
 		if (Latex == "") return;
 		foreach (var child in GetChildren())
@@ -106,9 +107,6 @@ public partial class LatexNode : Node3D
 		}
 		var newNode = ResourceLoader.Load<PackedScene>(path).Instantiate<Node3D>();
 		
-		
-		
-		
 		AddChild(newNode);
 		newNode.RotationDegrees = new Vector3(0, 0, 0);
 		
@@ -119,18 +117,18 @@ public partial class LatexNode : Node3D
 	// Should be essentially the same thing,
 	// but it could be used in the same loop rather than needing a separate flag and method.
 	// It's slightly more checks, but pretty negligible.
-	public void SetColor(Color color)
+	public void SetColor(Color color, int beginIndex = 0, int endIndex = -1)
 	{
 		MakeMaterialUnique();
-		foreach (var child in GetChildren())
+
+		var characters = GetChild(0).GetChildren();
+		if (endIndex == -1)
 		{
-			foreach (var grandchild in child.GetChildren())
-			{
-				if (grandchild is MeshInstance3D meshInstance3D)
-				{
-					((StandardMaterial3D)meshInstance3D.Mesh.SurfaceGetMaterial(0)).AlbedoColor = color;
-				}
-			}
+			endIndex = characters.Count;
+		}
+		foreach (var character in characters.Take(new System.Range(beginIndex, endIndex)))
+		{
+			((StandardMaterial3D)((MeshInstance3D)character).Mesh.SurfaceGetMaterial(0)).AlbedoColor = color;
 		}
 	}
 
