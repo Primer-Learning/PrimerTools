@@ -37,6 +37,7 @@ public partial class StateChangeSequenceController : Control
         
         _seekTimeSpinBox = GetNode<SpinBox>("%SeekTimeSpinBox");
         _seekTimeSpinBox.MaxValue = _stateChangeSequence.TotalDuration;
+        _seekTimeSpinBox.Value = _stateChangeSequence.StartFromTime;
         
         _seekButton = GetNode<Button>("%SeekButton");
         _seekButton.Pressed += OnSeekButtonPressed;

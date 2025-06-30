@@ -19,6 +19,7 @@ public abstract partial class StateChangeSequence : Node
     }
     
     [Export] private double _startFromTime = 0;
+    public double StartFromTime => _startFromTime;
     
     private readonly CompositeStateChange _rootComposite = new();
     private List<FlattenedAnimation> _flattenedAnimations;
