@@ -8,9 +8,10 @@ public partial class DiagramElement : Node
     private MeshInstance3D _meshInstance;
     private ShaderMaterial _shaderMaterial;
     private DiagramSystem _parentSystem;
+    private ShapeStyle _style;
     
     private float _padding = 1f;
-    public float Padding 
+    private float Padding 
     { 
         get => _padding;
         set
@@ -19,16 +20,33 @@ public partial class DiagramElement : Node
             UpdateMeshTransform();
         }
     }
+    
+    public ShapeStyle Style 
+    { 
+        get => _style;
+        set
+        {
+            if (_style != null)
+                _style.StyleChanged -= OnStyleChanged;
+            
+            _style = value;
+            
+            if (_style != null)
+                _style.StyleChanged += OnStyleChanged;
+            
+            UpdateShaderParameters();
+        }
+    }
 
-    public ShapeData ShapeData => _shapeData;
-
-    public DiagramElement(ShapeData shapeData, float padding = 1)
+    public DiagramElement(ShapeData shapeData, float padding = 1, ShapeStyle style = null)
     {
         _shapeData = shapeData;
         _padding = padding;
+        _style = style ?? new ShapeStyle();
         
         // Subscribe to shape changes
         _shapeData.ShapeChanged += OnShapeChanged;
+        _style.StyleChanged += OnStyleChanged;
     }
 
     public override void _ExitTree()
@@ -38,9 +56,19 @@ public partial class DiagramElement : Node
         {
             _shapeData.ShapeChanged -= OnShapeChanged;
         }
+        if (_style != null)
+        {
+            _style.StyleChanged -= OnStyleChanged;
+        }
     }
 
     private void OnShapeChanged()
+    {
+        UpdateMeshTransform();
+        UpdateShaderParameters();
+    }
+    
+    private void OnStyleChanged()
     {
         UpdateMeshTransform();
         UpdateShaderParameters();
@@ -90,9 +118,8 @@ public partial class DiagramElement : Node
         _shaderMaterial.Shader = shader;
         
         // Set common shader parameters
-        _shaderMaterial.SetShaderParameter("shape_color", parentSystem.DefaultShapeColor);
+        _style.ApplyToShader(_shaderMaterial);
         _shaderMaterial.SetShaderParameter("background_color", parentSystem.DefaultBackgroundColor);
-        _shaderMaterial.SetShaderParameter("thickness", parentSystem.DefaultThickness);
         _shaderMaterial.SetShaderParameter("smoothness", parentSystem.DefaultSmoothness);
         
         _meshInstance.SetSurfaceOverrideMaterial(0, _shaderMaterial);
@@ -122,10 +149,10 @@ public partial class DiagramElement : Node
         
         _shapeData.SetShaderParameters(_shaderMaterial);
         
-        // Set inner thickness for shapes that support it
-        if (_shapeData is CircleData || _shapeData is RectangleData || _shapeData is TriangleData)
+        // Apply style parameters
+        if (_style != null)
         {
-            _shaderMaterial.SetShaderParameter("inner_thickness", _parentSystem?.DefaultThickness ?? 0.01f);
+            _style.ApplyToShader(_shaderMaterial);
         }
     }
 }

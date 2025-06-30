@@ -307,9 +307,7 @@ public partial class CompositeShapeData : ShapeData
         _smoothness = smoothness;
     }
 
-    public CompositeShapeData()
-    {
-    }
+    public CompositeShapeData() {}
 
     private void OnChildShapeChanged()
     {

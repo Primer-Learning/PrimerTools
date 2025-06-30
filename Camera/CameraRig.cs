@@ -72,6 +72,7 @@ public partial class CameraRig : Node3D
     
     public override void _UnhandledInput(InputEvent @event)
     {
+        if (!Camera.Current) return;
         if (@event is InputEventMouseButton mouseButtonEvent)
         {
             HandleMouseButtonEvent(mouseButtonEvent);

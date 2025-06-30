@@ -7,13 +7,18 @@ using PrimerTools._2D.Diagram;
 [Tool]
 public partial class DiagramSystem : Node3D
 {
-    public string ShaderPath = "res://addons/PrimerTools/2D/Diagram/ShapeShaders/circle_shader.gdshader";
-    [Export] public Color DefaultShapeColor = new Color(1.0f, 0.5f, 0.0f, 1.0f);
-    [Export] public Color DefaultBackgroundColor = new Color(0.0f, 0.0f, 0.0f, 0.0f);
-    [Export] public float DefaultThickness = 0.1f;
-    [Export] public float DefaultSmoothness = 0.01f;
+    private string ShaderPath = "res://addons/PrimerTools/2D/Diagram/ShapeShaders/circle_shader.gdshader";
+    public Color DefaultBackgroundColor = new Color(0.0f, 0.0f, 0.0f, 0.0f);
+    public float DefaultSmoothness = 0.01f;
+
+    private ShapeStyle DefaultStyle { get; set; }
 
     private List<DiagramElement> _elements = new List<DiagramElement>();
+    
+    public DiagramSystem()
+    {
+        DefaultStyle = new ShapeStyle(0.1f, 0.01f, new Color(1.0f, 0.5f, 0.0f, 1.0f));
+    }
 
     [ExportToolButton("Create")]
     private Callable Create => Callable.From(RebuildDiagram);
@@ -23,6 +28,12 @@ public partial class DiagramSystem : Node3D
     public void AddElement(DiagramElement element)
     {
         _elements.Add(element);
+        
+        // If element doesn't have a style, use a clone of the default
+        if (element.Style == null)
+        {
+            element.Style = DefaultStyle.Clone();
+        }
     }
 
     public void RebuildDiagram()
