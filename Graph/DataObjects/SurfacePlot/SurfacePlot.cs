@@ -78,6 +78,11 @@ public partial class SurfacePlot : MeshInstance3D, IPrimerGraphData
         return new Animation();
     }
 
+    public IStateChange TransitionStateChange(double duration)
+    {
+        throw new NotImplementedException();
+    }
+
     public Tween TweenTransition(double duration = AnimationUtilities.DefaultDuration)
     {
         // For now, just create the mesh and return a default tween

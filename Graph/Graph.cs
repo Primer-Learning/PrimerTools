@@ -219,8 +219,7 @@ public partial class Graph : Node3D
     
     
     
-    public CompositeStateChange TransitionStateChange(double duration =
-    AnimationUtilities.DefaultDuration)
+    public CompositeStateChange TransitionStateChange(double duration = AnimationUtilities.DefaultDuration)
     {
         return TransitionStateChange(duration, duration, duration);
     }
@@ -258,9 +257,7 @@ public partial class Graph : Node3D
         // Update data objects
         foreach (var dataObject in GetChildren().OfType<IPrimerGraphData>())
         {
-            // TODO: Convert IPrimerGraphData.Transition to return IStateChange
-            // For now, we'll skip this
-            //updatePhase.AddStateChangeInParallel(dataObject.TransitionStateChange(updateDuration));
+            updatePhase.AddStateChangeInParallel(dataObject.TransitionStateChange(updateDuration));
         }
 
         composite.AddStateChange(updatePhase.WithDuration(updateDuration));

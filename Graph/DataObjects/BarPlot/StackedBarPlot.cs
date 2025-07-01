@@ -80,6 +80,11 @@ public partial class StackedBarPlot : Node3D, IPrimerGraphData
     private float _barWidth = 0.8f;
     private float _barDepth = 0.01f;
 
+    public IStateChange TransitionStateChange(double duration)
+    {
+        throw new NotImplementedException();
+    }
+
     public Tween TweenTransition(double duration = AnimationUtilities.DefaultDuration)
     {
         var stackProperties = DataAsRectProperties();

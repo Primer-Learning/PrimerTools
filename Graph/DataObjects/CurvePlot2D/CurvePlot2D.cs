@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Godot;
+using PrimerTools.TweenSystem;
 using PrimerTools.Utilities;
 using Array = Godot.Collections.Array;
 
@@ -241,6 +242,17 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
             pointsOfStages.Add(new[] { TransformPointFromDataSpaceToPositionSpace(_dataPoints[0]) });
         pointsOfStages.Add(_dataPoints.Select(x => TransformPointFromDataSpaceToPositionSpace(x)).ToArray());
         return this.AnimateValue(RenderExtent + 1, "RenderExtent");
+    }
+    
+    public IStateChange TransitionStateChange(double duration = Node3DStateChangeExtensions.DefaultDuration)
+    {
+        if (_dataPoints.Count == 0) return null; 
+        // If there's not a previous stage, add the first point of the data as the first stage
+        if (pointsOfStages.Count == 0)
+            pointsOfStages.Add(new[] { TransformPointFromDataSpaceToPositionSpace(_dataPoints[0]) });
+        pointsOfStages.Add(_dataPoints.Select(x => TransformPointFromDataSpaceToPositionSpace(x)).ToArray());
+        return new PropertyStateChange(this, "RenderExtent", pointsOfStages.Count);
+        // return this.AnimateValue(RenderExtent + 1, "RenderExtent");
     }
 
     /// <summary>

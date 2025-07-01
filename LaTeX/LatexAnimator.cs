@@ -157,8 +157,9 @@ public partial class LatexAnimator : Node3D
         
         // Create a combined node with all the characters from both LatexNodes, with the next expression scale zero.
         var intermediateNode = new Node3D();
-        intermediateNode.Visible = true;
+        intermediateNode.Visible = false;
         AddChild(intermediateNode);
+        intermediateNode.Name = "Intermediate ";
 
         var copiesOfCurrentExpressionCharacters = new List<Node3D>();
         foreach (var character in _latexNodes[_currentExpressionIndex].GetChild(0).GetChildren().OfType<Node3D>())

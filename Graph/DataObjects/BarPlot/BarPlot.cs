@@ -145,6 +145,11 @@ public partial class BarPlot : Node3D, IPrimerGraphData
         return animations.InParallel();
     }
 
+    public IStateChange TransitionStateChange(double duration)
+    {
+        throw new NotImplementedException();
+    }
+
     public Tween TweenTransition(double duration = AnimationUtilities.DefaultDuration)
     {
         var rectProperties = DataAsRectProperties(useTween: true);

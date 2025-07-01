@@ -50,6 +50,11 @@ public partial class PointData : Node3D, IPrimerGraphData
         return transitionAnimations.InParallel();
     }
 
+    public IStateChange TransitionStateChange(double duration)
+    {
+        throw new System.NotImplementedException();
+    }
+
     public Tween TweenTransition(double duration)
     {
         throw new System.NotImplementedException();
