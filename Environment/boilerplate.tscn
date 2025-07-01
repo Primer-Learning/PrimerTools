@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://cmyih6anxr6g7" path="res://addons/PrimerTools/Camera/CameraRig.cs" id="1_tea2c"]
 [ext_resource type="Script" uid="uid://b574a0jrxvcix" path="res://addons/PrimerTools/Utilities/FPSViewer.cs" id="2_y5nfq"]
-[ext_resource type="Environment" uid="uid://xpav3hoy6ldu" path="res://addons/PrimerTools/primer_environment.tres" id="3_mfiyt"]
+[ext_resource type="Environment" uid="uid://xpav3hoy6ldu" path="res://addons/PrimerTools/Environment/primer_environment.tres" id="3_mfiyt"]
 
 [node name="Boilerplate" type="Node3D"]
 

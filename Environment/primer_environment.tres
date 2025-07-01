@@ -1,0 +1,48 @@
+[gd_resource type="Environment" load_steps=4 format=3 uid="uid://xpav3hoy6ldu"]
+
+[ext_resource type="Shader" uid="uid://ddq02620nwc1d" path="res://addons/PrimerTools/Environment/sky_shader2.gdshader" id="1_1cjjy"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_yvsqb"]
+shader = ExtResource("1_1cjjy")
+shader_parameter/base_color = Color(0.1218, 0.132113, 0.14, 1)
+shader_parameter/mist_color = Color(0.184, 0.2, 0.212, 1)
+shader_parameter/mist_scale = 64.185
+shader_parameter/mist_speed = 0.15
+shader_parameter/mist_intensity = 0.503
+shader_parameter/perlin_layers = 0
+shader_parameter/worley_layers = 0
+shader_parameter/voronoi_edge_layers = 3
+shader_parameter/grid_layers = 0
+shader_parameter/crystalline_layers = 0
+shader_parameter/hexagonal_layers = 5
+shader_parameter/line_network_layers = 0
+shader_parameter/mondrian_layers = 0
+shader_parameter/circuit_layers = 0
+shader_parameter/grid_size = 0.5
+shader_parameter/line_thickness = 0.1
+shader_parameter/curl_influence = 1.0
+shader_parameter/layer1_octaves = 3
+shader_parameter/layer2_octaves = 3
+shader_parameter/layer3_octaves = 3
+shader_parameter/distortion_scale = 1.5
+shader_parameter/distortion_speed = 0.2
+shader_parameter/domain_warp_strength = 0.0
+shader_parameter/quantization_levels = 0
+shader_parameter/edge_detection_strength_layer1 = 0.0
+shader_parameter/edge_detection_strength_layer2 = 0.0
+shader_parameter/edge_detection_strength_layer3 = 0.0
+shader_parameter/contrast_boost = 1.0
+shader_parameter/use_rotation = 0
+shader_parameter/rotation_speed = 0.0
+shader_parameter/use_spherical_mapping = 1
+shader_parameter/show_noise_only = 0
+
+[sub_resource type="Sky" id="Sky_twrfi"]
+sky_material = SubResource("ShaderMaterial_yvsqb")
+
+[resource]
+background_mode = 2
+background_color = Color(0.184314, 0.2, 0.211765, 0)
+sky = SubResource("Sky_twrfi")
+ambient_light_color = Color(1, 1, 1, 1)
+sdfgi_enabled = true

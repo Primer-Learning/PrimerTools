@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://cmyih6anxr6g7" path="res://addons/PrimerTools/Camera/CameraRig.cs" id="1_i4ttt"]
 [ext_resource type="Script" uid="uid://b574a0jrxvcix" path="res://addons/PrimerTools/Utilities/FPSViewer.cs" id="2_ep767"]
 [ext_resource type="Script" uid="uid://cf7jqo5l5joyv" path="res://addons/PrimerTools/2D/Diagram/ExampleDiagram.cs" id="2_m6nep"]
-[ext_resource type="Environment" uid="uid://xpav3hoy6ldu" path="res://addons/PrimerTools/primer_environment.tres" id="3_1vqf3"]
+[ext_resource type="Environment" uid="uid://xpav3hoy6ldu" path="res://addons/PrimerTools/Environment/primer_environment.tres" id="3_1vqf3"]
 [ext_resource type="Shader" uid="uid://dyj6xy6kfgcu" path="res://addons/PrimerTools/2D/Diagram/ShapeShaders/circle_shader.gdshader" id="5_i4ttt"]
 [ext_resource type="Script" uid="uid://1h5y8c6snsvs" path="res://addons/PrimerTools/2D/Diagram/DiagramSequence.cs" id="6_ep767"]
 [ext_resource type="PackedScene" uid="uid://bxxakhhtmcbbd" path="res://addons/PrimerTools/StateChangeAnimationSystem/state_change_sequence_controller.tscn" id="7_1vqf3"]
@@ -62,7 +62,7 @@ anchor_right = 1.0
 offset_left = -59.0
 offset_bottom = 23.0
 grow_horizontal = 0
-text = "124 FPS"
+text = "139 FPS"
 script = ExtResource("2_ep767")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="Boilerplate"]
