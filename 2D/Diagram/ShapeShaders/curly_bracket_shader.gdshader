@@ -14,12 +14,24 @@ uniform float smoothness : hint_range(0.001, 0.1) = 0.01;
 uniform vec2 bracket_tip1 = vec2(-0.5, -1.0);
 uniform vec2 bracket_tip2 = vec2(0.5, -1.0);
 uniform vec2 bracket_stem = vec2(0.0, 0.0);
+uniform vec2 mesh_size = vec2(2.0, 2.0);
 
 varying vec2 object_pos;
 
 void vertex() {
+    // VERTEX is in normalized coordinates for a plane mesh
+    // Scale by mesh size to get actual object coordinates
+    object_pos = VERTEX.xy * mesh_size * 0.5;
+	
+	// old object_pos, which is world-space xy position of the vertex
     //object_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xy;
-	object_pos = ((MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz - NODE_POSITION_WORLD).xy;
+	// new object_pos is the local xy position of the vertex
+	//object_pos = ((MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz - NODE_POSITION_WORLD).xy;
+	// The below makes a very warped result.
+	// MODEL_MATRIX seems to do some scaling. I'm not sure of the units of VERTEX.
+	// Is it just UV space?
+	// object_pos = VERTEX.xy
+	// We need to rotate 
 }
 
 void fragment() {

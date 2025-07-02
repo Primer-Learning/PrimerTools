@@ -1,3 +1,4 @@
+using System;
 using Godot;
 using PrimerTools._2D.Diagram;
 using PrimerTools;
@@ -144,27 +145,69 @@ public partial class ShaderBracket : Node3D
     
     private void UpdateFromWorld3DPositions()
     {
-        // GD.Print("Got here");
         if (_bracketData == null || _meshInstance == null) return;
         
-        // For now, ignore Z values and project to XY plane
-        var leftTip2D = new Vector2(_leftTip3D.X, _leftTip3D.Y);
-        var rightTip2D = new Vector2(_rightTip3D.X, _rightTip3D.Y);
-        var stem2D = new Vector2(_stem3D.X, _stem3D.Y);
+        // Calculate the basis vectors for the bracket plane
+        var (basis, localPoints) = CalculateLocalBasis();
         
-        // Update bracket data with 2D coordinates
-        _bracketData.LeftTip = leftTip2D;
-        _bracketData.RightTip = rightTip2D;
-        _bracketData.Stem = stem2D;
+        // Update bracket data with 2D coordinates in local space
+        _bracketData.LeftTip = new Vector2(localPoints[0].X, localPoints[0].Y);
+        _bracketData.RightTip = new Vector2(localPoints[1].X, localPoints[1].Y);
+        _bracketData.Stem = new Vector2(localPoints[2].X, localPoints[2].Y);
         
-        // Update mesh transform and size
-        UpdateMeshTransform();
+        // Update mesh transform
+        UpdateMeshTransform(basis);
         
         // Update shader parameters
         UpdateShaderParameters();
     }
     
-    private void UpdateMeshTransform()
+    private (Basis basis, Vector3[] localPoints) CalculateLocalBasis()
+    {
+        // Calculate basis vectors
+        var tipToTip = (_rightTip3D - _leftTip3D);
+        var tipToStem = (_stem3D - _leftTip3D);
+
+        Vector3 localX;
+        Vector3 localY;
+        Vector3 localZ;
+        Basis basis;
+        
+        // Handle degenerate case where points are collinear
+        if (tipToTip.Cross(tipToStem).LengthSquared() < 0.0001f)
+        {
+            // Fall back to a default orientation
+            var up = Vector3.Up;
+            if (Mathf.Abs(tipToTip.Dot(up)) > 0.99f)
+                up = Vector3.Right;
+            
+            localZ = tipToTip.Cross(up).Normalized();
+            localY = localZ.Cross(tipToTip).Normalized();
+            basis = new Basis(tipToTip.Normalized(), localY, localZ);
+            
+            return (basis, new[] { Vector3.Zero, new Vector3((_rightTip3D - _leftTip3D).Length(), 0, 0), tipToStem });
+        }
+        
+        // Normal case: points form a proper triangle
+        localX = tipToTip.Normalized();
+        localZ = tipToTip.Cross(tipToStem).Normalized();
+        localY = localZ.Cross(localX).Normalized();
+        
+        basis = new Basis(localX, localY, localZ);
+        
+        // Calculate center point for the coordinate system
+        var center = (_leftTip3D + _rightTip3D + _stem3D) / 3.0f;
+        
+        // Convert world points to local coordinates
+        var localPoints = new Vector3[3];
+        localPoints[0] = basis.Inverse() * (_leftTip3D - center);
+        localPoints[1] = basis.Inverse() * (_rightTip3D - center);
+        localPoints[2] = basis.Inverse() * (_stem3D - center);
+        
+        return (basis, localPoints);
+    }
+    
+    private void UpdateMeshTransform(Basis basis)
     {
         if (_meshInstance == null || _bracketData == null) return;
         
@@ -179,12 +222,18 @@ public partial class ShaderBracket : Node3D
         }
         bounds = bounds.Grow(totalPadding);
         
-        // Position mesh at center of bounds (ignoring Z for now)
-        var center3D = new Vector3(bounds.GetCenter().X, bounds.GetCenter().Y, 0);
-        _meshInstance.GlobalPosition = center3D;
+        // Calculate world position for mesh center
+        var localCenter2D = bounds.GetCenter();
+        var localCenter3D = new Vector3(localCenter2D.X, localCenter2D.Y, 0);
         
-        // Orient mesh to face -Z (towards camera in typical setup)
-        _meshInstance.RotationDegrees = new Vector3(90, 0, 0);
+        // Transform to world space
+        var worldCenter = (_leftTip3D + _rightTip3D + _stem3D) / 3.0f + basis * localCenter3D;
+        GD.Print(basis);
+        GD.Print(localCenter3D);
+        GD.Print(worldCenter);
+        
+        _meshInstance.GlobalPosition = worldCenter;
+        _meshInstance.GlobalBasis = basis.Rotated(basis.X, Mathf.Tau / 4f);
         
         // Update mesh size
         UpdateMeshSize();
@@ -212,17 +261,16 @@ public partial class ShaderBracket : Node3D
     {
         if (_shaderMaterial == null || _bracketData == null) return;
         
-        // Get the mesh center in world space
-        var meshCenter = _meshInstance.Position;
+        // The bracket data already contains local coordinates relative to the mesh center
+        _shaderMaterial.SetShaderParameter("bracket_tip1", _bracketData.LeftTip);
+        _shaderMaterial.SetShaderParameter("bracket_tip2", _bracketData.RightTip);
+        _shaderMaterial.SetShaderParameter("bracket_stem", _bracketData.Stem);
         
-        // Convert bracket points to mesh-local coordinates
-        var localLeftTip = new Vector2(_bracketData.LeftTip.X - meshCenter.X, _bracketData.LeftTip.Y - meshCenter.Y);
-        var localRightTip = new Vector2(_bracketData.RightTip.X - meshCenter.X, _bracketData.RightTip.Y - meshCenter.Y);
-        var localStem = new Vector2(_bracketData.Stem.X - meshCenter.X, _bracketData.Stem.Y - meshCenter.Y);
-        
-        _shaderMaterial.SetShaderParameter("bracket_tip1", localLeftTip);
-        _shaderMaterial.SetShaderParameter("bracket_tip2", localRightTip);
-        _shaderMaterial.SetShaderParameter("bracket_stem", localStem);
+        // Pass mesh size to shader
+        if (_meshInstance.Mesh is PlaneMesh planeMesh)
+        {
+            _shaderMaterial.SetShaderParameter("mesh_size", planeMesh.Size);
+        }
         
         _style?.ApplyToShader(_shaderMaterial);
     }

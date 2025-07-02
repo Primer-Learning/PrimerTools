@@ -26,6 +26,7 @@ shader_parameter/smoothness = 0.01
 shader_parameter/bracket_tip1 = Vector2(-1.49, -0.945)
 shader_parameter/bracket_tip2 = Vector2(1.37, -1)
 shader_parameter/bracket_stem = Vector2(0, 0)
+shader_parameter/mesh_size = Vector2(2, 2)
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_41dll"]
 size = Vector2(8, 8)
@@ -58,9 +59,10 @@ shader_parameter/background_color = Color(0, 0, 0, 0)
 shader_parameter/base_thickness = 0.02
 shader_parameter/thickness_variation = 2.0
 shader_parameter/smoothness = 0.01
-shader_parameter/bracket_tip1 = Vector2(-1, -0.5)
-shader_parameter/bracket_tip2 = Vector2(1, -0.5)
-shader_parameter/bracket_stem = Vector2(0, 0.5)
+shader_parameter/bracket_tip1 = Vector2(-1, -0.333333)
+shader_parameter/bracket_tip2 = Vector2(1, -0.333333)
+shader_parameter/bracket_stem = Vector2(0, 0.666667)
+shader_parameter/mesh_size = Vector2(3.2, 2.2)
 
 [node name="DiagramTest" type="Node3D"]
 
@@ -82,7 +84,7 @@ anchor_right = 1.0
 offset_left = -59.0
 offset_bottom = 23.0
 grow_horizontal = 0
-text = "144 FPS"
+text = "145 FPS"
 script = ExtResource("2_ep767")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="Boilerplate"]
@@ -121,6 +123,6 @@ script = ExtResource("6_ep767")
 script = ExtResource("9_41dll")
 
 [node name="BracketMesh" type="MeshInstance3D" parent="Node3D"]
-transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, -0.5, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
 mesh = SubResource("PlaneMesh_i8vr5")
 surface_material_override/0 = SubResource("ShaderMaterial_3ac6h")
