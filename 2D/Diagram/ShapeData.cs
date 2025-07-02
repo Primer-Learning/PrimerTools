@@ -436,3 +436,73 @@ public partial class CompositeShapeData : ShapeData
         _shape2.SetShaderParameters(material, $"{prefix}shape2_");
     }
 }
+
+public partial class BracketData : ShapeData
+{
+    private Vector2 _leftTip;
+    public Vector2 LeftTip 
+    { 
+        get => _leftTip;
+        set
+        {
+            _leftTip = value;
+            NotifyChanged();
+        }
+    }
+    
+    private Vector2 _rightTip;
+    public Vector2 RightTip 
+    { 
+        get => _rightTip;
+        set
+        {
+            _rightTip = value;
+            NotifyChanged();
+        }
+    }
+    
+    private Vector2 _stem;
+    public Vector2 Stem 
+    { 
+        get => _stem;
+        set
+        {
+            _stem = value;
+            NotifyChanged();
+        }
+    }
+
+    public BracketData(Vector2 leftTip, Vector2 rightTip, Vector2 stem)
+    {
+        _leftTip = leftTip;
+        _rightTip = rightTip;
+        _stem = stem;
+    }
+
+    public BracketData()
+    {
+        _leftTip = new Vector2(-0.5f, -1.0f);
+        _rightTip = new Vector2(0.5f, -1.0f);
+        _stem = Vector2.Zero;
+    }
+
+    public override int GetShapeType() => 5; // New type for bracket
+
+    public override Rect2 GetBounds()
+    {
+        // Calculate bounds that encompass all three points
+        var minX = Mathf.Min(Mathf.Min(_leftTip.X, _rightTip.X), _stem.X);
+        var minY = Mathf.Min(Mathf.Min(_leftTip.Y, _rightTip.Y), _stem.Y);
+        var maxX = Mathf.Max(Mathf.Max(_leftTip.X, _rightTip.X), _stem.X);
+        var maxY = Mathf.Max(Mathf.Max(_leftTip.Y, _rightTip.Y), _stem.Y);
+        
+        return new Rect2(minX, minY, maxX - minX, maxY - minY);
+    }
+    
+    public override void SetShaderParameters(ShaderMaterial material, string prefix = "")
+    {
+        material.SetShaderParameter($"{prefix}bracket_tip1", _leftTip);
+        material.SetShaderParameter($"{prefix}bracket_tip2", _rightTip);
+        material.SetShaderParameter($"{prefix}bracket_stem", _stem);
+    }
+}

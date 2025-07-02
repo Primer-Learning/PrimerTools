@@ -12,7 +12,7 @@ public partial class ShapeStyle : GodotObject
     private float _smoothness = 0.1f;
     
     public float Thickness 
-    { 
+    {
         get => _thickness;
         set 
         { 

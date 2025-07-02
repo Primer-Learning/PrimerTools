@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3 uid="uid://bs80fh31y35u1"]
+[gd_scene load_steps=17 format=3 uid="uid://bs80fh31y35u1"]
 
 [ext_resource type="Script" uid="uid://cmyih6anxr6g7" path="res://addons/PrimerTools/Camera/CameraRig.cs" id="1_i4ttt"]
 [ext_resource type="Script" uid="uid://b574a0jrxvcix" path="res://addons/PrimerTools/Utilities/FPSViewer.cs" id="2_ep767"]
@@ -8,6 +8,7 @@
 [ext_resource type="Shader" uid="uid://dyj6xy6kfgcu" path="res://addons/PrimerTools/2D/Diagram/ShapeShaders/circle_shader.gdshader" id="5_i4ttt"]
 [ext_resource type="Script" uid="uid://1h5y8c6snsvs" path="res://addons/PrimerTools/2D/Diagram/DiagramSequence.cs" id="6_ep767"]
 [ext_resource type="PackedScene" uid="uid://bxxakhhtmcbbd" path="res://addons/PrimerTools/StateChangeAnimationSystem/state_change_sequence_controller.tscn" id="7_1vqf3"]
+[ext_resource type="Script" uid="uid://bdrrfd75k2b1h" path="res://addons/PrimerTools/Gestures/Bracket/ShaderBracket.cs" id="9_41dll"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_1vqf3"]
 size = Vector2(4, 4)
@@ -44,6 +45,23 @@ shader_parameter/radius = 3.0
 
 [sub_resource type="SphereMesh" id="SphereMesh_41dll"]
 
+[sub_resource type="PlaneMesh" id="PlaneMesh_i8vr5"]
+size = Vector2(3.2, 2.2)
+subdivide_width = 1
+subdivide_depth = 1
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_3ac6h"]
+render_priority = 0
+shader = ExtResource("5_h6344")
+shader_parameter/shape_color = Color(1, 1, 1, 1)
+shader_parameter/background_color = Color(0, 0, 0, 0)
+shader_parameter/base_thickness = 0.02
+shader_parameter/thickness_variation = 2.0
+shader_parameter/smoothness = 0.01
+shader_parameter/bracket_tip1 = Vector2(-1, -1)
+shader_parameter/bracket_tip2 = Vector2(1, -1)
+shader_parameter/bracket_stem = Vector2(0, 0)
+
 [node name="DiagramTest" type="Node3D"]
 
 [node name="Boilerplate" type="Node3D" parent="."]
@@ -79,6 +97,7 @@ script = ExtResource("2_m6nep")
 
 [node name="DiagramElement_CircleElement" type="MeshInstance3D" parent="ExampleDiagram"]
 transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, -0.0169601, 0.0289664, 0)
+visible = false
 mesh = SubResource("PlaneMesh_1vqf3")
 surface_material_override/0 = SubResource("ShaderMaterial_h6344")
 
@@ -97,3 +116,11 @@ mesh = SubResource("SphereMesh_41dll")
 script = ExtResource("6_ep767")
 
 [node name="Control" parent="." instance=ExtResource("7_1vqf3")]
+
+[node name="Node3D" type="Node3D" parent="."]
+script = ExtResource("9_41dll")
+
+[node name="BracketMesh" type="MeshInstance3D" parent="Node3D"]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, -0.5, 0)
+mesh = SubResource("PlaneMesh_i8vr5")
+surface_material_override/0 = SubResource("ShaderMaterial_3ac6h")
