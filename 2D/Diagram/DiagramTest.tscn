@@ -84,7 +84,7 @@ anchor_right = 1.0
 offset_left = -59.0
 offset_bottom = 23.0
 grow_horizontal = 0
-text = "145 FPS"
+text = "144 FPS"
 script = ExtResource("2_ep767")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="Boilerplate"]
@@ -124,11 +124,11 @@ script = ExtResource("6_ep767")
 
 [node name="Node3D" type="Node3D" parent="."]
 script = ExtResource("9_41dll")
-LeftTipPosition = Vector3(-1, -1, 1)
-RightTipPosition = Vector3(1, -1, 1)
-StemPosition = Vector3(0, 1, -1)
+LeftTipPosition = Vector3(0, -1, 1)
+RightTipPosition = Vector3(2, -1, 1)
+StemPosition = Vector3(1, 1, -1)
 
 [node name="BracketMesh" type="MeshInstance3D" parent="Node3D"]
-transform = Transform3D(1, 0, 0, 0, 0.707107, -0.707107, 0, 0.707107, 0.707107, 0, 0, 0)
+transform = Transform3D(1, 0, 0, 0, 0.707107, -0.707107, 0, 0.707107, 0.707107, 1, 0, 0)
 mesh = SubResource("PlaneMesh_i8vr5")
 surface_material_override/0 = SubResource("ShaderMaterial_3ac6h")
