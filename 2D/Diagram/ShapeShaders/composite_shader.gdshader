@@ -30,6 +30,13 @@ uniform vec2 shape1_arrow_start = vec2(-1.0, 0.0);
 uniform vec2 shape1_arrow_end = vec2(1.0, 0.0);
 uniform float shape1_head_length = 0.3;
 uniform float shape1_head_angle = 30.0;
+uniform vec2 shape1_bezier_p0 = vec2(-1.0, 0.0);
+uniform vec2 shape1_bezier_p1 = vec2(0.0, 1.0);
+uniform vec2 shape1_bezier_p2 = vec2(1.0, 0.0);
+uniform vec2 shape1_bezier_p3 = vec2(1.0, -1.0);
+uniform vec2 shape1_bracket_tip1 = vec2(-0.5, -1.0);
+uniform vec2 shape1_bracket_tip2 = vec2(0.5, -1.0);
+uniform vec2 shape1_bracket_stem = vec2(0.0, 0.0);
 
 // Shape 2 parameters
 uniform vec2 shape2_shape_center = vec2(0.0, 0.0);
@@ -42,6 +49,13 @@ uniform vec2 shape2_arrow_start = vec2(-1.0, 0.0);
 uniform vec2 shape2_arrow_end = vec2(1.0, 0.0);
 uniform float shape2_head_length = 0.3;
 uniform float shape2_head_angle = 30.0;
+uniform vec2 shape2_bezier_p0 = vec2(-1.0, 0.0);
+uniform vec2 shape2_bezier_p1 = vec2(0.0, 1.0);
+uniform vec2 shape2_bezier_p2 = vec2(1.0, 0.0);
+uniform vec2 shape2_bezier_p3 = vec2(1.0, -1.0);
+uniform vec2 shape2_bracket_tip1 = vec2(-0.5, -1.0);
+uniform vec2 shape2_bracket_tip2 = vec2(0.5, -1.0);
+uniform vec2 shape2_bracket_stem = vec2(0.0, 0.0);
 
 varying vec2 object_pos;
 
@@ -61,6 +75,12 @@ float evaluateShape(int shape_type, vec2 p, int shape_index) {
             return sdTriangle(p, shape1_point_a, shape1_point_b, shape1_point_c);
         } else if (shape_type == 4) { // Arrow
             return sdArrow(p, shape1_arrow_start, shape1_arrow_end, shape1_head_length, shape1_head_angle);
+        } else if (shape_type == 5) { // Quadratic Bezier
+            return sdBezierQuadratic(p, shape1_bezier_p0, shape1_bezier_p1, shape1_bezier_p2);
+        } else if (shape_type == 6) { // Cubic Bezier
+            return sdBezierCubic(p, shape1_bezier_p0, shape1_bezier_p1, shape1_bezier_p2, shape1_bezier_p3);
+        } else if (shape_type == 7) { // Curly Bracket
+            return sdCurlyBracket(p, shape1_bracket_tip1, shape1_bracket_tip2, shape1_bracket_stem);
         }
     } else {
         if (shape_type == 0) { // Circle
@@ -73,6 +93,12 @@ float evaluateShape(int shape_type, vec2 p, int shape_index) {
             return sdTriangle(p, shape2_point_a, shape2_point_b, shape2_point_c);
         } else if (shape_type == 4) { // Arrow
             return sdArrow(p, shape2_arrow_start, shape2_arrow_end, shape2_head_length, shape2_head_angle);
+        } else if (shape_type == 5) { // Quadratic Bezier
+            return sdBezierQuadratic(p, shape2_bezier_p0, shape2_bezier_p1, shape2_bezier_p2);
+        } else if (shape_type == 6) { // Cubic Bezier
+            return sdBezierCubic(p, shape2_bezier_p0, shape2_bezier_p1, shape2_bezier_p2, shape2_bezier_p3);
+        } else if (shape_type == 7) { // Curly Bracket
+            return sdCurlyBracket(p, shape2_bracket_tip1, shape2_bracket_tip2, shape2_bracket_stem);
         }
     }
     return 1000.0; // Large distance for unknown shape

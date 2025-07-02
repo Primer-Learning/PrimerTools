@@ -95,7 +95,7 @@ public partial class Graph : Node3D
         End
     }
 
-    // Proxy properties for backward compatibility
+    // Proxy properties for backward compatibility (axis labels are controlled by axes now)
     public AxisLabelAlignmentOptions XAxisLabelAlignment
     {
         get => XAxis.LabelAlignment;
@@ -217,8 +217,6 @@ public partial class Graph : Node3D
         );
     }
     
-    
-    
     public CompositeStateChange TransitionStateChange(double duration = AnimationUtilities.DefaultDuration)
     {
         return TransitionStateChange(duration, duration, duration);
@@ -276,15 +274,6 @@ public partial class Graph : Node3D
 
         return composite;
     }
-
-    // public Tween ShrinkPlottedDataToEnd()
-    // {
-    //     return GetComponentsInChildren<IPrimerGraphData>().Select(x => x.ShrinkToEnd()).RunInParallel();
-    // }
-    //
-    // // We assume there will be no data present when the axes are drown, so they appear independently
-    // public Tween Appear() => Axes.Select(x => x.Appear()).RunInParallel();
-    // public Tween Disappear() => Axes.Select(x => x.Disappear()).RunInParallel();
     
     public CurvePlot2D AddCurvePlot2D(string name = "Curve")
     {
@@ -318,16 +307,6 @@ public partial class Graph : Node3D
         surfacePlot.Name = name;
         return surfacePlot;
     }
-
-    
-    // public StackedArea AddStackedArea(string name)
-    // {
-    //     var gnome = new SimpleGnome(transform);
-    //     var area = gnome.Add<StackedArea>(name);
-    //     area.Reset(); // In case it already existed
-    //     area.transformPointFromDataSpaceToPositionSpace = DataSpaceToPositionSpace;
-    //     return area;
-    // }
     
     public BarPlot AddBarPlot(string name = "BarPlot")
     {
@@ -379,5 +358,11 @@ public partial class Graph : Node3D
             (point.Y - min.Y) / range.Y * YAxis.LengthMinusPadding,
             (point.Z - min.Z) / range.Z * ZAxis.LengthMinusPadding
         );
+    }
+
+    public void AddChildInDataSpace(Node3D newChild, Vector3 dataPosition)
+    {
+        AddChild(newChild);
+        newChild.Position = GetDataSpaceToPositionSpaceFromCurrentObjects(dataPosition);
     }
 }

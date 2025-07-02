@@ -1,5 +1,6 @@
 using Godot;
 using PrimerTools;
+using PrimerTools.TweenSystem;
 
 [Tool]
 public partial class Bracket : Node3D
@@ -108,6 +109,23 @@ public partial class Bracket : Node3D
 			LBar.ScaleToAnimation(new Vector3(parameters.lBarLength, LBar.Scale.Y, LBar.Scale.Z)),
 			RBar.ScaleToAnimation(new Vector3(parameters.rBarLength, RBar.Scale.Y, RBar.Scale.Z))
 		);
+	}
+	
+	public CompositeStateChange TransitionStateChange()
+	{
+		var parameters = CalculateUpdateParameters();
+
+		var change = new CompositeStateChange();
+		
+		change.AddStateChangeInParallel(this.MoveTo(StemPosition));
+		change.AddStateChangeInParallel(this.RotateTo(parameters.rotation));
+		change.AddStateChangeInParallel(this.ScaleTo(parameters.scale));
+		change.AddStateChangeInParallel(LTip.MoveTo(new Vector3(-parameters.lLength, 0, 1)));
+		change.AddStateChangeInParallel(RTip.MoveTo(new Vector3(parameters.rLength, 0, 1)));
+		change.AddStateChangeInParallel(LBar.ScaleTo(new Vector3(parameters.lBarLength, LBar.Scale.Y, LBar.Scale.Z)));
+		change.AddStateChangeInParallel(RBar.ScaleTo(new Vector3(parameters.rBarLength, RBar.Scale.Y, RBar.Scale.Z)));
+
+		return change;
 	}
 
 	public Animation ScaleUpFromZero(double duration = AnimationUtilities.DefaultDuration)

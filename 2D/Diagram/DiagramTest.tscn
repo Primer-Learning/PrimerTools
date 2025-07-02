@@ -1,9 +1,10 @@
-[gd_scene load_steps=13 format=3 uid="uid://bs80fh31y35u1"]
+[gd_scene load_steps=14 format=3 uid="uid://bs80fh31y35u1"]
 
 [ext_resource type="Script" uid="uid://cmyih6anxr6g7" path="res://addons/PrimerTools/Camera/CameraRig.cs" id="1_i4ttt"]
 [ext_resource type="Script" uid="uid://b574a0jrxvcix" path="res://addons/PrimerTools/Utilities/FPSViewer.cs" id="2_ep767"]
 [ext_resource type="Script" uid="uid://cf7jqo5l5joyv" path="res://addons/PrimerTools/2D/Diagram/ExampleDiagram.cs" id="2_m6nep"]
 [ext_resource type="Environment" uid="uid://xpav3hoy6ldu" path="res://addons/PrimerTools/Environment/primer_environment.tres" id="3_1vqf3"]
+[ext_resource type="Shader" uid="uid://830uuxbfl5f" path="res://addons/PrimerTools/2D/Diagram/ShapeShaders/curly_bracket_shader.gdshader" id="5_h6344"]
 [ext_resource type="Shader" uid="uid://dyj6xy6kfgcu" path="res://addons/PrimerTools/2D/Diagram/ShapeShaders/circle_shader.gdshader" id="5_i4ttt"]
 [ext_resource type="Script" uid="uid://1h5y8c6snsvs" path="res://addons/PrimerTools/2D/Diagram/DiagramSequence.cs" id="6_ep767"]
 [ext_resource type="PackedScene" uid="uid://bxxakhhtmcbbd" path="res://addons/PrimerTools/StateChangeAnimationSystem/state_change_sequence_controller.tscn" id="7_1vqf3"]
@@ -15,14 +16,15 @@ subdivide_depth = 1
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_h6344"]
 render_priority = 0
-shader = ExtResource("5_i4ttt")
+shader = ExtResource("5_h6344")
 shader_parameter/shape_color = Color(1, 0.5, 0, 1)
 shader_parameter/background_color = Color(0, 0, 0, 0)
-shader_parameter/thickness = 0.5
-shader_parameter/inner_thickness = 0.377
+shader_parameter/base_thickness = 0.02
+shader_parameter/thickness_variation = 2.0
 shader_parameter/smoothness = 0.01
-shader_parameter/shape_center = Vector2(-1, 1)
-shader_parameter/radius = 1.0
+shader_parameter/bracket_tip1 = Vector2(-1.49, -0.945)
+shader_parameter/bracket_tip2 = Vector2(1.37, -1)
+shader_parameter/bracket_stem = Vector2(0, 0)
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_41dll"]
 size = Vector2(8, 8)
@@ -49,7 +51,7 @@ shader_parameter/radius = 3.0
 [node name="CameraRig" type="Node3D" parent="Boilerplate"]
 transform = Transform3D(1, 0, 0, 0, 0.956305, 0.292372, 0, -0.292372, 0.956305, 0, 0, 0)
 script = ExtResource("1_i4ttt")
-Distance = 10.0
+Distance = 24.775
 
 [node name="Camera3D" type="Camera3D" parent="Boilerplate/CameraRig"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 24.775)
@@ -73,16 +75,16 @@ transform = Transform3D(1, 0, 0, 0, 0.588477, 0.808514, 0, -0.808514, 0.588477, 
 shadow_enabled = true
 
 [node name="ExampleDiagram" type="Node3D" parent="."]
-visible = false
 script = ExtResource("2_m6nep")
 
 [node name="DiagramElement_CircleElement" type="MeshInstance3D" parent="ExampleDiagram"]
-transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, -1, 1, 0)
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, -0.0169601, 0.0289664, 0)
 mesh = SubResource("PlaneMesh_1vqf3")
 surface_material_override/0 = SubResource("ShaderMaterial_h6344")
 
 [node name="DiagramElement_CircleElement2" type="MeshInstance3D" parent="ExampleDiagram"]
 transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 3, 0, 0)
+visible = false
 mesh = SubResource("PlaneMesh_41dll")
 surface_material_override/0 = SubResource("ShaderMaterial_i8vr5")
 
