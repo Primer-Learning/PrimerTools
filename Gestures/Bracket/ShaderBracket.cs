@@ -9,7 +9,12 @@ public partial class ShaderBracket : Node3D
     private BracketData _bracketData;
     private MeshInstance3D _meshInstance;
     private ShaderMaterial _shaderMaterial;
-    private ShapeStyle _style;
+
+    private ShapeStyle _style = new ShapeStyle()
+    {
+        Smoothness = 2f,
+        Thickness = 0.02f
+    };
     
     private Vector3 _leftTip3D = new Vector3(-1, -1, 0);
     private Vector3 _rightTip3D = new Vector3(1, -1, 0);
@@ -63,22 +68,27 @@ public partial class ShaderBracket : Node3D
             UpdateMeshSize();
         }
     }
-    
-    public ShapeStyle Style 
-    { 
+
+    public ShapeStyle Style
+    {
         get => _style;
         set
         {
             if (_style != null)
                 _style.StyleChanged -= OnStyleChanged;
-            
+
             _style = value;
-            
+
             if (_style != null)
                 _style.StyleChanged += OnStyleChanged;
-            
+
             UpdateShaderParameters();
         }
+    }
+
+    public override void _Ready()
+    {
+        Make();
     }
 
     private void Make()
@@ -88,12 +98,6 @@ public partial class ShaderBracket : Node3D
             child.Free();
         }
         _bracketData ??= new BracketData();
-        if (_style == null)
-        {
-            var style = new ShapeStyle();
-            style.Smoothness = 0.01f;
-            _style = style;
-        }
         CreateMesh();
         UpdateFromWorld3DPositions();
     }

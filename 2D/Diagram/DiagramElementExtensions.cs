@@ -5,19 +5,19 @@ namespace PrimerTools._2D.Diagram;
 
 public static class DiagramElementExtensions
 {
-    public static CompositeStateChange Appear(this DiagramElement element)
+    public static CompositeStateChange Appear(this DiagramElement element, double duration = Node3DStateChangeExtensions.DefaultDuration)
     {
         var originalThickness = element.Style.Thickness;
         element.Style.Thickness = 0;
         var appearanceStateChange = new CompositeStateChange();
         appearanceStateChange.AddStateChange(
-            new PropertyStateChange(element.Style, "Thickness", originalThickness)
+            new PropertyStateChange(element.Style, "Thickness", originalThickness), duration
         );
         
         var originalSmoothness = element.Style.Smoothness;
         element.Style.Smoothness = 0;
         appearanceStateChange.AddStateChangeInParallel(
-            new PropertyStateChange(element.Style, "Smoothness", originalSmoothness)
+            new PropertyStateChange(element.Style, "Smoothness", originalSmoothness), duration
         );
 
         switch (element.ShapeData)
@@ -27,7 +27,7 @@ public static class DiagramElementExtensions
                 circleData.Radius = 0;
                 appearanceStateChange.AddStateChangeInParallel(
                     new PropertyStateChange(circleData, "Radius", originalRadius),
-                    delay: 0.25f
+                    delay: duration / 2
                 );
                 break;
             case ArrowData arrowData:
@@ -35,15 +35,15 @@ public static class DiagramElementExtensions
                 var originalEnd = arrowData.End;
                 arrowData.End = arrowData.Start;
                 appearanceStateChange.AddStateChangeInParallel(
-                    new PropertyStateChange(arrowData, "End", originalEnd).WithDuration(0.5f),
-                    delay: 0.25
+                    new PropertyStateChange(arrowData, "End", originalEnd).WithDuration(duration),
+                    delay: duration / 2
                 );
                 
                 var originalHeadLength = arrowData.HeadLength;
                 arrowData.HeadLength = 0;
                 appearanceStateChange.AddStateChangeInParallel(
-                    new PropertyStateChange(arrowData, "HeadLength", originalHeadLength).WithDuration(0.5f),
-                    delay: 0.25f
+                    new PropertyStateChange(arrowData, "HeadLength", originalHeadLength).WithDuration(duration),
+                    delay: duration / 2
                 );
                 
                 break;
@@ -51,6 +51,36 @@ public static class DiagramElementExtensions
                 GD.Print($"Appearance not implemented for shape type {element.ShapeData.GetType()}");
                 break;
         }
+
+        return appearanceStateChange;
+    }
+    
+    public static CompositeStateChange Appear(this ShaderBracket element, double duration = Node3DStateChangeExtensions.DefaultDuration)
+    {
+        var originalThickness = element.Style.Thickness;
+        element.Style.Thickness = 0;
+        var appearanceStateChange = new CompositeStateChange();
+        appearanceStateChange.AddStateChange(
+            new PropertyStateChange(element.Style, "Thickness", originalThickness), duration
+        );
+        
+        var originalSmoothness = element.Style.Smoothness;
+        element.Style.Smoothness = 0;
+        appearanceStateChange.AddStateChangeInParallel(
+            new PropertyStateChange(element.Style, "Smoothness", originalSmoothness), duration
+        );
+        
+        var originalLeft = element.LeftTipPosition;
+        element.LeftTipPosition = element.StemPosition;
+        appearanceStateChange.AddStateChangeInParallel(
+            new PropertyStateChange(element, "LeftTipPosition", originalLeft)
+        );
+        var originalRight = element.RightTipPosition;
+        element.RightTipPosition = element.StemPosition;
+        appearanceStateChange.AddStateChangeInParallel(
+            new PropertyStateChange(element, "RightTipPosition", originalRight)
+        );
+           
 
         return appearanceStateChange;
     }

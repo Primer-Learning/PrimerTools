@@ -20,7 +20,7 @@ render_priority = 0
 shader = ExtResource("5_h6344")
 shader_parameter/shape_color = Color(1, 0.5, 0, 1)
 shader_parameter/background_color = Color(0, 0, 0, 0)
-shader_parameter/base_thickness = 0.02
+shader_parameter/thickness = 0.02
 shader_parameter/thickness_variation = 2.0
 shader_parameter/smoothness = 0.01
 shader_parameter/bracket_tip1 = Vector2(-1.49, -0.945)
@@ -47,7 +47,7 @@ shader_parameter/radius = 3.0
 [sub_resource type="SphereMesh" id="SphereMesh_41dll"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_i8vr5"]
-size = Vector2(3.2, 4.02843)
+size = Vector2(11.2, 5.2)
 subdivide_width = 1
 subdivide_depth = 1
 
@@ -56,13 +56,13 @@ render_priority = 0
 shader = ExtResource("5_h6344")
 shader_parameter/shape_color = Color(1, 1, 1, 1)
 shader_parameter/background_color = Color(0, 0, 0, 0)
-shader_parameter/base_thickness = 0.02
+shader_parameter/thickness = 0.1
 shader_parameter/thickness_variation = 2.0
 shader_parameter/smoothness = 0.01
-shader_parameter/bracket_tip1 = Vector2(-1, -1.41421)
-shader_parameter/bracket_tip2 = Vector2(1, -1.41421)
-shader_parameter/bracket_stem = Vector2(0, 1.41421)
-shader_parameter/mesh_size = Vector2(3.2, 4.02843)
+shader_parameter/bracket_tip1 = Vector2(-0.5, -0.5)
+shader_parameter/bracket_tip2 = Vector2(0.5, -0.5)
+shader_parameter/bracket_stem = Vector2(0, 0.5)
+shader_parameter/mesh_size = Vector2(11.2, 5.2)
 
 [node name="DiagramTest" type="Node3D"]
 
@@ -71,7 +71,7 @@ shader_parameter/mesh_size = Vector2(3.2, 4.02843)
 [node name="CameraRig" type="Node3D" parent="Boilerplate"]
 transform = Transform3D(1, 0, 0, 0, 0.956305, 0.292372, 0, -0.292372, 0.956305, 0, 0, 0)
 script = ExtResource("1_i4ttt")
-Distance = 24.775
+Distance = 10.0
 
 [node name="Camera3D" type="Camera3D" parent="Boilerplate/CameraRig"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 24.775)
@@ -84,7 +84,7 @@ anchor_right = 1.0
 offset_left = -59.0
 offset_bottom = 23.0
 grow_horizontal = 0
-text = "144 FPS"
+text = "10 FPS"
 script = ExtResource("2_ep767")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="Boilerplate"]
@@ -110,11 +110,10 @@ mesh = SubResource("PlaneMesh_41dll")
 surface_material_override/0 = SubResource("ShaderMaterial_i8vr5")
 
 [node name="TestSphere" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, 0, 1, -1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -10)
 mesh = SubResource("SphereMesh_41dll")
 
 [node name="TestSphere2" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, 1, -1, 1)
 mesh = SubResource("SphereMesh_41dll")
 
 [node name="DiagramSequence" type="Node" parent="."]
@@ -124,11 +123,11 @@ script = ExtResource("6_ep767")
 
 [node name="Node3D" type="Node3D" parent="."]
 script = ExtResource("9_41dll")
-LeftTipPosition = Vector3(0, -1, 1)
-RightTipPosition = Vector3(2, -1, 1)
-StemPosition = Vector3(1, 1, -1)
+LeftTipPosition = Vector3(0, 10, 0)
+RightTipPosition = Vector3(0, 0, 0)
+StemPosition = Vector3(4, 5, 0)
 
 [node name="BracketMesh" type="MeshInstance3D" parent="Node3D"]
-transform = Transform3D(1, 0, 0, 0, 0.707107, -0.707107, 0, 0.707107, 0.707107, 1, 0, 0)
+transform = Transform3D(0, -4.37114e-08, -1, -1, 0, 0, 0, 1, -4.37114e-08, 2, 5, 0)
 mesh = SubResource("PlaneMesh_i8vr5")
 surface_material_override/0 = SubResource("ShaderMaterial_3ac6h")
