@@ -21,7 +21,7 @@ varying vec2 object_pos;
 void vertex() {
     // VERTEX is in normalized coordinates for a plane mesh
     // Scale by mesh size to get actual object coordinates
-    object_pos = VERTEX.xy * mesh_size * 0.5;
+    object_pos = vec2(VERTEX.x, -VERTEX.z);
 	
 	// old object_pos, which is world-space xy position of the vertex
     //object_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xy;
@@ -35,6 +35,9 @@ void vertex() {
 }
 
 void fragment() {
+	
+	//if (object_pos.x > 1.0 && object_pos.y > 1.0) ALBEDO = vec3(0.0);
+	//else ALBEDO = vec3(object_pos, 1.0);
     vec2 p = object_pos;
     
     // Evaluate curly bracket with variable thickness
