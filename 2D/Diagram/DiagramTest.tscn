@@ -58,9 +58,9 @@ shader_parameter/background_color = Color(0, 0, 0, 0)
 shader_parameter/base_thickness = 0.02
 shader_parameter/thickness_variation = 2.0
 shader_parameter/smoothness = 0.01
-shader_parameter/bracket_tip1 = Vector2(-1, -1)
-shader_parameter/bracket_tip2 = Vector2(1, -1)
-shader_parameter/bracket_stem = Vector2(0, 0)
+shader_parameter/bracket_tip1 = Vector2(-1, -0.5)
+shader_parameter/bracket_tip2 = Vector2(1, -0.5)
+shader_parameter/bracket_stem = Vector2(0, 0.5)
 
 [node name="DiagramTest" type="Node3D"]
 

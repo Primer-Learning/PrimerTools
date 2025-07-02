@@ -212,9 +212,17 @@ public partial class ShaderBracket : Node3D
     {
         if (_shaderMaterial == null || _bracketData == null) return;
         
-        _shaderMaterial.SetShaderParameter("bracket_tip1", _bracketData.LeftTip);
-        _shaderMaterial.SetShaderParameter("bracket_tip2", _bracketData.RightTip);
-        _shaderMaterial.SetShaderParameter("bracket_stem", _bracketData.Stem);
+        // Get the mesh center in world space
+        var meshCenter = _meshInstance.Position;
+        
+        // Convert bracket points to mesh-local coordinates
+        var localLeftTip = new Vector2(_bracketData.LeftTip.X - meshCenter.X, _bracketData.LeftTip.Y - meshCenter.Y);
+        var localRightTip = new Vector2(_bracketData.RightTip.X - meshCenter.X, _bracketData.RightTip.Y - meshCenter.Y);
+        var localStem = new Vector2(_bracketData.Stem.X - meshCenter.X, _bracketData.Stem.Y - meshCenter.Y);
+        
+        _shaderMaterial.SetShaderParameter("bracket_tip1", localLeftTip);
+        _shaderMaterial.SetShaderParameter("bracket_tip2", localRightTip);
+        _shaderMaterial.SetShaderParameter("bracket_stem", localStem);
         
         _style?.ApplyToShader(_shaderMaterial);
     }

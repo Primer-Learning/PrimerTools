@@ -18,7 +18,8 @@ uniform vec2 bracket_stem = vec2(0.0, 0.0);
 varying vec2 object_pos;
 
 void vertex() {
-    object_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xy;
+    //object_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xy;
+	object_pos = ((MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz - NODE_POSITION_WORLD).xy;
 }
 
 void fragment() {
