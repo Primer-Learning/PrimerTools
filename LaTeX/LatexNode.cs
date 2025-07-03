@@ -32,6 +32,17 @@ public partial class LatexNode : Node3D
 	}
 	
 	public LatexNode() {}
+	
+	public List<MeshInstance3D> GetCharacters()
+	{
+		if (GetChildren().Count == 0 || GetChild(0).GetChildren().Count == 0)
+		{
+			GD.PushWarning("LatexNode has no valid characters");
+			return new List<MeshInstance3D>();
+		}
+
+		return GetChild(0).GetChildren().OfType<MeshInstance3D>().ToList();
+	}
 
 
 	private bool run = true;
@@ -105,7 +116,17 @@ public partial class LatexNode : Node3D
 			EditorInterface.Singleton.GetResourceFilesystem().UpdateFile(path);
 			EditorInterface.Singleton.GetResourceFilesystem().ReimportFiles(new string[] {path});
 		}
-		var newNode = ResourceLoader.Load<PackedScene>(path).Instantiate<Node3D>();
+
+		Node3D newNode;
+		try
+		{
+			newNode = ResourceLoader.Load<PackedScene>(path).Instantiate<Node3D>();
+		}
+		catch
+		{
+			GD.PushWarning($"Loading LaTeX object failed: {path}");
+			newNode = new Node3D();
+		}
 		
 		AddChild(newNode);
 		newNode.RotationDegrees = new Vector3(0, 0, 0);
@@ -121,7 +142,7 @@ public partial class LatexNode : Node3D
 	{
 		MakeMaterialUnique();
 
-		var characters = GetChild(0).GetChildren();
+		var characters = GetCharacters();
 		if (endIndex == -1)
 		{
 			endIndex = characters.Count;

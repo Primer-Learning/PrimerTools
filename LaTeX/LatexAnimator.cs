@@ -61,7 +61,7 @@ public partial class LatexAnimator : Node3D
         AddChild(intermediateNode);
 
         var copiesOfCurrentExpressionCharacters = new List<Node3D>();
-        foreach (var character in _latexNodes[_currentExpressionIndex].GetChild(0).GetChildren().OfType<Node3D>())
+        foreach (var character in _latexNodes[_currentExpressionIndex].GetCharacters())
         {
             var copy = (Node3D)character.Duplicate();
             intermediateNode.AddChild(copy);
@@ -69,7 +69,7 @@ public partial class LatexAnimator : Node3D
             copiesOfCurrentExpressionCharacters.Add(copy);
         }
         var copiesOfNextExpressionCharacters = new List<Node3D>();
-        foreach (var character in _latexNodes[newIndex].GetChild(0).GetChildren().OfType<Node3D>())
+        foreach (var character in _latexNodes[newIndex].GetCharacters())
         {
             var copy = (Node3D)character.Duplicate();
             intermediateNode.AddChild(copy);
@@ -133,6 +133,14 @@ public partial class LatexAnimator : Node3D
         int newIndex, 
         List<(int currentExpressionChunkBeginIndex, int nextExpressionChunkBeginIndex, int chunkLength)> preservedCharacterMap)
     {
+        if (_latexNodes[_currentExpressionIndex].GetCharacters().Count == 0 
+            || _latexNodes[newIndex].GetCharacters().Count == 0)
+        {
+            GD.Print("One or more LaTeX expressions has no characters. Skipping LaTeX animation.");
+            return new CompositeStateChange();
+        }
+        
+        
         // This doesn't work if the scale is zero, which it often is at the beginning of a scene
         var oldScale = Scale;
         Scale = Vector3.One;
@@ -160,9 +168,9 @@ public partial class LatexAnimator : Node3D
         intermediateNode.Visible = false;
         AddChild(intermediateNode);
         intermediateNode.Name = "Intermediate ";
-
+        
         var copiesOfCurrentExpressionCharacters = new List<Node3D>();
-        foreach (var character in _latexNodes[_currentExpressionIndex].GetChild(0).GetChildren().OfType<Node3D>())
+        foreach (var character in _latexNodes[_currentExpressionIndex].GetCharacters())
         {
             var copy = (Node3D)character.Duplicate();
             intermediateNode.AddChild(copy);
@@ -170,7 +178,7 @@ public partial class LatexAnimator : Node3D
             copiesOfCurrentExpressionCharacters.Add(copy);
         }
         var copiesOfNextExpressionCharacters = new List<Node3D>();
-        foreach (var character in _latexNodes[newIndex].GetChild(0).GetChildren().OfType<Node3D>())
+        foreach (var character in _latexNodes[newIndex].GetCharacters())
         {
             var copy = (Node3D)character.Duplicate();
             intermediateNode.AddChild(copy);
@@ -198,10 +206,14 @@ public partial class LatexAnimator : Node3D
         for (var i = 0; i < copiesOfCurrentExpressionCharacters.Count; i++)
         {
             if (!preservedFromIndices.Contains(i)) continue;
-        
             var movementIndex = preservedFromIndices.IndexOf(i);
             var indexInNextExpression = preservedToIndices[movementIndex];
-            movementPhase.AddStateChangeInParallel(copiesOfCurrentExpressionCharacters[i].MoveTo(copiesOfNextExpressionCharacters[indexInNextExpression].Position));
+            
+            if (copiesOfCurrentExpressionCharacters[i].Position !=
+                copiesOfNextExpressionCharacters[indexInNextExpression].Position)
+            {
+                movementPhase.AddStateChangeInParallel(copiesOfCurrentExpressionCharacters[i].MoveTo(copiesOfNextExpressionCharacters[indexInNextExpression].Position));
+            }
         }
         if (movementPhase.Duration > 0) // Only add if there are movements
         {
