@@ -227,8 +227,6 @@ public partial class ShaderBracket : Node3D
         
         // Transform to world space
         var worldCenter = worldTransformOfLeftTip * localCenter3D;
-        GD.Print(localCenter3D);
-        GD.Print(worldCenter);
         
         _meshInstance.GlobalPosition = worldCenter;
         _meshInstance.GlobalBasis = worldTransformOfLeftTip.Basis.Rotated(worldTransformOfLeftTip.Basis.X, Mathf.Tau / 4f);

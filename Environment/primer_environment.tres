@@ -34,7 +34,7 @@ shader_parameter/edge_detection_strength_layer3 = 0.0
 shader_parameter/contrast_boost = 1.0
 shader_parameter/use_rotation = 0
 shader_parameter/rotation_speed = 0.0
-shader_parameter/use_spherical_mapping = 1
+shader_parameter/use_spherical_mapping = 0
 shader_parameter/show_noise_only = 0
 
 [sub_resource type="Sky" id="Sky_twrfi"]

@@ -11,13 +11,13 @@ public static class DiagramElementExtensions
         element.Style.Thickness = 0;
         var appearanceStateChange = new CompositeStateChange();
         appearanceStateChange.AddStateChange(
-            new PropertyStateChange(element.Style, "Thickness", originalThickness), duration
+            new PropertyStateChange(element.Style, "Thickness", originalThickness).WithDuration(duration)
         );
         
         var originalSmoothness = element.Style.Smoothness;
         element.Style.Smoothness = 0;
         appearanceStateChange.AddStateChangeInParallel(
-            new PropertyStateChange(element.Style, "Smoothness", originalSmoothness), duration
+            new PropertyStateChange(element.Style, "Smoothness", originalSmoothness).WithDuration(duration)
         );
 
         switch (element.ShapeData)
@@ -26,7 +26,7 @@ public static class DiagramElementExtensions
                 var originalRadius = circleData.Radius;
                 circleData.Radius = 0;
                 appearanceStateChange.AddStateChangeInParallel(
-                    new PropertyStateChange(circleData, "Radius", originalRadius),
+                    new PropertyStateChange(circleData, "Radius", originalRadius).WithDuration(duration),
                     delay: duration / 2
                 );
                 break;
