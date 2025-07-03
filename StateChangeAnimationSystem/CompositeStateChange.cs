@@ -34,6 +34,29 @@ public class CompositeStateChange : IStateChange
     public double Duration => _timedChanges.Count > 0 
         ? _timedChanges.Max(tc => tc.EndTime) 
         : 0;
+
+    public CompositeStateChange(){}
+    
+    public static CompositeStateChange Series(params IStateChange[] stateChanges)
+    {
+        var composite = new CompositeStateChange();
+        foreach (var change in stateChanges)
+        {
+            composite.AddStateChange(change);
+        }
+    
+        return composite;
+    }
+    public static CompositeStateChange Parallel(params IStateChange[] stateChanges)
+    {
+        var composite = new CompositeStateChange();
+        foreach (var change in stateChanges)
+        {
+            composite.AddStateChangeInParallel(change);
+        }
+    
+        return composite;
+    }
     
     // Sequential add - starts after the last registered change
     public void AddStateChange(IStateChange change, double delay = 0)

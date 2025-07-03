@@ -7,37 +7,37 @@ namespace PrimerTools.Graph;
 [Tool]
 public partial class AxisTic : Node3D
 {
-    public Axis.TicData data;
+    public Axis.TicData Data;
     
-    private LatexNode latexNode => GetNode<LatexNode>("LatexNode");
+    private LatexNode LatexNode => GetNode<LatexNode>("LatexNode");
 
     public void SetLabel()
     {
-        latexNode.Latex = data.label;
-        latexNode.UpdateCharacters();
+        LatexNode.Latex = Data.label;
+        LatexNode.UpdateCharacters();
         this.MakeSelfAndChildrenLocal(GetTree().EditedSceneRoot);
     }
 
     public void SetLabelScale(float scale)
     {
-        latexNode.Scale = Vector3.One * scale;
+        LatexNode.Scale = Vector3.One * scale;
     }
 
     public Animation AnimateLabelScale(float scale)
     {
-        return latexNode.ScaleToAnimation(scale);
+        return LatexNode.ScaleToAnimation(scale);
     }
 
     public IStateChange AnimateLabelScaleStateChange(float scale)
     {
-        return latexNode.ScaleTo(scale);
+        return LatexNode.ScaleTo(scale);
     }
 
     public void SetLabelDistance(float? distance)
     {
         if (distance.HasValue)
         {
-            latexNode.Position = new Vector3(latexNode.Position.X, -distance.Value, latexNode.Position.Z);
+            LatexNode.Position = new Vector3(LatexNode.Position.X, -distance.Value, LatexNode.Position.Z);
         }
         // If no distance specified, keep the default position from the scene
     }
@@ -47,8 +47,8 @@ public partial class AxisTic : Node3D
         if (!distance.HasValue)
             return null;
             
-        return latexNode.MoveToAnimation(
-            new Vector3(latexNode.Position.X, -distance.Value, latexNode.Position.Z)
+        return LatexNode.MoveToAnimation(
+            new Vector3(LatexNode.Position.X, -distance.Value, LatexNode.Position.Z)
         );
     }
 
@@ -57,8 +57,8 @@ public partial class AxisTic : Node3D
         if (!distance.HasValue)
             return null;
             
-        return latexNode.MoveTo(
-            new Vector3(latexNode.Position.X, -distance.Value, latexNode.Position.Z)
+        return LatexNode.MoveTo(
+            new Vector3(LatexNode.Position.X, -distance.Value, LatexNode.Position.Z)
         );
     }
 }

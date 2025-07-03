@@ -46,11 +46,6 @@ shader_parameter/radius = 3.0
 
 [sub_resource type="SphereMesh" id="SphereMesh_41dll"]
 
-[sub_resource type="PlaneMesh" id="PlaneMesh_i8vr5"]
-size = Vector2(11.2, 5.2)
-subdivide_width = 1
-subdivide_depth = 1
-
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_3ac6h"]
 render_priority = 0
 shader = ExtResource("5_h6344")
@@ -64,14 +59,36 @@ shader_parameter/bracket_tip2 = Vector2(0.5, -0.5)
 shader_parameter/bracket_stem = Vector2(0, 0.5)
 shader_parameter/mesh_size = Vector2(11.2, 5.2)
 
+[sub_resource type="PlaneMesh" id="PlaneMesh_i8vr5"]
+size = Vector2(11.2, 5.2)
+subdivide_width = 1
+subdivide_depth = 1
+
 [node name="DiagramTest" type="Node3D"]
 
 [node name="Boilerplate" type="Node3D" parent="."]
 
-[node name="CameraRig" type="Node3D" parent="Boilerplate"]
+[node name="CameraRig" type="Node3D" parent="Boilerplate" node_paths=PackedStringArray("_camera")]
 transform = Transform3D(1, 0, 0, 0, 0.956305, 0.292372, 0, -0.292372, 0.956305, 0, 0, 0)
 script = ExtResource("1_i4ttt")
 Distance = 10.0
+RotationSensitivity = 0.005
+PanSensitivity = 0.02
+ZoomSensitivity = 0.1
+ZoomMin = 1.0
+ZoomMax = 1000.0
+EnableDragRotation = true
+EnablePanning = true
+EnableZooming = true
+InvertRotationX = false
+InvertRotationY = true
+InvertPanX = false
+InvertPanY = false
+InvertZoom = false
+_camera = NodePath("Camera3D")
+_isRotating = false
+_isPanning = false
+_lastMousePosition = Vector2(0, 0)
 
 [node name="Camera3D" type="Camera3D" parent="Boilerplate/CameraRig"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 24.775)
@@ -86,6 +103,8 @@ offset_bottom = 23.0
 grow_horizontal = 0
 text = "10 FPS"
 script = ExtResource("2_ep767")
+_printInterval = 1.0
+_timer = 0.0
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="Boilerplate"]
 environment = ExtResource("3_1vqf3")
@@ -96,6 +115,8 @@ shadow_enabled = true
 
 [node name="ExampleDiagram" type="Node3D" parent="."]
 script = ExtResource("2_m6nep")
+DefaultStyle = Object(Object,"script":Resource("res://addons/PrimerTools/2D/Diagram/ShapeStyle.cs"))
+
 
 [node name="DiagramElement_CircleElement" type="MeshInstance3D" parent="ExampleDiagram"]
 transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, -0.0169601, 0.0289664, 0)
@@ -118,14 +139,28 @@ mesh = SubResource("SphereMesh_41dll")
 
 [node name="DiagramSequence" type="Node" parent="."]
 script = ExtResource("6_ep767")
+_startFromTime = null
+_playbackSpeed = null
 
 [node name="Control" parent="." instance=ExtResource("7_1vqf3")]
 
-[node name="Node3D" type="Node3D" parent="."]
+[node name="Node3D" type="Node3D" parent="." node_paths=PackedStringArray("_meshInstance")]
 script = ExtResource("9_41dll")
 LeftTipPosition = Vector3(0, 10, 0)
 RightTipPosition = Vector3(0, 0, 0)
 StemPosition = Vector3(4, 5, 0)
+Style = Object(Object,"script":Resource("res://addons/PrimerTools/2D/Diagram/ShapeStyle.cs"))
+
+_bracketData = Object(Object,"script":null)
+
+_meshInstance = NodePath("BracketMesh")
+_shaderMaterial = SubResource("ShaderMaterial_3ac6h")
+_style = Object(Object,"script":Resource("res://addons/PrimerTools/2D/Diagram/ShapeStyle.cs"))
+
+_leftTip3D = Vector3(0, 10, 0)
+_rightTip3D = Vector3(0, 0, 0)
+_stem3D = Vector3(4, 5, 0)
+_padding = 0.5
 
 [node name="BracketMesh" type="MeshInstance3D" parent="Node3D"]
 transform = Transform3D(0, -4.37114e-08, -1, -1, 0, 0, 0, 1, -4.37114e-08, 2, 5, 0)

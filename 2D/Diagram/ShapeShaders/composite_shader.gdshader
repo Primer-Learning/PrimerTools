@@ -123,24 +123,24 @@ float applyOperation(float d1, float d2, int op, float k) {
 
 void fragment() {
     vec2 p = object_pos;
-    
+
     // Evaluate both shapes
     float d1 = evaluateShape(shape1_type, p, 1);
     float d2 = evaluateShape(shape2_type, p, 2);
-    
+
     // Apply operation
     float d = applyOperation(d1, d2, operation, operation_smoothness);
-    
+
     // Apply thickness
     d = applyThickness(d, thickness, inner_thickness);
-    
+
     // Apply smoothstep for antialiasing
     float alpha = 1.0 - smoothstep(0.0, smoothness, d);
-    
+
     // Mix colors based on the SDF
     vec3 color = mix(background_color.rgb, shape_color.rgb, alpha);
     float final_alpha = mix(background_color.a, shape_color.a, alpha);
-    
+
     ALBEDO = color;
     ALPHA = final_alpha;
 }

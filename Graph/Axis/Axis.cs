@@ -222,7 +222,7 @@ public partial class Axis : Node3D
 
 	private (CompositeStateChange remove, CompositeStateChange update, CompositeStateChange add) UpdateTicsStateChange(float duration)
 	{
-	    Vector3 GetPosition(AxisTic tic) => new(tic.data.value * DataSpaceScale, 0, 0);
+	    Vector3 GetPosition(AxisTic tic) => new(tic.Data.value * DataSpaceScale, 0, 0);
 
 	    var ticsToRemove = GetChildren().Select(x => x as AxisTic).Where(x => x != null).ToList();
 	    var removeComposite = new CompositeStateChange().WithName("Remove Tics");
@@ -237,7 +237,7 @@ public partial class Axis : Node3D
 	        if (tic == null)
 	        {
 	            tic = TicScene.Instantiate<AxisTic>();
-	            tic.data = data;
+	            tic.Data = data;
 	            AddChild(tic);
 	            tic.Name = name;
 	            tic.Owner = GetTree().EditedSceneRoot;
@@ -255,7 +255,7 @@ public partial class Axis : Node3D
 	        }
 	        else
 	        {
-	            tic.data = data;
+	            tic.Data = data;
 	            ticsToRemove.Remove(tic);
 	        }
 
@@ -381,7 +381,7 @@ public partial class Axis : Node3D
 
 	private (Animation removeAnimation, Animation updateAnimation, Animation addAnimation) UpdateTics(float duration)
 	{
-		Vector3 GetPosition(AxisTic tic) => new(tic.data.value * DataSpaceScale, 0, 0);
+		Vector3 GetPosition(AxisTic tic) => new(tic.Data.value * DataSpaceScale, 0, 0);
 		
 		var ticsToRemove = GetChildren().Select(x => x as AxisTic).Where(x => x != null).ToList();
 		var newTicAnimations = new List<Animation>();
@@ -398,7 +398,7 @@ public partial class Axis : Node3D
 			if (tic == null)
 			{
 				tic = TicScene.Instantiate<AxisTic>();
-				tic.data = data;
+				tic.Data = data;
 				AddChild(tic);
 				tic.Name = name;
 				tic.Owner = GetTree().EditedSceneRoot;
@@ -415,7 +415,7 @@ public partial class Axis : Node3D
 			}
 			else
 			{
-				tic.data = data;
+				tic.Data = data;
 				ticsToRemove.Remove(tic);
 			}
 			

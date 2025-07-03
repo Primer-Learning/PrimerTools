@@ -2,15 +2,15 @@ using Godot;
 using PrimerTools;
 using PrimerTools._2D.Diagram;
 
-[Tool]
+// [Tool]
 public partial class DiagramSystem : Node3D
 {
     public ShapeStyle DefaultStyle { get; set; } = new ShapeStyle();
     
     public DiagramSystem() {}
 
-    [ExportToolButton("Create")]
-    private Callable Create => Callable.From(RebuildDiagram);
+    // [ExportToolButton("Create")]
+    // private Callable Create => Callable.From(RebuildDiagram);
 
     protected virtual void DefineDiagram() {}
 

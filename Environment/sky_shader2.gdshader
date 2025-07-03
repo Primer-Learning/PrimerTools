@@ -69,7 +69,7 @@ float perlinNoise(vec3 p) {
     vec3 i = floor(p);
     vec3 f = fract(p);
     vec3 u = f * f * (3.0 - 2.0 * f);
-    
+
     return mix(mix(mix(dot(hash3(i + vec3(0.0, 0.0, 0.0)), f - vec3(0.0, 0.0, 0.0)),
                        dot(hash3(i + vec3(1.0, 0.0, 0.0)), f - vec3(1.0, 0.0, 0.0)), u.x),
                    mix(dot(hash3(i + vec3(0.0, 1.0, 0.0)), f - vec3(0.0, 1.0, 0.0)),
@@ -84,9 +84,9 @@ float perlinNoise(vec3 p) {
 float worleyNoise(vec3 p) {
     vec3 i = floor(p);
     vec3 f = fract(p);
-    
+
     float minDist = 1.0;
-    
+
     for (int x = -1; x <= 1; x++) {
         for (int y = -1; y <= 1; y++) {
             for (int z = -1; z <= 1; z++) {
@@ -97,7 +97,7 @@ float worleyNoise(vec3 p) {
             }
         }
     }
-    
+
     return minDist;
 }
 
@@ -105,17 +105,17 @@ float worleyNoise(vec3 p) {
 float voronoiEdgeNoise(vec3 p) {
     vec3 i = floor(p);
     vec3 f = fract(p);
-    
+
     float minDist1 = 1.0;
     float minDist2 = 1.0;
-    
+
     for (int x = -1; x <= 1; x++) {
         for (int y = -1; y <= 1; y++) {
             for (int z = -1; z <= 1; z++) {
                 vec3 neighbor = vec3(float(x), float(y), float(z));
                 vec3 point = hash3(i + neighbor) * 0.5 + 0.5;
                 float dist = length(f - neighbor - point);
-                
+
                 if (dist < minDist1) {
                     minDist2 = minDist1;
                     minDist1 = dist;
@@ -125,22 +125,22 @@ float voronoiEdgeNoise(vec3 p) {
             }
         }
     }
-    
+
     return minDist2 - minDist1;
 }
 
 // Curl noise modifier
 vec3 curlOffset(vec3 p) {
     float epsilon = 0.01;
-    
+
     vec3 dx = vec3(epsilon, 0.0, 0.0);
     vec3 dy = vec3(0.0, epsilon, 0.0);
     vec3 dz = vec3(0.0, 0.0, epsilon);
-    
+
     float x = perlinNoise(p + dy) - perlinNoise(p - dy) - perlinNoise(p + dz) + perlinNoise(p - dz);
     float y = perlinNoise(p + dz) - perlinNoise(p - dz) - perlinNoise(p + dx) + perlinNoise(p - dx);
     float z = perlinNoise(p + dx) - perlinNoise(p - dx) - perlinNoise(p + dy) + perlinNoise(p - dy);
-    
+
     return vec3(x, y, z) / (2.0 * epsilon);
 }
 
@@ -148,15 +148,15 @@ vec3 curlOffset(vec3 p) {
 float randomGrid(vec3 p) {
     vec3 grid = floor(p / grid_size);
     vec3 localPos = fract(p / grid_size);
-    
+
     // Random offset per cell
     vec3 offset = hash3(grid) * 0.3;
     localPos += offset;
-    
+
     // Sharp edges at grid boundaries
     float edges = 1.0 - smoothstep(0.0, line_thickness, min(localPos.x, localPos.y));
     edges = max(edges, 1.0 - smoothstep(0.0, line_thickness, min(1.0 - localPos.x, 1.0 - localPos.y)));
-    
+
     return edges;
 }
 
@@ -167,17 +167,17 @@ float crystallinePattern(vec3 p) {
     float sqrt3 = 1.7320508;
     vec2 a = mod(p2, vec2(1.0, sqrt3));
     vec2 b = mod(p2 - vec2(0.5, sqrt3 * 0.5), vec2(1.0, sqrt3));
-    
+
     // Distance to triangle edges
     float d1 = abs(a.x - a.y / sqrt3);
     float d2 = abs(b.x - b.y / sqrt3);
     float d3 = abs(a.x + a.y / sqrt3 - 1.0);
-    
+
     float pattern = 1.0 - smoothstep(0.0, line_thickness, min(min(d1, d2), d3));
-    
+
     // Add some randomness
     pattern *= 0.5 + 0.5 * hash3(floor(p * 3.0)).x;
-    
+
     return pattern;
 }
 
@@ -187,19 +187,19 @@ float hexagonalPattern(vec3 p) {
     vec2 hex = vec2(1.0, 1.7320508);
     vec2 a = mod(p2, hex) - hex * 0.5;
     vec2 b = mod(p2 - hex * 0.5, hex) - hex * 0.5;
-    
+
     float d1 = length(a);
     float d2 = length(b);
-    
+
     vec2 cellId = (d1 < d2) ? floor(p2 / hex) : floor((p2 - hex * 0.5) / hex);
-    
+
     // Random height per hex cell
     float height = hash3(vec3(cellId, 0.0)).x;
-    
+
     // Sharp hexagon edges
     float hexDist = min(d1, d2);
     float edge = 1.0 - smoothstep(0.4 - line_thickness, 0.4, hexDist);
-    
+
     return edge * height;
 }
 
@@ -207,29 +207,29 @@ float hexagonalPattern(vec3 p) {
 float lineNetwork(vec3 p) {
     float pattern = 0.0;
     vec3 pos = p * grid_size;
-    
+
     // Multiple scales of line networks
     for (int i = 0; i < 3; i++) {
         vec3 cellId = floor(pos);
         vec3 localPos = fract(pos);
-        
+
         // Random line direction per cell
         vec3 lineDir = normalize(hash3(cellId));
-        
+
         // Distance to line through cell center
         vec3 toPoint = localPos - vec3(0.5);
         float distToLine = length(cross(toPoint, lineDir));
-        
+
         // Sharp line
         float line = 1.0 - smoothstep(0.0, line_thickness * float(i + 1), distToLine);
-        
+
         // Random intensity
         line *= abs(hash3(cellId * 7.13).y);
-        
+
         pattern = max(pattern, line);
         pos *= 2.3;
     }
-    
+
     return pattern;
 }
 
@@ -237,19 +237,19 @@ float lineNetwork(vec3 p) {
 float mondrianPattern(vec3 p) {
     float pattern = 0.0;
     vec2 pos = p.xy * grid_size;
-    
+
     // Recursive subdivision
     for (int i = 0; i < 4; i++) {
         vec2 cellId = floor(pos);
         vec2 localPos = fract(pos);
-        
+
         // Random subdivision point
         vec2 split = hash3(vec3(cellId, float(i))).xy * 0.3 + 0.35;
-        
+
         // Edge detection
-        float edges = 1.0 - smoothstep(0.0, line_thickness, min(min(localPos.x, localPos.y), 
+        float edges = 1.0 - smoothstep(0.0, line_thickness, min(min(localPos.x, localPos.y),
                                                       min(1.0 - localPos.x, 1.0 - localPos.y)));
-        
+
         // Add subdivision lines
         if (hash3(vec3(cellId * 3.7, float(i))).x > 0.5) {
             // Vertical split
@@ -258,11 +258,11 @@ float mondrianPattern(vec3 p) {
             // Horizontal split
             edges = max(edges, 1.0 - smoothstep(0.0, line_thickness, abs(localPos.y - split.y)));
         }
-        
+
         pattern = max(pattern, edges);
         pos *= 2.1;
     }
-    
+
     return pattern;
 }
 
@@ -270,12 +270,12 @@ float mondrianPattern(vec3 p) {
 float circuitPattern(vec3 p) {
     vec3 gridPos = floor(p * grid_size * 2.0);
     vec3 localPos = fract(p * grid_size * 2.0);
-    
+
     float pattern = 0.0;
-    
+
     // Random connection pattern per cell
     float rand = hash3(gridPos).x;
-    
+
     // Create L-shaped or T-shaped connections
     if (rand < 0.33) {
         // L-shape
@@ -290,7 +290,7 @@ float circuitPattern(vec3 p) {
         pattern = max(step(0.5 - line_thickness, localPos.x) * step(localPos.x, 0.5 + line_thickness),
                      step(0.5 - line_thickness, localPos.y) * step(localPos.y, 0.5 + line_thickness));
     }
-    
+
     return pattern;
 }
 
@@ -303,59 +303,59 @@ bool hasNoiseType(int layers, int layerIndex) {
 float layerNoise(vec3 p, int layerIndex) {
     float result = 0.0;
     float totalWeight = 0.0;
-    
+
     // Check which noise types are enabled for this layer
     if (hasNoiseType(perlin_layers, layerIndex)) {
         result += perlinNoise(p);
         totalWeight += 1.0;
     }
-    
+
     if (hasNoiseType(worley_layers, layerIndex)) {
         result += worleyNoise(p);
         totalWeight += 1.0;
     }
-    
+
     if (hasNoiseType(voronoi_edge_layers, layerIndex)) {
         result += voronoiEdgeNoise(p);
         totalWeight += 1.0;
     }
-    
+
     // Check geometric patterns
     if (hasNoiseType(grid_layers, layerIndex)) {
         result += randomGrid(p);
         totalWeight += 1.0;
     }
-    
+
     if (hasNoiseType(crystalline_layers, layerIndex)) {
         result += crystallinePattern(p);
         totalWeight += 1.0;
     }
-    
+
     if (hasNoiseType(hexagonal_layers, layerIndex)) {
         result += hexagonalPattern(p);
         totalWeight += 1.0;
     }
-    
+
     if (hasNoiseType(line_network_layers, layerIndex)) {
         result += lineNetwork(p);
         totalWeight += 1.0;
     }
-    
+
     if (hasNoiseType(mondrian_layers, layerIndex)) {
         result += mondrianPattern(p);
         totalWeight += 1.0;
     }
-    
+
     if (hasNoiseType(circuit_layers, layerIndex)) {
         result += circuitPattern(p);
         totalWeight += 1.0;
     }
-    
+
     // If no noise types are enabled for this layer, return 0
     if (totalWeight == 0.0) {
         return 0.0;
     }
-    
+
     return result / totalWeight;
 }
 
@@ -363,13 +363,13 @@ float layerNoise(vec3 p, int layerIndex) {
 float fbm(vec3 p, int octaves, int layerIndex) {
     float value = 0.0;
     float amplitude = 0.5;
-    
+
     for (int i = 0; i < octaves; i++) {
         value += amplitude * layerNoise(p, layerIndex);
         p *= 2.0;
         amplitude *= 0.5;
     }
-    
+
     return value;
 }
 
@@ -387,49 +387,49 @@ mat3 rotationMatrix(float angle) {
 void sky() {
     vec3 dir = normalize(EYEDIR);
     vec3 scaled_dir = dir * mist_scale;
-    
+
     // Apply spherical mapping if enabled
     if (use_spherical_mapping == 1) {
         float theta = atan(dir.z, dir.x);
         float phi = asin(clamp(dir.y, -1.0, 1.0));
         scaled_dir = vec3(theta, phi, 1.0) * mist_scale;
     }
-    
+
     // Apply rotation if enabled
     if (use_rotation == 1) {
         mat3 rot = rotationMatrix(TIME * rotation_speed);
         scaled_dir = rot * scaled_dir;
     }
-    
+
     // Domain warping
     if (domain_warp_strength > 0.0) {
         vec3 warp1 = vec3(perlinNoise(scaled_dir * 2.0));
         vec3 warp2 = vec3(perlinNoise(scaled_dir * 4.0 + vec3(TIME * 0.1)));
         scaled_dir += (warp1 * 0.3 + warp2 * 0.15) * domain_warp_strength;
     }
-    
+
     // Animate by adding time-based offsets
     //vec3 flow1 = scaled_dir * TIME * mist_speed;
 	vec3 flow1 = scaled_dir + vec3(1.0, 1.0, 1.0) * TIME * mist_speed;
     vec3 flow2 = scaled_dir * 1.5 + vec3(0.0, TIME * mist_speed * 1.4, TIME * mist_speed * 0.6);
     vec3 flow3 = scaled_dir * 0.7 + vec3(TIME * mist_speed * 0.6, TIME * mist_speed * 1.0, 0.0);
-    
+
     // Apply curl noise influence
     if (curl_influence > 0.0) {
         flow1 += curlOffset(flow1 * 0.5) * curl_influence;
         flow2 += curlOffset(flow2 * 0.5) * curl_influence;
         flow3 += curlOffset(flow3 * 0.5) * curl_influence;
     }
-    
+
     // Add subtle distortion
     vec3 distort_coords = dir * distortion_scale * mist_scale + vec3(TIME * distortion_speed * 3.0);
     float distortion = perlinNoise(distort_coords) * 0.1;
-    
+
     // Create mist layers with layer-specific noise
     float mist1 = fbm(flow1 + distortion, layer1_octaves, 0);        // Layer 0 (bit 0)
     float mist2 = fbm(flow2 - distortion * 0.5, layer2_octaves, 1);  // Layer 1 (bit 1)
     float mist3 = fbm(flow3 + distortion * 0.3, layer3_octaves, 2);  // Layer 2 (bit 2)
-    
+
     // Apply edge detection per layer if enabled
     if (quantization_levels == 0) {  // Edge detection doesn't work well with quantization
         if (edge_detection_strength_layer1 > 0.0) {
@@ -438,14 +438,14 @@ void sky() {
             edge_mist1 = abs(edge_mist1) * 10.0;
             mist1 = mix(mist1, 1.0 - edge_mist1, edge_detection_strength_layer1);
         }
-        
+
         if (edge_detection_strength_layer2 > 0.0) {
             float edge_mist2 = fbm(flow2 - distortion * 0.5 + vec3(0.01, 0.0, 0.0), layer2_octaves, 1) - mist2;
             edge_mist2 += fbm(flow2 - distortion * 0.5 + vec3(0.0, 0.01, 0.0), layer2_octaves, 1) - mist2;
             edge_mist2 = abs(edge_mist2) * 10.0;
             mist2 = mix(mist2, 1.0 - edge_mist2, edge_detection_strength_layer2);
         }
-        
+
         if (edge_detection_strength_layer3 > 0.0) {
             float edge_mist3 = fbm(flow3 + distortion * 0.3 + vec3(0.01, 0.0, 0.0), layer3_octaves, 2) - mist3;
             edge_mist3 += fbm(flow3 + distortion * 0.3 + vec3(0.0, 0.01, 0.0), layer3_octaves, 2) - mist3;
@@ -453,21 +453,21 @@ void sky() {
             mist3 = mix(mist3, 1.0 - edge_mist3, edge_detection_strength_layer3);
         }
     }
-    
+
     // Combine layers
     float combined_mist = mist1 * 0.5 + mist2 * 0.3 + mist3 * 0.2;
-    
+
     // Normalize to 0-1
     combined_mist = (combined_mist * 0.5 + 0.5);
-    
+
     // Apply quantization if enabled
     if (quantization_levels > 0) {
         combined_mist = floor(combined_mist * float(quantization_levels)) / float(quantization_levels);
     }
-    
+
     // Apply contrast
     combined_mist = pow(combined_mist, contrast_boost) * mist_intensity;
-    
+
     // Check if in debug mode
     if (show_noise_only == 1) {
         // Show noise only
@@ -475,11 +475,11 @@ void sky() {
     } else {
         // Normal rendering
         vec3 final_color = mix(base_color, mist_color, combined_mist);
-        
+
         // Optional: Add subtle vertical gradient
         float gradient = 1.0 - abs(dir.y) * 0.2;
         final_color *= gradient;
-        
+
         COLOR = final_color;
     }
 }

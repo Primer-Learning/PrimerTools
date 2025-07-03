@@ -89,8 +89,6 @@ public abstract partial class StateChangeSequence : Node
     
     public void SeekTo(double time)
     {
-        GD.Print("Seeking");
-        GD.Print(time);
         if (time < 0)
         {
             GD.Print(TotalDuration);
@@ -189,7 +187,7 @@ public abstract partial class StateChangeSequence : Node
         // Group animations into non-overlapping tracks
         var tracks = BuildTracks(futureAnimations);
         
-        GD.Print($"Created {tracks.Count} tracks for {futureAnimations.Count} animations");
+        // GD.Print($"Created {tracks.Count} tracks for {futureAnimations.Count} animations");
         
         // Create a tween for each track
         for (int i = 0; i < tracks.Count; i++)
@@ -237,9 +235,9 @@ public abstract partial class StateChangeSequence : Node
         {
             _currentTime = TotalDuration;
             _isPlaying = false;
-            GD.Print("Sequence completed");
+            // GD.Print("Sequence completed");
         }));
-        GD.Print("Finished starting of the playing");
+        // GD.Print("Finished starting of the playing");
     }
     
     private List<List<FlattenedAnimation>> BuildTracks(List<FlattenedAnimation> animations)

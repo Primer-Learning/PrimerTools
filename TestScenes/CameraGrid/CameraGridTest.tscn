@@ -5,7 +5,6 @@
 [ext_resource type="Script" uid="uid://b8xrb3fphbabr" path="res://addons/PrimerTools/Camera/CameraGrid.cs" id="2_5g65c"]
 [ext_resource type="PackedScene" uid="uid://tug6o7ke0tmd" path="res://addons/PrimerTools/Gestures/Arrow/arrow.tscn" id="4_5vfdg"]
 
-
 [sub_resource type="BoxMesh" id="BoxMesh_vsghc"]
 
 [sub_resource type="ViewportTexture" id="ViewportTexture_8ku0h"]
