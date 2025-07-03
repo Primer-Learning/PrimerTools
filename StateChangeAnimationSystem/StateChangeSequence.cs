@@ -64,10 +64,7 @@ public abstract partial class StateChangeSequence : Node
             _flattenedAnimations[i].Animation.Revert();
         }
         
-        if (_startFromTime > 0)
-        {
-            SeekTo(_startFromTime);
-        }
+        SeekTo(_startFromTime);
         
         Play();
     }
@@ -92,6 +89,14 @@ public abstract partial class StateChangeSequence : Node
     
     public void SeekTo(double time)
     {
+        GD.Print("Seeking");
+        GD.Print(time);
+        if (time < 0)
+        {
+            GD.Print(TotalDuration);
+            time = TotalDuration;
+        }
+        
         KillAllTweens();
         
         // Revert animations that haven't started yet

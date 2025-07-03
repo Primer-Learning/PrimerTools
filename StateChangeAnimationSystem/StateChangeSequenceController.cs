@@ -41,6 +41,8 @@ public partial class StateChangeSequenceController : Control
         
         _seekButton = GetNode<Button>("%SeekButton");
         _seekButton.Pressed += OnSeekButtonPressed;
+        _seekButton = GetNode<Button>("%SetSeekPointButton");
+        _seekButton.Pressed += SetSeekPoint;
 
         _timeDisplay = GetNode<Label>("%TimeDisplay");
         
@@ -116,5 +118,10 @@ public partial class StateChangeSequenceController : Control
         if (_stateChangeSequence == null) return;
         
         _stateChangeSequence.SeekTo(_seekTimeSpinBox.Value);
+    }
+
+    private void SetSeekPoint()
+    {
+        _seekTimeSpinBox.Value = _stateChangeSequence.CurrentTime;
     }
 }

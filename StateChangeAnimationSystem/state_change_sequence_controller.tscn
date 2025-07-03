@@ -48,6 +48,11 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "Seek"
 
+[node name="SetSeekPointButton" type="Button" parent="_VBoxContainer_37804/Seek"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Set Seek Point"
+
 [node name="Speed" type="HBoxContainer" parent="_VBoxContainer_37804"]
 layout_mode = 2
 
