@@ -109,28 +109,57 @@ public partial class LatexNode : Node3D
 		{
 			child.Free();
 		}
-		
+
 		var path = await latexToMesh.MeshFromExpression(Latex, openBlender);
-		if (Engine.IsEditorHint())
+
+		// Runtime GLTF loading
+		Node3D newNode;
+		if (!Engine.IsEditorHint())
 		{
+			// At runtime, use direct GLTF loading
+			var gltfDocument = new GltfDocument();
+			var gltfState = new GltfState();
+
+			// Load the GLTF file
+			var error = gltfDocument.AppendFromFile(path, gltfState);
+			if (error != Error.Ok)
+			{
+				GD.PushError($"Failed to load GLTF file at runtime: {path}, Error: {error}");
+				newNode = new Node3D();
+			}
+			else
+			{
+				// Generate the scene from the loaded GLTF
+				// If this is the first time we've generated the expression, this still fails to produce characters
+				// But it doesn't throw errors and break the scene, so that's something.
+				newNode = (Node3D)gltfDocument.GenerateScene(gltfState);
+				if (newNode == null)
+				{
+					GD.PushError($"Failed to generate scene from GLTF: {path}");
+					newNode = new Node3D();
+				}
+			}
+		}
+		else
+		{
+			// In editor, use the import system
 			EditorInterface.Singleton.GetResourceFilesystem().UpdateFile(path);
 			EditorInterface.Singleton.GetResourceFilesystem().ReimportFiles(new string[] {path});
+
+			try
+			{
+				newNode = ResourceLoader.Load<PackedScene>(path).Instantiate<Node3D>();
+			}
+			catch
+			{
+				GD.PushWarning($"Loading LaTeX object failed in editor: {path}");
+				newNode = new Node3D();
+			}
 		}
 
-		Node3D newNode;
-		try
-		{
-			newNode = ResourceLoader.Load<PackedScene>(path).Instantiate<Node3D>();
-		}
-		catch
-		{
-			GD.PushWarning($"Loading LaTeX object failed: {path}");
-			newNode = new Node3D();
-		}
-		
 		AddChild(newNode);
 		newNode.RotationDegrees = new Vector3(0, 0, 0);
-		
+
 		Align();
 	}
 

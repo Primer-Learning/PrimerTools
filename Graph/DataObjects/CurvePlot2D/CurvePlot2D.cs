@@ -251,7 +251,7 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
         if (pointsOfStages.Count == 0)
             pointsOfStages.Add(new[] { TransformPointFromDataSpaceToPositionSpace(_dataPoints[0]) });
         pointsOfStages.Add(_dataPoints.Select(x => TransformPointFromDataSpaceToPositionSpace(x)).ToArray());
-        return new PropertyStateChange(this, "RenderExtent", pointsOfStages.Count);
+        return new PropertyStateChange(this, "RenderExtent", pointsOfStages.Count - 1);
         // return this.AnimateValue(RenderExtent + 1, "RenderExtent");
     }
 

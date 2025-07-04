@@ -124,6 +124,33 @@ public partial class LatexAnimator : Node3D
     }
 
     /// <summary>
+    /// Creates the given expression and animates to it
+    /// </summary>
+    /// <param name="latex">The expression to make a LatexNode from</param>
+    /// <param name="preservedCharacterMap">Specifies the characters that should be kept during the transition</param>
+    /// <returns></returns>
+    public CompositeStateChange AnimateToExpressionStateChange(
+        string latex,
+        List<(int currentExpressionChunkBeginIndex, int nextExpressionChunkBeginIndex, int chunkLength)>
+            preservedCharacterMap)
+    {
+        AddExpression(LatexNode.Create(latex));
+        return AnimateToExpressionStateChange(_currentExpressionIndex + 1, preservedCharacterMap);
+    }
+
+    /// <summary>
+    /// Animates to the next expression index
+    /// </summary>
+    /// <param name="preservedCharacterMap">Specifies the characters that should be kept during the transition</param>
+    /// <returns></returns>
+    public CompositeStateChange AnimateToExpressionStateChange(
+        List<(int currentExpressionChunkBeginIndex, int nextExpressionChunkBeginIndex, int chunkLength)>
+            preservedCharacterMap)
+    {
+        return AnimateToExpressionStateChange(_currentExpressionIndex + 1, preservedCharacterMap);
+    }
+
+    /// <summary>
     /// Animates to a different expression
     /// </summary>
     /// <param name="newIndex">The index of the new expression</param>
