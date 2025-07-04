@@ -303,6 +303,7 @@ public partial class Axis : Node3D
 		}
 		else if (!string.IsNullOrEmpty(_label))
 		{
+			GD.Print($"Label for {Type} exists");
 			// Create new label
 			_labelNode = LatexNode.Create(_label);
 			UpdateLabelAlignmentSettings();
@@ -323,13 +324,32 @@ public partial class Axis : Node3D
 	{
 		if (_labelNode == null) return;
 		
-		if (Type == AxisType.X && LabelAlignment == Graph.AxisLabelAlignmentOptions.End)
+		if (Type == AxisType.X)
 		{
-			_labelNode.HorizontalAlignment = LatexNode.HorizontalAlignmentOptions.Left;
+			if (LabelAlignment == Graph.AxisLabelAlignmentOptions.End)
+			{
+				_labelNode.HorizontalAlignment = LatexNode.HorizontalAlignmentOptions.Left;
+				_labelNode.VerticalAlignment = LatexNode.VerticalAlignmentOptions.Center;
+			}
+			else if (LabelAlignment == Graph.AxisLabelAlignmentOptions.Along)
+			{
+				_labelNode.HorizontalAlignment = LatexNode.HorizontalAlignmentOptions.Center;
+				_labelNode.VerticalAlignment = LatexNode.VerticalAlignmentOptions.Center;
+			} 
 		}
-		else if (Type == AxisType.X && LabelAlignment == Graph.AxisLabelAlignmentOptions.Along)
+		if (Type == AxisType.Y) // Both cases are the same at the moment, but still toying
 		{
-			_labelNode.HorizontalAlignment = LatexNode.HorizontalAlignmentOptions.Center;
+			if (LabelAlignment == Graph.AxisLabelAlignmentOptions.End)
+			{
+				_labelNode.HorizontalAlignment = LatexNode.HorizontalAlignmentOptions.Center;
+				_labelNode.VerticalAlignment = LatexNode.VerticalAlignmentOptions.Baseline;
+			} 
+			else if (LabelAlignment == Graph.AxisLabelAlignmentOptions.Along)
+			{
+				_labelNode.HorizontalAlignment = LatexNode.HorizontalAlignmentOptions.Center;
+				_labelNode.VerticalAlignment = LatexNode.VerticalAlignmentOptions.Baseline;
+			}
+				
 		}
 	}
 	
@@ -345,14 +365,14 @@ public partial class Axis : Node3D
 					Vector3.Zero
 				);
 				
-			case AxisType.Y:
+			case AxisType.Y: // The y-axis is rotated by 90 degrees
 				return (
 					LabelAlignment == Graph.AxisLabelAlignmentOptions.Along
 						? new Vector3(-LabelOffset, LengthMinusPadding / 2, 0)
-						: new Vector3(0, LengthMinusPadding + LabelOffset, 0),
+						: new Vector3(LengthMinusPadding + LabelOffset, 0, 0),
 					LabelAlignment == Graph.AxisLabelAlignmentOptions.Along
 						? new Vector3(0, 0, 90)
-						: Vector3.Zero
+						: new Vector3(0, 0, -90)
 				);
 				
 			case AxisType.Z:

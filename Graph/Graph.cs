@@ -226,50 +226,32 @@ public partial class Graph : Node3D
     {
         var composite = new CompositeStateChange().WithName("Graph Transition");
 
-        // Remove phase
+        // Phase containers
         var removePhase = new CompositeStateChange().WithName("Remove Phase");
+        var updatePhase = new CompositeStateChange().WithName("Update Phase");
+        var addPhase = new CompositeStateChange().WithName("Add Phase");
 
         // Update data space markers (happens during remove with zero duration)
         removePhase.AddStateChange(_dataSpaceMin.MoveTo(new Vector3(XAxis.Min, YAxis.Min, ZAxis.Min)).WithDuration(0));
         removePhase.AddStateChange(_dataSpaceMax.MoveTo(new Vector3(XAxis.Max, YAxis.Max, ZAxis.Max)).WithDuration(0));
 
-        // Add axis remove transitions
+        // Axis processing
         foreach (var axis in Axes)
         {
             var axisTransition = axis.UpdateChildrenStateChange();
             removePhase.AddStateChangeInParallel(axisTransition.Remove);
+            updatePhase.AddStateChangeInParallel(axisTransition.Update);
+            addPhase.AddStateChangeInParallel(axisTransition.Add);
         }
-
-        composite.AddStateChange(removePhase.WithDuration(removeDuration));
-
-        // Update phase
-        var updatePhase = new CompositeStateChange().WithName("Update Phase");
-
-        // Add axis update transitions
-        foreach (var axis in Axes)
-        {
-            var axisTransition = axis.UpdateChildrenStateChange();
-            updatePhase.AddStateChange(axisTransition.Update);
-        }
-
+        
         // Update data objects
         foreach (var dataObject in GetChildren().OfType<IPrimerGraphData>())
         {
             updatePhase.AddStateChangeInParallel(dataObject.TransitionStateChange(updateDuration));
         }
-
+        
+        composite.AddStateChange(removePhase.WithDuration(removeDuration));
         composite.AddStateChange(updatePhase.WithDuration(updateDuration));
-
-        // Add phase
-        var addPhase = new CompositeStateChange().WithName("Add Phase");
-
-        // Add axis add transitions
-        foreach (var axis in Axes)
-        {
-            var axisTransition = axis.UpdateChildrenStateChange();
-            addPhase.AddStateChangeInParallel(axisTransition.Add);
-        }
-
         composite.AddStateChange(addPhase.WithDuration(addDuration));
 
         return composite;
