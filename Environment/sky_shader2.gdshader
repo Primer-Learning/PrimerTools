@@ -3,6 +3,7 @@ shader_type sky;
 // Base colors
 uniform vec3 base_color : source_color = vec3(0.184, 0.2, 0.212);
 uniform vec3 mist_color : source_color = vec3(0.184, 0.2, 0.212);
+uniform vec3 lighting_color : source_color = vec3(1., 1., 1.);
 
 // Animation and appearance controls
 uniform float mist_scale : hint_range(0.5, 100.0) = 3.0;
@@ -385,101 +386,109 @@ mat3 rotationMatrix(float angle) {
 }
 
 void sky() {
-    vec3 dir = normalize(EYEDIR);
-    vec3 scaled_dir = dir * mist_scale;
+	if (AT_CUBEMAP_PASS) {
+		COLOR = lighting_color;
+	}
+	else {
+		
+	
+	
+	    vec3 dir = normalize(EYEDIR);
+	    vec3 scaled_dir = dir * mist_scale;
 
-    // Apply spherical mapping if enabled
-    if (use_spherical_mapping == 1) {
-        float theta = atan(dir.z, dir.x);
-        float phi = asin(clamp(dir.y, -1.0, 1.0));
-        scaled_dir = vec3(theta, phi, 1.0) * mist_scale;
-    }
+	    // Apply spherical mapping if enabled
+	    if (use_spherical_mapping == 1) {
+	        float theta = atan(dir.z, dir.x);
+	        float phi = asin(clamp(dir.y, -1.0, 1.0));
+	        scaled_dir = vec3(theta, phi, 1.0) * mist_scale;
+	    }
 
-    // Apply rotation if enabled
-    if (use_rotation == 1) {
-        mat3 rot = rotationMatrix(TIME * rotation_speed);
-        scaled_dir = rot * scaled_dir;
-    }
+	    // Apply rotation if enabled
+	    if (use_rotation == 1) {
+	        mat3 rot = rotationMatrix(TIME * rotation_speed);
+	        scaled_dir = rot * scaled_dir;
+	    }
 
-    // Domain warping
-    if (domain_warp_strength > 0.0) {
-        vec3 warp1 = vec3(perlinNoise(scaled_dir * 2.0));
-        vec3 warp2 = vec3(perlinNoise(scaled_dir * 4.0 + vec3(TIME * 0.1)));
-        scaled_dir += (warp1 * 0.3 + warp2 * 0.15) * domain_warp_strength;
-    }
+	    // Domain warping
+	    if (domain_warp_strength > 0.0) {
+	        vec3 warp1 = vec3(perlinNoise(scaled_dir * 2.0));
+	        vec3 warp2 = vec3(perlinNoise(scaled_dir * 4.0 + vec3(TIME * 0.1)));
+	        scaled_dir += (warp1 * 0.3 + warp2 * 0.15) * domain_warp_strength;
+	    }
 
-    // Animate by adding time-based offsets
-    //vec3 flow1 = scaled_dir * TIME * mist_speed;
-	vec3 flow1 = scaled_dir + vec3(1.0, 1.0, 1.0) * TIME * mist_speed;
-    vec3 flow2 = scaled_dir * 1.5 + vec3(0.0, TIME * mist_speed * 1.4, TIME * mist_speed * 0.6);
-    vec3 flow3 = scaled_dir * 0.7 + vec3(TIME * mist_speed * 0.6, TIME * mist_speed * 1.0, 0.0);
+	    // Animate by adding time-based offsets
+	    //vec3 flow1 = scaled_dir * TIME * mist_speed;
+		vec3 flow1 = scaled_dir + vec3(1.0, 1.0, 1.0) * TIME * mist_speed;
+	    vec3 flow2 = scaled_dir * 1.5 + vec3(0.0, TIME * mist_speed * 1.4, TIME * mist_speed * 0.6);
+	    vec3 flow3 = scaled_dir * 0.7 + vec3(TIME * mist_speed * 0.6, TIME * mist_speed * 1.0, 0.0);
 
-    // Apply curl noise influence
-    if (curl_influence > 0.0) {
-        flow1 += curlOffset(flow1 * 0.5) * curl_influence;
-        flow2 += curlOffset(flow2 * 0.5) * curl_influence;
-        flow3 += curlOffset(flow3 * 0.5) * curl_influence;
-    }
+	    // Apply curl noise influence
+	    if (curl_influence > 0.0) {
+	        flow1 += curlOffset(flow1 * 0.5) * curl_influence;
+	        flow2 += curlOffset(flow2 * 0.5) * curl_influence;
+	        flow3 += curlOffset(flow3 * 0.5) * curl_influence;
+	    }
 
-    // Add subtle distortion
-    vec3 distort_coords = dir * distortion_scale * mist_scale + vec3(TIME * distortion_speed * 3.0);
-    float distortion = perlinNoise(distort_coords) * 0.1;
+	    // Add subtle distortion
+	    vec3 distort_coords = dir * distortion_scale * mist_scale + vec3(TIME * distortion_speed * 3.0);
+	    float distortion = perlinNoise(distort_coords) * 0.1;
 
-    // Create mist layers with layer-specific noise
-    float mist1 = fbm(flow1 + distortion, layer1_octaves, 0);        // Layer 0 (bit 0)
-    float mist2 = fbm(flow2 - distortion * 0.5, layer2_octaves, 1);  // Layer 1 (bit 1)
-    float mist3 = fbm(flow3 + distortion * 0.3, layer3_octaves, 2);  // Layer 2 (bit 2)
+	    // Create mist layers with layer-specific noise
+	    float mist1 = fbm(flow1 + distortion, layer1_octaves, 0);        // Layer 0 (bit 0)
+	    float mist2 = fbm(flow2 - distortion * 0.5, layer2_octaves, 1);  // Layer 1 (bit 1)
+	    float mist3 = fbm(flow3 + distortion * 0.3, layer3_octaves, 2);  // Layer 2 (bit 2)
 
-    // Apply edge detection per layer if enabled
-    if (quantization_levels == 0) {  // Edge detection doesn't work well with quantization
-        if (edge_detection_strength_layer1 > 0.0) {
-            float edge_mist1 = fbm(flow1 + distortion + vec3(0.01, 0.0, 0.0), layer1_octaves, 0) - mist1;
-            edge_mist1 += fbm(flow1 + distortion + vec3(0.0, 0.01, 0.0), layer1_octaves, 0) - mist1;
-            edge_mist1 = abs(edge_mist1) * 10.0;
-            mist1 = mix(mist1, 1.0 - edge_mist1, edge_detection_strength_layer1);
-        }
+	    // Apply edge detection per layer if enabled
+	    if (quantization_levels == 0) {  // Edge detection doesn't work well with quantization
+	        if (edge_detection_strength_layer1 > 0.0) {
+	            float edge_mist1 = fbm(flow1 + distortion + vec3(0.01, 0.0, 0.0), layer1_octaves, 0) - mist1;
+	            edge_mist1 += fbm(flow1 + distortion + vec3(0.0, 0.01, 0.0), layer1_octaves, 0) - mist1;
+	            edge_mist1 = abs(edge_mist1) * 10.0;
+	            mist1 = mix(mist1, 1.0 - edge_mist1, edge_detection_strength_layer1);
+	        }
 
-        if (edge_detection_strength_layer2 > 0.0) {
-            float edge_mist2 = fbm(flow2 - distortion * 0.5 + vec3(0.01, 0.0, 0.0), layer2_octaves, 1) - mist2;
-            edge_mist2 += fbm(flow2 - distortion * 0.5 + vec3(0.0, 0.01, 0.0), layer2_octaves, 1) - mist2;
-            edge_mist2 = abs(edge_mist2) * 10.0;
-            mist2 = mix(mist2, 1.0 - edge_mist2, edge_detection_strength_layer2);
-        }
+	        if (edge_detection_strength_layer2 > 0.0) {
+	            float edge_mist2 = fbm(flow2 - distortion * 0.5 + vec3(0.01, 0.0, 0.0), layer2_octaves, 1) - mist2;
+	            edge_mist2 += fbm(flow2 - distortion * 0.5 + vec3(0.0, 0.01, 0.0), layer2_octaves, 1) - mist2;
+	            edge_mist2 = abs(edge_mist2) * 10.0;
+	            mist2 = mix(mist2, 1.0 - edge_mist2, edge_detection_strength_layer2);
+	        }
 
-        if (edge_detection_strength_layer3 > 0.0) {
-            float edge_mist3 = fbm(flow3 + distortion * 0.3 + vec3(0.01, 0.0, 0.0), layer3_octaves, 2) - mist3;
-            edge_mist3 += fbm(flow3 + distortion * 0.3 + vec3(0.0, 0.01, 0.0), layer3_octaves, 2) - mist3;
-            edge_mist3 = abs(edge_mist3) * 10.0;
-            mist3 = mix(mist3, 1.0 - edge_mist3, edge_detection_strength_layer3);
-        }
-    }
+	        if (edge_detection_strength_layer3 > 0.0) {
+	            float edge_mist3 = fbm(flow3 + distortion * 0.3 + vec3(0.01, 0.0, 0.0), layer3_octaves, 2) - mist3;
+	            edge_mist3 += fbm(flow3 + distortion * 0.3 + vec3(0.0, 0.01, 0.0), layer3_octaves, 2) - mist3;
+	            edge_mist3 = abs(edge_mist3) * 10.0;
+	            mist3 = mix(mist3, 1.0 - edge_mist3, edge_detection_strength_layer3);
+	        }
+	    }
 
-    // Combine layers
-    float combined_mist = mist1 * 0.5 + mist2 * 0.3 + mist3 * 0.2;
+	    // Combine layers
+	    float combined_mist = mist1 * 0.5 + mist2 * 0.3 + mist3 * 0.2;
 
-    // Normalize to 0-1
-    combined_mist = (combined_mist * 0.5 + 0.5);
+	    // Normalize to 0-1
+	    combined_mist = (combined_mist * 0.5 + 0.5);
 
-    // Apply quantization if enabled
-    if (quantization_levels > 0) {
-        combined_mist = floor(combined_mist * float(quantization_levels)) / float(quantization_levels);
-    }
+	    // Apply quantization if enabled
+	    if (quantization_levels > 0) {
+	        combined_mist = floor(combined_mist * float(quantization_levels)) / float(quantization_levels);
+	    }
 
-    // Apply contrast
-    combined_mist = pow(combined_mist, contrast_boost) * mist_intensity;
+	    // Apply contrast
+	    combined_mist = pow(combined_mist, contrast_boost) * mist_intensity;
 
-    // Check if in debug mode
-    if (show_noise_only == 1) {
-        // Show noise only
-        COLOR = vec3(combined_mist);
-    } else {
-        // Normal rendering
-        vec3 final_color = mix(base_color, mist_color, combined_mist);
+	    // Check if in debug mode
+	    if (show_noise_only == 1) {
+	        // Show noise only
+	        COLOR = vec3(combined_mist);
+	    } else {
+	        // Normal rendering
+	        vec3 final_color = mix(base_color, mist_color, combined_mist);
 
-        // Optional: Add subtle vertical gradient
-        float gradient = 1.0 - abs(dir.y) * 0.2;
-        final_color *= gradient;
+	        // Optional: Add subtle vertical gradient
+	        float gradient = 1.0 - abs(dir.y) * 0.2;
+	        final_color *= gradient;
 
-        COLOR = final_color;
-    }
+	        COLOR = final_color;
+	    }
+	}
 }

@@ -6,6 +6,7 @@
 shader = ExtResource("1_1cjjy")
 shader_parameter/base_color = Color(0.0511276, 0.0573691, 0.062142, 1)
 shader_parameter/mist_color = Color(0.184, 0.2, 0.212, 1)
+shader_parameter/lighting_color = Color(1, 1, 1, 1)
 shader_parameter/mist_scale = 64.185
 shader_parameter/mist_speed = 1.0
 shader_parameter/mist_intensity = 0.5
@@ -46,3 +47,5 @@ background_color = Color(0.184314, 0.2, 0.211765, 0)
 sky = SubResource("Sky_twrfi")
 ambient_light_color = Color(1, 1, 1, 1)
 sdfgi_enabled = true
+fog_mode = 1
+fog_density = 1.0
