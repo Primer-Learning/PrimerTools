@@ -137,7 +137,11 @@ public partial class LatexAnimator : Node3D
         int anchorChunkIndex = -1
         )
     {
-        AddExpression(LatexNode.Create(latex));
+        var nextLatex = LatexNode.Create(latex);
+        // Copy alignment of current expression. If you want different alignment, don't use this overload.
+        nextLatex.HorizontalAlignment = _latexNodes[_currentExpressionIndex].HorizontalAlignment;
+        nextLatex.VerticalAlignment = _latexNodes[_currentExpressionIndex].VerticalAlignment;
+        AddExpression(nextLatex);
         return AnimateToExpressionStateChange(_currentExpressionIndex + 1, preservedCharacterChunks, anchorChunkIndex);
     }
 
@@ -280,9 +284,10 @@ public partial class LatexAnimator : Node3D
             if (!preservedFromIndices.Contains(i)) continue;
             var movementIndex = preservedFromIndices.IndexOf(i);
             var indexInNextExpression = preservedToIndices[movementIndex];
-            
-            if (copiesOfCurrentExpressionCharacters[i].Position !=
-                copiesOfNextExpressionCharacters[indexInNextExpression].Position)
+
+            var diff = copiesOfCurrentExpressionCharacters[i].Position -
+                       copiesOfNextExpressionCharacters[indexInNextExpression].Position;
+            if (diff.Length() > 0.001)
             {
                 movementPhase.AddStateChangeInParallel(copiesOfCurrentExpressionCharacters[i].MoveTo(copiesOfNextExpressionCharacters[indexInNextExpression].Position));
             }

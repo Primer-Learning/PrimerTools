@@ -61,24 +61,24 @@ public static class DiagramElementExtensions
         element.Style.Thickness = 0;
         var appearanceStateChange = new CompositeStateChange();
         appearanceStateChange.AddStateChange(
-            new PropertyStateChange(element.Style, "Thickness", originalThickness), duration
+            new PropertyStateChange(element.Style, "Thickness", originalThickness).WithDuration(duration)
         );
         
         var originalSmoothness = element.Style.Smoothness;
         element.Style.Smoothness = 0;
         appearanceStateChange.AddStateChangeInParallel(
-            new PropertyStateChange(element.Style, "Smoothness", originalSmoothness), duration
+            new PropertyStateChange(element.Style, "Smoothness", originalSmoothness).WithDuration(duration)
         );
         
         var originalLeft = element.LeftTipPosition;
         element.LeftTipPosition = element.StemPosition;
         appearanceStateChange.AddStateChangeInParallel(
-            new PropertyStateChange(element, "LeftTipPosition", originalLeft)
+            new PropertyStateChange(element, "LeftTipPosition", originalLeft).WithDuration(duration)
         );
         var originalRight = element.RightTipPosition;
         element.RightTipPosition = element.StemPosition;
         appearanceStateChange.AddStateChangeInParallel(
-            new PropertyStateChange(element, "RightTipPosition", originalRight)
+            new PropertyStateChange(element, "RightTipPosition", originalRight).WithDuration(duration)
         );
            
 
