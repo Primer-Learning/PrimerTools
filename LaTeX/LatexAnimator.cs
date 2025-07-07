@@ -127,38 +127,48 @@ public partial class LatexAnimator : Node3D
     /// Creates the given expression and animates to it
     /// </summary>
     /// <param name="latex">The expression to make a LatexNode from</param>
-    /// <param name="preservedCharacterMap">Specifies the characters that should be kept during the transition</param>
+    /// <param name="preservedCharacterChunks">Specifies the characters that should be kept during the transition</param>
+    /// <param name="anchorChunkIndex">If preservedCharacterChunks are defined, setting this to an index of one of them will
+    ///  cause that chunk to act as an anchor for the animation, keeping the chunk in place and moving everything else around it. </param>
     /// <returns></returns>
     public CompositeStateChange AnimateToExpressionStateChange(
         string latex,
-        List<(int currentExpressionChunkBeginIndex, int nextExpressionChunkBeginIndex, int chunkLength)>
-            preservedCharacterMap)
+        List<(int currentExpressionChunkBeginIndex, int nextExpressionChunkBeginIndex, int chunkLength)> preservedCharacterChunks,
+        int anchorChunkIndex = -1
+        )
     {
         AddExpression(LatexNode.Create(latex));
-        return AnimateToExpressionStateChange(_currentExpressionIndex + 1, preservedCharacterMap);
+        return AnimateToExpressionStateChange(_currentExpressionIndex + 1, preservedCharacterChunks, anchorChunkIndex);
     }
 
     /// <summary>
     /// Animates to the next expression index
     /// </summary>
-    /// <param name="preservedCharacterMap">Specifies the characters that should be kept during the transition</param>
+    /// <param name="preservedCharacterChunks">Specifies the characters that should be kept during the transition</param>
+    /// <param name="anchorChunkIndex">If preservedCharacterChunks are defined, setting this to an index of one of them will
+    ///  cause that chunk to act as an anchor for the animation, keeping the chunk in place and moving everything else around it. </param>
     /// <returns></returns>
     public CompositeStateChange AnimateToExpressionStateChange(
-        List<(int currentExpressionChunkBeginIndex, int nextExpressionChunkBeginIndex, int chunkLength)>
-            preservedCharacterMap)
+        List<(int currentExpressionChunkBeginIndex, int nextExpressionChunkBeginIndex, int chunkLength)> preservedCharacterChunks,
+        int anchorChunkIndex = -1
+        )
     {
-        return AnimateToExpressionStateChange(_currentExpressionIndex + 1, preservedCharacterMap);
+        return AnimateToExpressionStateChange(_currentExpressionIndex + 1, preservedCharacterChunks, anchorChunkIndex);
     }
 
     /// <summary>
     /// Animates to a different expression
     /// </summary>
     /// <param name="newIndex">The index of the new expression</param>
-    /// <param name="preservedCharacterMap">Specifies the characters that should be kept during the transition</param>
+    /// <param name="preservedCharacterChunks">Specifies the characters that should be kept during the transition</param>
+    /// <param name="anchorChunkIndex">If preservedCharacterChunks are defined, setting this to an index of one of them will
+    ///  cause that chunk to act as an anchor for the animation, keeping the chunk in place and moving everything else around it. </param>
     /// <returns></returns>
     public CompositeStateChange AnimateToExpressionStateChange(
         int newIndex, 
-        List<(int currentExpressionChunkBeginIndex, int nextExpressionChunkBeginIndex, int chunkLength)> preservedCharacterMap)
+        List<(int currentExpressionChunkBeginIndex, int nextExpressionChunkBeginIndex, int chunkLength)> preservedCharacterChunks,
+        int anchorChunkIndex = -1
+        )
     {
         if (_latexNodes[_currentExpressionIndex].GetCharacters().Count == 0 
             || _latexNodes[newIndex].GetCharacters().Count == 0)
@@ -166,7 +176,42 @@ public partial class LatexAnimator : Node3D
             GD.Print("One or more LaTeX expressions has no characters. Skipping LaTeX animation.");
             return new CompositeStateChange();
         }
-        
+
+        if (anchorChunkIndex >= 0 && anchorChunkIndex < preservedCharacterChunks.Count)
+        {
+            // The below won't work with non-unit scales, so some not-very-robust warning
+            if (Math.Abs(_latexNodes[_currentExpressionIndex].Scale.X - 1) > 0.001)
+            {
+                GD.Print("Anchored LaTeX animations likely won't work properly when the LatexNodes have non-unit scales. You could scale the LatexAnimator itself, or make LatexAnimator no longer assume unit scales.");
+            }
+            
+            // Find the first character in the anchor chunk
+            var anchorCharacterIndex = preservedCharacterChunks[anchorChunkIndex].currentExpressionChunkBeginIndex;
+            var anchorCharacter = _latexNodes[_currentExpressionIndex].GetCharacters()[anchorCharacterIndex];
+            // Find the corresponding character in destination
+            var anchoredCharacterIndex = preservedCharacterChunks[anchorChunkIndex].nextExpressionChunkBeginIndex;
+            var anchoredCharacter = _latexNodes[newIndex].GetCharacters()[anchoredCharacterIndex];
+
+            // Move every destination character's position by the difference between the anchor and anchored positions
+            // But since these are each in container that are used for alignment, we need to apply the container's
+            // position to get the position in the grandparent LatexNode space.
+            // This would disrupt alignment calculations, but I don't expect that will matter if we're using anchors
+            // in a LatexAnimator.
+            // If it ends up mattering, it might be possible to move the containers and then move the characters
+            // so they align individually.
+            var anchorCharacterTransformRelativeToOutNode =
+                _latexNodes[_currentExpressionIndex].GetChild<Node3D>(0).Transform * anchorCharacter.Position; 
+            var anchoredCharacterTransformRelativeToOutNode =
+                _latexNodes[newIndex].GetChild<Node3D>(0).Transform * anchoredCharacter.Position;
+            
+            var displacement = anchorCharacterTransformRelativeToOutNode - anchoredCharacterTransformRelativeToOutNode;
+            
+            GD.Print($"Anchor displacement: {displacement}");
+            foreach (var character in _latexNodes[newIndex].GetCharacters())
+            {
+                character.Position += displacement;
+            }
+        }
         
         // This doesn't work if the scale is zero, which it often is at the beginning of a scene
         var oldScale = Scale;
@@ -178,10 +223,10 @@ public partial class LatexAnimator : Node3D
             return new CompositeStateChange().WithName("Empty Expression Change");
         }
         
-        // Turn the preservedCharacterMap into lists of indices, making later steps easier
+        // Turn the preservedCharacterChunks into lists of indices, making later steps easier
         var preservedFromIndices = new List<int>();
         var preservedToIndices = new List<int>();
-        foreach (var chunk in preservedCharacterMap)
+        foreach (var chunk in preservedCharacterChunks)
         {
             for (var i = 0; i < chunk.chunkLength; i++)
             {
