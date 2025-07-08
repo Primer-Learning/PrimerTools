@@ -80,8 +80,28 @@ public static class DiagramElementExtensions
         appearanceStateChange.AddStateChangeInParallel(
             new PropertyStateChange(element, "RightTipPosition", originalRight).WithDuration(duration)
         );
-           
-
+        
+        return appearanceStateChange;
+    }
+    
+    public static CompositeStateChange Disappear(this ShaderBracket element, double duration = Node3DStateChangeExtensions.DefaultDuration)
+    {
+        var appearanceStateChange = new CompositeStateChange();
+        appearanceStateChange.AddStateChange(
+            new PropertyStateChange(element.Style, "Thickness", 0).WithDuration(duration)
+        );
+        
+        appearanceStateChange.AddStateChangeInParallel(
+            new PropertyStateChange(element.Style, "Smoothness", 0).WithDuration(duration)
+        );
+        
+        appearanceStateChange.AddStateChangeInParallel(
+            new PropertyStateChange(element, "LeftTipPosition", element.StemPosition).WithDuration(duration)
+        );
+        appearanceStateChange.AddStateChangeInParallel(
+            new PropertyStateChange(element, "RightTipPosition", element.StemPosition).WithDuration(duration)
+        );
+        
         return appearanceStateChange;
     }
 }
