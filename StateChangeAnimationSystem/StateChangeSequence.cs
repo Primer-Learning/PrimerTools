@@ -26,7 +26,6 @@ public abstract partial class StateChangeSequence : Node
     private double _timeAccumulator = 0;
     private double _currentTime = 0;
     private bool _isPlaying = false;
-    private Tween _masterTween;
 
     public double LastStateChangeTime => _rootComposite.CurrentEndTime;
     
@@ -66,36 +65,41 @@ public abstract partial class StateChangeSequence : Node
         
         SeekTo(_startFromTime);
         
-        Play();
+        if (_startFromTime < TotalDuration)
+        {
+            Play();
+        }
     }
     
     public override void _Process(double delta)
     {
-        if (_isPlaying && _masterTween != null && _masterTween.IsValid())
+        if (!_isPlaying) return;
+        
+        // Update time based on playback speed
+        var scaledDelta = delta * _playbackSpeed;
+        var newTime = _currentTime + scaledDelta;
+        
+        // Clamp to total duration
+        if (newTime >= TotalDuration)
         {
-            _timeAccumulator += delta;
-            _currentTime = Math.Min(_startFromTime + _timeAccumulator, TotalDuration);
-
-            // Stop if we've reached the end
-            if (_currentTime >= TotalDuration)
-            {
-                _currentTime = TotalDuration;
-                _isPlaying = false;
-            }
+            newTime = TotalDuration;
+            _isPlaying = false;
         }
+        
+        // Use the existing seek logic for frame-by-frame updates
+        SeekToInternal(newTime);
+        _currentTime = newTime;
     }
     
     protected abstract void Define();
     
-    public void SeekTo(double time)
+    private void SeekToInternal(double time)
     {
         if (time < 0)
         {
             GD.Print(TotalDuration);
             time = TotalDuration;
         }
-        
-        KillAllTweens();
         
         // Revert animations that haven't started yet
         foreach (var animation in _flattenedAnimations.Where(a => a.AbsoluteStartTime > time).Reverse())
@@ -115,163 +119,33 @@ public abstract partial class StateChangeSequence : Node
             var elapsedTime = time - animation.AbsoluteStartTime;
             animation.Animation.EvaluateAtTime(elapsedTime);
         }
-        
+    }
+    
+    public void SeekTo(double time)
+    {
+        SeekToInternal(time);
         _currentTime = time;
-        _timeAccumulator = 0;
         _startFromTime = time;
-
-        if (_isPlaying)
-        {
-            Play();
-        }
+        _timeAccumulator = time - _startFromTime;
     }
     // Add pause/resume methods
     public void Pause()
     {
-        if (!_isPlaying) return;
-
         _isPlaying = false;
-        
-        // Pause all tweens
-        foreach (var tween in GetTree().GetProcessedTweens())
-        {
-            if (tween.IsValid())
-            {
-                tween.Pause();
-            }
-        }
     }
 
     public void Resume()
     {
-        if (_isPlaying) return;
-
         _isPlaying = true;
-        
-        // Resume all tweens
-        var hasValidTweens = false;
-        foreach (var tween in GetTree().GetProcessedTweens())
-        {
-            if (tween.IsValid())
-            {
-                tween.Play();
-                hasValidTweens = true;
-            }
-        }
-        
-        if (!hasValidTweens)
-        {
-            Play();
-        }
     }
     
     private void Play()
     {
         _isPlaying = true;
         _timeAccumulator = 0;
-        Engine.TimeScale = _playbackSpeed;
-        
-        // Kill all existing tweens
-        KillAllTweens();
-        
-        var remainingDuration = TotalDuration - _currentTime;
-        if (remainingDuration <= 0) return;
-        
-        // Filter animations that haven't finished yet
-        var futureAnimations = _flattenedAnimations
-            .Where(a => a.AbsoluteEndTime > _currentTime)
-            .ToList();
-        
-        if (futureAnimations.Count == 0) return;
-        
-        // Group animations into non-overlapping tracks
-        var tracks = BuildTracks(futureAnimations);
-        
-        // GD.Print($"Created {tracks.Count} tracks for {futureAnimations.Count} animations");
-        
-        // Create a tween for each track
-        for (int i = 0; i < tracks.Count; i++)
-        {
-            var track = tracks[i];
-            var trackTween = i == 0 ? CreateTween() : GetTree().CreateTween();
-            
-            if (i == 0)
-            {
-                _masterTween = trackTween;
-            }
-            
-            var trackCurrentTime = _currentTime;
-
-            // trackTween.TweenCallback(Callable.From(
-            //         () =>
-            //         {
-            //             GD.Print("Starting Tween");
-            //         }
-            //     )
-            // );
-            
-            foreach (var animation in track.OrderBy(a => a.AbsoluteStartTime))
-            {
-                // Add delay to reach this animation's start time
-                if (animation.AbsoluteStartTime > trackCurrentTime)
-                {
-                    var delay = animation.AbsoluteStartTime - trackCurrentTime;
-                    trackTween.TweenInterval(delay);
-                    trackCurrentTime = animation.AbsoluteStartTime;
-                }
-                
-                // Calculate elapsed time for this specific animation
-                var changeElapsedTime = Math.Max(0, _currentTime - animation.AbsoluteStartTime);
-                animation.Animation.AppendTweener(trackTween, changeElapsedTime);
-                
-                // GD.Print($"  Added {animation.Animation.Name} to track {i} at {animation.AbsoluteStartTime}s");
-                
-                trackCurrentTime = animation.AbsoluteEndTime;
-            }
-        }
-        
-        // Add a final callback to the main tween to mark completion
-        _masterTween.TweenCallback(Callable.From(() => 
-        {
-            _currentTime = TotalDuration;
-            _isPlaying = false;
-            // GD.Print("Sequence completed");
-        }));
-        // GD.Print("Finished starting of the playing");
+        // No more tween creation - just set the flag
     }
     
-    private List<List<FlattenedAnimation>> BuildTracks(List<FlattenedAnimation> animations)
-    {
-        var tracks = new List<List<FlattenedAnimation>>();
-        
-        foreach (var animation in animations)
-        {
-            // Find a track where this animation doesn't overlap with existing animations
-            var track = tracks.FirstOrDefault(t => 
-                !t.Any(existing => 
-                    animation.AbsoluteStartTime < existing.AbsoluteEndTime && 
-                    animation.AbsoluteEndTime > existing.AbsoluteStartTime));
-            
-            if (track == null)
-            {
-                // Create a new track if no non-overlapping track exists
-                track = new List<FlattenedAnimation>();
-                tracks.Add(track);
-            }
-            
-            track.Add(animation);
-        }
-        
-        return tracks;
-    }
-    
-    private void KillAllTweens()
-    {
-        foreach (var tween in GetTree().GetProcessedTweens())
-        {
-            tween.Kill();
-        }
-    }
     
     public void AddStateChange(IStateChange stateChange, double delay = 0)
     {

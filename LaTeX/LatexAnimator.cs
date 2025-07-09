@@ -210,7 +210,6 @@ public partial class LatexAnimator : Node3D
             
             var displacement = anchorCharacterTransformRelativeToOutNode - anchoredCharacterTransformRelativeToOutNode;
             
-            GD.Print($"Anchor displacement: {displacement}");
             foreach (var character in _latexNodes[newIndex].GetCharacters())
             {
                 character.Position += displacement;
