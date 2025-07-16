@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
+using PrimerTools;
 
 public abstract partial class StateChangeSequence : Node
 {
@@ -62,7 +63,8 @@ public abstract partial class StateChangeSequence : Node
         {
             _flattenedAnimations[i].Animation.Revert();
         }
-        
+
+        if (_startFromTime < 0) _startFromTime = TotalDuration;
         SeekTo(_startFromTime);
         
         if (_startFromTime < TotalDuration)
@@ -84,6 +86,10 @@ public abstract partial class StateChangeSequence : Node
         {
             newTime = TotalDuration;
             _isPlaying = false;
+            
+            // Notify recorder if present
+            var recorder = GetParent()?.GetChildren().OfType<SceneRecorder>().FirstOrDefault();
+            recorder?.OnSequenceComplete();
         }
         
         // Use the existing seek logic for frame-by-frame updates
@@ -111,6 +117,12 @@ public abstract partial class StateChangeSequence : Node
         foreach (var animation in _flattenedAnimations.Where(a => a.AbsoluteEndTime <= time))
         {
             animation.Animation.ApplyEndState();
+            if (animation.Animation is MethodTriggerStateChange methodTrigger)
+            {
+                if (_isPlaying) methodTrigger.Execute();
+                else methodTrigger.SetTriggered(); 
+            }
+            
         }
         
         // Evaluate animations that we're in the middle of

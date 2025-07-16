@@ -5,6 +5,7 @@ public class MethodTriggerStateChange : IAnimatedStateChange
 {
     private readonly Action _callback;
     private readonly string _name;
+    private bool _hasTriggered = false;
 
     public string Name => _name;
     public double Duration => 0; // Instant trigger
@@ -15,14 +16,17 @@ public class MethodTriggerStateChange : IAnimatedStateChange
         _name = name ?? "MethodTrigger";
     }
 
-    public void AppendTweener(Tween tween, double elapsedTime = 0)
+    public void SetTriggered()
     {
-        // Since this is instant, we only execute if elapsedTime hasn't passed yet
-        if (elapsedTime <= 0)
-        {
-            tween.TweenCallback(Callable.From(_callback));
-        }
+        _hasTriggered = true;
     }
+    public void Execute()
+    {
+        if (_hasTriggered) return;
+        _callback.Invoke();
+        _hasTriggered = true;
+    }
+    
     public IStateChange WithDuration(double duration)
     {
         // Method triggers are instant
@@ -37,6 +41,9 @@ public class MethodTriggerStateChange : IAnimatedStateChange
 
     public void RecordStartState() {}
 
-    public void Revert() {}
+    public void Revert()
+    {
+        _hasTriggered = false;
+    }
 
 }

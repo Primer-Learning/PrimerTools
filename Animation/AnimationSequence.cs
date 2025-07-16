@@ -147,7 +147,7 @@ public abstract partial class AnimationSequence : AnimationPlayer
 			_sceneName = value;
 			_baseDirectory = Path.Combine(ProjectSettings.GlobalizePath("res://"), "..", "png", _sceneName);
 			
-			DebouncedCreateDirectory(); // I want run this once after no keystrokes have come in for one second
+			DebouncedCreateDirectory(); // I want to run this once after no keystrokes have come in for one second
 		}
 	}
 	
