@@ -104,4 +104,60 @@ public static class DiagramElementExtensions
         
         return appearanceStateChange;
     }
+    
+    public static CompositeStateChange Appear(this ShaderArrow element, double duration = Node3DStateChangeExtensions.DefaultDuration)
+    {
+        var originalThickness = element.Style.Thickness;
+        element.Style.Thickness = 0;
+        var appearanceStateChange = new CompositeStateChange();
+        appearanceStateChange.AddStateChange(
+            new PropertyStateChange(element.Style, "Thickness", originalThickness).WithDuration(duration)
+        );
+        
+        var originalSmoothness = element.Style.Smoothness;
+        element.Style.Smoothness = 0;
+        appearanceStateChange.AddStateChangeInParallel(
+            new PropertyStateChange(element.Style, "Smoothness", originalSmoothness).WithDuration(duration)
+        );
+        
+        var originalEnd = element.EndPosition;
+        element.EndPosition = element.StartPosition;
+        appearanceStateChange.AddStateChangeInParallel(
+            new PropertyStateChange(element, "EndPosition", originalEnd).WithDuration(duration),
+            delay: duration / 2
+        );
+        
+        var originalHeadLength = element.HeadLength;
+        element.HeadLength = 0;
+        appearanceStateChange.AddStateChangeInParallel(
+            new PropertyStateChange(element, "HeadLength", originalHeadLength).WithDuration(duration),
+            delay: duration / 2
+        );
+        
+        return appearanceStateChange;
+    }
+    public static CompositeStateChange Disappear(this ShaderArrow element, double duration = Node3DStateChangeExtensions.DefaultDuration)
+    {
+        var appearanceStateChange = new CompositeStateChange();
+        
+        appearanceStateChange.AddStateChange(
+            new PropertyStateChange(element, "StartPosition", element.EndPosition).WithDuration(duration)
+        );
+        
+        appearanceStateChange.AddStateChangeInParallel(
+            new PropertyStateChange(element, "HeadLength", 0).WithDuration(duration),
+            delay: duration / 2
+        );
+        
+        appearanceStateChange.AddStateChangeInParallel(
+            new PropertyStateChange(element.Style, "Thickness", 0).WithDuration(duration),
+            delay: duration / 2
+        );
+        
+        appearanceStateChange.AddStateChangeInParallel(
+            new PropertyStateChange(element.Style, "Smoothness", 0).WithDuration(duration)
+        );
+        
+        return appearanceStateChange;
+    }
 }

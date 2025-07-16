@@ -48,18 +48,6 @@ public class PropertyStateChange : IAnimatedStateChange
         _transition = Tween.TransitionType.Cubic;
         _ease = Tween.EaseType.InOut;
     }
-    
-    public void AppendTweener(Tween tween, double elapsedTime = 0)
-    {
-        var remainingDuration = _duration - elapsedTime;
-        
-        if (remainingDuration <= 0) return;
-        
-        // Append the property tweener to the provided tween
-        tween.TweenProperty(_target, _property, _endValue, remainingDuration)
-            .SetTrans(_transition)
-            .SetEase(_ease);
-    }
 
     public void EvaluateAtTime(double elapsedTime)
     {
