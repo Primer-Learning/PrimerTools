@@ -6,9 +6,9 @@ render_mode cull_disabled;
 
 uniform vec4 shape_color : source_color = vec4(1.0, 0.5, 0.0, 1.0);
 uniform vec4 background_color : source_color = vec4(0.0, 0.0, 0.0, 0.0);
-uniform float thickness : hint_range(0.01, 0.5) = 0.02;
+uniform float thickness : hint_range(0, 0.5) = 0.02;
 uniform float thickness_variation : hint_range(0.0, 5.0) = 2.0;
-uniform float smoothness : hint_range(0.01, 10) = 0.01;
+uniform float smoothness : hint_range(0, 10) = 0.01;
 
 // Bracket parameters
 uniform vec2 bracket_tip1 = vec2(-0.5, -1.0);

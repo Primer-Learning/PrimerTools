@@ -78,7 +78,7 @@ public partial class ShaderBracket : Node3D
                 _style.StyleChanged -= OnStyleChanged;
 
             _style = value;
-
+            
             if (_style != null)
                 _style.StyleChanged += OnStyleChanged;
 
@@ -98,6 +98,10 @@ public partial class ShaderBracket : Node3D
             child.Free();
         }
         _bracketData ??= new BracketData();
+        
+        if (_style != null)
+            _style.StyleChanged += OnStyleChanged;
+        
         CreateMesh();
         UpdateFromWorld3DPositions();
     }
@@ -111,6 +115,7 @@ public partial class ShaderBracket : Node3D
     
     private void OnStyleChanged()
     {
+        GD.Print("Bracket style changed");
         UpdateShaderParameters();
     }
     

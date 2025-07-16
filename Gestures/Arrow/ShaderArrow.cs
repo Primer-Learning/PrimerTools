@@ -120,7 +120,7 @@ public partial class ShaderArrow : Node3D
     public ShapeStyle Style
     {
         get => _style;
-        set
+        private set
         {
             if (_style != null)
                 _style.StyleChanged -= OnStyleChanged;
@@ -148,6 +148,10 @@ public partial class ShaderArrow : Node3D
         _arrowData ??= new ArrowData();
         _arrowData.HeadLength = _headLength;
         _arrowData.HeadAngle = _headAngle;
+        
+        if (_style != null)
+            _style.StyleChanged += OnStyleChanged;
+        
         CreateMesh();
         UpdateFromWorld3DPositions();
     }
@@ -162,6 +166,7 @@ public partial class ShaderArrow : Node3D
     
     private void OnStyleChanged()
     {
+        GD.Print("Arrow style changed");
         UpdateShaderParameters();
     }
     

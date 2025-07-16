@@ -136,12 +136,29 @@ public static class DiagramElementExtensions
         
         return appearanceStateChange;
     }
-    public static CompositeStateChange Disappear(this ShaderArrow element, double duration = Node3DStateChangeExtensions.DefaultDuration)
+    
+    // TODO: Make this not need currentHeadPosition
+    // The issue is that state changes don't apply their changes when built. This is largely fine, perhaps even good
+    // for reasons I don't recall. But the disappear method needs to know where the head currently is, and it doesn't
+    // currently have a good way of knowing that.
+    // One possibility is to make ShaderArrow and ShaderBracket, and everything else, work more like Graph,
+    // where the class properties are separate from the visual node/shader properties they control. In that case,
+    // the properties are updated inside of the sequence's Define method and are therefore accessible for building
+    // transitions.
+    // Another possibility could be to allow PropertyStateChange to optionally take a delegate instead of a value
+    // which would allow it to figure out the value the first time it is evaluated, but complicating otherwise fairly
+    // simple class seems bad. 
+    
+    public static CompositeStateChange Disappear(this ShaderArrow element, double duration = Node3DStateChangeExtensions.DefaultDuration, Vector3? currentHeadPosition = null)
     {
         var appearanceStateChange = new CompositeStateChange();
+        if (!currentHeadPosition.HasValue)
+        {
+            currentHeadPosition = element.EndPosition;
+        }
         
         appearanceStateChange.AddStateChange(
-            new PropertyStateChange(element, "StartPosition", element.EndPosition).WithDuration(duration)
+            new PropertyStateChange(element, "StartPosition", currentHeadPosition.Value).WithDuration(duration)
         );
         
         appearanceStateChange.AddStateChangeInParallel(
