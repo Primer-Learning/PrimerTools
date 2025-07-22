@@ -360,16 +360,16 @@ public partial class Axis : Node3D
 			case AxisType.X:
 				return (
 					LabelAlignment == Graph.AxisLabelAlignmentOptions.Along
-						? new Vector3(LengthMinusPadding / 2, -LabelOffset, 0)
-						: new Vector3(LengthMinusPadding + LabelOffset, 0, 0),
+						? new Vector3(LengthMinusPadding / 2 + Min * DataSpaceScale, -LabelOffset, 0)
+						: new Vector3(LengthMinusPadding + LabelOffset + Min * DataSpaceScale, 0, 0),
 					Vector3.Zero
 				);
 				
 			case AxisType.Y: // The y-axis is rotated by 90 degrees
 				return (
 					LabelAlignment == Graph.AxisLabelAlignmentOptions.Along
-						? new Vector3(-LabelOffset, LengthMinusPadding / 2, 0)
-						: new Vector3(LengthMinusPadding + LabelOffset, 0, 0),
+						? new Vector3(-LabelOffset, LengthMinusPadding / 2 + Min * DataSpaceScale, 0)
+						: new Vector3(LengthMinusPadding + LabelOffset + Min * DataSpaceScale, 0, 0),
 					LabelAlignment == Graph.AxisLabelAlignmentOptions.Along
 						? new Vector3(0, 0, 90)
 						: new Vector3(0, 0, -90)
@@ -378,8 +378,8 @@ public partial class Axis : Node3D
 			case AxisType.Z:
 				return (
 					LabelAlignment == Graph.AxisLabelAlignmentOptions.Along
-						? new Vector3(0, -LabelOffset, LengthMinusPadding / 2)
-						: new Vector3(-12.5f, -4.5f, LengthMinusPadding),
+						? new Vector3(0, -LabelOffset, LengthMinusPadding / 2 + Min * DataSpaceScale)
+						: new Vector3(-12.5f, -4.5f, LengthMinusPadding + Min * DataSpaceScale),
 					Vector3.Zero
 				);
 				
