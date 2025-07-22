@@ -166,7 +166,6 @@ public partial class ShaderArrow : Node3D
     
     private void OnStyleChanged()
     {
-        GD.Print("Arrow style changed");
         UpdateShaderParameters();
     }
     

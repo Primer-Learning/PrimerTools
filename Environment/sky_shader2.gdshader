@@ -390,9 +390,9 @@ void sky() {
 		COLOR = lighting_color;
 	}
 	else {
-		
-	
-	
+
+
+
 	    vec3 dir = normalize(EYEDIR);
 	    vec3 scaled_dir = dir * mist_scale;
 

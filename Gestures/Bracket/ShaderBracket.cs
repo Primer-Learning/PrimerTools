@@ -115,7 +115,6 @@ public partial class ShaderBracket : Node3D
     
     private void OnStyleChanged()
     {
-        GD.Print("Bracket style changed");
         UpdateShaderParameters();
     }
     

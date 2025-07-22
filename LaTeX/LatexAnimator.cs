@@ -284,6 +284,12 @@ public partial class LatexAnimator : Node3D
             var movementIndex = preservedFromIndices.IndexOf(i);
             var indexInNextExpression = preservedToIndices[movementIndex];
 
+            if (copiesOfNextExpressionCharacters.Count <= indexInNextExpression)
+            {
+                GD.PushWarning("Ran out of next expression character copies.");
+                continue;
+            }
+            
             var diff = copiesOfCurrentExpressionCharacters[i].Position -
                        copiesOfNextExpressionCharacters[indexInNextExpression].Position;
             if (diff.Length() > 0.001)

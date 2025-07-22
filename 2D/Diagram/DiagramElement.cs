@@ -97,7 +97,8 @@ public partial class DiagramElement : Node
         // Create mesh instance
         _meshInstance = new MeshInstance3D();
         _meshInstance.RotationDegrees = new Vector3(90, 0, 0);
-        parentSystem.AddChild(_meshInstance);
+        AddChild(_meshInstance);
+        parentSystem.AddChild(this);
         _meshInstance.Name = $"DiagramElement_{_shapeData.GetType().Name}";
         
         // Create plane mesh

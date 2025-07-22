@@ -55,6 +55,43 @@ public static class DiagramElementExtensions
         return appearanceStateChange;
     }
     
+    public static CompositeStateChange Disappear(this DiagramElement element, double duration = Node3DStateChangeExtensions.DefaultDuration)
+    {
+        var appearanceStateChange = new CompositeStateChange();
+        switch (element.ShapeData)
+        {
+            case CircleData circleData:
+                appearanceStateChange.AddStateChange(
+                    new PropertyStateChange(circleData, "Radius", 0).WithDuration(duration)
+                );
+                break;
+            case ArrowData arrowData:
+                appearanceStateChange.AddStateChange(
+                    new PropertyStateChange(arrowData, "Start", arrowData.End).WithDuration(duration)
+                );
+                appearanceStateChange.AddStateChangeInParallel(
+                    new PropertyStateChange(arrowData, "HeadLength", 0).WithDuration(duration),
+                    delay: duration / 2
+                );
+                
+                break;
+            default:
+                GD.Print($"Appearance not implemented for shape type {element.ShapeData.GetType()}");
+                break;
+        }
+        
+        appearanceStateChange.AddStateChangeInParallel(
+            new PropertyStateChange(element.Style, "Thickness", 0).WithDuration(duration),
+            delay: duration / 2
+        );
+        
+        appearanceStateChange.AddStateChangeInParallel(
+            new PropertyStateChange(element.Style, "Smoothness", 0).WithDuration(duration)
+        );
+
+        return appearanceStateChange;
+    }
+    
     public static CompositeStateChange Appear(this ShaderBracket element, double duration = Node3DStateChangeExtensions.DefaultDuration)
     {
         var originalThickness = element.Style.Thickness;
@@ -146,7 +183,7 @@ public static class DiagramElementExtensions
     // the properties are updated inside of the sequence's Define method and are therefore accessible for building
     // transitions.
     // Another possibility could be to allow PropertyStateChange to optionally take a delegate instead of a value
-    // which would allow it to figure out the value the first time it is evaluated, but complicating otherwise fairly
+    // which would allow it to figure out the value the first time it is evaluated, but complicating an otherwise fairly
     // simple class seems bad. 
     
     public static CompositeStateChange Disappear(this ShaderArrow element, double duration = Node3DStateChangeExtensions.DefaultDuration, Vector3? currentHeadPosition = null)
