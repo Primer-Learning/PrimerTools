@@ -30,34 +30,19 @@ public partial class SurfacePlot : MeshInstance3D, IPrimerGraphData
     #endregion
     
     #region Data
-    private Vector3[,] _data;
-    private Vector3[,] _previousData;
-    private float _renderExtent;
-    private float _transitionProgress;
+    private List<Vector3[,]> _surfaceStates = new List<Vector3[,]>();
+    private float _stateProgress = 0f;
     
     public enum SweepMode { XAxis, ZAxis, Radial, Diagonal }
     private SweepMode _currentSweepMode = SweepMode.XAxis;
     
-    private enum AnimationState { None, Appearing, Transitioning, Disappearing }
-    private AnimationState _currentAnimation = AnimationState.None;
-    
-    [Export] public float RenderExtent
+    [Export] public float StateProgress
     {
-        get => _renderExtent;
+        get => _stateProgress;
         set
         {
-            _renderExtent = value;
-            UpdateMeshForCurrentExtent();
-        }
-    }
-    
-    [Export] public float TransitionProgress
-    {
-        get => _transitionProgress;
-        set
-        {
-            _transitionProgress = value;
-            UpdateMeshForCurrentExtent();
+            _stateProgress = value;
+            UpdateMeshForCurrentProgress();
         }
     }
     
@@ -70,19 +55,32 @@ public partial class SurfacePlot : MeshInstance3D, IPrimerGraphData
 
     public void FetchData()
     {
-        _data = DataFetchMethod();
+        var data = DataFetchMethod();
+        AddState(data);
     }
     
     public void SetData(Vector3[,] heightData)
     {
-        _data = heightData;
+        AddState(heightData);
+    }
+    
+    public void AddState(Vector3[,] stateData)
+    {
+        _surfaceStates.Add(stateData);
     }
 
     public void SetDataWithHeightFunction(Func<float, float, float> heightFunction,
         float minX, float maxX, int xPoints,
         float minZ, float maxZ, int zPoints)
     {
-        _data = new Vector3[xPoints, zPoints];
+        AddStateWithHeightFunction(heightFunction, minX, maxX, xPoints, minZ, maxZ, zPoints);
+    }
+    
+    public void AddStateWithHeightFunction(Func<float, float, float> heightFunction,
+        float minX, float maxX, int xPoints,
+        float minZ, float maxZ, int zPoints)
+    {
+        var data = new Vector3[xPoints, zPoints];
 
         var xStep = (maxX - minX) / (xPoints - 1);
         var zStep = (maxZ - minZ) / (zPoints - 1);
@@ -93,9 +91,11 @@ public partial class SurfacePlot : MeshInstance3D, IPrimerGraphData
             for (var j = 0; j < zPoints; j++)
             {
                 var z = minZ + j * zStep;
-                _data[i, j] = new Vector3(x, heightFunction(x, z), z);
+                data[i, j] = new Vector3(x, heightFunction(x, z), z);
             }
         }
+        
+        AddState(data);
     }
 
     
@@ -117,48 +117,88 @@ public partial class SurfacePlot : MeshInstance3D, IPrimerGraphData
     
     public IStateChange TransitionAppear(double duration = Node3DStateChangeExtensions.DefaultDuration, SweepMode mode = SweepMode.XAxis)
     {
-        if (_data == null || _data.GetLength(0) == 0 || _data.GetLength(1) == 0) return null;
+        if (_surfaceStates.Count == 0) return null;
         
         _currentSweepMode = mode;
-        _currentAnimation = AnimationState.Appearing;
-        RenderExtent = 0;
+        StateProgress = 0;
         
-        return new PropertyStateChange(this, "RenderExtent", 1f)
+        return new PropertyStateChange(this, "StateProgress", 1f)
             .WithDuration(duration);
     }
     
-    private void UpdateMeshForCurrentExtent()
+    public IStateChange TransitionToNextState(double duration = Node3DStateChangeExtensions.DefaultDuration)
     {
-        if (_data == null || _data.GetLength(0) == 0 || _data.GetLength(1) == 0) return;
+        if (_surfaceStates.Count == 0) return null;
         
-        switch (_currentAnimation)
+        // Don't go beyond the last state
+        // if (targetProgress > _surfaceStates.Count - 1)
+        //     targetProgress = _surfaceStates.Count - 1;
+            
+        return new PropertyStateChange(this, "StateProgress", _surfaceStates.Count)
+            .WithDuration(duration);
+    }
+    
+    public IStateChange TransitionToState(int stateIndex, double duration = Node3DStateChangeExtensions.DefaultDuration)
+    {
+        if (stateIndex < 0 || stateIndex >= _surfaceStates.Count) return null;
+        
+        return new PropertyStateChange(this, "StateProgress", (float)stateIndex)
+            .WithDuration(duration);
+    }
+    
+    private void UpdateMeshForCurrentProgress()
+    {
+        if (_surfaceStates.Count == 0)
         {
-            case AnimationState.Appearing:
-            case AnimationState.Disappearing:
-                CreateSweptMesh(_renderExtent);
-                break;
-            case AnimationState.Transitioning:
-                UpdateMeshForTransition();
-                break;
-            case AnimationState.None:
-                CreateMesh();
-                break;
+            Mesh = new ArrayMesh();
+            return;
         }
+
+        // Handle initial appearance (0 to 1 progress)
+        if (_stateProgress < 1f)
+        {
+            CreateSweptMesh(_stateProgress);
+            return;
+        }
+
+        // For progress >= 1, we're showing states or transitioning between them
+        // Progress 1.0 = state 0, Progress 2.0 = state 1, etc.
+        var adjustedProgress = _stateProgress - 1f;
+        var stateIndex = Mathf.FloorToInt(adjustedProgress);
+        var transitionProgress = adjustedProgress - stateIndex;
+
+        // Clamp to valid state range
+        if (stateIndex >= _surfaceStates.Count - 1)
+        {
+            // We're at or beyond the last state
+            CreateMeshFromData(_surfaceStates[_surfaceStates.Count - 1]);
+            return;
+        }
+
+        // If we're exactly on a state (no fractional part), show it
+        if (Mathf.IsEqualApprox(transitionProgress, 0f))
+        {
+            CreateMeshFromData(_surfaceStates[stateIndex]);
+            return;
+        }
+
+        // Interpolate between two states
+        var fromState = _surfaceStates[stateIndex];
+        var toState = _surfaceStates[stateIndex + 1];
+        CreateInterpolatedMesh(fromState, toState, transitionProgress);
     }
     
     private void CreateSweptMesh(float progress)
     {
-        // For now, implement basic X-axis sweep
-        // We'll expand this in the next step
-        if (progress <= 0)
+        if (_surfaceStates.Count == 0 || progress <= 0)
         {
-            // Create empty mesh
             Mesh = new ArrayMesh();
             return;
         }
         
-        var width = _data.GetLength(0);
-        var depth = _data.GetLength(1);
+        var data = _surfaceStates[0];
+        var width = data.GetLength(0);
+        var depth = data.GetLength(1);
         
         // Calculate visible width based on progress
         var visibleWidth = Mathf.Max(1, (int)(width * progress));
@@ -172,7 +212,7 @@ public partial class SurfacePlot : MeshInstance3D, IPrimerGraphData
         {
             for (var z = 0; z < depth; z++)
             {
-                vertices.Add(TransformPointFromDataSpaceToPositionSpace(_data[x, z]));
+                vertices.Add(TransformPointFromDataSpaceToPositionSpace(data[x, z]));
             }
         }
         
@@ -181,8 +221,8 @@ public partial class SurfacePlot : MeshInstance3D, IPrimerGraphData
         {
             for (var z = 0; z < depth; z++)
             {
-                var currentPoint = _data[visibleWidth - 1, z];
-                var nextPoint = _data[visibleWidth, z];
+                var currentPoint = data[visibleWidth - 1, z];
+                var nextPoint = data[visibleWidth, z];
                 var interpolatedPoint = currentPoint.Lerp(nextPoint, edgeFraction);
                 vertices.Add(TransformPointFromDataSpaceToPositionSpace(interpolatedPoint));
             }
@@ -227,11 +267,47 @@ public partial class SurfacePlot : MeshInstance3D, IPrimerGraphData
         Mesh.SurfaceSetMaterial(0, Material);
     }
     
-    private void UpdateMeshForTransition()
+    private void CreateInterpolatedMesh(Vector3[,] fromData, Vector3[,] toData, float progress)
     {
-        // Placeholder for transition between surfaces
-        // Will be implemented in a later step
-        CreateMesh();
+        var width = Math.Min(fromData.GetLength(0), toData.GetLength(0));
+        var depth = Math.Min(fromData.GetLength(1), toData.GetLength(1));
+        
+        var vertices = new List<Vector3>();
+        var indices = new List<int>();
+        
+        // Interpolate vertices
+        for (var x = 0; x < width; x++)
+        {
+            for (var z = 0; z < depth; z++)
+            {
+                var fromPoint = fromData[x, z];
+                var toPoint = toData[x, z];
+                var interpolatedPoint = fromPoint.Lerp(toPoint, progress);
+                vertices.Add(TransformPointFromDataSpaceToPositionSpace(interpolatedPoint));
+            }
+        }
+        
+        // Create triangles
+        for (var x = 0; x < width - 1; x++)
+        {
+            for (var z = 0; z < depth - 1; z++)
+            {
+                var topLeft = x * depth + z;
+                var topRight = topLeft + 1;
+                var bottomLeft = (x + 1) * depth + z;
+                var bottomRight = bottomLeft + 1;
+                
+                indices.Add(topLeft);
+                indices.Add(bottomLeft);
+                indices.Add(bottomRight);
+                
+                indices.Add(topLeft);
+                indices.Add(bottomRight);
+                indices.Add(topRight);
+            }
+        }
+        
+        BuildMeshFromVerticesAndIndices(vertices, indices);
     }
 
     public Tween TweenTransition(double duration = AnimationUtilities.DefaultDuration)
@@ -249,14 +325,25 @@ public partial class SurfacePlot : MeshInstance3D, IPrimerGraphData
 
     private void CreateMesh()
     {
-        if (_data == null || _data.GetLength(0) == 0 || _data.GetLength(1) == 0)
+        if (_surfaceStates.Count == 0)
         {
             GD.Print("No height data available to create mesh.");
             return;
         }
+        
+        CreateMeshFromData(_surfaceStates[_surfaceStates.Count - 1]);
+    }
+    
+    private void CreateMeshFromData(Vector3[,] data)
+    {
+        if (data == null || data.GetLength(0) == 0 || data.GetLength(1) == 0)
+        {
+            Mesh = new ArrayMesh();
+            return;
+        }
 
-        var width = _data.GetLength(0);
-        var depth = _data.GetLength(1);
+        var width = data.GetLength(0);
+        var depth = data.GetLength(1);
 
         var vertices = new List<Vector3>();
         var indices = new List<int>();
@@ -266,8 +353,7 @@ public partial class SurfacePlot : MeshInstance3D, IPrimerGraphData
         {
             for (var z = 0; z < depth; z++)
             {
-                // Create a vertex at this position
-                vertices.Add(TransformPointFromDataSpaceToPositionSpace(_data[x, z]));
+                vertices.Add(TransformPointFromDataSpaceToPositionSpace(data[x, z]));
             }
         }
 
@@ -293,7 +379,11 @@ public partial class SurfacePlot : MeshInstance3D, IPrimerGraphData
             }
         }
 
-        // Create the mesh
+        BuildMeshFromVerticesAndIndices(vertices, indices);
+    }
+    
+    private void BuildMeshFromVerticesAndIndices(List<Vector3> vertices, List<int> indices)
+    {
         var arrayMesh = new ArrayMesh();
         var arrays = new Godot.Collections.Array();
         arrays.Resize((int)Mesh.ArrayType.Max);
@@ -305,7 +395,7 @@ public partial class SurfacePlot : MeshInstance3D, IPrimerGraphData
         arrays[(int)Mesh.ArrayType.Vertex] = vertexArray;
         arrays[(int)Mesh.ArrayType.Index] = indexArray;
         arrays[(int)Mesh.ArrayType.Normal] = normals;
-
+        
         arrayMesh.AddSurfaceFromArrays(Mesh.PrimitiveType.Triangles, arrays);
         Mesh = arrayMesh;
         Mesh.SurfaceSetMaterial(0, Material);
