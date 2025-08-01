@@ -2,6 +2,7 @@ using Godot;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using PrimerTools.TweenSystem;
 using PrimerTools.Utilities;
 
 namespace PrimerTools.Graph;
@@ -30,6 +31,19 @@ public partial class SurfacePlot : MeshInstance3D, IPrimerGraphData
     
     #region Data
     private Vector3[,] _data;
+    private readonly List<Vector3[,]> dataStages = new();
+    private float _renderExtent;
+    
+    [Export] public float RenderExtent
+    {
+        get => _renderExtent;
+        set
+        {
+            _renderExtent = value;
+            UpdateMeshForCurrentExtent();
+        }
+    }
+    
     public delegate Vector3[,] DataFetch();
     public DataFetch DataFetchMethod = () =>
     {
@@ -78,9 +92,41 @@ public partial class SurfacePlot : MeshInstance3D, IPrimerGraphData
         return new Animation();
     }
 
-    public IStateChange TransitionStateChange(double duration)
+    public IStateChange TransitionStateChange(double duration = Node3DStateChangeExtensions.DefaultDuration)
     {
-        throw new NotImplementedException();
+        if (_data == null || _data.GetLength(0) == 0 || _data.GetLength(1) == 0) return null;
+        
+        // First stage is a single point if no previous data exists
+        if (dataStages.Count == 0)
+            dataStages.Add(new Vector3[,] {{_data[0, 0]}});
+        
+        // Clone the current data and add it as a new stage
+        var dataCopy = new Vector3[_data.GetLength(0), _data.GetLength(1)];
+        for (var i = 0; i < _data.GetLength(0); i++)
+        {
+            for (var j = 0; j < _data.GetLength(1); j++)
+            {
+                dataCopy[i, j] = _data[i, j];
+            }
+        }
+        dataStages.Add(dataCopy);
+        
+        return new PropertyStateChange(this, "RenderExtent", dataStages.Count - 1)
+            .WithDuration(duration);
+    }
+    
+    private void UpdateMeshForCurrentExtent()
+    {
+        // Placeholder for now - will be implemented in subsequent steps
+        if (dataStages.Count == 0) return;
+        
+        // For now, just create the full mesh when we reach an integer value
+        if (_renderExtent % 1 == 0 && _renderExtent > 0)
+        {
+            var stageIndex = Mathf.Min((int)_renderExtent, dataStages.Count - 1);
+            _data = dataStages[stageIndex];
+            CreateMesh();
+        }
     }
 
     public Tween TweenTransition(double duration = AnimationUtilities.DefaultDuration)

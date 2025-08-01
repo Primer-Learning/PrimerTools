@@ -263,11 +263,6 @@ public partial class Graph : Node3D
         line.TransformPointFromDataSpaceToPositionSpace = GetDataSpaceToPositionSpaceFromSettings;
         AddChild(line);
         line.Position = Vector3.Zero;
-        // line.Position = new Vector3(
-        //     XAxis.Min * XAxis.DataSpaceScale,
-        //     YAxis.Min * YAxis.DataSpaceScale,
-        //     ZAxis.Min * ZAxis.DataSpaceScale
-        // );
         if (Engine.IsEditorHint())
         {
             line.Owner = GetTree().EditedSceneRoot;
@@ -281,11 +276,7 @@ public partial class Graph : Node3D
         var surfacePlot = new SurfacePlot();
         surfacePlot.TransformPointFromDataSpaceToPositionSpace = GetDataSpaceToPositionSpaceFromSettings;
         AddChild(surfacePlot);
-        surfacePlot.Position = new Vector3(
-            XAxis.Min * XAxis.DataSpaceScale,
-            YAxis.Min * YAxis.DataSpaceScale,
-            ZAxis.Min * ZAxis.DataSpaceScale
-        );
+        surfacePlot.Position = Vector3.Zero;
         surfacePlot.Owner = GetTree().EditedSceneRoot;
         surfacePlot.Name = name;
         return surfacePlot;

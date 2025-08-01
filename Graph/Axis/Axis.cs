@@ -28,9 +28,9 @@ public partial class Axis : Node3D
 		{
 			_label = value;
 			// Free the previous node so it will be remade on transition
-			if (IsInstanceValid(_labelNode))
+			if (IsInstanceValid(LabelNode))
 			{
-				_labelNode.Free();
+				LabelNode.Free();
 			}
 		}
 	}
@@ -38,7 +38,7 @@ public partial class Axis : Node3D
 	[Export] public float LabelScale = 1;
 	[Export] public Graph.AxisLabelAlignmentOptions LabelAlignment = Graph.AxisLabelAlignmentOptions.End;
 	
-	private LatexNode _labelNode;
+	public LatexNode LabelNode;
 	
 	[Export] public float Min = 0;
 	// [Export] private float Min {
@@ -293,28 +293,28 @@ public partial class Axis : Node3D
 		var updateComposite = new CompositeStateChange().WithName("Update Label");
 		var addComposite = new CompositeStateChange().WithName("Add Label");
 		
-		if (_labelNode is not null && IsInstanceValid(_labelNode))
+		if (LabelNode is not null && IsInstanceValid(LabelNode))
 		{
 			// Update existing label
 			var (position, rotation) = GetLabelTransform();
-			updateComposite.AddStateChange(_labelNode.MoveTo(position).WithDuration(duration));
-			updateComposite.AddStateChangeInParallel(_labelNode.RotateTo(rotation).WithDuration(duration));
-			updateComposite.AddStateChangeInParallel(_labelNode.ScaleTo(Vector3.One * LabelScale).WithDuration(duration));
+			updateComposite.AddStateChange(LabelNode.MoveTo(position).WithDuration(duration));
+			updateComposite.AddStateChangeInParallel(LabelNode.RotateTo(rotation).WithDuration(duration));
+			updateComposite.AddStateChangeInParallel(LabelNode.ScaleTo(Vector3.One * LabelScale).WithDuration(duration));
 		}
 		else if (!string.IsNullOrEmpty(_label))
 		{
 			GD.Print($"Label for {Type} exists");
 			// Create new label
-			_labelNode = LatexNode.Create(_label);
+			LabelNode = LatexNode.Create(_label);
 			UpdateLabelAlignmentSettings();
 			
 			var (position, rotation) = GetLabelTransform();
-			_labelNode.Position = position;
-			_labelNode.RotationDegrees = rotation;
-			_labelNode.Scale = Vector3.Zero;
-			AddChild(_labelNode);
+			LabelNode.Position = position;
+			LabelNode.RotationDegrees = rotation;
+			LabelNode.Scale = Vector3.Zero;
+			AddChild(LabelNode);
 			
-			addComposite.AddStateChange(_labelNode.ScaleTo(Vector3.One * LabelScale).WithDuration(duration));
+			addComposite.AddStateChange(LabelNode.ScaleTo(Vector3.One * LabelScale).WithDuration(duration));
 		}
 		
 		return (removeComposite, updateComposite, addComposite);
@@ -322,34 +322,57 @@ public partial class Axis : Node3D
 	
 	private void UpdateLabelAlignmentSettings()
 	{
-		if (_labelNode == null) return;
+		if (LabelNode == null) return;
 		
-		if (Type == AxisType.X)
+		switch (Type)
 		{
-			if (LabelAlignment == Graph.AxisLabelAlignmentOptions.End)
+			case AxisType.X:
 			{
-				_labelNode.HorizontalAlignment = LatexNode.HorizontalAlignmentOptions.Left;
-				_labelNode.VerticalAlignment = LatexNode.VerticalAlignmentOptions.Center;
+				if (LabelAlignment == Graph.AxisLabelAlignmentOptions.End)
+				{
+					LabelNode.HorizontalAlignment = LatexNode.HorizontalAlignmentOptions.Left;
+					LabelNode.VerticalAlignment = LatexNode.VerticalAlignmentOptions.Center;
+				}
+				else if (LabelAlignment == Graph.AxisLabelAlignmentOptions.Along)
+				{
+					LabelNode.HorizontalAlignment = LatexNode.HorizontalAlignmentOptions.Center;
+					LabelNode.VerticalAlignment = LatexNode.VerticalAlignmentOptions.Center;
+				}
+
+				break;
 			}
-			else if (LabelAlignment == Graph.AxisLabelAlignmentOptions.Along)
+			// Both cases are the same at the moment, but still toying
+			case AxisType.Y:
 			{
-				_labelNode.HorizontalAlignment = LatexNode.HorizontalAlignmentOptions.Center;
-				_labelNode.VerticalAlignment = LatexNode.VerticalAlignmentOptions.Center;
-			} 
-		}
-		if (Type == AxisType.Y) // Both cases are the same at the moment, but still toying
-		{
-			if (LabelAlignment == Graph.AxisLabelAlignmentOptions.End)
-			{
-				_labelNode.HorizontalAlignment = LatexNode.HorizontalAlignmentOptions.Center;
-				_labelNode.VerticalAlignment = LatexNode.VerticalAlignmentOptions.Baseline;
-			} 
-			else if (LabelAlignment == Graph.AxisLabelAlignmentOptions.Along)
-			{
-				_labelNode.HorizontalAlignment = LatexNode.HorizontalAlignmentOptions.Center;
-				_labelNode.VerticalAlignment = LatexNode.VerticalAlignmentOptions.Baseline;
+				if (LabelAlignment == Graph.AxisLabelAlignmentOptions.End)
+				{
+					LabelNode.HorizontalAlignment = LatexNode.HorizontalAlignmentOptions.Center;
+					LabelNode.VerticalAlignment = LatexNode.VerticalAlignmentOptions.Baseline;
+				} 
+				else if (LabelAlignment == Graph.AxisLabelAlignmentOptions.Along)
+				{
+					LabelNode.HorizontalAlignment = LatexNode.HorizontalAlignmentOptions.Center;
+					LabelNode.VerticalAlignment = LatexNode.VerticalAlignmentOptions.Baseline;
+				}
+
+				break;
 			}
-				
+			// Both cases are the same at the moment, but still toying
+			case AxisType.Z:
+			{
+				if (LabelAlignment == Graph.AxisLabelAlignmentOptions.End)
+				{
+					LabelNode.HorizontalAlignment = LatexNode.HorizontalAlignmentOptions.Center;
+					LabelNode.VerticalAlignment = LatexNode.VerticalAlignmentOptions.Center;
+				} 
+				else if (LabelAlignment == Graph.AxisLabelAlignmentOptions.Along)
+				{
+					LabelNode.HorizontalAlignment = LatexNode.HorizontalAlignmentOptions.Center;
+					LabelNode.VerticalAlignment = LatexNode.VerticalAlignmentOptions.Baseline;
+				}
+
+				break;
+			}
 		}
 	}
 	
@@ -378,9 +401,9 @@ public partial class Axis : Node3D
 			case AxisType.Z:
 				return (
 					LabelAlignment == Graph.AxisLabelAlignmentOptions.Along
-						? new Vector3(0, -LabelOffset, LengthMinusPadding / 2 + Min * DataSpaceScale)
-						: new Vector3(-12.5f, -4.5f, LengthMinusPadding + Min * DataSpaceScale),
-					Vector3.Zero
+						? new Vector3(LengthMinusPadding / 2 + Min * DataSpaceScale, -LabelOffset, 0)
+						: new Vector3(LengthMinusPadding + LabelOffset + 2 + Min * DataSpaceScale, 0, 0),
+					new Vector3(0, 90, 0)
 				);
 				
 			default:
