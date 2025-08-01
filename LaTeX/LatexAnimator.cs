@@ -11,6 +11,7 @@ public partial class LatexAnimator : Node3D
 {
     private List<LatexNode> _latexNodes = [];
     private int _currentExpressionIndex = 0;
+    public int CurrentExpressionIndex => _currentExpressionIndex;
 
     public void AddExpression(string expression)
     {

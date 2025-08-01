@@ -262,11 +262,12 @@ public partial class Graph : Node3D
         var line = new CurvePlot2D();
         line.TransformPointFromDataSpaceToPositionSpace = GetDataSpaceToPositionSpaceFromSettings;
         AddChild(line);
-        line.Position = new Vector3(
-            XAxis.Min * XAxis.DataSpaceScale,
-            YAxis.Min * YAxis.DataSpaceScale,
-            ZAxis.Min * ZAxis.DataSpaceScale
-        );
+        line.Position = Vector3.Zero;
+        // line.Position = new Vector3(
+        //     XAxis.Min * XAxis.DataSpaceScale,
+        //     YAxis.Min * YAxis.DataSpaceScale,
+        //     ZAxis.Min * ZAxis.DataSpaceScale
+        // );
         if (Engine.IsEditorHint())
         {
             line.Owner = GetTree().EditedSceneRoot;
@@ -323,9 +324,9 @@ public partial class Graph : Node3D
     public Vector3 GetDataSpaceToPositionSpaceFromSettings(Vector3 point)
     {
         return new Vector3(
-            (point.X - XAxis.Min) / XAxis.RangeSize * XAxis.LengthMinusPadding,
-            (point.Y - YAxis.Min) / YAxis.RangeSize * YAxis.LengthMinusPadding,
-            (point.Z - ZAxis.Min) / ZAxis.RangeSize * ZAxis.LengthMinusPadding
+            (point.X - XAxis.Min) / XAxis.RangeSize * XAxis.LengthMinusPadding + XAxis.Min * XAxis.DataSpaceScale,
+            (point.Y - YAxis.Min) / YAxis.RangeSize * YAxis.LengthMinusPadding + YAxis.Min * YAxis.DataSpaceScale,
+            (point.Z - ZAxis.Min) / ZAxis.RangeSize * ZAxis.LengthMinusPadding + ZAxis.Min * ZAxis.DataSpaceScale
         );
     }
 

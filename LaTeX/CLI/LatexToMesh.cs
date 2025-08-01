@@ -95,8 +95,19 @@ internal class LatexToMesh
         var destinationPath = Path.Combine(gltfDirPath, GenerateFileName(latex) + ".gltf");
         if (File.Exists(destinationPath)) return destinationPath;
         
+        // Queue the actual processing work
+        return await LatexProcessQueue.EnqueueAsync(
+            async () => await ProcessNewExpression(latex, openBlender, scriptPath, destinationPath),
+            $"LaTeX: {latex}"
+        );
+    }
+    
+    private async Task<string> ProcessNewExpression(string latex, bool openBlender, string scriptPath, string destinationPath)
+    {
+        GD.Print($"[LatexToMesh] Starting processing: {latex}");
         var input = LatexInput.From("H" + latex); // The H gets removed in blender after alignment
         var svgPath = await RenderToSvg(input, default);
+        GD.Print($"[LatexToMesh] SVG created at: {svgPath}");
         
         // TODO: Get the blender path from Godot's user settings
         var blenderPath = @"C:\Program Files\Blender Foundation\Blender 3.6\blender.exe";
@@ -117,11 +128,16 @@ internal class LatexToMesh
         }
         
         using Process process = Process.Start(startInfo);
-        using (StreamReader reader = process.StandardOutput)
+        string result = await process.StandardOutput.ReadToEndAsync();
+        await process.WaitForExitAsync();
+        
+        if (process.ExitCode != 0)
         {
-            string result = await reader.ReadToEndAsync();
-            GD.Print(result);
+            throw new Exception($"Blender process failed with exit code {process.ExitCode}");
         }
+        
+        GD.Print($"[Blender] Completed: {latex}");
+        GD.Print(result);
         
         return destinationPath;
     }
