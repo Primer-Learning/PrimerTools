@@ -31,8 +31,15 @@ public partial class SurfacePlot : MeshInstance3D, IPrimerGraphData
     
     #region Data
     private Vector3[,] _data;
-    private readonly List<Vector3[,]> dataStages = new();
+    private Vector3[,] _previousData;
     private float _renderExtent;
+    private float _transitionProgress;
+    
+    public enum SweepMode { XAxis, ZAxis, Radial, Diagonal }
+    private SweepMode _currentSweepMode = SweepMode.XAxis;
+    
+    private enum AnimationState { None, Appearing, Transitioning, Disappearing }
+    private AnimationState _currentAnimation = AnimationState.None;
     
     [Export] public float RenderExtent
     {
@@ -40,6 +47,16 @@ public partial class SurfacePlot : MeshInstance3D, IPrimerGraphData
         set
         {
             _renderExtent = value;
+            UpdateMeshForCurrentExtent();
+        }
+    }
+    
+    [Export] public float TransitionProgress
+    {
+        get => _transitionProgress;
+        set
+        {
+            _transitionProgress = value;
             UpdateMeshForCurrentExtent();
         }
     }
@@ -94,39 +111,127 @@ public partial class SurfacePlot : MeshInstance3D, IPrimerGraphData
 
     public IStateChange TransitionStateChange(double duration = Node3DStateChangeExtensions.DefaultDuration)
     {
+        // Default to TransitionAppear for backward compatibility
+        return TransitionAppear(duration);
+    }
+    
+    public IStateChange TransitionAppear(double duration = Node3DStateChangeExtensions.DefaultDuration, SweepMode mode = SweepMode.XAxis)
+    {
         if (_data == null || _data.GetLength(0) == 0 || _data.GetLength(1) == 0) return null;
         
-        // First stage is a single point if no previous data exists
-        if (dataStages.Count == 0)
-            dataStages.Add(new Vector3[,] {{_data[0, 0]}});
+        _currentSweepMode = mode;
+        _currentAnimation = AnimationState.Appearing;
+        RenderExtent = 0;
         
-        // Clone the current data and add it as a new stage
-        var dataCopy = new Vector3[_data.GetLength(0), _data.GetLength(1)];
-        for (var i = 0; i < _data.GetLength(0); i++)
-        {
-            for (var j = 0; j < _data.GetLength(1); j++)
-            {
-                dataCopy[i, j] = _data[i, j];
-            }
-        }
-        dataStages.Add(dataCopy);
-        
-        return new PropertyStateChange(this, "RenderExtent", dataStages.Count - 1)
+        return new PropertyStateChange(this, "RenderExtent", 1f)
             .WithDuration(duration);
     }
     
     private void UpdateMeshForCurrentExtent()
     {
-        // Placeholder for now - will be implemented in subsequent steps
-        if (dataStages.Count == 0) return;
+        if (_data == null || _data.GetLength(0) == 0 || _data.GetLength(1) == 0) return;
         
-        // For now, just create the full mesh when we reach an integer value
-        if (_renderExtent % 1 == 0 && _renderExtent > 0)
+        switch (_currentAnimation)
         {
-            var stageIndex = Mathf.Min((int)_renderExtent, dataStages.Count - 1);
-            _data = dataStages[stageIndex];
-            CreateMesh();
+            case AnimationState.Appearing:
+            case AnimationState.Disappearing:
+                CreateSweptMesh(_renderExtent);
+                break;
+            case AnimationState.Transitioning:
+                UpdateMeshForTransition();
+                break;
+            case AnimationState.None:
+                CreateMesh();
+                break;
         }
+    }
+    
+    private void CreateSweptMesh(float progress)
+    {
+        // For now, implement basic X-axis sweep
+        // We'll expand this in the next step
+        if (progress <= 0)
+        {
+            // Create empty mesh
+            Mesh = new ArrayMesh();
+            return;
+        }
+        
+        var width = _data.GetLength(0);
+        var depth = _data.GetLength(1);
+        
+        // Calculate visible width based on progress
+        var visibleWidth = Mathf.Max(1, (int)(width * progress));
+        var edgeFraction = (width * progress) % 1;
+        
+        var vertices = new List<Vector3>();
+        var indices = new List<int>();
+        
+        // Create vertices up to visible width
+        for (var x = 0; x < visibleWidth; x++)
+        {
+            for (var z = 0; z < depth; z++)
+            {
+                vertices.Add(TransformPointFromDataSpaceToPositionSpace(_data[x, z]));
+            }
+        }
+        
+        // Add interpolated edge vertices if needed
+        if (edgeFraction > 0 && visibleWidth < width)
+        {
+            for (var z = 0; z < depth; z++)
+            {
+                var currentPoint = _data[visibleWidth - 1, z];
+                var nextPoint = _data[visibleWidth, z];
+                var interpolatedPoint = currentPoint.Lerp(nextPoint, edgeFraction);
+                vertices.Add(TransformPointFromDataSpaceToPositionSpace(interpolatedPoint));
+            }
+        }
+        
+        // Create triangles
+        var actualWidth = edgeFraction > 0 ? visibleWidth + 1 : visibleWidth;
+        for (var x = 0; x < actualWidth - 1; x++)
+        {
+            for (var z = 0; z < depth - 1; z++)
+            {
+                var topLeft = x * depth + z;
+                var topRight = topLeft + 1;
+                var bottomLeft = (x + 1) * depth + z;
+                var bottomRight = bottomLeft + 1;
+                
+                indices.Add(topLeft);
+                indices.Add(bottomLeft);
+                indices.Add(bottomRight);
+                
+                indices.Add(topLeft);
+                indices.Add(bottomRight);
+                indices.Add(topRight);
+            }
+        }
+        
+        // Create the mesh
+        var arrayMesh = new ArrayMesh();
+        var arrays = new Godot.Collections.Array();
+        arrays.Resize((int)Mesh.ArrayType.Max);
+        
+        var normals = CalculateNormals(vertices, indices);
+        var vertexArray = vertices.ToArray();
+        var indexArray = indices.ToArray();
+        MeshUtilities.MakeDoubleSided(ref vertexArray, ref indexArray, ref normals);
+        arrays[(int)Mesh.ArrayType.Vertex] = vertexArray;
+        arrays[(int)Mesh.ArrayType.Index] = indexArray;
+        arrays[(int)Mesh.ArrayType.Normal] = normals;
+        
+        arrayMesh.AddSurfaceFromArrays(Mesh.PrimitiveType.Triangles, arrays);
+        Mesh = arrayMesh;
+        Mesh.SurfaceSetMaterial(0, Material);
+    }
+    
+    private void UpdateMeshForTransition()
+    {
+        // Placeholder for transition between surfaces
+        // Will be implemented in a later step
+        CreateMesh();
     }
 
     public Tween TweenTransition(double duration = AnimationUtilities.DefaultDuration)
