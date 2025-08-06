@@ -556,37 +556,48 @@ public partial class Table : Node3D
             }
         }
         
-        // TODO: Update this to match the row bar logic above, once it's working properly
-        // for (var i = 0; i < numColumns + 1; i++)
-        // {
-        //     float topY = 0;
-        //     float bottomY = GetColumnPosition(numColumns - 1) + GetColumnWidth(numColumns - 1);
-        //     
-        //     MeshInstance3D line;
-        //     if (i >= _verticalGridLines.Count)
-        //     {
-        //         float lastX;
-        //         if (_verticalGridLines.Count == 0) lastX = 0;
-        //         else lastX = GetColumnPosition(i - 1); 
-        //         
-        //         line = CreateVerticalLine(topY, bottomY, lastX);
-        //     }
-        //     else
-        //     {
-        //         line = _verticalGridLines[i];
-        //     }
-        //     
-        //     var targetX = i == numColumns ? GetColumnPosition(numColumns - 1) - GetColumnWidth(numColumns - 1) : GetColumnPosition(i);
-        //     
-        //     // Animate to target position if different
-        //     if (!Mathf.IsEqualApprox(line.Position.X, targetX))
-        //     {
-        //         composite.AddStateChangeInParallel(
-        //             line.MoveTo(new Vector3(line.Position.X, targetX, 0))
-        //                 .WithDuration(duration)
-        //         );
-        //     }
-        // }
+        for (var i = 0; i < numColumns + 1; i++)
+        {
+            float topY = 0;
+            float bottomY = GetRowPosition(numRows - 1) - GetRowHeight(numRows - 1);
+            
+            MeshInstance3D line;
+            if (i >= _verticalGridLines.Count)
+            {
+                float lastX;
+                if (i == 0)
+                {
+                    lastX = 0;
+                }
+                else lastX = GetColumnPosition(i); 
+                
+                line = CreateVerticalLine(lastX, topY, bottomY);
+                ((CylinderMesh)line.Mesh).Height = 0;
+            }
+            else
+            {
+                line = _verticalGridLines[i];
+            }
+            
+            var targetX = i == numColumns ? GetColumnPosition(numColumns - 1) + GetColumnWidth(numColumns - 1) : GetColumnPosition(i);
+            var targetY = (topY + bottomY) / 2;
+            var targetPos = new Vector3(targetX, targetY, 0);
+            
+            // Animate to target position if different
+            if ((line.Position - targetPos).LengthSquared() > 0.001f)
+            {
+                composite.AddStateChangeInParallel(
+                    line.MoveTo(targetPos)
+                        .WithDuration(duration)
+                );
+            }
+            if (!Mathf.IsEqualApprox(((CylinderMesh)line.Mesh).Height, topY - bottomY))
+            {
+                composite.AddStateChangeInParallel(
+                    new PropertyStateChange((CylinderMesh)line.Mesh, "height", topY - bottomY).WithDuration(duration)
+                );
+            }
+        }
 
         return composite;
     }
