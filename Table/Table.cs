@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using PrimerTools;
 using PrimerTools.LaTeX;
+using PrimerTools.TweenSystem;
 
 public partial class Table : Node3D
 {
@@ -35,7 +36,9 @@ public partial class Table : Node3D
     public bool ShowGridLines = true;
     public float GridLineThickness = 0.05f;
     public Color GridLineColor = Colors.Gray;
-    private readonly List<MeshInstance3D> _gridLines = new();
+    // private readonly List<MeshInstance3D> _gridLines = new();
+    private readonly List<MeshInstance3D> _horizontalGridLines = new();
+    private readonly List<MeshInstance3D> _verticalGridLines = new();
     
     // Auto-sizing properties
     public float AutoSizeHorizontalPadding = 0.5f; // Extra padding on left/right
@@ -134,6 +137,7 @@ public partial class Table : Node3D
         {
             position -= GetRowHeight(i);
         }
+        // GD.Print($"Row {row} is at y = {position}");
         return position;
     }
     private Vector3 GetAlignmentOffset(int row, int column, Node3D node)
@@ -208,13 +212,13 @@ public partial class Table : Node3D
             _cells[column][row] = node;
         }
         
-        // Update grid lines after adding a node
-        UpdateGridLines();
+        // Don't update grid lines immediately - wait for transition
+        // UpdateGridLines();
         
-        // Auto-size if enabled
+        // Auto-size if enabled - but only calculate sizes, don't reposition
         if (AutoSizeEnabled)
         {
-            CallDeferred(nameof(AutoSizeColumnsAndRows));
+            CalculateAutoSizes();
         }
     }
     public void AddLatexNodeToPositionWithDefaultSettingsForTheTable(string latexString, int row, int column)
@@ -222,25 +226,32 @@ public partial class Table : Node3D
         var newLatexNode = new LatexNode();
         newLatexNode.Latex = latexString;
         newLatexNode.UpdateCharacters();
-        
-        // Use separate scales for header row and header column
-        if (row == 0)
-        {
-            newLatexNode.Scale = HeaderRowScale;
-        }
-        else if (column == 0)
-        {
-            newLatexNode.Scale = HeaderColumnScale;
-        }
-        else
-        {
-            newLatexNode.Scale = CellLatexScale;
-        }
-        
+
+        // Determine target scale
+        // Vector3 targetScale;
+        // if (row == 0)
+        // {
+        //     targetScale = HeaderRowScale;
+        // }
+        // else if (column == 0)
+        // {
+        //     targetScale = HeaderColumnScale;
+        // }
+        // else
+        // {
+        //     targetScale = CellLatexScale;
+        // }
+
+        // // Store target scale in metadata
+        // newLatexNode.SetMeta("target_scale", targetScale);
+
+        // Start at zero scale (invisible)
+        // newLatexNode.Scale = Vector3.Zero;
+
         // Set alignment based on column and row settings
         newLatexNode.HorizontalAlignment = GetColumnAlignment(column);
         newLatexNode.VerticalAlignment = GetRowAlignment(row);
-        
+
         AddNode3DToPosition(newLatexNode, row, column);
     }
     
@@ -254,46 +265,6 @@ public partial class Table : Node3D
             }
         }
     }
-    public Animation ScaleAllChildrenToDefault()
-    {
-        GD.PushWarning("Keyframed animation system is deprecated. Make a StateChange object instead.");
-        var animations = new List<Animation>();
-        for (var i = 0; i < _cells.Count; i++)
-        {
-            for (var j = 0; j < _cells[i].Count; j++)
-            {
-                if (_cells[i][j] is not null)
-                {
-                    animations.Add(ScaleCellToDefault(j, i)); // Note: j is row, i is column
-                }
-            }
-        }
-        return animations.InParallel();
-    }
-    public Animation ScaleCellToDefault(int row, int column)
-    {
-        GD.PushWarning("Keyframed animation system is deprecated. Make a StateChange object instead.");
-        if (column < _cells.Count && row < _cells[column].Count && _cells[column][row] is not null)
-        {
-            Vector3 targetScale;
-            if (row == 0)
-            {
-                targetScale = HeaderRowScale;
-            }
-            else if (column == 0)
-            {
-                targetScale = HeaderColumnScale;
-            }
-            else
-            {
-                targetScale = CellLatexScale;
-            }
-            return _cells[column][row].ScaleToAnimation(targetScale);
-        }
-        
-        GD.PrintErr("No cell at that position");
-        return null;
-    }
     
     #region Auto-sizing
     public async void AutoSizeColumnsAndRows()
@@ -301,6 +272,11 @@ public partial class Table : Node3D
         // Wait a bit for LatexNodes to process
         await ToSignal(GetTree().CreateTimer(0.1), "timeout");
         
+        CalculateAutoSizes();
+    }
+    
+    private void CalculateAutoSizes()
+    {
         // Calculate required sizes
         var requiredColumnWidths = new Dictionary<int, float>();
         var requiredRowHeights = new Dictionary<int, float>();
@@ -358,16 +334,38 @@ public partial class Table : Node3D
         {
             SetRowHeight(kvp.Key, kvp.Value);
         }
-        
-        // Reposition all nodes with new sizes
-        RepositionAllNodes();
-        
-        // Update grid lines
-        UpdateGridLines();
     }
     
     private Aabb GetNodeBoundingBox(Node3D node)
     {
+        // Store original scale
+        var originalScale = node.Scale;
+        
+        // Temporarily set to target scale if node is at zero scale
+        if (node.Scale.IsZeroApprox())
+        {
+            // Find the target scale for this node
+            int row = -1, col = -1;
+            for (int c = 0; c < _cells.Count; c++)
+            {
+                for (int r = 0; r < _cells[c].Count; r++)
+                {
+                    if (_cells[c][r] == node)
+                    {
+                        row = r;
+                        col = c;
+                        break;
+                    }
+                }
+                if (row != -1) break;
+            }
+            
+            if (row != -1 && col != -1)
+            {
+                node.Scale = GetTargetScaleForCell(node, row, col);
+            }
+        }
+        
         var aabb = new Aabb();
         bool first = true;
         
@@ -399,6 +397,9 @@ public partial class Table : Node3D
                 aabb = aabb.Merge(meshAabb);
             }
         }
+        
+        // Restore original scale
+        node.Scale = originalScale;
         
         // If no mesh instances found, use a default size
         if (first)
@@ -450,7 +451,7 @@ public partial class Table : Node3D
     public void EnableAutoSizing()
     {
         AutoSizeEnabled = true;
-        AutoSizeColumnsAndRows();
+        CalculateAutoSizes();
     }
     
     public void DisableAutoSizing()
@@ -459,78 +460,240 @@ public partial class Table : Node3D
     }
     #endregion
     
-    #region Grid Lines
-    public void UpdateGridLines()
+    #region Transition System
+    public IStateChange TransitionStateChange(double duration = 0.5)
     {
-        // Clear existing grid lines
-        foreach (var line in _gridLines)
+        var composite = new CompositeStateChange().WithName("Table Transition");
+
+        // 1. Update grid lines based on current table dimensions
+        composite.AddStateChange(TransitionGridLines(duration));
+
+        // 2. Scale up any cells that are at zero scale
+        for (int col = 0; col < _cells.Count; col++)
         {
-            line.QueueFree();
-        }
-        _gridLines.Clear();
+            for (int row = 0; row < _cells[col].Count; row++)
+            {
+                var node = _cells[col][row];
+                if (node == null) continue;
         
+                // Check if node needs to scale up
+                if (node.Scale.IsZeroApprox())
+                {
+                    Vector3 targetScale = GetTargetScaleForCell(node, row, col);
+                    composite.AddStateChangeInParallel(
+                        node.ScaleTo(targetScale).WithDuration(duration)
+                    );
+                }
+        
+                // Check if node is in the right position
+                var targetPos = GetTargetPositionForCell(row, col, node);
+                if (!node.Position.IsEqualApprox(targetPos))
+                {
+                    composite.AddStateChangeInParallel(
+                        node.MoveTo(targetPos).WithDuration(duration)
+                    );
+                }
+            }
+        }
+
+        return composite;
+    }
+
+    private IStateChange TransitionGridLines(double duration)
+    {
+        var composite = new CompositeStateChange().WithName("Grid Line Transition");
+
         if (!ShowGridLines)
-            return;
-        
-        // Calculate table dimensions
-        int numColumns = _cells.Count;
-        int numRows = numColumns > 0 ? _cells.Max(col => col.Count) : 0;
-        
+            return composite;
+
+        // Calculate what grid lines should exist
+        var numColumns = _cells.Count;
+        var numRows = numColumns > 0 ? _cells.Max(col => col.Count) : 0;
+
         if (numColumns == 0 || numRows == 0)
-            return;
+            return composite;
         
-        // Create vertical lines (between columns and at edges)
-        for (int col = 0; col <= numColumns; col++)
+        for (var i = 0; i < numRows + 1; i++)
         {
-            float xPos;
-            if (col == 0)
-            {
-                xPos = 0; // Left edge
-            }
-            else if (col == numColumns)
-            {
-                // Right edge of the last column
-                xPos = GetColumnPosition(numColumns - 1) + GetColumnWidth(numColumns - 1);
-            }
-            else
-            {
-                // Between columns
-                xPos = GetColumnPosition(col);
-            }
-            
-            float topY = 0;
-            float bottomY = GetRowPosition(numRows - 1) - GetRowHeight(numRows - 1);
-            
-            CreateVerticalLine(xPos, topY, bottomY);
-        }
-        
-        // Create horizontal lines (between rows and at edges)
-        for (int row = 0; row <= numRows; row++)
-        {
-            float yPos;
-            if (row == 0)
-            {
-                yPos = 0; // Top edge
-            }
-            else if (row == numRows)
-            {
-                // Bottom edge of the last row
-                yPos = GetRowPosition(numRows - 1) - GetRowHeight(numRows - 1);
-            }
-            else
-            {
-                // Between rows
-                yPos = GetRowPosition(row);
-            }
-            
             float leftX = 0;
             float rightX = GetColumnPosition(numColumns - 1) + GetColumnWidth(numColumns - 1);
             
-            CreateHorizontalLine(leftX, rightX, yPos);
+            MeshInstance3D line;
+            if (i >= _horizontalGridLines.Count)
+            {
+                float lastY;
+                if (i == 0)
+                {
+                    lastY = 0;
+                }
+                else lastY = GetRowPosition(i); 
+                
+                line = CreateHorizontalLine(leftX, rightX, lastY);
+                ((CylinderMesh)line.Mesh).Height = 0;
+            }
+            else
+            {
+                line = _horizontalGridLines[i];
+            }
+            
+            var targetY = i == numRows ? GetRowPosition(numRows - 1) - GetRowHeight(numRows - 1) : GetRowPosition(i);
+            var targetX = (rightX - leftX) / 2;
+            var targetPos = new Vector3(targetX, targetY, 0);
+            
+            // Animate to target position if different
+            if ((line.Position - targetPos).LengthSquared() > 0.001f)
+            {
+                composite.AddStateChangeInParallel(
+                    line.MoveTo(targetPos)
+                        .WithDuration(duration)
+                );
+            }
+            if (!Mathf.IsEqualApprox(((CylinderMesh)line.Mesh).Height, rightX - leftX))
+            {
+                composite.AddStateChangeInParallel(
+                    new PropertyStateChange((CylinderMesh)line.Mesh, "height", rightX - leftX).WithDuration(duration)
+                );
+            }
         }
+        
+        // TODO: Update this to match the row bar logic above, once it's working properly
+        // for (var i = 0; i < numColumns + 1; i++)
+        // {
+        //     float topY = 0;
+        //     float bottomY = GetColumnPosition(numColumns - 1) + GetColumnWidth(numColumns - 1);
+        //     
+        //     MeshInstance3D line;
+        //     if (i >= _verticalGridLines.Count)
+        //     {
+        //         float lastX;
+        //         if (_verticalGridLines.Count == 0) lastX = 0;
+        //         else lastX = GetColumnPosition(i - 1); 
+        //         
+        //         line = CreateVerticalLine(topY, bottomY, lastX);
+        //     }
+        //     else
+        //     {
+        //         line = _verticalGridLines[i];
+        //     }
+        //     
+        //     var targetX = i == numColumns ? GetColumnPosition(numColumns - 1) - GetColumnWidth(numColumns - 1) : GetColumnPosition(i);
+        //     
+        //     // Animate to target position if different
+        //     if (!Mathf.IsEqualApprox(line.Position.X, targetX))
+        //     {
+        //         composite.AddStateChangeInParallel(
+        //             line.MoveTo(new Vector3(line.Position.X, targetX, 0))
+        //                 .WithDuration(duration)
+        //         );
+        //     }
+        // }
+
+        return composite;
     }
+
+    private Vector3 GetTargetScaleForCell(Node3D node, int row, int col)
+    {
+        // Check if node has stored target scale
+        if (node.HasMeta("target_scale"))
+            return node.GetMeta("target_scale").AsVector3();
+
+        // Otherwise use default logic
+        if (row == 0)
+            return HeaderRowScale;
+        else if (col == 0)
+            return HeaderColumnScale;
+        else
+            return CellLatexScale;
+    }
+
+    private Vector3 GetTargetPositionForCell(int row, int col, Node3D node)
+    {
+        float xPos = GetColumnPosition(col);
+        float yPos = GetRowPosition(row);
+        var alignmentOffset = GetAlignmentOffset(row, col, node);
+        return new Vector3(xPos, yPos, 0) + alignmentOffset;
+    }
+
+    private float GetTableWidth()
+    {
+        int numColumns = _cells.Count;
+        if (numColumns == 0) return 0;
+        return GetColumnPosition(numColumns - 1) + GetColumnWidth(numColumns - 1);
+    }
+    #endregion
     
-    private void CreateVerticalLine(float x, float topY, float bottomY)
+    #region Grid Lines
+    // public void UpdateGridLines()
+    // {
+    //     // Clear existing grid lines
+    //     foreach (var line in _gridLines)
+    //     {
+    //         line.QueueFree();
+    //     }
+    //     _gridLines.Clear();
+    //     
+    //     if (!ShowGridLines)
+    //         return;
+    //     
+    //     // Calculate table dimensions
+    //     int numColumns = _cells.Count;
+    //     int numRows = numColumns > 0 ? _cells.Max(col => col.Count) : 0;
+    //     
+    //     if (numColumns == 0 || numRows == 0)
+    //         return;
+    //     
+    //     // Create vertical lines (between columns and at edges)
+    //     for (int col = 0; col <= numColumns; col++)
+    //     {
+    //         float xPos;
+    //         if (col == 0)
+    //         {
+    //             xPos = 0; // Left edge
+    //         }
+    //         else if (col == numColumns)
+    //         {
+    //             // Right edge of the last column
+    //             xPos = GetColumnPosition(numColumns - 1) + GetColumnWidth(numColumns - 1);
+    //         }
+    //         else
+    //         {
+    //             // Between columns
+    //             xPos = GetColumnPosition(col);
+    //         }
+    //         
+    //         float topY = 0;
+    //         float bottomY = GetRowPosition(numRows - 1) - GetRowHeight(numRows - 1);
+    //         
+    //         CreateVerticalLine(xPos, topY, bottomY);
+    //     }
+    //     
+    //     // Create horizontal lines (between rows and at edges)
+    //     for (int row = 0; row <= numRows; row++)
+    //     {
+    //         float yPos;
+    //         if (row == 0)
+    //         {
+    //             yPos = 0; // Top edge
+    //         }
+    //         else if (row == numRows)
+    //         {
+    //             // Bottom edge of the last row
+    //             yPos = GetRowPosition(numRows - 1) - GetRowHeight(numRows - 1);
+    //         }
+    //         else
+    //         {
+    //             // Between rows
+    //             yPos = GetRowPosition(row);
+    //         }
+    //         
+    //         float leftX = 0;
+    //         float rightX = GetColumnPosition(numColumns - 1) + GetColumnWidth(numColumns - 1);
+    //         
+    //         CreateHorizontalLine(leftX, rightX, yPos);
+    //     }
+    // }
+    
+    private MeshInstance3D CreateVerticalLine(float x, float topY, float bottomY)
     {
         var line = new MeshInstance3D();
         var cylinder = new CylinderMesh();
@@ -553,10 +716,11 @@ public partial class Table : Node3D
         line.RotationDegrees = new Vector3(0, 0, 0); // No rotation needed for vertical
         
         AddChild(line);
-        _gridLines.Add(line);
+        _verticalGridLines.Add(line);
+        return line;
     }
     
-    private void CreateHorizontalLine(float leftX, float rightX, float y)
+    private MeshInstance3D CreateHorizontalLine(float leftX, float rightX, float y)
     {
         var line = new MeshInstance3D();
         var cylinder = new CylinderMesh();
@@ -579,7 +743,8 @@ public partial class Table : Node3D
         line.RotationDegrees = new Vector3(0, 0, 90); // Rotate to be horizontal
         
         AddChild(line);
-        _gridLines.Add(line);
+        _horizontalGridLines.Add(line);
+        return line;
     }
     #endregion
 }
