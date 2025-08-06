@@ -110,7 +110,8 @@ public partial class LatexNode : Node3D
 			child.Free();
 		}
 
-		var path = await latexToMesh.MeshFromExpression(Latex, openBlender);
+		var path = latexToMesh.GetPathToExisting(Latex);
+		if (path == string.Empty) path = await latexToMesh.MeshFromExpression(Latex, openBlender);
 
 		// Runtime GLTF loading
 		Node3D newNode;

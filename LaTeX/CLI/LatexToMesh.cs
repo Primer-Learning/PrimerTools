@@ -86,15 +86,24 @@ internal class LatexToMesh
         }
     }
 
-    public async Task<string> MeshFromExpression(string latex, bool openBlender = false)
+    public string GetPathToExisting(string latex)
     {
         var dirPath = "addons/PrimerTools/LaTeX";
         var scriptPath = Path.Combine(dirPath, "svg_to_mesh.py");
         var gltfDirPath = Path.Combine(dirPath, "gltf");
         if (!Directory.Exists(gltfDirPath)) Directory.CreateDirectory(gltfDirPath);
         var destinationPath = Path.Combine(gltfDirPath, GenerateFileName(latex) + ".gltf");
-        if (File.Exists(destinationPath)) return destinationPath;
+        return File.Exists(destinationPath) ? destinationPath : string.Empty;
+    }
+    
+    public async Task<string> MeshFromExpression(string latex, bool openBlender = false)
+    {
+        var dirPath = "addons/PrimerTools/LaTeX";
+        var gltfDirPath = Path.Combine(dirPath, "gltf");
+        if (!Directory.Exists(gltfDirPath)) Directory.CreateDirectory(gltfDirPath);
+        var destinationPath = Path.Combine(gltfDirPath, GenerateFileName(latex) + ".gltf");
         
+        var scriptPath = Path.Combine(dirPath, "svg_to_mesh.py");
         // Queue the actual processing work
         return await LatexProcessQueue.EnqueueAsync(
             async () => await ProcessNewExpression(latex, openBlender, scriptPath, destinationPath),
