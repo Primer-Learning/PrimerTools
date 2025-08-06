@@ -41,8 +41,8 @@ public partial class Table : Node3D
     private readonly List<MeshInstance3D> _verticalGridLines = new();
     
     // Auto-sizing properties
-    public float AutoSizeHorizontalPadding = 0.5f; // Extra padding on left/right
-    public float AutoSizeVerticalPadding = 0.5f; // Extra padding on top/bottom
+    public float AutoSizeHorizontalPadding = 1; // Extra padding on left/right
+    public float AutoSizeVerticalPadding = 1; // Extra padding on top/bottom
     public bool AutoSizeEnabled = false;
 
     #region Row and column properties
@@ -416,7 +416,7 @@ public partial class Table : Node3D
         return meshInstances;
     }
     
-    private void RepositionAllNodes()
+    public void RepositionAllNodes()
     {
         for (int col = 0; col < _cells.Count; col++)
         {
@@ -435,17 +435,6 @@ public partial class Table : Node3D
                 node.Position = new Vector3(xPos, yPos, 0) + alignmentOffset;
             }
         }
-    }
-    
-    public void EnableAutoSizing()
-    {
-        AutoSizeEnabled = true;
-        CalculateAutoSizes();
-    }
-    
-    public void DisableAutoSizing()
-    {
-        AutoSizeEnabled = false;
     }
     #endregion
     
