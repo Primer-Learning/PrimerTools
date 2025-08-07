@@ -30,7 +30,7 @@ public partial class Table : Node3D
     public LatexNode.HorizontalAlignmentOptions DefaultHorizontalAlignment = LatexNode.HorizontalAlignmentOptions.Center;
     public LatexNode.VerticalAlignmentOptions DefaultVerticalAlignment = LatexNode.VerticalAlignmentOptions.Center;
 
-    private readonly List<List<Node3D>> _cells = new();
+    private readonly Dictionary<Node3D, (int row, int column)> _nodePositions = new();
     
     // Grid line properties
     public bool ShowGridLines = true;
@@ -95,16 +95,16 @@ public partial class Table : Node3D
     }
     public void SetAllColumnWidths(float width)
     {
-        int maxColumn = _cells.Count;
-        for (int i = 0; i < maxColumn; i++)
+        int maxColumn = GetMaxColumn();
+        for (int i = 0; i <= maxColumn; i++)
         {
             SetColumnWidth(i, width);
         }
     }
     public void SetAllRowHeights(float height)
     {
-        int maxRow = _cells.Any() ? _cells.Max(col => col.Count) : 0;
-        for (int i = 0; i < maxRow; i++)
+        int maxRow = GetMaxRow();
+        for (int i = 0; i <= maxRow; i++)
         {
             SetRowHeight(i, height);
         }
@@ -184,24 +184,15 @@ public partial class Table : Node3D
     {
         AddChild(node);
         
-        // Make sure the cells structure can hold this cell
-        while (_cells.Count <= column)
-        {
-            _cells.Add(new List<Node3D>());
-        }
-        while (_cells[column].Count <= row)
-        {
-            _cells[column].Add(null);
-        }
-        
-        if (_cells[column][row] != null)
+        // Check if there's already a node at this position
+        var existingNode = GetNodeAt(row, column);
+        if (existingNode != null)
         {
             GD.PrintErr("Overwriting a cell in the table");
+            _nodePositions.Remove(existingNode);
         }
-        else
-        {
-            _cells[column][row] = node;
-        }
+        
+        _nodePositions[node] = (row, column);
         
         if (AutoSizeEnabled)
         {
@@ -270,12 +261,10 @@ public partial class Table : Node3D
         var requiredRowHeights = new Dictionary<int, float>();
         
         // Iterate through all cells
-        for (int col = 0; col < _cells.Count; col++)
+        foreach (var kvp in _nodePositions)
         {
-            for (int row = 0; row < _cells[col].Count; row++)
-            {
-                var node = _cells[col][row];
-                if (node == null) continue;
+            var node = kvp.Key;
+            var (row, col) = kvp.Value;
                 
                 // Get the bounding box for this cell's content
                 var aabb = GetNodeBoundingBox(node);
@@ -296,19 +285,18 @@ public partial class Table : Node3D
                     // For left/right alignment, we might need to adjust
                 }
                 
-                // Update required column width
-                float requiredWidth = contentWidth + AutoSizeHorizontalPadding * 2;
-                if (!requiredColumnWidths.ContainsKey(col) || requiredColumnWidths[col] < requiredWidth)
-                {
-                    requiredColumnWidths[col] = requiredWidth;
-                }
-                
-                // Update required row height
-                float requiredHeight = contentHeight + AutoSizeVerticalPadding * 2;
-                if (!requiredRowHeights.ContainsKey(row) || requiredRowHeights[row] < requiredHeight)
-                {
-                    requiredRowHeights[row] = requiredHeight;
-                }
+            // Update required column width
+            float requiredWidth = contentWidth + AutoSizeHorizontalPadding * 2;
+            if (!requiredColumnWidths.ContainsKey(col) || requiredColumnWidths[col] < requiredWidth)
+            {
+                requiredColumnWidths[col] = requiredWidth;
+            }
+            
+            // Update required row height
+            float requiredHeight = contentHeight + AutoSizeVerticalPadding * 2;
+            if (!requiredRowHeights.ContainsKey(row) || requiredRowHeights[row] < requiredHeight)
+            {
+                requiredRowHeights[row] = requiredHeight;
             }
         }
         
@@ -333,24 +321,9 @@ public partial class Table : Node3D
         if (node.Scale.Length() < 0.001)
         {
             // Find the target scale for this node
-            int row = -1, col = -1;
-            for (int c = 0; c < _cells.Count; c++)
+            if (_nodePositions.TryGetValue(node, out var position))
             {
-                for (int r = 0; r < _cells[c].Count; r++)
-                {
-                    if (_cells[c][r] == node)
-                    {
-                        row = r;
-                        col = c;
-                        break;
-                    }
-                }
-                if (row != -1) break;
-            }
-            
-            if (row != -1 && col != -1)
-            {
-                node.Scale = GetTargetScaleForCell(node, row, col);
+                node.Scale = GetTargetScaleForCell(node, position.row, position.column);
             }
         }
         
@@ -418,22 +391,19 @@ public partial class Table : Node3D
     
     public void RepositionAllNodes()
     {
-        for (int col = 0; col < _cells.Count; col++)
+        foreach (var kvp in _nodePositions)
         {
-            for (int row = 0; row < _cells[col].Count; row++)
-            {
-                var node = _cells[col][row];
-                if (node == null) continue;
-                
-                // Calculate new position
-                float xPos = GetColumnPosition(col);
-                float yPos = GetRowPosition(row);
-                
-                // Apply alignment offset
-                var alignmentOffset = GetAlignmentOffset(row, col, node);
-                
-                node.Position = new Vector3(xPos, yPos, 0) + alignmentOffset;
-            }
+            var node = kvp.Key;
+            var (row, col) = kvp.Value;
+            
+            // Calculate new position
+            float xPos = GetColumnPosition(col);
+            float yPos = GetRowPosition(row);
+            
+            // Apply alignment offset
+            var alignmentOffset = GetAlignmentOffset(row, col, node);
+            
+            node.Position = new Vector3(xPos, yPos, 0) + alignmentOffset;
         }
     }
     #endregion
@@ -447,30 +417,27 @@ public partial class Table : Node3D
         composite.AddStateChange(TransitionGridLines(duration));
 
         // 2. Scale up any cells that are at zero scale
-        for (int col = 0; col < _cells.Count; col++)
+        foreach (var kvp in _nodePositions)
         {
-            for (int row = 0; row < _cells[col].Count; row++)
+            var node = kvp.Key;
+            var (row, col) = kvp.Value;
+    
+            // Check if node needs to scale up
+            if (node.Scale.IsZeroApprox())
             {
-                var node = _cells[col][row];
-                if (node == null) continue;
-        
-                // Check if node needs to scale up
-                if (node.Scale.IsZeroApprox())
-                {
-                    Vector3 targetScale = GetTargetScaleForCell(node, row, col);
-                    composite.AddStateChangeInParallel(
-                        node.ScaleTo(targetScale).WithDuration(duration)
-                    );
-                }
-        
-                // Check if node is in the right position
-                var targetPos = GetTargetPositionForCell(row, col, node);
-                if (!node.Position.IsEqualApprox(targetPos))
-                {
-                    composite.AddStateChangeInParallel(
-                        node.MoveTo(targetPos).WithDuration(duration)
-                    );
-                }
+                Vector3 targetScale = GetTargetScaleForCell(node, row, col);
+                composite.AddStateChangeInParallel(
+                    node.ScaleTo(targetScale).WithDuration(duration)
+                );
+            }
+    
+            // Check if node is in the right position
+            var targetPos = GetTargetPositionForCell(row, col, node);
+            if (!node.Position.IsEqualApprox(targetPos))
+            {
+                composite.AddStateChangeInParallel(
+                    node.MoveTo(targetPos).WithDuration(duration)
+                );
             }
         }
 
@@ -485,8 +452,8 @@ public partial class Table : Node3D
             return composite;
 
         // Calculate what grid lines should exist
-        var numColumns = _cells.Count;
-        var numRows = numColumns > 0 ? _cells.Max(col => col.Count) : 0;
+        var numColumns = GetMaxColumn() + 1;
+        var numRows = GetMaxRow() + 1;
 
         if (numColumns == 0 || numRows == 0)
             return composite;
@@ -605,9 +572,60 @@ public partial class Table : Node3D
 
     private float GetTableWidth()
     {
-        int numColumns = _cells.Count;
-        if (numColumns == 0) return 0;
-        return GetColumnPosition(numColumns - 1) + GetColumnWidth(numColumns - 1);
+        int maxColumn = GetMaxColumn();
+        if (maxColumn < 0) return 0;
+        return GetColumnPosition(maxColumn) + GetColumnWidth(maxColumn);
+    }
+    
+    // Helper methods for the new structure
+    public Node3D GetNodeAt(int row, int column)
+    {
+        foreach (var kvp in _nodePositions)
+        {
+            if (kvp.Value.row == row && kvp.Value.column == column)
+                return kvp.Key;
+        }
+        return null;
+    }
+    
+    private int GetMaxRow()
+    {
+        if (_nodePositions.Count == 0) return -1;
+        return _nodePositions.Values.Max(pos => pos.row);
+    }
+    
+    private int GetMaxColumn()
+    {
+        if (_nodePositions.Count == 0) return -1;
+        return _nodePositions.Values.Max(pos => pos.column);
+    }
+    
+    // Public method to update node position in the table
+    public void UpdateNodePosition(Node3D node, int newRow, int newColumn)
+    {
+        if (_nodePositions.ContainsKey(node))
+        {
+            _nodePositions[node] = (newRow, newColumn);
+        }
+        else
+        {
+            GD.PrintErr($"Node {node.Name} is not in the table");
+        }
+    }
+    
+    // Public method to swap two nodes' positions
+    public void SwapNodePositions(Node3D node1, Node3D node2)
+    {
+        if (_nodePositions.TryGetValue(node1, out var pos1) && 
+            _nodePositions.TryGetValue(node2, out var pos2))
+        {
+            _nodePositions[node1] = pos2;
+            _nodePositions[node2] = pos1;
+        }
+        else
+        {
+            GD.PrintErr("One or both nodes are not in the table");
+        }
     }
     #endregion
     
