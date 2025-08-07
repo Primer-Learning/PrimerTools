@@ -334,9 +334,10 @@ public partial class Graph : Node3D
         );
     }
 
+    // Todo: Make this an IPrimerGraphData that knows how to move itself.
     public void AddChildInDataSpace(Node3D newChild, Vector3 dataPosition)
     {
         AddChild(newChild);
-        newChild.Position = GetDataSpaceToPositionSpaceFromCurrentObjects(dataPosition);
+        newChild.Position = GetDataSpaceToPositionSpaceFromSettings(dataPosition);
     }
 }

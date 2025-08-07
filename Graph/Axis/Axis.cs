@@ -391,10 +391,10 @@ public partial class Axis : Node3D
 			case AxisType.Y: // The y-axis is rotated by 90 degrees
 				return (
 					LabelAlignment == Graph.AxisLabelAlignmentOptions.Along
-						? new Vector3(-LabelOffset, LengthMinusPadding / 2 + Min * DataSpaceScale, 0)
+						? new Vector3(LengthMinusPadding / 2 + Min * DataSpaceScale, LabelOffset, 0)
 						: new Vector3(LengthMinusPadding + LabelOffset + Min * DataSpaceScale, 0, 0),
 					LabelAlignment == Graph.AxisLabelAlignmentOptions.Along
-						? new Vector3(0, 0, 90)
+						? new Vector3(0, 0, 0)
 						: new Vector3(0, 0, -90)
 				);
 				
