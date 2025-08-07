@@ -85,11 +85,13 @@ public partial class StateChangeSequenceController : Control
         {
             GetNode<Control>("%ControlsContainer").Visible = false;
             GetNode<Control>("%ScrubberContainer").Visible = false;
+            _hideButton.Text = "Show";
         }
         else
         {
             GetNode<Control>("%ControlsContainer").Visible = true;
             GetNode<Control>("%ScrubberContainer").Visible = true;
+            _hideButton.Text = "Hide Controls";
         }
 
         _hidden = !_hidden;
