@@ -13,54 +13,68 @@ grow_vertical = 2
 mouse_filter = 1
 script = ExtResource("1_50png")
 
-[node name="_VBoxContainer_37804" type="VBoxContainer" parent="."]
-layout_mode = 0
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -122.0
+grow_horizontal = 2
+grow_vertical = 0
 
-[node name="Play_Reset" type="HBoxContainer" parent="_VBoxContainer_37804"]
+[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer"]
 layout_mode = 2
 
-[node name="Play" type="Button" parent="_VBoxContainer_37804/Play_Reset"]
+[node name="ControlsContainer" type="HBoxContainer" parent="VBoxContainer/MarginContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Play_Reset" type="HBoxContainer" parent="VBoxContainer/MarginContainer/ControlsContainer"]
+layout_mode = 2
+
+[node name="Play" type="Button" parent="VBoxContainer/MarginContainer/ControlsContainer/Play_Reset"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Play"
 
-[node name="Reset" type="Button" parent="_VBoxContainer_37804/Play_Reset"]
+[node name="Reset" type="Button" parent="VBoxContainer/MarginContainer/ControlsContainer/Play_Reset"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Reset"
 
-[node name="Seek" type="HBoxContainer" parent="_VBoxContainer_37804"]
+[node name="Seek" type="HBoxContainer" parent="VBoxContainer/MarginContainer/ControlsContainer"]
 layout_mode = 2
 
-[node name="_Label_37831" type="Label" parent="_VBoxContainer_37804/Seek"]
+[node name="_Label_37831" type="Label" parent="VBoxContainer/MarginContainer/ControlsContainer/Seek"]
 layout_mode = 2
 text = "Seek to:"
 
-[node name="SeekTimeSpinBox" type="SpinBox" parent="_VBoxContainer_37804/Seek"]
+[node name="SeekTimeSpinBox" type="SpinBox" parent="VBoxContainer/MarginContainer/ControlsContainer/Seek"]
 unique_name_in_owner = true
 layout_mode = 2
 max_value = 1.50167
 step = 0.01
 suffix = "s"
 
-[node name="SeekButton" type="Button" parent="_VBoxContainer_37804/Seek"]
+[node name="SeekButton" type="Button" parent="VBoxContainer/MarginContainer/ControlsContainer/Seek"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Seek"
 
-[node name="SetSeekPointButton" type="Button" parent="_VBoxContainer_37804/Seek"]
+[node name="SetSeekPointButton" type="Button" parent="VBoxContainer/MarginContainer/ControlsContainer/Seek"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Set Seek Point"
 
-[node name="Speed" type="HBoxContainer" parent="_VBoxContainer_37804"]
+[node name="Speed" type="HBoxContainer" parent="VBoxContainer/MarginContainer/ControlsContainer"]
 layout_mode = 2
 
-[node name="_Label_37808" type="Label" parent="_VBoxContainer_37804/Speed"]
+[node name="_Label_37808" type="Label" parent="VBoxContainer/MarginContainer/ControlsContainer/Speed"]
 layout_mode = 2
 text = "Speed:"
 
-[node name="SpeedSpinBox" type="SpinBox" parent="_VBoxContainer_37804/Speed"]
+[node name="SpeedSpinBox" type="SpinBox" parent="VBoxContainer/MarginContainer/ControlsContainer/Speed"]
 unique_name_in_owner = true
 layout_mode = 2
 min_value = 0.1
@@ -68,41 +82,44 @@ max_value = 5.0
 step = 0.1
 value = 1.0
 
-[node name="Time" type="HBoxContainer" parent="_VBoxContainer_37804"]
+[node name="Time" type="HBoxContainer" parent="VBoxContainer/MarginContainer/ControlsContainer"]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="_VBoxContainer_37804/Time"]
+[node name="Label" type="Label" parent="VBoxContainer/MarginContainer/ControlsContainer/Time"]
 layout_mode = 2
 text = "Time:"
 
-[node name="TimeDisplay" type="Label" parent="_VBoxContainer_37804/Time"]
+[node name="TimeDisplay" type="Label" parent="VBoxContainer/MarginContainer/ControlsContainer/Time"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "0.00 / 1.50"
 
-[node name="MarginContainer" type="MarginContainer" parent="."]
-layout_mode = 1
-anchors_preset = 12
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_top = -87.0
-grow_horizontal = 2
-grow_vertical = 0
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 8
+
+[node name="HideButton" type="Button" parent="VBoxContainer/MarginContainer/HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Hide Controls"
+
+[node name="ScrubberContainer" type="MarginContainer" parent="VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
 mouse_filter = 0
 theme_override_constants/margin_left = 20
 theme_override_constants/margin_top = 20
 theme_override_constants/margin_right = 20
 theme_override_constants/margin_bottom = 20
 
-[node name="Timeline" type="VBoxContainer" parent="MarginContainer"]
+[node name="Timeline" type="VBoxContainer" parent="VBoxContainer/ScrubberContainer"]
 layout_mode = 2
 
-[node name="_Label_37857" type="Label" parent="MarginContainer/Timeline"]
+[node name="_Label_37857" type="Label" parent="VBoxContainer/ScrubberContainer/Timeline"]
 layout_mode = 2
 text = "Timeline"
 
-[node name="TimelineSlider" type="HSlider" parent="MarginContainer/Timeline"]
+[node name="TimelineSlider" type="HSlider" parent="VBoxContainer/ScrubberContainer/Timeline"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(934, 20)
 layout_mode = 2

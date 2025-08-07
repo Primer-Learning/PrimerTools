@@ -12,6 +12,9 @@ public partial class StateChangeSequenceController : Control
     private SpinBox _playbackSpeedSpinBox;
     private SpinBox _seekTimeSpinBox;
     private Button _seekButton;
+    
+    private Button _hideButton;
+    private bool _hidden = false;
 
     public override void _Ready()
     {
@@ -25,6 +28,9 @@ public partial class StateChangeSequenceController : Control
             GD.PrintErr("No tween sequence found");
             return;
         }
+        
+        _hideButton = GetNode<Button>("%HideButton");
+        _hideButton.Pressed += OnHideButtonPressed;
         
         _playPauseButton = GetNode<Button>("%Play");
         _playPauseButton.Pressed += OnPlayPausePressed;
@@ -73,6 +79,22 @@ public partial class StateChangeSequenceController : Control
         _stateChangeSequence.PlaybackSpeed = _playbackSpeedSpinBox.Value;
     }
 
+    private void OnHideButtonPressed()
+    {
+        if (!_hidden)
+        {
+            GetNode<Control>("%ControlsContainer").Visible = false;
+            GetNode<Control>("%ScrubberContainer").Visible = false;
+        }
+        else
+        {
+            GetNode<Control>("%ControlsContainer").Visible = true;
+            GetNode<Control>("%ScrubberContainer").Visible = true;
+        }
+
+        _hidden = !_hidden;
+    }
+    
     private void OnPlayPausePressed()
     {
         if (_stateChangeSequence == null) return;
