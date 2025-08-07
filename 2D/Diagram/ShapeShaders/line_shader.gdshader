@@ -27,8 +27,15 @@ void fragment() {
     float d = sdLine(p, point_a, point_b);
     d = d - thickness;
 
-    // Apply smoothstep for antialiasing
-    float alpha = 1.0 - smoothstep(0.0, smoothness, d);
+    float d_dx = dFdx(d);
+    float d_dy = dFdy(d);
+    float grad_len = length(vec2(d_dx, d_dy));
+
+    // Normalize the gradient to get consistent AA width
+    float aa_width = smoothness * max(grad_len, 0.0001);
+
+    // Apply smoothstep with gradient-based anti-aliasing
+    float alpha = 1.0 - smoothstep(0.0, aa_width, d);
 
     // Mix colors based on the SDF
     vec3 color = mix(background_color.rgb, shape_color.rgb, alpha);
