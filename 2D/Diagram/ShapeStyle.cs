@@ -9,7 +9,7 @@ public partial class ShapeStyle : GodotObject
     private float _innerThickness = 0.01f;
     private Color _shapeColor = new Color(1.0f, 1.0f, 1.0f, 1.0f);
     private Color _backgroundColor = new Color(0.0f, 0.0f, 0.0f, 0.0f);
-    private float _smoothness = 0.1f;
+    private float _smoothness = 2.5f;
     
     public float Thickness 
     {
