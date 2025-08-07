@@ -32,6 +32,10 @@ public partial class Table : Node3D
 
     private readonly Dictionary<Node3D, (int row, int column)> _nodePositions = new();
     
+    // Track which columns and rows actually contain content
+    private readonly HashSet<int> _occupiedColumns = new();
+    private readonly HashSet<int> _occupiedRows = new();
+    
     // Grid line properties
     public bool ShowGridLines = true;
     public float GridLineThickness = 0.05f;
@@ -54,6 +58,12 @@ public partial class Table : Node3D
             columnWidths.Add(HorizontalSpacing);
         }
         columnWidths[column] = width;
+        
+        // If setting a non-zero width, mark as occupied
+        if (width > 0)
+        {
+            _occupiedColumns.Add(column);
+        }
     }
     public void SetRowHeight(int row, float height)
     {
@@ -63,6 +73,12 @@ public partial class Table : Node3D
             rowHeights.Add(VerticalSpacing);
         }
         rowHeights[row] = height;
+        
+        // If setting a non-zero height, mark as occupied
+        if (height > 0)
+        {
+            _occupiedRows.Add(row);
+        }
     }
     public void SetColumnAlignment(int column, LatexNode.HorizontalAlignmentOptions alignment)
     {
@@ -83,12 +99,20 @@ public partial class Table : Node3D
     
     private float GetColumnWidth(int column)
     {
+        // Empty columns have zero width
+        if (!_occupiedColumns.Contains(column))
+            return 0;
+            
         if (column < columnWidths.Count)
             return columnWidths[column];
         return HorizontalSpacing;
     }
     private float GetRowHeight(int row)
     {
+        // Empty rows have zero height
+        if (!_occupiedRows.Contains(row))
+            return 0;
+            
         if (row < rowHeights.Count)
             return rowHeights[row];
         return VerticalSpacing;
@@ -194,6 +218,10 @@ public partial class Table : Node3D
         
         _nodePositions[node] = (row, column);
         
+        // Mark this row and column as occupied
+        _occupiedColumns.Add(column);
+        _occupiedRows.Add(row);
+        
         if (AutoSizeEnabled)
         {
             CalculateAutoSizes();
@@ -240,7 +268,6 @@ public partial class Table : Node3D
 
         AddNode3DToPosition(newLatexNode, row, column);
     }
-    
     public void SetScaleOfAllChildren(Vector3 scale)
     {
         foreach (var child in GetChildren())
@@ -443,7 +470,6 @@ public partial class Table : Node3D
 
         return composite;
     }
-
     private IStateChange TransitionGridLines(double duration)
     {
         var composite = new CompositeStateChange().WithName("Grid Line Transition");
@@ -452,16 +478,17 @@ public partial class Table : Node3D
             return composite;
 
         // Calculate what grid lines should exist
-        var numColumns = GetMaxColumn() + 1;
-        var numRows = GetMaxRow() + 1;
+        var maxColumn = GetMaxColumn();
+        var maxRow = GetMaxRow();
 
-        if (numColumns == 0 || numRows == 0)
+        if (maxColumn < 0 || maxRow < 0)
             return composite;
         
-        for (var i = 0; i < numRows + 1; i++)
+        // Draw horizontal lines from 0 to maxRow + 1
+        for (var i = 0; i <= maxRow + 1; i++)
         {
-            float leftX = 0;
-            float rightX = GetColumnPosition(numColumns - 1) + GetColumnWidth(numColumns - 1);
+            float leftX = GetColumnPosition(0);
+            float rightX = GetColumnPosition(maxColumn) + GetColumnWidth(maxColumn);
             
             MeshInstance3D line;
             if (i >= _horizontalGridLines.Count)
@@ -481,7 +508,7 @@ public partial class Table : Node3D
                 line = _horizontalGridLines[i];
             }
             
-            var targetY = i == numRows ? GetRowPosition(numRows - 1) - GetRowHeight(numRows - 1) : GetRowPosition(i);
+            var targetY = i > maxRow ? GetRowPosition(maxRow) - GetRowHeight(maxRow) : GetRowPosition(i);
             var targetX = (rightX - leftX) / 2;
             var targetPos = new Vector3(targetX, targetY, 0);
             
@@ -501,10 +528,11 @@ public partial class Table : Node3D
             }
         }
         
-        for (var i = 0; i < numColumns + 1; i++)
+        // Draw vertical lines from 0 to maxColumn + 1
+        for (var i = 0; i <= maxColumn + 1; i++)
         {
-            float topY = 0;
-            float bottomY = GetRowPosition(numRows - 1) - GetRowHeight(numRows - 1);
+            float topY = GetRowPosition(0);
+            float bottomY = GetRowPosition(maxRow) - GetRowHeight(maxRow);
             
             MeshInstance3D line;
             if (i >= _verticalGridLines.Count)
@@ -524,7 +552,7 @@ public partial class Table : Node3D
                 line = _verticalGridLines[i];
             }
             
-            var targetX = i == numColumns ? GetColumnPosition(numColumns - 1) + GetColumnWidth(numColumns - 1) : GetColumnPosition(i);
+            var targetX = i > maxColumn ? GetColumnPosition(maxColumn) + GetColumnWidth(maxColumn) : GetColumnPosition(i);
             var targetY = (topY + bottomY) / 2;
             var targetPos = new Vector3(targetX, targetY, 0);
             
@@ -546,7 +574,6 @@ public partial class Table : Node3D
 
         return composite;
     }
-
     private Vector3 GetTargetScaleForCell(Node3D node, int row, int col)
     {
         // Check if node has stored target scale
@@ -561,7 +588,6 @@ public partial class Table : Node3D
         else
             return CellLatexScale;
     }
-
     private Vector3 GetTargetPositionForCell(int row, int col, Node3D node)
     {
         float xPos = GetColumnPosition(col);
@@ -569,7 +595,6 @@ public partial class Table : Node3D
         var alignmentOffset = GetAlignmentOffset(row, col, node);
         return new Vector3(xPos, yPos, 0) + alignmentOffset;
     }
-
     private float GetTableWidth()
     {
         int maxColumn = GetMaxColumn();
@@ -587,13 +612,11 @@ public partial class Table : Node3D
         }
         return null;
     }
-    
     private int GetMaxRow()
     {
         if (_nodePositions.Count == 0) return -1;
         return _nodePositions.Values.Max(pos => pos.row);
     }
-    
     private int GetMaxColumn()
     {
         if (_nodePositions.Count == 0) return -1;
@@ -625,6 +648,34 @@ public partial class Table : Node3D
         else
         {
             GD.PrintErr("One or both nodes are not in the table");
+        }
+    }
+    
+    // Remove a node from the table
+    public void RemoveNode(Node3D node)
+    {
+        if (_nodePositions.TryGetValue(node, out var position))
+        {
+            _nodePositions.Remove(node);
+            
+            // Check if this was the last node in its row/column
+            bool columnStillOccupied = false;
+            bool rowStillOccupied = false;
+            
+            foreach (var kvp in _nodePositions)
+            {
+                if (kvp.Value.column == position.column)
+                    columnStillOccupied = true;
+                if (kvp.Value.row == position.row)
+                    rowStillOccupied = true;
+            }
+            
+            if (!columnStillOccupied)
+                _occupiedColumns.Remove(position.column);
+            if (!rowStillOccupied)
+                _occupiedRows.Remove(position.row);
+                
+            node.QueueFree();
         }
     }
     #endregion
