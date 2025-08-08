@@ -28,4 +28,9 @@ public static class PrimerMathUtils
         }
         return from.Rotated(axis, angle * weight) * (num1 / s1);
     }
+    
+    public static double Sigmoid(double x)
+    {
+        return 1.0 / (1.0 + Mathf.Exp(-x));
+    }
 }
