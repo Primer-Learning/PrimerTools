@@ -164,18 +164,23 @@ public partial class BarPlot3D : Node3D, IPrimerGraphData
         return tween;
     }
 
-    public Animation Disappear()
+    public IStateChange Disappear()
     {
-        var animations = new List<Animation>();
-        
-        for (var x = 0; x < BinsX; x++)
-        for (var y = 0; y < BinsY; y++)
-        {
-            var bar = GetBar(x, y);
-            if (bar == null) continue;
-            animations.Add(bar.ScaleToAnimation(Vector3.Zero));
-        }
-
-        return animations.InParallel();
+        throw new NotImplementedException();
     }
+
+    // public Animation Disappear()
+    // {
+    //     var animations = new List<Animation>();
+    //     
+    //     for (var x = 0; x < BinsX; x++)
+    //     for (var y = 0; y < BinsY; y++)
+    //     {
+    //         var bar = GetBar(x, y);
+    //         if (bar == null) continue;
+    //         animations.Add(bar.ScaleToAnimation(Vector3.Zero));
+    //     }
+    //
+    //     return animations.InParallel();
+    // }
 }

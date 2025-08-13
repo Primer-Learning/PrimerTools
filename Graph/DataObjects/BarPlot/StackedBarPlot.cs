@@ -160,6 +160,11 @@ public partial class StackedBarPlot : Node3D, IPrimerGraphData
         return tween;
     }
 
+    public IStateChange Disappear()
+    {
+        throw new NotImplementedException();
+    }
+
     public Animation Transition(double duration = AnimationUtilities.DefaultDuration)
     {
         var stackProperties = DataAsRectProperties();
@@ -251,11 +256,6 @@ public partial class StackedBarPlot : Node3D, IPrimerGraphData
         }
 
         return bar;
-    }
-    
-    public Animation Disappear()
-    {
-        throw new NotImplementedException();
     }
     
     public void SetData(params List<float>[] stacks)

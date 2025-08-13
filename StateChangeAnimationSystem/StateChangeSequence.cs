@@ -38,7 +38,7 @@ public abstract partial class StateChangeSequence : Node
     public double PlaybackSpeed
     {
         get => _playbackSpeed;
-        set => _playbackSpeed = Mathf.Max(0.1, value);
+        set => _playbackSpeed = Mathf.Max(0.0, value);
     }
     
     public override void _Ready()
@@ -67,7 +67,7 @@ public abstract partial class StateChangeSequence : Node
         if (_startFromTime < 0) _startFromTime = TotalDuration;
         SeekTo(_startFromTime);
         
-        if (_startFromTime < TotalDuration)
+        if (_startFromTime < TotalDuration && _playbackSpeed > 0)
         {
             Play();
         }

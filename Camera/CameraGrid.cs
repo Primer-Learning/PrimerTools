@@ -12,7 +12,7 @@ public partial class CameraGrid : CanvasImitator
     {
         _exportedMemberChangeChecker ??= new ExportedMemberChangeChecker(this);
         
-        if (Engine.IsEditorHint() && _exportedMemberChangeChecker.CheckForChanges())
+        if (_exportedMemberChangeChecker.CheckForChanges())
         {
             DrawGrid();
         }
@@ -43,8 +43,8 @@ public partial class CameraGrid : CanvasImitator
     
     public override void _Ready()
     {
-        if (!Engine.IsEditorHint()) QueueFree();
-        DrawGrid();
+        // if (!Engine.IsEditorHint()) QueueFree();
+        // DrawGrid();
     }
     
     private void DrawGrid()

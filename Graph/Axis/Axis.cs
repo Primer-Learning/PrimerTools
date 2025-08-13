@@ -303,7 +303,6 @@ public partial class Axis : Node3D
 		}
 		else if (!string.IsNullOrEmpty(_label))
 		{
-			GD.Print($"Label for {Type} exists");
 			// Create new label
 			LabelNode = LatexNode.Create(_label);
 			UpdateLabelAlignmentSettings();
@@ -402,7 +401,7 @@ public partial class Axis : Node3D
 				return (
 					LabelAlignment == Graph.AxisLabelAlignmentOptions.Along
 						? new Vector3(LengthMinusPadding / 2 + Min * DataSpaceScale, -LabelOffset, 0)
-						: new Vector3(LengthMinusPadding + LabelOffset + 2 + Min * DataSpaceScale, 0, 0),
+						: new Vector3(LengthMinusPadding + 2 + Min * DataSpaceScale, -LabelOffset, 0),
 					new Vector3(0, 90, 0)
 				);
 				

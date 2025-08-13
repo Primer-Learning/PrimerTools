@@ -8,5 +8,5 @@ public interface IPrimerGraphData
     public Animation Transition(double duration);
     public IStateChange TransitionStateChange(double duration);
     public Tween TweenTransition(double duration);
-    public Animation Disappear();
+    public IStateChange Disappear();
 }

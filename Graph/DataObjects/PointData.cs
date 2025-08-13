@@ -60,7 +60,7 @@ public partial class PointData : Node3D, IPrimerGraphData
         throw new System.NotImplementedException();
     }
 
-    public Animation Disappear()
+    public IStateChange Disappear()
     {
         throw new System.NotImplementedException();
     }

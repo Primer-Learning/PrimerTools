@@ -95,7 +95,7 @@ public partial class ShaderArrow : Node3D
             if (_arrowData != null)
             {
                 _arrowData.HeadLength = value;
-                UpdateShaderParameters();
+                UpdateFromWorld3DPositions();
             }
         }
     }

@@ -255,6 +255,12 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
         // return this.AnimateValue(RenderExtent + 1, "RenderExtent");
     }
 
+    public IStateChange Disappear()
+    {
+        SetData(_dataPoints[0]);
+        return TransitionStateChange();
+    }
+
     /// <summary>
     /// Creates a tween that will transition the curve to the latest data. The returned tween will usually not be needed,
     /// but it's there if you want to chain things or whatever.
@@ -277,11 +283,6 @@ public partial class CurvePlot2D : MeshInstance3D, IPrimerGraphData
             duration
         );
         return tween;
-    }
-
-    public Animation Disappear()
-    {
-        throw new NotImplementedException();
     }
     #endregion
 

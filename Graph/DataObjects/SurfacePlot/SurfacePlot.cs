@@ -69,6 +69,7 @@ public partial class SurfacePlot : MeshInstance3D, IPrimerGraphData
         _surfaceStates.Add(stateData);
     }
 
+    // TODO: Make the min/max/points arguments optional.
     public void SetDataWithHeightFunction(Func<float, float, float> heightFunction,
         float minX, float maxX, int xPoints,
         float minZ, float maxZ, int zPoints)
@@ -317,11 +318,16 @@ public partial class SurfacePlot : MeshInstance3D, IPrimerGraphData
         return CreateTween();
     }
 
-    public Animation Disappear()
+    public IStateChange Disappear()
     {
-        // For now, return an empty animation
-        return new Animation();
+        throw new NotImplementedException();
     }
+
+    // public Animation Disappear()
+    // {
+    //     // For now, return an empty animation
+    //     return new Animation();
+    // }
 
     private void CreateMesh()
     {

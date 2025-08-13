@@ -274,6 +274,11 @@ public partial class BarPlot : Node3D, IPrimerGraphData
         return tween;
     }
 
+    public IStateChange Disappear()
+    {
+        throw new NotImplementedException();
+    }
+
     private MeshInstance3D CreateBar(int i, Tuple<float, float, float> rectProperties)
     {
         var bar = new MeshInstance3D();
@@ -305,11 +310,6 @@ public partial class BarPlot : Node3D, IPrimerGraphData
         }
 
         return bar;
-    }
-    
-    public Animation Disappear()
-    {
-        throw new System.NotImplementedException();
     }
     
     public void SetData(params float[] bars)
