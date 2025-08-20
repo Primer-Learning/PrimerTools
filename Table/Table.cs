@@ -208,14 +208,6 @@ public partial class Table : Node3D
     {
         AddChild(node);
         
-        // Check if there's already a node at this position
-        var existingNode = GetNodeAt(row, column);
-        if (existingNode != null)
-        {
-            GD.PrintErr("Overwriting a cell in the table");
-            _nodePositions.Remove(existingNode);
-        }
-        
         _nodePositions[node] = (row, column);
         
         // Mark this row and column as occupied

@@ -122,7 +122,6 @@ public abstract partial class StateChangeSequence : Node
                 if (_isPlaying) methodTrigger.Execute();
                 else methodTrigger.SetTriggered(); 
             }
-            
         }
         
         // Evaluate animations that we're in the middle of
