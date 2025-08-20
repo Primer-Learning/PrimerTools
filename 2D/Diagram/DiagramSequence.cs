@@ -5,7 +5,7 @@ namespace PrimerTools._2D.Diagram;
 
 public partial class DiagramSequence : StateChangeSequence
 {
-    protected override void Define()
+    public override void Define()
     {
         // Create a diagram system
         var diagram = new DiagramSystem();

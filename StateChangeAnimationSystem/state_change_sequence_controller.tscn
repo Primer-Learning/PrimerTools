@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://bxxakhhtmcbbd"]
 
-[ext_resource type="Script" uid="uid://bb532wmd4d8pb" path="res://addons/PrimerTools/StateChangeAnimationSystem/StateChangeSequenceController.cs" id="1_50png"]
+[ext_resource type="Script" uid="uid://bb532wmd4d8pb" path="res://addons/PrimerTools/StateChangeAnimationSystem/StateChangeSequencePlayerController.cs" id="1_50png"]
 
 [node name="Control" type="Control"]
 custom_minimum_size = Vector2(300, 150)

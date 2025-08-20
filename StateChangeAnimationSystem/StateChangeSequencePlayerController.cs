@@ -1,9 +1,10 @@
 using System.Linq;
 using Godot;
+using PrimerTools;
 
-public partial class StateChangeSequenceController : Control
+public partial class StateChangeSequencePlayerController : Control
 {
-    private StateChangeSequence _stateChangeSequence;
+    private StateChangeSequencePlayer _stateChangeSequencePlayer;
     private Button _playPauseButton;
     private Label _timeDisplay;
     private HSlider _timelineSlider;
@@ -18,15 +19,23 @@ public partial class StateChangeSequenceController : Control
 
     public override void _Ready()
     {
-        // Find the TweenSequence
-        _stateChangeSequence = GetParent().GetChildren()
-            .OfType<StateChangeSequence>()
+        _stateChangeSequencePlayer = GetParent().GetChildren()
+            .OfType<StateChangeSequencePlayer>()
             .FirstOrDefault();
-
-        if (_stateChangeSequence == null)
+        
+        if (_stateChangeSequencePlayer == null)
         {
             GD.PrintErr("No tween sequence found");
             return;
+        }
+        
+        if (_stateChangeSequencePlayer.TotalDuration == 0)
+        {
+            GD.PrintErr("State change sequence player has zero duration. It might not be Ready.");
+            if (_stateChangeSequencePlayer.IsNodeReady())
+            {
+                GD.PrintErr("Apparently, IsNodeReady can be true before Ready has been called on the node.");
+            }
         }
         
         _hideButton = GetNode<Button>("%HideButton");
@@ -42,8 +51,8 @@ public partial class StateChangeSequenceController : Control
         _playbackSpeedSpinBox.SetValueNoSignal(1.0);  // Explicitly set without triggering signals
         
         _seekTimeSpinBox = GetNode<SpinBox>("%SeekTimeSpinBox");
-        _seekTimeSpinBox.MaxValue = _stateChangeSequence.TotalDuration;
-        _seekTimeSpinBox.Value = _stateChangeSequence.StartFromTime;
+        _seekTimeSpinBox.MaxValue = _stateChangeSequencePlayer.TotalDuration;
+        _seekTimeSpinBox.Value = _stateChangeSequencePlayer.StartFromTime;
         
         _seekButton = GetNode<Button>("%SeekButton");
         _seekButton.Pressed += OnSeekButtonPressed;
@@ -56,27 +65,27 @@ public partial class StateChangeSequenceController : Control
         _timelineSlider.DragStarted += OnSliderDragStarted;
         _timelineSlider.DragEnded += OnSliderDragEnded;
         _timelineSlider.ValueChanged += OnSliderValueChanged;
-        _timelineSlider.MaxValue = _stateChangeSequence.TotalDuration;
+        _timelineSlider.MaxValue = _stateChangeSequencePlayer.TotalDuration;
     }
 
     public override void _Process(double delta)
     {
-        if (_stateChangeSequence == null) return;
+        if (_stateChangeSequencePlayer == null) return;
 
         // Update time display
-        _timeDisplay.Text = $"{_stateChangeSequence.CurrentTime:F2} / {_stateChangeSequence.TotalDuration:F2}";
+        _timeDisplay.Text = $"{_stateChangeSequencePlayer.CurrentTime:F2} / {_stateChangeSequencePlayer.TotalDuration:F2}";
 
         // Update button state
-        _playPauseButton.Text = _stateChangeSequence.IsPlaying ? "Pause" : "Play";
+        _playPauseButton.Text = _stateChangeSequencePlayer.IsPlaying ? "Pause" : "Play";
 
         // Update slider position if not dragging
         if (!_isDragging)
         {
-            _timelineSlider.SetValueNoSignal(_stateChangeSequence.CurrentTime);
+            _timelineSlider.SetValueNoSignal(_stateChangeSequencePlayer.CurrentTime);
         }
 
         // Update playback speed if supported (you'd need to add this to TweenSequence)
-        _stateChangeSequence.PlaybackSpeed = _playbackSpeedSpinBox.Value;
+        _stateChangeSequencePlayer.PlaybackSpeed = _playbackSpeedSpinBox.Value;
     }
 
     private void OnHideButtonPressed()
@@ -99,19 +108,19 @@ public partial class StateChangeSequenceController : Control
     
     private void OnPlayPausePressed()
     {
-        if (_stateChangeSequence == null) return;
+        if (_stateChangeSequencePlayer == null) return;
 
-        if (_stateChangeSequence.IsPlaying)
-            _stateChangeSequence.Pause();
+        if (_stateChangeSequencePlayer.IsPlaying)
+            _stateChangeSequencePlayer.Pause();
         else
-            _stateChangeSequence.Resume();
+            _stateChangeSequencePlayer.Resume();
     }
 
     private void OnResetPressed()
     {
-        if (_stateChangeSequence == null) return;
+        if (_stateChangeSequencePlayer == null) return;
 
-        _stateChangeSequence.SeekTo(0);
+        _stateChangeSequencePlayer.SeekTo(0);
     }
 
     private void OnSliderDragStarted()
@@ -119,9 +128,9 @@ public partial class StateChangeSequenceController : Control
         _isDragging = true;
 
         // Pause during scrubbing for smoother experience
-        if (_stateChangeSequence != null && _stateChangeSequence.IsPlaying)
+        if (_stateChangeSequencePlayer != null && _stateChangeSequencePlayer.IsPlaying)
         {
-            _stateChangeSequence.Pause();
+            _stateChangeSequencePlayer.Pause();
         }
     }
 
@@ -132,20 +141,20 @@ public partial class StateChangeSequenceController : Control
 
     private void OnSliderValueChanged(double value)
     {
-        if (_stateChangeSequence == null || !_isDragging) return;
+        if (_stateChangeSequencePlayer == null || !_isDragging) return;
         
-        _stateChangeSequence.SeekTo(value);
+        _stateChangeSequencePlayer.SeekTo(value);
     }
     
     private void OnSeekButtonPressed()
     {
-        if (_stateChangeSequence == null) return;
+        if (_stateChangeSequencePlayer == null) return;
         
-        _stateChangeSequence.SeekTo(_seekTimeSpinBox.Value);
+        _stateChangeSequencePlayer.SeekTo(_seekTimeSpinBox.Value);
     }
 
     private void SetSeekPoint()
     {
-        _seekTimeSpinBox.Value = _stateChangeSequence.CurrentTime;
+        _seekTimeSpinBox.Value = _stateChangeSequencePlayer.CurrentTime;
     }
 }

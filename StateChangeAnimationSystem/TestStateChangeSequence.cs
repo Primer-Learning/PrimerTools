@@ -5,7 +5,7 @@ namespace PrimerTools.TweenSystem;
 
 public partial class TestStateChangeSequence : StateChangeSequence
 {
-    protected override void Define()
+    public override void Define()
     {
         var cube = new MeshInstance3D();
         cube.Mesh = new BoxMesh();
