@@ -3,7 +3,7 @@ using PrimerTools;
 using PrimerTools._2D.Diagram;
 
 // [Tool]
-public partial class DiagramSystem : Node3D
+public partial class DiagramSystem : Node
 {
     public ShapeStyle DefaultStyle { get; set; } = new ShapeStyle();
     

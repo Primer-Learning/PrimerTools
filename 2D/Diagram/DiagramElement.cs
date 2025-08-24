@@ -2,7 +2,7 @@ using Godot;
 
 namespace PrimerTools._2D.Diagram;
 
-public partial class DiagramElement : Node
+public partial class DiagramElement : Node3D
 {
     [Export] private ShapeData _shapeData;
     private MeshInstance3D _meshInstance;
