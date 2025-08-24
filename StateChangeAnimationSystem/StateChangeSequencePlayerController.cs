@@ -13,6 +13,8 @@ public partial class StateChangeSequencePlayerController : Control
     private SpinBox _playbackSpeedSpinBox;
     private SpinBox _seekTimeSpinBox;
     private Button _seekButton;
+    private HSlider _volumeSlider;
+    private Label _volumeLabel;
     
     private Button _hideButton;
     private bool _hidden = false;
@@ -66,6 +68,21 @@ public partial class StateChangeSequencePlayerController : Control
         _timelineSlider.DragEnded += OnSliderDragEnded;
         _timelineSlider.ValueChanged += OnSliderValueChanged;
         _timelineSlider.MaxValue = _stateChangeSequencePlayer.TotalDuration;
+        
+        // Set up volume controls
+        _volumeSlider = GetNode<HSlider>("%VolumeSlider");
+        _volumeLabel = GetNode<Label>("%VolumeLabel");
+        
+        if (_volumeSlider != null)
+        {
+            _volumeSlider.MinValue = -80;
+            _volumeSlider.MaxValue = 24;
+            _volumeSlider.Step = 0.1;
+            _volumeSlider.Value = _stateChangeSequencePlayer.VolumeDb;
+            _volumeSlider.ValueChanged += OnVolumeSliderChanged;
+        }
+        
+        UpdateVolumeLabel();
     }
 
     public override void _Process(double delta)
@@ -156,5 +173,21 @@ public partial class StateChangeSequencePlayerController : Control
     private void SetSeekPoint()
     {
         _seekTimeSpinBox.Value = _stateChangeSequencePlayer.CurrentTime;
+    }
+    
+    private void OnVolumeSliderChanged(double value)
+    {
+        if (_stateChangeSequencePlayer == null) return;
+        
+        _stateChangeSequencePlayer.VolumeDb = (float)value;
+        UpdateVolumeLabel();
+    }
+    
+    private void UpdateVolumeLabel()
+    {
+        if (_volumeLabel != null && _stateChangeSequencePlayer != null)
+        {
+            _volumeLabel.Text = $"Volume: {_stateChangeSequencePlayer.VolumeDb:F1} dB";
+        }
     }
 }

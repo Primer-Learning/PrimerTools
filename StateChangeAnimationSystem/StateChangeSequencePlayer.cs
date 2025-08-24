@@ -21,6 +21,24 @@ public partial class StateChangeSequencePlayer : Node
     [Export] private double _startFromTime = 0;
     public double StartFromTime => _startFromTime;
     
+    [Export] private AudioStream _audioTrack;
+    private AudioStreamPlayer _audioPlayer;
+    
+    [Export(PropertyHint.Range, "-80,24,0.1")] 
+    private float _volumeDb = 0.0f;
+    public float VolumeDb
+    {
+        get => _volumeDb;
+        set
+        {
+            _volumeDb = Mathf.Clamp(value, -80.0f, 24.0f);
+            if (_audioPlayer != null)
+            {
+                _audioPlayer.VolumeDb = _volumeDb;
+            }
+        }
+    }
+    
     private readonly CompositeStateChange _rootComposite = new();
     private List<FlattenedAnimation> _flattenedAnimations;
     private double _timeAccumulator = 0;
@@ -37,11 +55,28 @@ public partial class StateChangeSequencePlayer : Node
     public double PlaybackSpeed
     {
         get => _playbackSpeed;
-        set => _playbackSpeed = Mathf.Max(0.0, value);
+        set
+        {
+            _playbackSpeed = Mathf.Max(0.0, value);
+            if (_audioPlayer != null)
+            {
+                _audioPlayer.PitchScale = (float)_playbackSpeed;
+            }
+        }
     }
     
     public override void _Ready()
     {
+        // Set up audio player if audio track is provided
+        if (_audioTrack != null)
+        {
+            _audioPlayer = new AudioStreamPlayer();
+            AddChild(_audioPlayer);
+            _audioPlayer.Stream = _audioTrack;
+            _audioPlayer.PitchScale = (float)_playbackSpeed;
+            _audioPlayer.VolumeDb = _volumeDb;
+        }
+        
         GatherSubsequences();
 
         // Flatten the entire animation tree once
@@ -98,6 +133,9 @@ public partial class StateChangeSequencePlayer : Node
             newTime = TotalDuration;
             _isPlaying = false;
             
+            // Stop audio when sequence completes
+            _audioPlayer?.Stop();
+            
             // Notify recorder if present
             var recorder = GetParent()?.GetChildren().OfType<SceneRecorder>().FirstOrDefault();
             recorder?.OnSequenceComplete();
@@ -114,6 +152,24 @@ public partial class StateChangeSequencePlayer : Node
         {
             GD.Print(TotalDuration);
             time = TotalDuration;
+        }
+        
+        // Sync audio position if we have an audio player
+        if (_audioPlayer != null)
+        {
+            if (_isPlaying && !_audioPlayer.Playing)
+            {
+                _audioPlayer.Play((float)time);
+            }
+            else if (_audioPlayer.Playing)
+            {
+                // Only seek if we're significantly out of sync (more than 50ms)
+                var audioPosition = _audioPlayer.GetPlaybackPosition();
+                if (Mathf.Abs(audioPosition - time) > 0.05)
+                {
+                    _audioPlayer.Seek((float)time);
+                }
+            }
         }
         
         // Revert animations that haven't started yet
@@ -147,22 +203,50 @@ public partial class StateChangeSequencePlayer : Node
         _currentTime = time;
         _startFromTime = time;
         _timeAccumulator = time - _startFromTime;
+        
+        // Seek audio to match
+        if (_audioPlayer != null)
+        {
+            _audioPlayer.Stop();
+            if (_isPlaying)
+            {
+                _audioPlayer.Play((float)time);
+            }
+        }
     }
+    
     // Add pause/resume methods
     public void Pause()
     {
         _isPlaying = false;
+        if (_audioPlayer != null)
+        {
+            _audioPlayer.StreamPaused = true;
+        }
     }
 
     public void Resume()
     {
         _isPlaying = true;
+        if (_audioPlayer != null)
+        {
+            _audioPlayer.StreamPaused = false;
+            if (!_audioPlayer.Playing)
+            {
+                _audioPlayer.Play((float)_currentTime);
+            }
+        }
     }
     
     private void Play()
     {
         _isPlaying = true;
         _timeAccumulator = 0;
-        // No more tween creation - just set the flag
+        
+        // Start audio playback
+        if (_audioPlayer != null)
+        {
+            _audioPlayer.Play((float)_currentTime);
+        }
     }
 }

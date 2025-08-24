@@ -13,6 +13,17 @@ grow_vertical = 2
 mouse_filter = 1
 script = ExtResource("1_50png")
 
+[node name="HideButton" type="Button" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -114.0
+offset_bottom = 31.0
+grow_horizontal = 0
+text = "Hide Controls"
+
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 12
@@ -98,10 +109,18 @@ text = "0.00 / 1.50"
 layout_mode = 2
 size_flags_horizontal = 8
 
-[node name="HideButton" type="Button" parent="VBoxContainer/MarginContainer/HBoxContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/MarginContainer/HBoxContainer"]
+layout_mode = 2
+
+[node name="VolumeLabel" type="Label" parent="VBoxContainer/MarginContainer/HBoxContainer/VBoxContainer"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Hide Controls"
+text = "Volume"
+
+[node name="VolumeSlider" type="HSlider" parent="VBoxContainer/MarginContainer/HBoxContainer/VBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
 
 [node name="ScrubberContainer" type="MarginContainer" parent="VBoxContainer"]
 unique_name_in_owner = true

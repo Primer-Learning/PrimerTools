@@ -1,6 +1,6 @@
 using Godot;
 
-public abstract partial class StateChangeSequence : Node
+public abstract partial class StateChangeSequence : Node3D
 {
     public readonly CompositeStateChange RootComposite = new();
     public abstract void Define();
