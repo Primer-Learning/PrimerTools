@@ -111,12 +111,14 @@ public partial class StateChangeSequencePlayerController : Control
         {
             GetNode<Control>("%ControlsContainer").Visible = false;
             GetNode<Control>("%ScrubberContainer").Visible = false;
+            GetNode<Control>("%VolumeContainer").Visible = false;
             _hideButton.Text = "Show";
         }
         else
         {
             GetNode<Control>("%ControlsContainer").Visible = true;
             GetNode<Control>("%ScrubberContainer").Visible = true;
+            GetNode<Control>("%VolumeContainer").Visible = true;
             _hideButton.Text = "Hide Controls";
         }
 

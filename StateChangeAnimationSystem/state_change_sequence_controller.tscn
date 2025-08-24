@@ -105,19 +105,20 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "0.00 / 1.50"
 
-[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/MarginContainer"]
+[node name="VolumeContainer" type="HBoxContainer" parent="VBoxContainer/MarginContainer"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 8
 
-[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/MarginContainer/HBoxContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/MarginContainer/VolumeContainer"]
 layout_mode = 2
 
-[node name="VolumeLabel" type="Label" parent="VBoxContainer/MarginContainer/HBoxContainer/VBoxContainer"]
+[node name="VolumeLabel" type="Label" parent="VBoxContainer/MarginContainer/VolumeContainer/VBoxContainer"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Volume"
 
-[node name="VolumeSlider" type="HSlider" parent="VBoxContainer/MarginContainer/HBoxContainer/VBoxContainer"]
+[node name="VolumeSlider" type="HSlider" parent="VBoxContainer/MarginContainer/VolumeContainer/VBoxContainer"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(200, 0)
 layout_mode = 2

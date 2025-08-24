@@ -66,11 +66,35 @@ public class CompositeStateChange : IStateChange
         _currentEndTime = startTime + change.Duration;
     }
     
+    // Sequential add with delay in minutes and seconds
+    public void AddStateChange(IStateChange change, int delayMinutes, float delaySeconds)
+    {
+        AddStateChange(change, delayMinutes * 60.0 + delaySeconds);
+    }
+    
+    // Sequential add with delay in minutes, seconds, and frames (60ths of a second)
+    public void AddStateChange(IStateChange change, int delayMinutes, int delaySeconds, int delayFrames)
+    {
+        AddStateChange(change, delayMinutes * 60.0 + delaySeconds + delayFrames / 60.0);
+    }
+    
     // Add at absolute time relative to this composite's start
     public void AddStateChangeAt(IStateChange change, double absoluteTime)
     {
         _timedChanges.Add(new TimedStateChange(change, absoluteTime));
         _currentEndTime = Math.Max(_currentEndTime, absoluteTime + change.Duration);
+    }
+    
+    // Add at absolute time specified in minutes and seconds
+    public void AddStateChangeAt(IStateChange change, int minutes, float seconds)
+    {
+        AddStateChangeAt(change, minutes * 60.0 + seconds);
+    }
+    
+    // Add at absolute time specified in minutes, seconds, and frames (60ths of a second)
+    public void AddStateChangeAt(IStateChange change, int minutes, int seconds, int frames)
+    {
+        AddStateChangeAt(change, minutes * 60.0 + seconds + frames / 60.0);
     }
     
     // Add in parallel with the last change
@@ -81,6 +105,18 @@ public class CompositeStateChange : IStateChange
         startTime += delay;
         _timedChanges.Add(new TimedStateChange(change, startTime));
         _currentEndTime = Math.Max(_currentEndTime, startTime + change.Duration);
+    }
+    
+    // Add in parallel with delay in minutes and seconds
+    public void AddStateChangeInParallel(IStateChange change, int delayMinutes, float delaySeconds)
+    {
+        AddStateChangeInParallel(change, delayMinutes * 60.0 + delaySeconds);
+    }
+    
+    // Add in parallel with delay in minutes, seconds, and frames (60ths of a second)
+    public void AddStateChangeInParallel(IStateChange change, int delayMinutes, int delaySeconds, int delayFrames)
+    {
+        AddStateChangeInParallel(change, delayMinutes * 60.0 + delaySeconds + delayFrames / 60.0);
     }
     
     public CompositeStateChange WithName(string name)

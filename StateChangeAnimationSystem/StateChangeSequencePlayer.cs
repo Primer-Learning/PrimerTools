@@ -21,6 +21,8 @@ public partial class StateChangeSequencePlayer : Node
     [Export] private double _startFromTime = 0;
     public double StartFromTime => _startFromTime;
     
+    [Export] private bool _combineSequencesInParallel = false;
+    
     [Export] private AudioStream _audioTrack;
     private AudioStreamPlayer _audioPlayer;
     
@@ -114,7 +116,17 @@ public partial class StateChangeSequencePlayer : Node
             if (child is StateChangeSequence subsequence)
             {
                 subsequence.Define();
-                _rootComposite.AddStateChange(subsequence.RootComposite);
+                
+                if (_combineSequencesInParallel)
+                {
+                    // All sequences start at time 0
+                    _rootComposite.AddStateChangeAt(subsequence.RootComposite, 0);
+                }
+                else
+                {
+                    // Current behavior: sequences in series
+                    _rootComposite.AddStateChange(subsequence.RootComposite);
+                }
             }
         }
     }
