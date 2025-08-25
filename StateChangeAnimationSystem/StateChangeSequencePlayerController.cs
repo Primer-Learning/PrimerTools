@@ -54,7 +54,7 @@ public partial class StateChangeSequencePlayerController : Control
         
         _seekTimeSpinBox = GetNode<SpinBox>("%SeekTimeSpinBox");
         _seekTimeSpinBox.MaxValue = _stateChangeSequencePlayer.TotalDuration;
-        _seekTimeSpinBox.Value = _stateChangeSequencePlayer.StartFromTime;
+        _seekTimeSpinBox.Value = _stateChangeSequencePlayer.StartTimeInSeconds;
         
         _seekButton = GetNode<Button>("%SeekButton");
         _seekButton.Pressed += OnSeekButtonPressed;
@@ -89,8 +89,13 @@ public partial class StateChangeSequencePlayerController : Control
     {
         if (_stateChangeSequencePlayer == null) return;
 
+        var minutesCurrent = Mathf.FloorToInt(_stateChangeSequencePlayer.CurrentTime / 60);
+        var secondsCurrent = _stateChangeSequencePlayer.CurrentTime % 60;
+        var minutesTotal = Mathf.FloorToInt(_stateChangeSequencePlayer.TotalDuration / 60);
+        var secondsTotal = _stateChangeSequencePlayer.TotalDuration % 60;
+        
         // Update time display
-        _timeDisplay.Text = $"{_stateChangeSequencePlayer.CurrentTime:F2} / {_stateChangeSequencePlayer.TotalDuration:F2}";
+        _timeDisplay.Text = $"{minutesCurrent}:{secondsCurrent:F2} / {minutesTotal}:{secondsTotal:F2}";
 
         // Update button state
         _playPauseButton.Text = _stateChangeSequencePlayer.IsPlaying ? "Pause" : "Play";

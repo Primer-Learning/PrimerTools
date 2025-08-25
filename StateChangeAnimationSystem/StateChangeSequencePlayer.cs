@@ -18,8 +18,9 @@ public partial class StateChangeSequencePlayer : Node
         }
     }
     
-    [Export] private double _startFromTime = 0;
-    public double StartFromTime => _startFromTime;
+    [Export] private int _startFromMinutes = 0;
+    [Export] private double _startFromSeconds = 0;
+    public double StartTimeInSeconds => _startFromMinutes * 60 + _startFromSeconds;
     
     [Export] private bool _combineSequencesInParallel = false;
     
@@ -100,10 +101,10 @@ public partial class StateChangeSequencePlayer : Node
             _flattenedAnimations[i].Animation.Revert();
         }
 
-        if (_startFromTime < 0) _startFromTime = TotalDuration;
-        SeekTo(_startFromTime);
+        if (StartTimeInSeconds < 0) _startFromSeconds = TotalDuration;
+        SeekTo(StartTimeInSeconds);
         
-        if (_startFromTime < TotalDuration && _playbackSpeed > 0)
+        if (StartTimeInSeconds < TotalDuration && _playbackSpeed > 0)
         {
             Play();
         }
@@ -175,9 +176,9 @@ public partial class StateChangeSequencePlayer : Node
             }
             else if (_audioPlayer.Playing)
             {
-                // Only seek if we're significantly out of sync (more than 50ms)
+                // Only seek if we're significantly out of sync (more than 10ms)
                 var audioPosition = _audioPlayer.GetPlaybackPosition();
-                if (Mathf.Abs(audioPosition - time) > 0.05)
+                if (Mathf.Abs(audioPosition - time) > 0.01)
                 {
                     _audioPlayer.Seek((float)time);
                 }
@@ -213,8 +214,11 @@ public partial class StateChangeSequencePlayer : Node
     {
         SeekToInternal(time);
         _currentTime = time;
-        _startFromTime = time;
-        _timeAccumulator = time - _startFromTime;
+        // This is sort of weird, but once we're seeking, just use seconds.
+        // The minutes option is really for the editor. At least for now.
+        _startFromSeconds = time;
+        _startFromMinutes = 0;
+        _timeAccumulator = time - _startFromSeconds;
         
         // Seek audio to match
         if (_audioPlayer != null)
