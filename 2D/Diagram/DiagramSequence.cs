@@ -58,7 +58,7 @@ public partial class DiagramSequence : StateChangeSequence
         
         // Animate the shapes directly
         // Move circle1 to the right
-        AddStateChange(
+        AddStateChangeWithDelay(
             new PropertyStateChange(circle1Data, "Center", new Vector2(0, 0))
                 .WithDuration(2)
         );
@@ -70,7 +70,7 @@ public partial class DiagramSequence : StateChangeSequence
         );
         
         // Move both circles up
-        AddStateChange(
+        AddStateChangeWithDelay(
             new PropertyStateChange(circle1Data, "Center", new Vector2(0, 2))
                 .WithDuration(1.5)
         );
@@ -80,19 +80,19 @@ public partial class DiagramSequence : StateChangeSequence
         );
         
         // Shrink circle1
-        AddStateChange(
+        AddStateChangeWithDelay(
             new PropertyStateChange(circle1Data, "Radius", 0.2f)
                 .WithDuration(1)
         );
         
         // Animate rectangle size
-        AddStateChange(
+        AddStateChangeWithDelay(
             new PropertyStateChange(rectData, "Size", new Vector2(2.0f, 0.2f))
                 .WithDuration(1.5)
         );
         
         // Animate line endpoints
-        AddStateChange(
+        AddStateChangeWithDelay(
             new PropertyStateChange(lineData, "PointB", new Vector2(1, 1))
                 .WithDuration(2)
         );
@@ -104,13 +104,13 @@ public partial class DiagramSequence : StateChangeSequence
         );
         
         // Animate composite smoothness
-        AddStateChange(
+        AddStateChangeWithDelay(
             new PropertyStateChange(compositeData1, "Smoothness", 0.05f)
                 .WithDuration(2)
         );
         
         // Animate the shapes within the composite
-        AddStateChange(
+        AddStateChangeWithDelay(
             new PropertyStateChange(compositeData1.Shape1 as CircleData, "Radius", 0.3f)
                 .WithDuration(1.5f)
         );

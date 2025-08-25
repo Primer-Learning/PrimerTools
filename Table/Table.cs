@@ -433,7 +433,7 @@ public partial class Table : Node3D
         var composite = new CompositeStateChange().WithName("Table Transition");
 
         // 1. Update grid lines based on current table dimensions
-        composite.AddStateChange(TransitionGridLines(duration));
+        composite.AddStateChangeWithDelay(TransitionGridLines(duration));
 
         // 2. Scale up any cells that are at zero scale
         foreach (var kvp in _nodePositions)

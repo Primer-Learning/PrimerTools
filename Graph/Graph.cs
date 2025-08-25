@@ -232,8 +232,8 @@ public partial class Graph : Node3D
         var addPhase = new CompositeStateChange().WithName("Add Phase");
 
         // Update data space markers (happens during remove with zero duration)
-        removePhase.AddStateChange(_dataSpaceMin.MoveTo(new Vector3(XAxis.Min, YAxis.Min, ZAxis.Min)).WithDuration(0));
-        removePhase.AddStateChange(_dataSpaceMax.MoveTo(new Vector3(XAxis.Max, YAxis.Max, ZAxis.Max)).WithDuration(0));
+        removePhase.AddStateChangeWithDelay(_dataSpaceMin.MoveTo(new Vector3(XAxis.Min, YAxis.Min, ZAxis.Min)).WithDuration(0));
+        removePhase.AddStateChangeWithDelay(_dataSpaceMax.MoveTo(new Vector3(XAxis.Max, YAxis.Max, ZAxis.Max)).WithDuration(0));
 
         // Axis processing
         foreach (var axis in Axes)
@@ -250,9 +250,9 @@ public partial class Graph : Node3D
             updatePhase.AddStateChangeInParallel(dataObject.TransitionStateChange(updateDuration));
         }
         
-        composite.AddStateChange(removePhase.WithDuration(removeDuration));
-        composite.AddStateChange(updatePhase.WithDuration(updateDuration));
-        composite.AddStateChange(addPhase.WithDuration(addDuration));
+        composite.AddStateChangeWithDelay(removePhase.WithDuration(removeDuration));
+        composite.AddStateChangeWithDelay(updatePhase.WithDuration(updateDuration));
+        composite.AddStateChangeWithDelay(addPhase.WithDuration(addDuration));
 
         return composite;
     }

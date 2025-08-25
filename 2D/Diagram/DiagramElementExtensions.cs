@@ -10,7 +10,7 @@ public static class DiagramElementExtensions
         var originalThickness = element.Style.Thickness;
         element.Style.Thickness = 0;
         var appearanceStateChange = new CompositeStateChange();
-        appearanceStateChange.AddStateChange(
+        appearanceStateChange.AddStateChangeWithDelay(
             new PropertyStateChange(element.Style, "Thickness", originalThickness).WithDuration(duration)
         );
         
@@ -67,12 +67,12 @@ public static class DiagramElementExtensions
         switch (element.ShapeData)
         {
             case CircleData circleData:
-                appearanceStateChange.AddStateChange(
+                appearanceStateChange.AddStateChangeWithDelay(
                     new PropertyStateChange(circleData, "Radius", 0).WithDuration(duration)
                 );
                 break;
             case ArrowData arrowData:
-                appearanceStateChange.AddStateChange(
+                appearanceStateChange.AddStateChangeWithDelay(
                     new PropertyStateChange(arrowData, "Start", arrowData.End).WithDuration(duration)
                 );
                 appearanceStateChange.AddStateChangeInParallel(
@@ -103,7 +103,7 @@ public static class DiagramElementExtensions
         var originalThickness = element.Style.Thickness;
         element.Style.Thickness = 0;
         var appearanceStateChange = new CompositeStateChange();
-        appearanceStateChange.AddStateChange(
+        appearanceStateChange.AddStateChangeWithDelay(
             new PropertyStateChange(element.Style, "Thickness", originalThickness).WithDuration(duration)
         );
         
@@ -130,7 +130,7 @@ public static class DiagramElementExtensions
     public static CompositeStateChange Disappear(this ShaderBracket element, double duration = Node3DStateChangeExtensions.DefaultDuration)
     {
         var appearanceStateChange = new CompositeStateChange();
-        appearanceStateChange.AddStateChange(
+        appearanceStateChange.AddStateChangeWithDelay(
             new PropertyStateChange(element.Style, "Thickness", 0).WithDuration(duration)
         );
         
@@ -153,7 +153,7 @@ public static class DiagramElementExtensions
         var originalThickness = element.Style.Thickness;
         element.Style.Thickness = 0;
         var appearanceStateChange = new CompositeStateChange();
-        appearanceStateChange.AddStateChange(
+        appearanceStateChange.AddStateChangeWithDelay(
             new PropertyStateChange(element.Style, "Thickness", originalThickness).WithDuration(duration)
         );
         
@@ -200,7 +200,7 @@ public static class DiagramElementExtensions
             currentHeadPosition = element.EndPosition;
         }
         
-        appearanceStateChange.AddStateChange(
+        appearanceStateChange.AddStateChangeWithDelay(
             new PropertyStateChange(element, "StartPosition", currentHeadPosition.Value).WithDuration(duration)
         );
         

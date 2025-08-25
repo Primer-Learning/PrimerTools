@@ -90,7 +90,7 @@ public static class Node3DStateChangeExtensions
         // Add the prep rotation
         var prepRotation = node.RotateTo(new Quaternion(Vector3.Back, difference.Normalized()), global: false)
             .WithDuration(prepTurnDuration);
-        composite.AddStateChange(prepRotation);
+        composite.AddStateChangeWithDelay(prepRotation);
         
         // Add the movement in parallel with the rotation
         var move = node.MoveTo(destination, stopDistance);
@@ -106,18 +106,18 @@ public static class Node3DStateChangeExtensions
         var composite = new CompositeStateChange().WithName($"{node.Name}.Pulse()");
         
         // Scale up
-        composite.AddStateChange(node.ScaleTo(originalScale * scaleFactor).WithDuration(attack));
+        composite.AddStateChangeWithDelay(node.ScaleTo(originalScale * scaleFactor).WithDuration(attack));
         
         // Hold (if any)
         if (hold > 0)
         {
             // Add a delay by using a dummy state change
             // We could also add a DelayStateChange class for this purpose
-            composite.AddStateChange(new PropertyStateChange(node, "scale", originalScale * scaleFactor).WithDuration(hold));
+            composite.AddStateChangeWithDelay(new PropertyStateChange(node, "scale", originalScale * scaleFactor).WithDuration(hold));
         }
         
         // Scale back down
-        composite.AddStateChange(node.ScaleTo(originalScale).WithDuration(decay));
+        composite.AddStateChangeWithDelay(node.ScaleTo(originalScale).WithDuration(decay));
         
         return composite;
     }

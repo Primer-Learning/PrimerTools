@@ -121,12 +121,12 @@ public partial class StateChangeSequencePlayer : Node
                 if (_combineSequencesInParallel)
                 {
                     // All sequences start at time 0
-                    _rootComposite.AddStateChangeAt(subsequence.RootComposite, 0);
+                    _rootComposite.AddStateChange(subsequence.RootComposite, 0);
                 }
                 else
                 {
                     // Current behavior: sequences in series
-                    _rootComposite.AddStateChange(subsequence.RootComposite);
+                    _rootComposite.AddStateChangeWithDelay(subsequence.RootComposite);
                 }
             }
         }

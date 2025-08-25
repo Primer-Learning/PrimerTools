@@ -5,34 +5,34 @@ public abstract partial class StateChangeSequence : Node3D
     public readonly CompositeStateChange RootComposite = new();
     public abstract void Define();
     
-    protected void AddStateChange(IStateChange stateChange, double delay = 0)
+    protected void AddStateChangeWithDelay(IStateChange stateChange, double delay = 0)
     {
-        RootComposite.AddStateChange(stateChange, delay);
+        RootComposite.AddStateChangeWithDelay(stateChange, delay);
     }
     
-    protected void AddStateChange(IStateChange stateChange, int delayMinutes, float delaySeconds)
+    protected void AddStateChangeWithDelay(IStateChange stateChange, int delayMinutes, float delaySeconds)
     {
-        RootComposite.AddStateChange(stateChange, delayMinutes, delaySeconds);
+        RootComposite.AddStateChangeWithDelay(stateChange, delayMinutes, delaySeconds);
     }
     
-    protected void AddStateChange(IStateChange stateChange, int delayMinutes, int delaySeconds, int delayFrames)
+    protected void AddStateChangeWithDelay(IStateChange stateChange, int delayMinutes, int delaySeconds, int delayFrames)
     {
-        RootComposite.AddStateChange(stateChange, delayMinutes, delaySeconds, delayFrames);
+        RootComposite.AddStateChangeWithDelay(stateChange, delayMinutes, delaySeconds, delayFrames);
     }
     
-    protected void AddStateChangeAt(IStateChange stateChange, double absoluteTime)
+    protected void AddStateChange(IStateChange stateChange, double absoluteTime = -1)
     {
-        RootComposite.AddStateChangeAt(stateChange, absoluteTime);
+        RootComposite.AddStateChange(stateChange, absoluteTime);
     }
     
-    protected void AddStateChangeAt(IStateChange stateChange, int minutes, float seconds)
+    protected void AddStateChange(IStateChange stateChange, int minutes, float seconds)
     {
-        RootComposite.AddStateChangeAt(stateChange, minutes, seconds);
+        RootComposite.AddStateChange(stateChange, minutes, seconds);
     }
     
-    protected void AddStateChangeAt(IStateChange stateChange, int minutes, int seconds, int frames)
+    protected void AddStateChange(IStateChange stateChange, int minutes, int seconds, int frames)
     {
-        RootComposite.AddStateChangeAt(stateChange, minutes, seconds, frames);
+        RootComposite.AddStateChange(stateChange, minutes, seconds, frames);
     }
     
     protected void AddStateChangeInParallel(IStateChange stateChange, double delay = 0)

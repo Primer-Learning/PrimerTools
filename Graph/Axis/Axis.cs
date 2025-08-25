@@ -160,17 +160,17 @@ public partial class Axis : Node3D
 	    var (removeLabel, updateLabel, addLabel) = UpdateLabelStateChange(duration);
 
 	    var removeComposite = new CompositeStateChange().WithName($"{Name} Remove");
-	    removeComposite.AddStateChange(removeTics);
+	    removeComposite.AddStateChangeWithDelay(removeTics);
 	    removeComposite.AddStateChangeInParallel(removeLabel);
 
 	    var updateComposite = new CompositeStateChange().WithName($"{Name} Update");
-	    updateComposite.AddStateChange(UpdateArrowsStateChange(duration));
+	    updateComposite.AddStateChangeWithDelay(UpdateArrowsStateChange(duration));
 	    updateComposite.AddStateChangeInParallel(UpdateRodStateChange(duration));
 	    updateComposite.AddStateChangeInParallel(updateTics);
 	    updateComposite.AddStateChangeInParallel(updateLabel);
 
 	    var addComposite = new CompositeStateChange().WithName($"{Name} Add");
-	    addComposite.AddStateChange(addTics);
+	    addComposite.AddStateChangeWithDelay(addTics);
 	    addComposite.AddStateChangeInParallel(addLabel);
 
 	    return (removeComposite, updateComposite, addComposite);
@@ -183,7 +183,7 @@ public partial class Axis : Node3D
 
 	    if (!ShowRod) { rod.Visible = false; }
 
-	    composite.AddStateChange(rod.MoveTo(new Vector3(-Padding.X + Min * DataSpaceScale, 0f, 0f)).WithDuration(duration));
+	    composite.AddStateChangeWithDelay(rod.MoveTo(new Vector3(-Padding.X + Min * DataSpaceScale, 0f, 0f)).WithDuration(duration));
 	    composite.AddStateChangeInParallel(
 	        rod.ScaleTo(length == 0
 	            ? Vector3.Zero
@@ -214,7 +214,7 @@ public partial class Axis : Node3D
 	        startArrow.Scale = Vector3.Zero;
 	    }
 
-	    composite.AddStateChange(startArrow.MoveTo(new Vector3(-padding.X + Min * DataSpaceScale, 0f, 0f)).WithDuration(duration));
+	    composite.AddStateChangeWithDelay(startArrow.MoveTo(new Vector3(-padding.X + Min * DataSpaceScale, 0f, 0f)).WithDuration(duration));
 	    composite.AddStateChangeInParallel(endArrow.MoveTo(new Vector3(length - padding.X + Min * DataSpaceScale, 0f, 0f)).WithDuration(duration));
 
 	    return composite;
@@ -297,7 +297,7 @@ public partial class Axis : Node3D
 		{
 			// Update existing label
 			var (position, rotation) = GetLabelTransform();
-			updateComposite.AddStateChange(LabelNode.MoveTo(position).WithDuration(duration));
+			updateComposite.AddStateChangeWithDelay(LabelNode.MoveTo(position).WithDuration(duration));
 			updateComposite.AddStateChangeInParallel(LabelNode.RotateTo(rotation).WithDuration(duration));
 			updateComposite.AddStateChangeInParallel(LabelNode.ScaleTo(Vector3.One * LabelScale).WithDuration(duration));
 		}
@@ -313,7 +313,7 @@ public partial class Axis : Node3D
 			LabelNode.Scale = Vector3.Zero;
 			AddChild(LabelNode);
 			
-			addComposite.AddStateChange(LabelNode.ScaleTo(Vector3.One * LabelScale).WithDuration(duration));
+			addComposite.AddStateChangeWithDelay(LabelNode.ScaleTo(Vector3.One * LabelScale).WithDuration(duration));
 		}
 		
 		return (removeComposite, updateComposite, addComposite);

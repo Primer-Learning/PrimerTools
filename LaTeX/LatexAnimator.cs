@@ -267,7 +267,7 @@ public partial class LatexAnimator : Node3D
         
         // Disappear phase
         var disappearPhase = new CompositeStateChange().WithName("Disappear Phase");
-        disappearPhase.AddStateChange(new PropertyStateChange(_latexNodes[_currentExpressionIndex], "visible", false).WithDuration(0.001));
+        disappearPhase.AddStateChangeWithDelay(new PropertyStateChange(_latexNodes[_currentExpressionIndex], "visible", false).WithDuration(0.001));
         disappearPhase.AddStateChangeInParallel(new PropertyStateChange(intermediateNode, "visible", true).WithDuration(0.001));
         
         for (var i = 0; i < copiesOfCurrentExpressionCharacters.Count; i++)
@@ -275,7 +275,7 @@ public partial class LatexAnimator : Node3D
             if (preservedFromIndices.Contains(i)) continue;
             disappearPhase.AddStateChangeInParallel(copiesOfCurrentExpressionCharacters[i].ScaleTo(0));
         }
-        composite.AddStateChange(disappearPhase);
+        composite.AddStateChangeWithDelay(disappearPhase);
         
         // Movement phase
         var movementPhase = new CompositeStateChange().WithName("Movement Phase");
@@ -300,7 +300,7 @@ public partial class LatexAnimator : Node3D
         }
         if (movementPhase.Duration > 0) // Only add if there are movements
         {
-            composite.AddStateChange(movementPhase);
+            composite.AddStateChangeWithDelay(movementPhase);
         }
         
         // Appearance phase
@@ -312,14 +312,14 @@ public partial class LatexAnimator : Node3D
         }
         if (appearancePhase.Duration > 0) // Only add if there are appearances
         {
-            composite.AddStateChange(appearancePhase);
+            composite.AddStateChangeWithDelay(appearancePhase);
         }
         
         // Final swap to new expression
         var finalSwap = new CompositeStateChange().WithName("Final Swap");
-        finalSwap.AddStateChange(new PropertyStateChange(_latexNodes[newIndex], "visible", true).WithDuration(0.001));
+        finalSwap.AddStateChangeWithDelay(new PropertyStateChange(_latexNodes[newIndex], "visible", true).WithDuration(0.001));
         finalSwap.AddStateChangeInParallel(new PropertyStateChange(intermediateNode, "visible", false).WithDuration(0.001));
-        composite.AddStateChange(finalSwap);
+        composite.AddStateChangeWithDelay(finalSwap);
 
         _currentExpressionIndex = newIndex;
 
