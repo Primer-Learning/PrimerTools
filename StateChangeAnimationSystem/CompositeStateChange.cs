@@ -59,11 +59,16 @@ public class CompositeStateChange : IStateChange
     }
     
     // Sequential add - starts after the last registered change
-    public void AddStateChangeWithDelay(IStateChange change, double delay = 0)
+    public void AddStateChangeWithDelay(IStateChange change, double delay = 0, bool log = false)
     {
         var startTime = _currentEndTime + delay;
         _timedChanges.Add(new TimedStateChange(change, startTime));
         _currentEndTime = startTime + change.Duration;
+
+        if (log)
+        {
+            GD.Print($"Start time {startTime}");
+        }
     }
     
     // Sequential add with delay in minutes and seconds
@@ -79,11 +84,11 @@ public class CompositeStateChange : IStateChange
     }
     
     // Add at absolute time relative to this composite's start
-    public void AddStateChange(IStateChange change, double absoluteTime = -1)
+    public void AddStateChange(IStateChange change, double absoluteTime = -1, bool log = false)
     {
         if (absoluteTime == -1)
         {
-            AddStateChangeWithDelay(change);
+            AddStateChangeWithDelay(change, log: log);
         }
         else
         {
@@ -94,9 +99,9 @@ public class CompositeStateChange : IStateChange
     }
     
     // Add at absolute time specified in minutes and seconds
-    public void AddStateChange(IStateChange change, int minutes, float seconds)
+    public void AddStateChange(IStateChange change, int minutes, float seconds, bool log = false)
     {
-        AddStateChange(change, minutes * 60.0 + seconds);
+        AddStateChange(change, minutes * 60.0 + seconds, log: false);
     }
     
     // Add at absolute time specified in minutes, seconds, and frames (60ths of a second)

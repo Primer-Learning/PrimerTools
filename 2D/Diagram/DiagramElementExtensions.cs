@@ -163,6 +163,13 @@ public static class DiagramElementExtensions
             new PropertyStateChange(element.Style, "Smoothness", originalSmoothness).WithDuration(duration)
         );
         
+        // Just to pin this down. Without this, the start position when evaluated will be wherever the last 
+        // one was set.
+        appearanceStateChange.AddStateChangeInParallel(
+            new PropertyStateChange(element, "StartPosition", element.StartPosition).WithDuration(0),
+            delay: 0
+        );
+        
         var originalEnd = element.EndPosition;
         element.EndPosition = element.StartPosition;
         appearanceStateChange.AddStateChangeInParallel(
