@@ -155,35 +155,15 @@ public partial class StateChangeSequencePlayer : Node
         }
         
         // Use the existing seek logic for frame-by-frame updates
-        SeekToInternal(newTime);
+        SeekForward(newTime);
         _currentTime = newTime;
     }
     
     private void SeekToInternal(double time)
     {
-        if (time < 0)
-        {
-            GD.Print(TotalDuration);
-            time = TotalDuration;
-        }
+        if (time < 0) time = TotalDuration;
         
-        // Sync audio position if we have an audio player
-        if (_audioPlayer != null)
-        {
-            if (_isPlaying && !_audioPlayer.Playing)
-            {
-                _audioPlayer.Play((float)time);
-            }
-            else if (_audioPlayer.Playing)
-            {
-                // Only seek if we're significantly out of sync (more than 10ms)
-                var audioPosition = _audioPlayer.GetPlaybackPosition();
-                if (Mathf.Abs(audioPosition - time) > 0.01)
-                {
-                    _audioPlayer.Seek((float)time);
-                }
-            }
-        }
+        SeekAudio(time); // TODO: Try getting rid of this. It seems that SeekToInternal's only call site has audio seeking on its own.
         
         // Revert animations that haven't started yet
         foreach (var animation in _flattenedAnimations.Where(a => a.AbsoluteStartTime > time).Reverse())
@@ -193,6 +173,32 @@ public partial class StateChangeSequencePlayer : Node
         
         // Apply all animations that should be complete by this time
         foreach (var animation in _flattenedAnimations.Where(a => a.AbsoluteEndTime <= time))
+        {
+            animation.Animation.ApplyEndState();
+            if (animation.Animation is MethodTriggerStateChange methodTrigger)
+            {
+                if (_isPlaying) methodTrigger.Execute();
+                else methodTrigger.SetTriggered(); 
+            }
+        }
+        
+        // Evaluate animations that we're in the middle of
+        foreach (var animation in _flattenedAnimations.Where(a => a.AbsoluteStartTime <= time && a.AbsoluteEndTime > time))
+        {
+            var elapsedTime = time - animation.AbsoluteStartTime;
+            animation.Animation.EvaluateAtTime(elapsedTime);
+        }
+    }
+    
+    private void SeekForward(double time)
+    {
+        if (time < 0) time = TotalDuration;
+        
+        SeekAudio(time);
+        
+        // Apply animations that have completed in the last delta
+        var delta = 1; 
+        foreach (var animation in _flattenedAnimations.Where(a => a.AbsoluteEndTime <= time && a.AbsoluteEndTime > time - delta))
         {
             animation.Animation.ApplyEndState();
             if (animation.Animation is MethodTriggerStateChange methodTrigger)
@@ -227,6 +233,27 @@ public partial class StateChangeSequencePlayer : Node
             if (_isPlaying)
             {
                 _audioPlayer.Play((float)time);
+            }
+        }
+    }
+
+    private void SeekAudio(double time)
+    {
+        // Sync audio position if we have an audio player
+        if (_audioPlayer != null)
+        {
+            if (_isPlaying && !_audioPlayer.Playing)
+            {
+                _audioPlayer.Play((float)time);
+            }
+            else if (_audioPlayer.Playing)
+            {
+                // Only seek if we're significantly out of sync (more than 10ms)
+                var audioPosition = _audioPlayer.GetPlaybackPosition();
+                if (Mathf.Abs(audioPosition - time) > 0.01)
+                {
+                    _audioPlayer.Seek((float)time);
+                }
             }
         }
     }
