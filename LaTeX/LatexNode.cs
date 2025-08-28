@@ -86,6 +86,25 @@ public partial class LatexNode : Node3D
 		}
 	}
 
+	public bool Billboard = false;
+
+	public override void _Process(double delta)
+	{
+		if (Billboard)
+		{
+			// GD.Print("arstoienarst");
+			// LookAt(GetParent<Node3D>().ToLocal(GetViewport().GetCamera3D().GlobalPosition), Vector3.Up, useModelFront: true);
+			// LookAt(ToLocal(GetViewport().GetCamera3D().GlobalPosition), Vector3.Up, useModelFront: true);
+
+			var scale = Scale;
+			
+			var forward = (GetViewport().GetCamera3D().GlobalPosition - GlobalPosition).Normalized();
+			var basis = Transform3DUtils.BasisFromForwardAndUp(forward, Vector3.Up);
+			GlobalBasis = basis;
+			Scale = scale;
+		}
+	}
+
 	public Animation AnimateNumericalExpression(float value, double duration = AnimationUtilities.DefaultDuration)
 	{
 		var labelTextAnimation = new Animation();
