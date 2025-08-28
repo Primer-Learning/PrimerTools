@@ -13,7 +13,7 @@ internal class SvgToMesh
 {
     public string GetPathToExisting(string identifier)
     {
-        var dirPath = "addons/PrimerTools/LaTeX";
+        var dirPath = ProjectSettings.GlobalizePath("res://addons/PrimerTools/LaTeX");
         var gltfDirPath = Path.Combine(dirPath, "gltf");
         if (!Directory.Exists(gltfDirPath)) Directory.CreateDirectory(gltfDirPath);
         var destinationPath = Path.Combine(gltfDirPath, GenerateFileName(identifier) + ".gltf");
@@ -22,12 +22,13 @@ internal class SvgToMesh
     
     public async Task<string> ConvertSvgToMesh(string svgPath, string identifier, bool openBlender = false)
     {
-        var dirPath = "addons/PrimerTools/LaTeX";
+        var dirPath = ProjectSettings.GlobalizePath("res://addons/PrimerTools/LaTeX");
         var gltfDirPath = Path.Combine(dirPath, "gltf");
         if (!Directory.Exists(gltfDirPath)) Directory.CreateDirectory(gltfDirPath);
         var destinationPath = Path.Combine(gltfDirPath, GenerateFileName(identifier) + ".gltf");
         
-        var scriptPath = Path.Combine(dirPath, "svg_to_mesh.py");
+        // Use the direct SVG script that doesn't expect an 'H' character
+        var scriptPath = Path.Combine(dirPath, "svg_to_mesh_direct.py");
         
         // Queue the actual processing work
         return await LatexProcessQueue.EnqueueAsync(
@@ -49,14 +50,19 @@ internal class SvgToMesh
             UseShellExecute = false
         };
         
+        // Properly quote paths that may contain spaces
+        var quotedScriptPath = $"\"{scriptPath}\"";
+        var quotedSvgPath = $"\"{svgPath}\"";
+        var quotedDestinationPath = $"\"{destinationPath}\"";
+        
         if (openBlender)
         {
-            startInfo.Arguments = $"--python {scriptPath} -- {svgPath} {destinationPath}";
+            startInfo.Arguments = $"--python {quotedScriptPath} -- {quotedSvgPath} {quotedDestinationPath}";
             startInfo.CreateNoWindow = false;
         }
         else
         {
-            startInfo.Arguments = $"--background --python {scriptPath} -- {svgPath} {destinationPath}";
+            startInfo.Arguments = $"--background --python {quotedScriptPath} -- {quotedSvgPath} {quotedDestinationPath}";
             startInfo.CreateNoWindow = true;
         }
         

@@ -114,11 +114,12 @@ internal class LatexToMesh
         
         // Then convert SVG to mesh using the shared converter
         // Note: We don't re-queue this since we're already in a queued task
-        var dirPath = "addons/PrimerTools/LaTeX";
+        var dirPath = ProjectSettings.GlobalizePath("res://addons/PrimerTools/LaTeX");
         var gltfDirPath = Path.Combine(dirPath, "gltf");
         if (!Directory.Exists(gltfDirPath)) Directory.CreateDirectory(gltfDirPath);
         var destinationPath = Path.Combine(gltfDirPath, SvgToMesh.GenerateFileName(latex) + ".gltf");
         
+        // Use the original script that expects the 'H' character for LaTeX
         var scriptPath = Path.Combine(dirPath, "svg_to_mesh.py");
         
         // TODO: Get the blender path from Godot's user settings
@@ -129,14 +130,19 @@ internal class LatexToMesh
             UseShellExecute = false
         };
         
+        // Properly quote paths that may contain spaces
+        var quotedScriptPath = $"\"{scriptPath}\"";
+        var quotedSvgPath = $"\"{svgPath}\"";
+        var quotedDestinationPath = $"\"{destinationPath}\"";
+        
         if (openBlender)
         {
-            startInfo.Arguments = $"--python {scriptPath} -- {svgPath} {destinationPath}";
+            startInfo.Arguments = $"--python {quotedScriptPath} -- {quotedSvgPath} {quotedDestinationPath}";
             startInfo.CreateNoWindow = false;
         }
         else
         {
-            startInfo.Arguments = $"--background --python {scriptPath} -- {svgPath} {destinationPath}";
+            startInfo.Arguments = $"--background --python {quotedScriptPath} -- {quotedSvgPath} {quotedDestinationPath}";
             startInfo.CreateNoWindow = true;
         }
         
