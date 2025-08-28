@@ -139,9 +139,9 @@ public partial class SceneRecorder : Node
                 CreateRecordingDirectory();
             }
             
-            // Hide FPS viewer if present
-            var fpsViewer = GetParent().GetChildren().OfType<FPSViewer>().FirstOrDefault();
-            if (fpsViewer != null) fpsViewer.Visible = false;
+            // Hide Sequence controller
+            var sequenceController = GetParent().GetChildren().OfType<StateChangeSequencePlayerController>().FirstOrDefault();
+            if (sequenceController != null) sequenceController.Visible = false;
         }
     }
     

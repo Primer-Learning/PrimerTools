@@ -44,7 +44,6 @@ public partial class StateChangeSequencePlayer : Node
     
     private readonly CompositeStateChange _rootComposite = new();
     private List<FlattenedAnimation> _flattenedAnimations;
-    private double _timeAccumulator = 0;
     private double _currentTime = 0;
     private bool _isPlaying = false;
 
@@ -150,95 +149,17 @@ public partial class StateChangeSequencePlayer : Node
             _audioPlayer?.Stop();
             
             // Notify recorder if present
-            var recorder = GetParent()?.GetChildren().OfType<SceneRecorder>().FirstOrDefault();
+            var recorder = GetParent().GetChildren().OfType<SceneRecorder>().FirstOrDefault();
             recorder?.OnSequenceComplete();
         }
         
-        // Use the existing seek logic for frame-by-frame updates
-        SeekForward(newTime);
-        _currentTime = newTime;
-    }
-    
-    private void SeekToInternal(double time)
-    {
-        if (time < 0) time = TotalDuration;
-        
-        SeekAudio(time); // TODO: Try getting rid of this. It seems that SeekToInternal's only call site has audio seeking on its own.
-        
-        // Revert animations that haven't started yet
-        foreach (var animation in _flattenedAnimations.Where(a => a.AbsoluteStartTime > time).Reverse())
-        {
-            animation.Animation.Revert();
-        }
-        
-        // Apply all animations that should be complete by this time
-        foreach (var animation in _flattenedAnimations.Where(a => a.AbsoluteEndTime <= time))
-        {
-            animation.Animation.ApplyEndState();
-            if (animation.Animation is MethodTriggerStateChange methodTrigger)
-            {
-                if (_isPlaying) methodTrigger.Execute();
-                else methodTrigger.SetTriggered(); 
-            }
-        }
-        
-        // Evaluate animations that we're in the middle of
-        foreach (var animation in _flattenedAnimations.Where(a => a.AbsoluteStartTime <= time && a.AbsoluteEndTime > time))
-        {
-            var elapsedTime = time - animation.AbsoluteStartTime;
-            animation.Animation.EvaluateAtTime(elapsedTime);
-        }
-    }
-    
-    private void SeekForward(double time)
-    {
-        if (time < 0) time = TotalDuration;
-        
-        SeekAudio(time);
-        
-        // Apply animations that have completed in the last delta
-        var delta = 1; 
-        foreach (var animation in _flattenedAnimations.Where(a => a.AbsoluteEndTime <= time && a.AbsoluteEndTime > time - delta))
-        {
-            animation.Animation.ApplyEndState();
-            if (animation.Animation is MethodTriggerStateChange methodTrigger)
-            {
-                if (_isPlaying) methodTrigger.Execute();
-                else methodTrigger.SetTriggered(); 
-            }
-        }
-        
-        // Evaluate animations that we're in the middle of
-        foreach (var animation in _flattenedAnimations.Where(a => a.AbsoluteStartTime <= time && a.AbsoluteEndTime > time))
-        {
-            var elapsedTime = time - animation.AbsoluteStartTime;
-            animation.Animation.EvaluateAtTime(elapsedTime);
-        }
+        SeekTo(newTime);
     }
     
     public void SeekTo(double time)
     {
-        SeekToInternal(time);
-        _currentTime = time;
-        // This is sort of weird, but once we're seeking, just use seconds.
-        // The minutes option is really for the editor. At least for now.
-        _startFromSeconds = time;
-        _startFromMinutes = 0;
-        _timeAccumulator = time - _startFromSeconds;
+        if (time < 0) time = TotalDuration;
         
-        // Seek audio to match
-        if (_audioPlayer != null)
-        {
-            _audioPlayer.Stop();
-            if (_isPlaying)
-            {
-                _audioPlayer.Play((float)time);
-            }
-        }
-    }
-
-    private void SeekAudio(double time)
-    {
         // Sync audio position if we have an audio player
         if (_audioPlayer != null)
         {
@@ -248,14 +169,43 @@ public partial class StateChangeSequencePlayer : Node
             }
             else if (_audioPlayer.Playing)
             {
-                // Only seek if we're significantly out of sync (more than 10ms)
+                // Only seek if we're significantly out of sync
                 var audioPosition = _audioPlayer.GetPlaybackPosition();
-                if (Mathf.Abs(audioPosition - time) > 0.01)
+                if (Mathf.Abs(audioPosition - time) > 0.05)
                 {
                     _audioPlayer.Seek((float)time);
                 }
             }
         }
+        
+        // We're going back in time! Revert animations that shouldn't have started yet.
+        if (time < _currentTime)
+        {
+            foreach (var animation in _flattenedAnimations.Where(a => a.AbsoluteStartTime > time).Reverse())
+            {
+                animation.Animation.Revert();
+            }
+        }
+        
+        // Apply animations completed during the time change we're applying
+        foreach (var animation in _flattenedAnimations.Where(a => a.AbsoluteEndTime <= time && a.AbsoluteEndTime > _currentTime))
+        {
+            animation.Animation.ApplyEndState();
+            if (animation.Animation is MethodTriggerStateChange methodTrigger)
+            {
+                if (_isPlaying) methodTrigger.Execute();
+                else methodTrigger.SetTriggered(); 
+            }
+        }
+        
+        // Evaluate animations that we're in the middle of
+        foreach (var animation in _flattenedAnimations.Where(a => a.AbsoluteStartTime <= time && a.AbsoluteEndTime > time))
+        {
+            var elapsedTime = time - animation.AbsoluteStartTime;
+            animation.Animation.EvaluateAtTime(elapsedTime);
+        }
+
+        _currentTime = time;
     }
     
     // Add pause/resume methods
@@ -284,7 +234,6 @@ public partial class StateChangeSequencePlayer : Node
     private void Play()
     {
         _isPlaying = true;
-        _timeAccumulator = 0;
         
         // Start audio playback
         if (_audioPlayer != null)
