@@ -5,11 +5,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Godot;
 using PrimerTools.Latex;
-using System.Security.Cryptography;
-using System.Text;
-using System.Text.RegularExpressions;
 
 namespace PrimerTools.LaTeX;
+
 internal class LatexToMesh
 {
     private static readonly string[] XelatexArguments = {
@@ -23,6 +21,7 @@ internal class LatexToMesh
     };
 
     internal TempDir rootTempDir = new();
+    private readonly SvgToMesh svgToMesh = new();
 
     public Task<string> RenderToSvg(LatexInput config, CancellationToken ct)
     {
@@ -88,35 +87,39 @@ internal class LatexToMesh
 
     public string GetPathToExisting(string latex)
     {
-        var dirPath = "addons/PrimerTools/LaTeX";
-        var scriptPath = Path.Combine(dirPath, "svg_to_mesh.py");
-        var gltfDirPath = Path.Combine(dirPath, "gltf");
-        if (!Directory.Exists(gltfDirPath)) Directory.CreateDirectory(gltfDirPath);
-        var destinationPath = Path.Combine(gltfDirPath, GenerateFileName(latex) + ".gltf");
-        return File.Exists(destinationPath) ? destinationPath : string.Empty;
+        return svgToMesh.GetPathToExisting(latex);
     }
     
     public async Task<string> MeshFromExpression(string latex, bool openBlender = false)
     {
-        var dirPath = "addons/PrimerTools/LaTeX";
-        var gltfDirPath = Path.Combine(dirPath, "gltf");
-        if (!Directory.Exists(gltfDirPath)) Directory.CreateDirectory(gltfDirPath);
-        var destinationPath = Path.Combine(gltfDirPath, GenerateFileName(latex) + ".gltf");
+        // Check if we already have a mesh for this expression
+        var existing = GetPathToExisting(latex);
+        if (!string.IsNullOrEmpty(existing)) return existing;
         
-        var scriptPath = Path.Combine(dirPath, "svg_to_mesh.py");
-        // Queue the actual processing work
+        // Queue the LaTeX to SVG conversion and then SVG to mesh conversion
         return await LatexProcessQueue.EnqueueAsync(
-            async () => await ProcessNewExpression(latex, openBlender, scriptPath, destinationPath),
+            async () => await ProcessLatexExpression(latex, openBlender),
             $"LaTeX: {latex}"
         );
     }
     
-    private async Task<string> ProcessNewExpression(string latex, bool openBlender, string scriptPath, string destinationPath)
+    private async Task<string> ProcessLatexExpression(string latex, bool openBlender)
     {
-        GD.Print($"[LatexToMesh] Starting processing: {latex}");
+        GD.Print($"[LatexToMesh] Starting LaTeX processing: {latex}");
+        
+        // First convert LaTeX to SVG
         var input = LatexInput.From("H" + latex); // The H gets removed in blender after alignment
         var svgPath = await RenderToSvg(input, default);
         GD.Print($"[LatexToMesh] SVG created at: {svgPath}");
+        
+        // Then convert SVG to mesh using the shared converter
+        // Note: We don't re-queue this since we're already in a queued task
+        var dirPath = "addons/PrimerTools/LaTeX";
+        var gltfDirPath = Path.Combine(dirPath, "gltf");
+        if (!Directory.Exists(gltfDirPath)) Directory.CreateDirectory(gltfDirPath);
+        var destinationPath = Path.Combine(gltfDirPath, SvgToMesh.GenerateFileName(latex) + ".gltf");
+        
+        var scriptPath = Path.Combine(dirPath, "svg_to_mesh.py");
         
         // TODO: Get the blender path from Godot's user settings
         var blenderPath = @"C:\Program Files\Blender Foundation\Blender 3.6\blender.exe";
@@ -125,6 +128,7 @@ internal class LatexToMesh
             RedirectStandardOutput = true,
             UseShellExecute = false
         };
+        
         if (openBlender)
         {
             startInfo.Arguments = $"--python {scriptPath} -- {svgPath} {destinationPath}";
@@ -159,45 +163,4 @@ internal class LatexToMesh
         var stderr = workingDir.GetChildPath($"{name}.stderr");
         File.WriteAllText(stderr, result.stderr);
     }
-    
-    public static string GenerateFileName(string latexExpression)
-    {
-        // Replace invalid file name characters with '_'. 
-        // This list covers characters invalid in Windows and the '/' for UNIX-based systems.
-        var invalidChars = new string(Path.GetInvalidFileNameChars()) + " " + "\x00..\x1F";
-        var sanitized = Regex.Replace(latexExpression, $"[{Regex.Escape(invalidChars)}]", "_");
-
-        // Shorten if too long to avoid path length issues, keeping under 255 characters
-        const int maxBaseLength = 100;
-        if (sanitized.Length > maxBaseLength)
-        {
-            sanitized = sanitized[..maxBaseLength];
-        }
-
-        // Generate a hash of the original expression for uniqueness
-        string hash = GetShortHash(latexExpression);
-
-        // Combine sanitized expression with hash
-        string fileName = $"{sanitized}_{hash}.txt"; // .txt or your preferred extension
-
-        return fileName;
-    }
-
-    private static string GetShortHash(string input)
-    {
-        using (SHA256 sha256 = SHA256.Create())
-        {
-            // Compute hash - this returns byte array
-            byte[] bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(input));
-
-            // Convert byte array to a short string representation
-            StringBuilder builder = new StringBuilder();
-            for (int i = 0; i < 4; i++) // Use only the first 4 bytes for a short hash
-            {
-                builder.Append(bytes[i].ToString("x2"));
-            }
-            return builder.ToString();
-        }
-    }
 }
-
