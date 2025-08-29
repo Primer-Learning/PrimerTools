@@ -2,6 +2,7 @@ using Godot;
 
 public abstract partial class StateChangeSequence : Node3D
 {
+    [Export] public bool Active = true; 
     public readonly CompositeStateChange RootComposite = new();
     public abstract void Define();
     

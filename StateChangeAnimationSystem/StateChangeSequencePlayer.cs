@@ -113,7 +113,7 @@ public partial class StateChangeSequencePlayer : Node
     {
         foreach (var child in GetChildren())
         {
-            if (child is StateChangeSequence subsequence)
+            if (child is StateChangeSequence { Active: true } subsequence)
             {
                 subsequence.Define();
                 
