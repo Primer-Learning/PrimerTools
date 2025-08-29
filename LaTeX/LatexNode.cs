@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using Godot;
 using PrimerTools.Graph;
+using PrimerTools.TweenSystem;
 
 namespace PrimerTools.LaTeX;
 [Tool]
@@ -41,7 +42,35 @@ public partial class LatexNode : Node3D
 			return new List<MeshInstance3D>();
 		}
 
-		return GetChild(0).GetChildren().OfType<MeshInstance3D>().ToList();
+		// Now we need to go one level deeper to get the MeshInstance3D children
+		// since each character is wrapped in a Node3D container
+		var characters = new List<MeshInstance3D>();
+		foreach (var container in GetChild(0).GetChildren())
+		{
+			if (container is Node3D node3d)
+			{
+				foreach (var child in node3d.GetChildren())
+				{
+					if (child is MeshInstance3D meshInstance)
+					{
+						characters.Add(meshInstance);
+						break; // Only expect one MeshInstance3D per container
+					}
+				}
+			}
+		}
+		return characters;
+	}
+
+	public List<Node3D> GetCharacterContainers()
+	{
+		if (GetChildren().Count == 0 || GetChild(0).GetChildren().Count == 0)
+		{
+			GD.PushWarning("LatexNode has no valid character containers");
+			return new List<Node3D>();
+		}
+
+		return GetChild(0).GetChildren().OfType<Node3D>().ToList();
 	}
 
 
@@ -59,6 +88,8 @@ public partial class LatexNode : Node3D
 
 	[Export] public bool openBlender = false;
 	[Export] public string Latex = "\\LaTeX";
+	[Export] public float MidlineOffset = 0.35f; // Configurable offset from baseline to midline
+	[Export] public bool UseMidlineCentering = true; // Make midline centering optional
 
 	public string numberPrefix = "";
 	public string numberSuffix = "";
@@ -180,6 +211,16 @@ public partial class LatexNode : Node3D
 		AddChild(newNode);
 		newNode.RotationDegrees = new Vector3(0, 0, 0);
 
+		if (UseMidlineCentering)
+		{
+			foreach (var container in newNode.GetChildren().OfType<Node3D>())
+			{
+				var diff = container.Position.Y - MidlineOffset;
+				container.Position -= Vector3.Up * diff;
+				container.GetChild<Node3D>(0).Position += Vector3.Up * diff;
+			}
+		}
+
 		Align();
 	}
 
@@ -210,12 +251,19 @@ public partial class LatexNode : Node3D
 		{
 			foreach (var grandchild in child.GetChildren())
 			{
-				if (grandchild is MeshInstance3D meshInstance3D)
+				// Now we need to go one level deeper due to the container nodes
+				if (grandchild is Node3D container)
 				{
-					// Old duplication that kept the material from blender import.
-					// meshInstance3D.Mesh.SurfaceSetMaterial(0,(StandardMaterial3D) meshInstance3D.Mesh.SurfaceGetMaterial(0).Duplicate(true));
-					// Instead, create a new material with basic defaults.
-					meshInstance3D.Mesh.SurfaceSetMaterial(0, new StandardMaterial3D());
+					foreach (var greatGrandchild in container.GetChildren())
+					{
+						if (greatGrandchild is MeshInstance3D meshInstance3D)
+						{
+							// Old duplication that kept the material from blender import.
+							// meshInstance3D.Mesh.SurfaceSetMaterial(0,(StandardMaterial3D) meshInstance3D.Mesh.SurfaceGetMaterial(0).Duplicate(true));
+							// Instead, create a new material with basic defaults.
+							meshInstance3D.Mesh.SurfaceSetMaterial(0, new StandardMaterial3D());
+						}
+					}
 				}
 			}
 		}
@@ -230,15 +278,39 @@ public partial class LatexNode : Node3D
 		{
 			foreach (var grandchild in child.GetChildren())
 			{
-				if (grandchild is MeshInstance3D meshInstance3D)
+				// Now we need to go one level deeper due to the container nodes
+				if (grandchild is Node3D container)
 				{
-					animations.Add(
-						meshInstance3D.AnimateColorRgb(color)
-					);
+					foreach (var greatGrandchild in container.GetChildren())
+					{
+						if (greatGrandchild is MeshInstance3D meshInstance3D)
+						{
+							animations.Add(
+								meshInstance3D.AnimateColorRgb(color)
+							);
+						}
+					}
 				}
 			}
 		}
 		return animations.InParallel();
+	}
+
+	public CompositeStateChange Appear()
+	{
+		var containers = GetCharacterContainers();
+		var stateChanges = new IStateChange[containers.Count];
+
+		// Since midline centering is now done in UpdateCharacters,
+		// we just need to scale the containers from zero
+		var i = 0;
+		foreach (var container in containers)
+		{
+			container.Scale = Vector3.Zero;
+			stateChanges[i] = container.ScaleTo(1);
+			i++;
+		}
+		return CompositeStateChange.Parallel(stateChanges);
 	}
 	
 	#region Alignment
@@ -282,13 +354,57 @@ public partial class LatexNode : Node3D
 			// GD.PushWarning("No children to align.");
 			return;
 		}
-		var children = GetChild(0).GetChildren().OfType<VisualInstance3D>();
-		var visualInstance3Ds = children as VisualInstance3D[] ?? children.ToArray();
 		
-		var left = visualInstance3Ds.Select(x => x.GetAabb().Position.X * x.Scale.X + x.Position.X).Min();
-		var right = visualInstance3Ds.Select(x => x.GetAabb().End.X * x.Scale.X + x.Position.X).Max();
-		var bottom = visualInstance3Ds.Select(x => x.GetAabb().Position.Y * x.Scale.Y + x.Position.Y).Min();
-		var top = visualInstance3Ds.Select(x => x.GetAabb().End.Y * x.Scale.Y + x.Position.Y).Max();
+		// Get all the visual instances (now they're the MeshInstance3D children within containers)
+		var visualInstance3Ds = new List<VisualInstance3D>();
+		foreach (var container in GetChild(0).GetChildren())
+		{
+			if (container is Node3D node3d)
+			{
+				foreach (var child in node3d.GetChildren())
+				{
+					if (child is VisualInstance3D visualInstance)
+					{
+						visualInstance3Ds.Add(visualInstance);
+					}
+				}
+			}
+		}
+		
+		if (visualInstance3Ds.Count == 0) return;
+		
+		// Calculate bounds considering the container transforms
+		var boundsData = new List<(float left, float right, float bottom, float top)>();
+		for (int i = 0; i < visualInstance3Ds.Count; i++)
+		{
+			var visualInstance = visualInstance3Ds[i];
+			var container = visualInstance.GetParent<Node3D>();
+			var aabb = visualInstance.GetAabb();
+			
+			// Transform the AABB corners by both the mesh's local transform and the container's transform
+			var meshTransform = visualInstance.Transform;
+			var containerTransform = container.Transform;
+			var combinedTransform = containerTransform * meshTransform;
+			
+			var localMin = aabb.Position;
+			var localMax = aabb.End;
+			
+			// Transform the min and max points
+			var transformedMin = combinedTransform * localMin;
+			var transformedMax = combinedTransform * localMax;
+			
+			boundsData.Add((
+				Math.Min(transformedMin.X, transformedMax.X),
+				Math.Max(transformedMin.X, transformedMax.X),
+				Math.Min(transformedMin.Y, transformedMax.Y),
+				Math.Max(transformedMin.Y, transformedMax.Y)
+			));
+		}
+		
+		var left = boundsData.Select(b => b.left).Min();
+		var right = boundsData.Select(b => b.right).Max();
+		var bottom = boundsData.Select(b => b.bottom).Min();
+		var top = boundsData.Select(b => b.top).Max();
 		
 		float x, y;
 		x = horizontalAlignment switch
@@ -308,7 +424,7 @@ public partial class LatexNode : Node3D
 			_ => 0
 		};
 
-		((Node3D)GetChild(0)).Position = new Vector3(x, y,0);
+		GetChild<Node3D>(0).Position = new Vector3(x, y, 0);
 	}
 
 	#endregion

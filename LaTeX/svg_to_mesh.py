@@ -21,15 +21,32 @@ bpy.ops.object.select_all(action='SELECT')
 
 
 mesh_objects = []
+container_objects = []
 for obj in bpy.context.selected_objects:
     mesh_objects.append(obj)
     bpy.context.view_layer.objects.active = obj
     # Commented out because mesh conversion happens automatically with gltf export
     # bpy.ops.object.convert(target='MESH')
     bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='BOUNDS')
+    
+    # Create an empty container for this mesh object
+    bpy.ops.object.empty_add(type='PLAIN_AXES', location=obj.location)
+    container = bpy.context.object
+    container.name = f"{obj.name}_container"
+    container_objects.append(container)
+    
+    # Parent the mesh to its container
+    obj.parent = container
+    obj.parent_type = 'OBJECT'
+    # Reset the mesh's transform since it's now relative to the container
+    obj.location = (0, 0, 0)
+    obj.rotation_euler = (0, 0, 0)
+    obj.scale = (1, 1, 1)
  
-# Move the first object to origin
-if mesh_objects:
+# Move the first container to origin
+if container_objects:
+    first_container = container_objects[0]
+    second_container = container_objects[1]
     first_obj = mesh_objects[0]
     second_obj = mesh_objects[1]
     
@@ -42,12 +59,15 @@ if mesh_objects:
     
     translation = -Vector(lower_right_corner)
 
-    # Apply the same translation to all other objects
-    for obj in mesh_objects:
-        obj.location += translation
-        obj.location *= SCALE_FACTOR
-        obj.scale *= SCALE_FACTOR
-        # obj.rotation_euler = (3.14159265358 / 2, 0, 0) #This will only work if we rotate around the baseline instead of center
+    # Apply the same translation to all container objects
+    for container in container_objects:
+        container.location += translation
+        container.location *= SCALE_FACTOR
+        container.scale *= SCALE_FACTOR
+        # container.rotation_euler = (3.14159265358 / 2, 0, 0) #This will only work if we rotate around the baseline instead of center
+        bpy.ops.object.select_all(action='DESELECT')
+        container.select_set(True)
+        bpy.context.view_layer.objects.active = container
         bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
 
 
@@ -62,13 +82,13 @@ if mesh_objects:
     #
     # # Destroy the parent object
 
-    # Create a new empty object at the origin to parent all objects to
+    # Create a new empty object at the origin to parent all containers to
     bpy.ops.object.empty_add(type='PLAIN_AXES', location=(0, 0, 0))
     parent_object = bpy.context.object
     
-    for obj in mesh_objects:
+    for container in container_objects:
         # Set the parent while keeping world space location
-        obj.select_set(True)
+        container.select_set(True)
         parent_object.select_set(True)
         bpy.context.view_layer.objects.active = parent_object
         bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
@@ -79,19 +99,26 @@ if mesh_objects:
     # Update the scene to apply transformation
     # bpy.context.view_layer.update()
 
-    for obj in mesh_objects:
+    for container in container_objects:
         # Remove the parent while keeping world space location
+        container.select_set(True)
+        bpy.context.view_layer.objects.active = container
+        bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
+        bpy.ops.object.transform_apply(location=False, rotation=True, scale=False)
+
+    # Convert mesh objects to actual meshes (they're still curves at this point)
+    for obj in mesh_objects:
         obj.select_set(True)
         bpy.context.view_layer.objects.active = obj
-        bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
-        # This is not allowed because the objects are curves, which are fundamentally 2D.
+        # This is not allowed on curves until they're converted
         bpy.ops.object.convert(target='MESH')
-        bpy.ops.object.transform_apply(location=False, rotation=True, scale=False)
 
     # Destroy the parent object
     bpy.data.objects.remove(parent_object)
 
+# Remove the first container and its mesh
 bpy.data.objects.remove(first_obj, do_unlink=True)
+bpy.data.objects.remove(first_container, do_unlink=True)
 
 # Export to GLTF
 bpy.ops.export_scene.gltf(filepath=destination_path, export_format='GLTF_EMBEDDED')

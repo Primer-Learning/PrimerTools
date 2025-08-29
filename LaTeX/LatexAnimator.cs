@@ -61,20 +61,21 @@ public partial class LatexAnimator : Node3D
         intermediateNode.Visible = false;
         AddChild(intermediateNode);
 
+        // Use GetCharacterContainers instead of GetCharacters for proper movement
         var copiesOfCurrentExpressionCharacters = new List<Node3D>();
-        foreach (var character in _latexNodes[_currentExpressionIndex].GetCharacters())
+        foreach (var container in _latexNodes[_currentExpressionIndex].GetCharacterContainers())
         {
-            var copy = (Node3D)character.Duplicate();
+            var copy = (Node3D)container.Duplicate();
             intermediateNode.AddChild(copy);
-            copy.GlobalPosition = character.GlobalPosition;
+            copy.GlobalPosition = container.GlobalPosition;
             copiesOfCurrentExpressionCharacters.Add(copy);
         }
         var copiesOfNextExpressionCharacters = new List<Node3D>();
-        foreach (var character in _latexNodes[newIndex].GetCharacters())
+        foreach (var container in _latexNodes[newIndex].GetCharacterContainers())
         {
-            var copy = (Node3D)character.Duplicate();
+            var copy = (Node3D)container.Duplicate();
             intermediateNode.AddChild(copy);
-            copy.GlobalPosition = character.GlobalPosition;
+            copy.GlobalPosition = container.GlobalPosition;
             copy.Scale = Vector3.Zero;
             copiesOfNextExpressionCharacters.Add(copy);
         }
@@ -175,8 +176,9 @@ public partial class LatexAnimator : Node3D
         int anchorChunkIndex = -1
         )
     {
-        if (_latexNodes[_currentExpressionIndex].GetCharacters().Count == 0 
-            || _latexNodes[newIndex].GetCharacters().Count == 0)
+        // Check if we have containers instead of characters
+        if (_latexNodes[_currentExpressionIndex].GetCharacterContainers().Count == 0 
+            || _latexNodes[newIndex].GetCharacterContainers().Count == 0)
         {
             GD.Print("One or more LaTeX expressions has no characters. Skipping LaTeX animation.");
             return new CompositeStateChange();
@@ -190,14 +192,14 @@ public partial class LatexAnimator : Node3D
                 GD.Print("Anchored LaTeX animations likely won't work properly when the LatexNodes have non-unit scales. You could scale the LatexAnimator itself, or make LatexAnimator no longer assume unit scales.");
             }
             
-            // Find the first character in the anchor chunk
+            // Find the first character container in the anchor chunk
             var anchorCharacterIndex = preservedCharacterChunks[anchorChunkIndex].currentExpressionChunkBeginIndex;
-            var anchorCharacter = _latexNodes[_currentExpressionIndex].GetCharacters()[anchorCharacterIndex];
-            // Find the corresponding character in destination
+            var anchorContainer = _latexNodes[_currentExpressionIndex].GetCharacterContainers()[anchorCharacterIndex];
+            // Find the corresponding character container in destination
             var anchoredCharacterIndex = preservedCharacterChunks[anchorChunkIndex].nextExpressionChunkBeginIndex;
-            var anchoredCharacter = _latexNodes[newIndex].GetCharacters()[anchoredCharacterIndex];
+            var anchoredContainer = _latexNodes[newIndex].GetCharacterContainers()[anchoredCharacterIndex];
 
-            // Move every destination character's position by the difference between the anchor and anchored positions
+            // Move every destination character container's position by the difference between the anchor and anchored positions
             // But since these are each in container that are used for alignment, we need to apply the container's
             // position to get the position in the grandparent LatexNode space.
             // This would disrupt alignment calculations, but I don't expect that will matter if we're using anchors
@@ -205,15 +207,15 @@ public partial class LatexAnimator : Node3D
             // If it ends up mattering, it might be possible to move the containers and then move the characters
             // so they align individually.
             var anchorCharacterTransformRelativeToOutNode =
-                _latexNodes[_currentExpressionIndex].GetChild<Node3D>(0).Transform * anchorCharacter.Position; 
+                _latexNodes[_currentExpressionIndex].GetChild<Node3D>(0).Transform * anchorContainer.Position; 
             var anchoredCharacterTransformRelativeToOutNode =
-                _latexNodes[newIndex].GetChild<Node3D>(0).Transform * anchoredCharacter.Position;
+                _latexNodes[newIndex].GetChild<Node3D>(0).Transform * anchoredContainer.Position;
             
             var displacement = anchorCharacterTransformRelativeToOutNode - anchoredCharacterTransformRelativeToOutNode;
             
-            foreach (var character in _latexNodes[newIndex].GetCharacters())
+            foreach (var container in _latexNodes[newIndex].GetCharacterContainers())
             {
-                character.Position += displacement;
+                container.Position += displacement;
             }
         }
         
@@ -239,26 +241,27 @@ public partial class LatexAnimator : Node3D
             }
         }
         
-        // Create a combined node with all the characters from both LatexNodes, with the next expression scale zero.
+        // Create a combined node with all the character containers from both LatexNodes, with the next expression scale zero.
         var intermediateNode = new Node3D();
         intermediateNode.Visible = false;
         AddChild(intermediateNode);
         intermediateNode.Name = "Intermediate ";
         
+        // Use GetCharacterContainers for proper movement
         var copiesOfCurrentExpressionCharacters = new List<Node3D>();
-        foreach (var character in _latexNodes[_currentExpressionIndex].GetCharacters())
+        foreach (var container in _latexNodes[_currentExpressionIndex].GetCharacterContainers())
         {
-            var copy = (Node3D)character.Duplicate();
+            var copy = (Node3D)container.Duplicate();
             intermediateNode.AddChild(copy);
-            copy.GlobalPosition = character.GlobalPosition;
+            copy.GlobalPosition = container.GlobalPosition;
             copiesOfCurrentExpressionCharacters.Add(copy);
         }
         var copiesOfNextExpressionCharacters = new List<Node3D>();
-        foreach (var character in _latexNodes[newIndex].GetCharacters())
+        foreach (var container in _latexNodes[newIndex].GetCharacterContainers())
         {
-            var copy = (Node3D)character.Duplicate();
+            var copy = (Node3D)container.Duplicate();
             intermediateNode.AddChild(copy);
-            copy.GlobalPosition = character.GlobalPosition;
+            copy.GlobalPosition = container.GlobalPosition;
             copy.Scale = Vector3.Zero;
             copiesOfNextExpressionCharacters.Add(copy);
         }
