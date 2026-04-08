@@ -388,7 +388,7 @@ mat3 rotationMatrix(float angle) {
 }
 
 void sky() {
-	float adjusted_time = TIME + time_offset;
+	float adjusted_time = 0.0; //TIME + time_offset;
 
 	if (AT_CUBEMAP_PASS) {
 		COLOR = lighting_color;

@@ -181,7 +181,7 @@ public partial class SceneRecorder : Node
 
     private void ConfigureOutputDirs()
     {
-        _baseDirectory   = Path.Combine(ProjectSettings.GlobalizePath("res://"), "..", "png", _sceneName);
+        _baseDirectory   = Path.Combine(ProjectSettings.GlobalizePath("res://"), "..", "png2", _sceneName);
         _currentTakeDir  = SceneDirectory;
         EnsureDir(_baseDirectory);
         EnsureDir(_currentTakeDir);

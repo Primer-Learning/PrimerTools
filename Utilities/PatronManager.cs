@@ -73,7 +73,7 @@ public partial class PatronManager
     };
     
     public List<Patron> patrons = new List<Patron>();
-    private string csvPath = "res://20250903-members-1433431-primerlearning.csv"; // Adjust path as needed
+    private string csvPath = "res://20251228-members-1433431-primerlearning.csv";
     
     private string excludedPath = "res://addons/PrimerAssets/Patreon/exclusions.txt";
     private HashSet<string> _excludedPatrons;
