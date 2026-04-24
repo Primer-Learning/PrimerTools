@@ -1,0 +1,46 @@
+[gd_scene load_steps=5 format=3 uid="uid://c80mcvqju5ahj"]
+
+[ext_resource type="Script" uid="uid://cjnytcvjp1h14" path="res://addons/PrimerTools/Photoshoot/Photoshoot.cs" id="1_script"]
+[ext_resource type="Script" uid="uid://4fx7o3m51ej5" path="res://addons/PrimerTools/Photoshoot/ManualPhotoshootSubject.cs" id="2_xhkee"]
+[ext_resource type="PackedScene" uid="uid://d2csrlnemo5q" path="res://addons/PrimerAssets/Organized/Blob/Old Blobs/blob.tscn" id="4_vwu84"]
+
+[sub_resource type="Resource" id="Resource_pg8u6"]
+script = ExtResource("2_xhkee")
+metadata/_custom_type_script = "uid://4fx7o3m51ej5"
+
+[node name="Photoshoot" type="Node"]
+script = ExtResource("1_script")
+Subject = SubResource("Resource_pg8u6")
+
+[node name="SubViewportContainer" type="SubViewportContainer" parent="."]
+offset_right = 512.0
+offset_bottom = 512.0
+
+[node name="SubViewport" type="SubViewport" parent="SubViewportContainer"]
+unique_name_in_owner = true
+transparent_bg = true
+handle_input_locally = false
+render_target_update_mode = 4
+
+[node name="CameraRig" type="Node3D" parent="SubViewportContainer/SubViewport"]
+transform = Transform3D(0.7145949, 0.19399232, -0.6721022, 7.450581e-09, 0.96077913, 0.2773147, 0.6995385, -0.1981676, 0.6865678, -0.12867683, 0.7253889, 0.216)
+
+[node name="Camera3D" type="Camera3D" parent="SubViewportContainer/SubViewport/CameraRig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 3.982)
+current = true
+fov = 22.0
+
+[node name="KeyLight" type="DirectionalLight3D" parent="SubViewportContainer/SubViewport"]
+transform = Transform3D(0.8657455, -4.7601358e-08, -0.5004844, 0.037490875, 0.99719036, 0.06485224, 0.49907833, -0.07490915, 0.8633131, 2.7894508e-08, 5.225456, 0.7574584)
+light_energy = 1.2
+
+[node name="FillLight" type="DirectionalLight3D" parent="SubViewportContainer/SubViewport"]
+transform = Transform3D(-0.4999469, 7.402897e-05, 0.8660561, -0.29596865, 0.93977886, -0.17093371, -0.8139138, -0.34178323, -0.4698176, 0, 2, -2)
+visible = false
+light_energy = 0.4
+
+[node name="ModelSlot" type="Node3D" parent="SubViewportContainer/SubViewport"]
+unique_name_in_owner = true
+
+[node name="blob" parent="." instance=ExtResource("4_vwu84")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.03515199, -0.46363854, 0.06459427)
