@@ -23,31 +23,55 @@ public partial class Photoshoot : Node
             if (_subject != null) _subject.Changed -= OnSubjectChanged;
             _subject = value;
             if (_subject != null) _subject.Changed += OnSubjectChanged;
-            if (_modelSlot != null) _subject?.LoadModel(_modelSlot);
+            var slot = ModelSlot;
+            if (slot != null) _subject?.LoadModel(slot);
         }
     }
 
     [ExportToolButton("Snap Picture")]
     public Callable SnapPictureButton => Callable.From(() => _ = SnapPicture());
 
+    // Lazy accessors. The node references are re-resolved from %-unique-names
+    // on demand because [Tool] Photoshoot can receive inspector edits before
+    // _Ready (during deserialization) and after hot-reload (which swaps the C#
+    // instance but does not re-fire _Ready), leaving stale/null cached fields.
     private SubViewport _viewport;
+    private SubViewport Viewport
+    {
+        get
+        {
+            if (_viewport == null && IsInsideTree())
+                _viewport = GetNodeOrNull<SubViewport>("%SubViewport");
+            return _viewport;
+        }
+    }
+
     private Node3D _modelSlot;
+    private Node3D ModelSlot
+    {
+        get
+        {
+            if (_modelSlot == null && IsInsideTree())
+                _modelSlot = GetNodeOrNull<Node3D>("%ModelSlot");
+            return _modelSlot;
+        }
+    }
 
     public override void _Ready()
     {
-        _viewport = GetNode<SubViewport>("%SubViewport");
-        _modelSlot = GetNode<Node3D>("%ModelSlot");
-        _subject?.LoadModel(_modelSlot);
+        _subject?.LoadModel(ModelSlot);
     }
 
     private void OnSubjectChanged()
     {
-        if (_modelSlot != null) _subject?.LoadModel(_modelSlot);
+        var slot = ModelSlot;
+        if (slot != null) _subject?.LoadModel(slot);
     }
 
     private async Task SnapPicture()
     {
-        if (_viewport == null) return;
+        var viewport = Viewport;
+        if (viewport == null) return;
         if (_subject == null)
         {
             GD.PrintErr("[photoshoot] No Subject assigned");
@@ -57,7 +81,7 @@ public partial class Photoshoot : Node
         if (string.IsNullOrEmpty(savePath)) return;
 
         await ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
-        var img = _viewport.GetTexture().GetImage();
+        var img = viewport.GetTexture().GetImage();
         var absPath = ProjectSettings.GlobalizePath(savePath);
         var dir = System.IO.Path.GetDirectoryName(absPath);
         if (!string.IsNullOrEmpty(dir) && !System.IO.Directory.Exists(dir))
