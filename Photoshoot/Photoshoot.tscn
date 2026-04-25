@@ -1,16 +1,24 @@
-[gd_scene load_steps=5 format=3 uid="uid://c80mcvqju5ahj"]
+[gd_scene load_steps=7 format=3 uid="uid://c80mcvqju5ahj"]
 
-[ext_resource type="Script" uid="uid://cjnytcvjp1h14" path="res://addons/PrimerTools/Photoshoot/Photoshoot.cs" id="1_script"]
-[ext_resource type="Script" uid="uid://4fx7o3m51ej5" path="res://addons/PrimerTools/Photoshoot/ManualPhotoshootSubject.cs" id="2_xhkee"]
-[ext_resource type="PackedScene" uid="uid://d2csrlnemo5q" path="res://addons/PrimerAssets/Organized/Blob/Old Blobs/blob.tscn" id="4_vwu84"]
+[ext_resource type="Script" uid="uid://d003c7dfdui5m" path="res://addons/PrimerTools/Photoshoot/Photoshoot.cs" id="1_script"]
+[ext_resource type="Script" uid="uid://df0gntb6u8r7d" path="res://Bridge/Visuals/GoodPhotoshootSubject.cs" id="2_nvn1q"]
+[ext_resource type="Script" uid="uid://b2h26llaoia2s" path="res://addons/PrimerTools/Camera/CameraRig.cs" id="3_mf6h7"]
 
-[sub_resource type="Resource" id="Resource_pg8u6"]
-script = ExtResource("2_xhkee")
-metadata/_custom_type_script = "uid://4fx7o3m51ej5"
+[sub_resource type="Resource" id="Resource_mf6h7"]
+script = ExtResource("2_nvn1q")
+Good = 11
+metadata/_custom_type_script = "uid://df0gntb6u8r7d"
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_mf6h7"]
+albedo_color = Color(0.5, 0.22, 0.05, 1)
+
+[sub_resource type="SphereMesh" id="SphereMesh_4v3pt"]
+radius = 0.07
+height = 0.14
 
 [node name="Photoshoot" type="Node"]
 script = ExtResource("1_script")
-Subject = SubResource("Resource_pg8u6")
+Subject = SubResource("Resource_mf6h7")
 
 [node name="SubViewportContainer" type="SubViewportContainer" parent="."]
 offset_right = 512.0
@@ -23,10 +31,12 @@ handle_input_locally = false
 render_target_update_mode = 4
 
 [node name="CameraRig" type="Node3D" parent="SubViewportContainer/SubViewport"]
-transform = Transform3D(0.7145949, 0.19399232, -0.6721022, 7.450581e-09, 0.96077913, 0.2773147, 0.6995385, -0.1981676, 0.6865678, -0.12867683, 0.7253889, 0.216)
+transform = Transform3D(1, 0, 0, 0, 0.74895567, 0.66262007, 0, -0.66262, 0.7489557, 0, 0.07, 0)
+script = ExtResource("3_mf6h7")
+Distance = 10.0
 
 [node name="Camera3D" type="Camera3D" parent="SubViewportContainer/SubViewport/CameraRig"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 3.982)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.452)
 current = true
 fov = 22.0
 
@@ -42,5 +52,7 @@ light_energy = 0.4
 [node name="ModelSlot" type="Node3D" parent="SubViewportContainer/SubViewport"]
 unique_name_in_owner = true
 
-[node name="blob" parent="." instance=ExtResource("4_vwu84")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.03515199, -0.46363854, 0.06459427)
+[node name="@MeshInstance3D@76789" type="MeshInstance3D" parent="SubViewportContainer/SubViewport/ModelSlot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.07, 0)
+material_override = SubResource("StandardMaterial3D_mf6h7")
+mesh = SubResource("SphereMesh_4v3pt")
