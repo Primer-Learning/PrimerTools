@@ -23,8 +23,7 @@ public partial class Photoshoot : Node
             if (_subject != null) _subject.Changed -= OnSubjectChanged;
             _subject = value;
             if (_subject != null) _subject.Changed += OnSubjectChanged;
-            var slot = ModelSlot;
-            if (slot != null) _subject?.LoadModel(slot);
+            ReloadModel();
         }
     }
 
@@ -59,13 +58,43 @@ public partial class Photoshoot : Node
 
     public override void _Ready()
     {
-        _subject?.LoadModel(ModelSlot);
+        ReloadModel();
     }
 
     private void OnSubjectChanged()
     {
+        ReloadModel();
+    }
+
+    private void ReloadModel()
+    {
         var slot = ModelSlot;
-        if (slot != null) _subject?.LoadModel(slot);
+        if (slot == null || _subject == null) return;
+        _subject.LoadModel(slot);
+        ClaimOwnership(slot);
+    }
+
+    // Give every loaded node (and its descendants) Owner = edited scene root so
+    // the subtree is visible and editable in the Scene dock while framing the
+    // shot. Editor-only — outside the editor, Owner is meaningless for behavior.
+    //
+    // Note: saving the scene while a model is loaded will persist these nodes
+    // into the .tscn. Reloading (re-open / re-assign Subject) wipes them again,
+    // so in practice this just means "don't Ctrl-S while a subject is loaded."
+    private void ClaimOwnership(Node3D slot)
+    {
+        if (!Engine.IsEditorHint()) return;
+        var root = GetTree()?.EditedSceneRoot;
+        if (root == null) return;
+        foreach (Node child in slot.GetChildren())
+            SetOwnerRecursive(child, root);
+    }
+
+    private static void SetOwnerRecursive(Node node, Node owner)
+    {
+        node.Owner = owner;
+        foreach (Node child in node.GetChildren())
+            SetOwnerRecursive(child, owner);
     }
 
     private async Task SnapPicture()
