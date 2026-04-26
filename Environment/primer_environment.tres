@@ -1,6 +1,6 @@
 [gd_resource type="Environment" load_steps=4 format=3 uid="uid://xpav3hoy6ldu"]
 
-[ext_resource type="Shader" uid="uid://ddq02620nwc1d" path="res://addons/PrimerTools/Environment/sky_shader2.gdshader" id="1_1cjjy"]
+[ext_resource type="Shader" uid="uid://dwhor1qnhajw2" path="res://addons/PrimerTools/Environment/sky_shader2.gdshader" id="1_1cjjy"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_yvsqb"]
 shader = ExtResource("1_1cjjy")
