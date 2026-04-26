@@ -53,24 +53,27 @@ public partial class CameraRig : Node3D
     }
 
     #region Manipulation in play mode
-    public float RotationSensitivity { get; set; } = 0.005f;
-    public float PanSensitivity { get; set; } = 0.02f;
-    public float ZoomSensitivity { get; set; } = 0.1f;
-    public float ZoomMin { get; set; } = 1.0f;
-    public float ZoomMax { get; set; } = 1000.0f;
-    public bool EnableDragRotation { get; set; } = true;
-    public bool EnablePanning { get; set; } = true;
-    public bool EnableZooming { get; set; } = true;
-    public bool InvertRotationX { get; set; } = false;
-    public bool InvertRotationY { get; set; } = true;
-    public bool InvertPanX { get; set; } = false;
-    public bool InvertPanY { get; set; } = false;
-    public bool InvertZoom { get; set; } = false;
-    
+    [Export] public float RotationSensitivity { get; set; } = 0.005f;
+    [Export] public float PanSensitivity { get; set; } = 0.02f;
+    [Export] public float ZoomSensitivity { get; set; } = 0.1f;
+    [Export] public float ZoomMin { get; set; } = 1.0f;
+    [Export] public float ZoomMax { get; set; } = 1000.0f;
+    [Export] public bool EnableYaw { get; set; } = true;
+    [Export] public bool EnablePitch { get; set; } = true;
+    [Export] public bool EnablePanning { get; set; } = true;
+    /// <summary>When true, panning glides along the world XZ plane instead of the camera-local screen plane.</summary>
+    [Export] public bool FlatPan { get; set; } = false;
+    [Export] public bool EnableZooming { get; set; } = true;
+    [Export] public bool InvertRotationX { get; set; } = false;
+    [Export] public bool InvertRotationY { get; set; } = true;
+    [Export] public bool InvertPanX { get; set; } = false;
+    [Export] public bool InvertPanY { get; set; } = false;
+    [Export] public bool InvertZoom { get; set; } = false;
+
     private bool _isRotating = false;
     private bool _isPanning = false;
     private Vector2 _lastMousePosition;
-    
+
     public override void _UnhandledInput(InputEvent @event)
     {
         if (SceneRecorder.IsOn) return;
@@ -84,20 +87,20 @@ public partial class CameraRig : Node3D
             HandleMouseMotionEvent(mouseMotionEvent);
         }
     }
-    
+
     private void HandleMouseButtonEvent(InputEventMouseButton mouseButtonEvent)
     {
         switch (mouseButtonEvent.ButtonIndex)
         {
             case MouseButton.Left:
-                if (EnableDragRotation)
+                if (EnableYaw || EnablePitch)
                 {
                     _isRotating = mouseButtonEvent.Pressed;
                     if (_isRotating)
                         _lastMousePosition = mouseButtonEvent.Position;
                 }
                 break;
-                
+
             case MouseButton.Middle:
                 if (EnablePanning)
                 {
@@ -106,7 +109,7 @@ public partial class CameraRig : Node3D
                         _lastMousePosition = mouseButtonEvent.Position;
                 }
                 break;
-                
+
             case MouseButton.WheelUp:
                 if (EnableZooming)
                 {
@@ -114,7 +117,7 @@ public partial class CameraRig : Node3D
                     Zoom(zoomDirection * ZoomSensitivity);
                 }
                 break;
-                
+
             case MouseButton.WheelDown:
                 if (EnableZooming)
                 {
@@ -124,46 +127,64 @@ public partial class CameraRig : Node3D
                 break;
         }
     }
-    
+
     private void HandleMouseMotionEvent(InputEventMouseMotion mouseMotionEvent)
     {
         Vector2 delta = mouseMotionEvent.Position - _lastMousePosition;
         _lastMousePosition = mouseMotionEvent.Position;
-        
-        if (_isRotating && EnableDragRotation)
+
+        if (_isRotating)
         {
-            // Apply horizontal rotation (around Y axis)
-            float yRotationDirection = InvertRotationX ? 1 : -1;
-            RotateY(yRotationDirection * delta.X * RotationSensitivity);
-            
-            // Apply vertical rotation (around X axis)
-            float xRotationDirection = InvertRotationY ? -1 : 1;
-            float xRotation = xRotationDirection * delta.Y * RotationSensitivity;
-            
-            // Rotate around the local X axis
-            RotateObjectLocal(Vector3.Right, xRotation);
+            if (EnableYaw)
+            {
+                float yRotationDirection = InvertRotationX ? 1 : -1;
+                RotateY(yRotationDirection * delta.X * RotationSensitivity);
+            }
+
+            if (EnablePitch)
+            {
+                float xRotationDirection = InvertRotationY ? -1 : 1;
+                float xRotation = xRotationDirection * delta.Y * RotationSensitivity;
+                RotateObjectLocal(Vector3.Right, xRotation);
+            }
         }
-        
+
         if (_isPanning && EnablePanning)
         {
-            // Get the camera's local coordinate system
             Basis cameraBasis = GlobalTransform.Basis;
-            
-            // Get the right and up vectors from the camera's basis
-            Vector3 right = cameraBasis.X.Normalized();
-            Vector3 up = cameraBasis.Y.Normalized();
-            
+
+            Vector3 right;
+            Vector3 up;
+            if (FlatPan)
+            {
+                right = FlattenXZ(cameraBasis.X);
+                up = FlattenXZ(-cameraBasis.Z);
+            }
+            else
+            {
+                right = cameraBasis.X.Normalized();
+                up = cameraBasis.Y.Normalized();
+            }
+
             float xDirection = InvertPanX ? 1 : -1;
             float yDirection = InvertPanY ? -1 : 1;
-            
+
             Vector3 panOffset =
                 right * xDirection * delta.X * PanSensitivity +
                 up * yDirection * delta.Y * PanSensitivity;
-                
+
+            if (FlatPan) panOffset.Y = 0;
+
             GlobalPosition += panOffset;
         }
     }
-    
+
+    private static Vector3 FlattenXZ(Vector3 v)
+    {
+        v.Y = 0;
+        return v.LengthSquared() > 0.0001f ? v.Normalized() : Vector3.Zero;
+    }
+
     private void Zoom(float amount)
     {
         float newDistance = Mathf.Clamp(
@@ -171,7 +192,7 @@ public partial class CameraRig : Node3D
             ZoomMin,
             ZoomMax
         );
-        
+
         Distance = newDistance;
     }
     #endregion
