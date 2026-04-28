@@ -66,7 +66,7 @@ using PrimerTools.Graph;
 //         // var treeScene = ResourceLoader.Load<PackedScene>("res://addons/PrimerAssets/Organized/Trees/Mango trees/Medium mango tree/Resources/mango tree medium.scn");
 //         for (var i = 0; i < Sim.NumTrees; i++)
 //         {
-//             var tree = FruitTree.MangoTreeScene.Instantiate<FruitTree>();
+//             var tree = FruitTree.TreeScene.Instantiate<FruitTree>();
 //             Ground.AddChild(tree);
 //             // tree.Owner = GetTree().EditedSceneRoot;
 //             // tree.MakeSelfAndChildrenLocal(GetTree().EditedSceneRoot);
