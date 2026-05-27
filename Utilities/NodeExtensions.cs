@@ -10,9 +10,22 @@ public static class NodeExtensions
     {
         if (ancestorWhoNodesAreLocalWithRespectTo == null)
         {
+            // Fail loud: the helper has nothing useful to do when its target
+            // is detached from the tree, and silently no-oping makes the
+            // underlying bug invisible. Caller can guard with IsInsideTree()
+            // if a no-op is genuinely the right behaviour.
+            if (!parent.IsInsideTree())
+            {
+                GD.PushWarning(
+                    $"MakeSelfAndChildrenLocal called on '{parent.Name}' ({parent.GetType().Name}) " +
+                    "which is not inside the scene tree — skipping. The caller created or kept " +
+                    "a reference to a detached node.");
+                return;
+            }
             ancestorWhoNodesAreLocalWithRespectTo = parent.GetTree().EditedSceneRoot;
+            if (ancestorWhoNodesAreLocalWithRespectTo == null) return; // not in editor / nothing edited
         }
-        
+
         parent.Owner = ancestorWhoNodesAreLocalWithRespectTo;
         parent.SceneFilePath = "";
         if (depth > 100)
