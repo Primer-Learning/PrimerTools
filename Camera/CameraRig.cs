@@ -61,6 +61,10 @@ public partial class CameraRig : Node3D
     [Export] public float ZoomMax { get; set; } = 1000.0f;
     [Export] public bool EnableYaw { get; set; } = true;
     [Export] public bool EnablePitch { get; set; } = true;
+    /// <summary>Minimum pitch in degrees. 0 = horizontal, 90 = looking straight down.</summary>
+    [Export] public float PitchMin { get; set; } = 0f;
+    /// <summary>Maximum pitch in degrees. 0 = horizontal, 90 = looking straight down.</summary>
+    [Export] public float PitchMax { get; set; } = 90f;
     [Export] public bool EnablePanning { get; set; } = true;
     /// <summary>When true, panning glides along the world XZ plane instead of the camera-local screen plane.</summary>
     [Export] public bool FlatPan { get; set; } = false;
@@ -136,16 +140,22 @@ public partial class CameraRig : Node3D
         
         if (_isRotating && EnableDragRotation)
         {
-            // Apply horizontal rotation (around Y axis)
-            float yRotationDirection = InvertRotationX ? 1 : -1;
-            RotateY(yRotationDirection * delta.X * RotationSensitivity);
-            
-            // Apply vertical rotation (around X axis)
-            float xRotationDirection = InvertRotationY ? -1 : 1;
-            float xRotation = xRotationDirection * delta.Y * RotationSensitivity;
-            
-            // Rotate around the local X axis
-            RotateObjectLocal(Vector3.Right, xRotation);
+            if (EnableYaw)
+            {
+                float yRotationDirection = InvertRotationX ? 1 : -1;
+                RotateY(yRotationDirection * delta.X * RotationSensitivity);
+            }
+
+            if (EnablePitch)
+            {
+                float xRotationDirection = InvertRotationY ? -1 : 1;
+                float xRotation = xRotationDirection * delta.Y * RotationSensitivity;
+                RotateObjectLocal(Vector3.Right, xRotation);
+
+                Vector3 rot = Rotation;
+                rot.X = Mathf.Clamp(rot.X, -Mathf.DegToRad(PitchMax), -Mathf.DegToRad(PitchMin));
+                Rotation = rot;
+            }
         }
         
         if (_isPanning && EnablePanning)
