@@ -53,20 +53,24 @@ public partial class CameraRig : Node3D
     }
 
     #region Manipulation in play mode
-    public float RotationSensitivity { get; set; } = 0.005f;
-    public float PanSensitivity { get; set; } = 0.02f;
-    public float ZoomSensitivity { get; set; } = 0.1f;
-    public float ZoomMin { get; set; } = 1.0f;
-    public float ZoomMax { get; set; } = 1000.0f;
-    public bool EnableDragRotation { get; set; } = true;
-    public bool EnablePanning { get; set; } = true;
-    public bool EnableZooming { get; set; } = true;
-    public bool InvertRotationX { get; set; } = false;
-    public bool InvertRotationY { get; set; } = true;
-    public bool InvertPanX { get; set; } = false;
-    public bool InvertPanY { get; set; } = false;
-    public bool InvertZoom { get; set; } = false;
-    
+    [Export] public float RotationSensitivity { get; set; } = 0.005f;
+    /// <summary>Unitless multiplier on top of the zoom-aware pan rate. 1.0 = mouse tracks the world 1:1 at the rig's depth.</summary>
+    [Export] public float PanSensitivity { get; set; } = 1.0f;
+    [Export] public float ZoomSensitivity { get; set; } = 0.1f;
+    [Export] public float ZoomMin { get; set; } = 1.0f;
+    [Export] public float ZoomMax { get; set; } = 1000.0f;
+    [Export] public bool EnableYaw { get; set; } = true;
+    [Export] public bool EnablePitch { get; set; } = true;
+    [Export] public bool EnablePanning { get; set; } = true;
+    /// <summary>When true, panning glides along the world XZ plane instead of the camera-local screen plane.</summary>
+    [Export] public bool FlatPan { get; set; } = false;
+    [Export] public bool EnableZooming { get; set; } = true;
+    [Export] public bool InvertRotationX { get; set; } = false;
+    [Export] public bool InvertRotationY { get; set; } = true;
+    [Export] public bool InvertPanX { get; set; } = false;
+    [Export] public bool InvertPanY { get; set; } = false;
+    [Export] public bool InvertZoom { get; set; } = false;
+
     private bool _isRotating = false;
     private bool _isPanning = false;
     private Vector2 _lastMousePosition;
@@ -155,15 +159,46 @@ public partial class CameraRig : Node3D
             
             float xDirection = InvertPanX ? 1 : -1;
             float yDirection = InvertPanY ? -1 : 1;
-            
+
+            float worldPerPixel = GetWorldUnitsPerPixel();
+
             Vector3 panOffset =
-                right * xDirection * delta.X * PanSensitivity +
-                up * yDirection * delta.Y * PanSensitivity;
-                
+                right * xDirection * delta.X * worldPerPixel * PanSensitivity +
+                up * yDirection * delta.Y * worldPerPixel * PanSensitivity;
+
+            if (FlatPan) panOffset.Y = 0;
+
             GlobalPosition += panOffset;
         }
     }
-    
+
+    private static Vector3 FlattenXZ(Vector3 v)
+    {
+        v.Y = 0;
+        return v.LengthSquared() > 0.0001f ? v.Normalized() : Vector3.Zero;
+    }
+
+    /// <summary>
+    /// World units spanned by one screen pixel at the rig's depth. Lets pan track the cursor 1:1
+    /// regardless of zoom: drag the mouse N pixels, the rig moves the same world distance the cursor
+    /// would have traversed over the plane through the rig's origin.
+    /// </summary>
+    private float GetWorldUnitsPerPixel()
+    {
+        Vector2 viewportSize = GetViewport().GetVisibleRect().Size;
+        bool useWidth = Camera.KeepAspect == Camera3D.KeepAspectEnum.Width;
+        float pixelExtent = useWidth ? viewportSize.X : viewportSize.Y;
+        if (pixelExtent <= 0) return 0;
+
+        if (Camera.Projection == Camera3D.ProjectionType.Orthogonal)
+        {
+            return Camera.Size / pixelExtent;
+        }
+
+        float halfFovRad = Mathf.DegToRad(Camera.Fov) * 0.5f;
+        return 2f * Mathf.Abs(Distance) * Mathf.Tan(halfFovRad) / pixelExtent;
+    }
+
     private void Zoom(float amount)
     {
         float newDistance = Mathf.Clamp(
