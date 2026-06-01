@@ -89,7 +89,9 @@ public partial class CameraRig : Node3D
     private bool _isRotating = false;
     private bool _isPanning = false;
     private Vector2 _lastMousePosition;
-    
+    private float _yaw;
+    private float _pitch;
+
     public override void _UnhandledInput(InputEvent @event)
     {
         if (SceneRecorder.IsOn) return;
@@ -113,7 +115,11 @@ public partial class CameraRig : Node3D
                 {
                     _isRotating = mouseButtonEvent.Pressed;
                     if (_isRotating)
+                    {
                         _lastMousePosition = mouseButtonEvent.Position;
+                        _yaw = Rotation.Y;
+                        _pitch = Rotation.X;
+                    }
                 }
                 break;
                 
@@ -154,19 +160,17 @@ public partial class CameraRig : Node3D
             if (EnableYaw)
             {
                 float yRotationDirection = InvertRotationX ? 1 : -1;
-                RotateY(yRotationDirection * delta.X * RotationSensitivity);
+                _yaw += yRotationDirection * delta.X * RotationSensitivity;
             }
 
             if (EnablePitch)
             {
                 float xRotationDirection = InvertRotationY ? -1 : 1;
-                float xRotation = xRotationDirection * delta.Y * RotationSensitivity;
-                RotateObjectLocal(Vector3.Right, xRotation);
-
-                Vector3 rot = Rotation;
-                rot.X = Mathf.Clamp(rot.X, -Mathf.DegToRad(PitchMax), -Mathf.DegToRad(PitchMin));
-                Rotation = rot;
+                _pitch += xRotationDirection * delta.Y * RotationSensitivity;
+                _pitch = Mathf.Clamp(_pitch, -Mathf.DegToRad(PitchMax), -Mathf.DegToRad(PitchMin));
             }
+
+            Rotation = new Vector3(_pitch, _yaw, 0);
         }
 
         if (_isPanning && PanningMode != PanMode.Locked)
