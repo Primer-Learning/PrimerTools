@@ -1,9 +1,11 @@
-[gd_scene load_steps=8 format=3 uid="uid://dpy757onicgp4"]
+[gd_scene load_steps=10 format=3 uid="uid://dpy757onicgp4"]
 
 [ext_resource type="PackedScene" uid="uid://4q2wwbqene03" path="res://addons/PrimerTools/Simulation/Models/Medium mango tree/mango tree medium new.glb" id="1_ls4xx"]
 [ext_resource type="Shader" uid="uid://cmg1seas0n7rk" path="res://addons/QuaterniusAssets/Stylized Nature MegaKit/Materials/M_MangoLeaf_Seasons.gdshader" id="2_mgato"]
 [ext_resource type="Texture2D" uid="uid://c1t6yyytspoom" path="res://addons/PrimerTools/Simulation/Models/Medium mango tree/textures/mango_leaf_grayscale.png" id="3_28bkr"]
 [ext_resource type="Shader" uid="uid://bv8y8ou0h7ttr" path="res://Bridge/Visuals/Shaders/plant_trunk_growth.gdshader" id="4_trunk"]
+[ext_resource type="Texture2D" uid="uid://dvsu16i3c8e" path="res://addons/QuaterniusAssets/Stylized Nature MegaKit/assets/Noise_Wind.png" id="5_windnoise"]
+[ext_resource type="Texture2D" uid="uid://h35uej8tofad" path="res://addons/QuaterniusAssets/Stylized Nature MegaKit/Materials/T_FoliageNoise.tres" id="6_gennoise"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_qgun3"]
 render_priority = 0
@@ -11,6 +13,8 @@ shader = ExtResource("2_mgato")
 shader_parameter/Leaf_Color = Color(0.33333334, 0.5529412, 0, 1)
 shader_parameter/ExtraColor = Color(0.13, 0.33, 0.25, 1)
 shader_parameter/Alpha = ExtResource("3_28bkr")
+shader_parameter/NoiseTexture = ExtResource("5_windnoise")
+shader_parameter/GeneratedNoise = ExtResource("6_gennoise")
 shader_parameter/SSS_Color = Color(0.5133333, 0.7, 0, 1)
 shader_parameter/SSS_Strength = 2.0
 shader_parameter/SSS_Blend = 0.2
