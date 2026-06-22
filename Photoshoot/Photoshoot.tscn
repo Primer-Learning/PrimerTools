@@ -1,0 +1,58 @@
+[gd_scene load_steps=7 format=3 uid="uid://c80mcvqju5ahj"]
+
+[ext_resource type="Script" uid="uid://d003c7dfdui5m" path="res://addons/PrimerTools/Photoshoot/Photoshoot.cs" id="1_script"]
+[ext_resource type="Script" uid="uid://df0gntb6u8r7d" path="res://Bridge/Visuals/GoodPhotoshootSubject.cs" id="2_nvn1q"]
+[ext_resource type="Script" uid="uid://b2h26llaoia2s" path="res://addons/PrimerTools/Camera/CameraRig.cs" id="3_mf6h7"]
+
+[sub_resource type="Resource" id="Resource_mf6h7"]
+script = ExtResource("2_nvn1q")
+Good = 11
+metadata/_custom_type_script = "uid://df0gntb6u8r7d"
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_mf6h7"]
+albedo_color = Color(0.5, 0.22, 0.05, 1)
+
+[sub_resource type="SphereMesh" id="SphereMesh_4v3pt"]
+radius = 0.07
+height = 0.14
+
+[node name="Photoshoot" type="Node"]
+script = ExtResource("1_script")
+Subject = SubResource("Resource_mf6h7")
+
+[node name="SubViewportContainer" type="SubViewportContainer" parent="."]
+offset_right = 512.0
+offset_bottom = 512.0
+
+[node name="SubViewport" type="SubViewport" parent="SubViewportContainer"]
+unique_name_in_owner = true
+transparent_bg = true
+handle_input_locally = false
+render_target_update_mode = 4
+
+[node name="CameraRig" type="Node3D" parent="SubViewportContainer/SubViewport"]
+transform = Transform3D(1, 0, 0, 0, 0.74895567, 0.66262007, 0, -0.66262, 0.7489557, 0, 0.07, 0)
+script = ExtResource("3_mf6h7")
+Distance = 10.0
+
+[node name="Camera3D" type="Camera3D" parent="SubViewportContainer/SubViewport/CameraRig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.452)
+current = true
+fov = 22.0
+
+[node name="KeyLight" type="DirectionalLight3D" parent="SubViewportContainer/SubViewport"]
+transform = Transform3D(0.8657455, -4.7601358e-08, -0.5004844, 0.037490875, 0.99719036, 0.06485224, 0.49907833, -0.07490915, 0.8633131, 2.7894508e-08, 5.225456, 0.7574584)
+light_energy = 1.2
+
+[node name="FillLight" type="DirectionalLight3D" parent="SubViewportContainer/SubViewport"]
+transform = Transform3D(-0.4999469, 7.402897e-05, 0.8660561, -0.29596865, 0.93977886, -0.17093371, -0.8139138, -0.34178323, -0.4698176, 0, 2, -2)
+visible = false
+light_energy = 0.4
+
+[node name="ModelSlot" type="Node3D" parent="SubViewportContainer/SubViewport"]
+unique_name_in_owner = true
+
+[node name="@MeshInstance3D@76789" type="MeshInstance3D" parent="SubViewportContainer/SubViewport/ModelSlot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.07, 0)
+material_override = SubResource("StandardMaterial3D_mf6h7")
+mesh = SubResource("SphereMesh_4v3pt")
