@@ -111,7 +111,7 @@ public partial class CameraRig : Node3D
         switch (mouseButtonEvent.ButtonIndex)
         {
             case MouseButton.Left:
-                if (EnableDragRotation)
+                if (EnableYaw || EnablePitch)
                 {
                     _isRotating = mouseButtonEvent.Pressed;
                     if (_isRotating)
@@ -155,7 +155,7 @@ public partial class CameraRig : Node3D
         Vector2 delta = mouseMotionEvent.Position - _lastMousePosition;
         _lastMousePosition = mouseMotionEvent.Position;
         
-        if (_isRotating && EnableDragRotation)
+        if (_isRotating && (EnableYaw || EnablePitch))
         {
             if (EnableYaw)
             {
