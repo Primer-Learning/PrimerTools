@@ -4,3 +4,5 @@
 *.import
 # Tree Distribution saves
 **Saved Tree Distributions/
+# WIP experimental mango mesh — kept local, not synced (remove this line to sync it)
+Simulation/Models/Medium mango tree/mango tree medium new smooth attempt.blend
