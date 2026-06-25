@@ -87,12 +87,13 @@ public partial class CameraRig : Node3D
     [Export] public bool InvertZoom { get; set; } = false;
 
     /// <summary>
-    /// When false, the rig ignores all mouse input (rotate / pan / zoom). Lets a
-    /// mode that owns the mouse — e.g. the wall-plan editor's node dragging —
-    /// suppress camera manipulation without the rig knowing about it. Any in-flight
-    /// rotate/pan is cancelled while disabled.
+    /// When false, the rig ignores mouse rotate and pan (button-drag). Lets a mode
+    /// that owns drag input — e.g. the wall-plan editor's node dragging — suppress
+    /// camera manipulation without the rig knowing about it; any in-flight
+    /// rotate/pan is cancelled. Wheel zoom is unaffected (it doesn't conflict with
+    /// drag) and still obeys <see cref="EnableZooming"/>.
     /// </summary>
-    [Export] public bool MouseInputEnabled { get; set; } = true;
+    [Export] public bool MouseManipulationEnabled { get; set; } = true;
 
     private bool _isRotating = false;
     private bool _isPanning = false;
@@ -104,18 +105,26 @@ public partial class CameraRig : Node3D
     {
         if (SceneRecorder.IsOn) return;
         if (!Camera.Current) return;
-        if (!MouseInputEnabled)
-        {
-            _isRotating = false;
-            _isPanning = false;
-            return;
-        }
         if (@event is InputEventMouseButton mouseButtonEvent)
         {
+            // Zoom (wheel) always processes; rotate/pan obey MouseManipulationEnabled.
+            bool isZoom = mouseButtonEvent.ButtonIndex is MouseButton.WheelUp or MouseButton.WheelDown;
+            if (!MouseManipulationEnabled && !isZoom)
+            {
+                _isRotating = false;
+                _isPanning = false;
+                return;
+            }
             HandleMouseButtonEvent(mouseButtonEvent);
         }
         else if (@event is InputEventMouseMotion mouseMotionEvent)
         {
+            if (!MouseManipulationEnabled)
+            {
+                _isRotating = false;
+                _isPanning = false;
+                return;
+            }
             HandleMouseMotionEvent(mouseMotionEvent);
         }
     }
