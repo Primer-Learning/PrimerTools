@@ -86,6 +86,14 @@ public partial class CameraRig : Node3D
     [Export] public bool InvertPanY { get; set; } = false;
     [Export] public bool InvertZoom { get; set; } = false;
 
+    /// <summary>
+    /// When false, the rig ignores all mouse input (rotate / pan / zoom). Lets a
+    /// mode that owns the mouse — e.g. the wall-plan editor's node dragging —
+    /// suppress camera manipulation without the rig knowing about it. Any in-flight
+    /// rotate/pan is cancelled while disabled.
+    /// </summary>
+    [Export] public bool MouseInputEnabled { get; set; } = true;
+
     private bool _isRotating = false;
     private bool _isPanning = false;
     private Vector2 _lastMousePosition;
@@ -96,6 +104,12 @@ public partial class CameraRig : Node3D
     {
         if (SceneRecorder.IsOn) return;
         if (!Camera.Current) return;
+        if (!MouseInputEnabled)
+        {
+            _isRotating = false;
+            _isPanning = false;
+            return;
+        }
         if (@event is InputEventMouseButton mouseButtonEvent)
         {
             HandleMouseButtonEvent(mouseButtonEvent);
