@@ -44,8 +44,9 @@ public partial class CameraRig : Node3D
     }
 
     /// <summary>
-    /// Orthographic projection toggle. Switching preserves the apparent framing:
-    /// the ortho size is derived from Distance and the camera's FOV so the plane
+    /// Instant orthographic projection toggle (see <see cref="TweenProjection"/>
+    /// for the animated switch). Switching preserves the apparent framing: the
+    /// ortho size is derived from Distance and the camera's FOV so the plane
     /// through the rig's origin spans the same screen extent in both projections.
     /// Distance stays the single zoom state — wheel zoom keeps working in ortho
     /// because the ortho size tracks Distance.
@@ -56,6 +57,8 @@ public partial class CameraRig : Node3D
         set
         {
             if (Camera is null) return;
+            _projectionTween?.Kill();
+            _orthoTarget = value;
             Camera.Projection = value
                 ? Camera3D.ProjectionType.Orthogonal
                 : Camera3D.ProjectionType.Perspective;
@@ -103,6 +106,111 @@ public partial class CameraRig : Node3D
             .SetEase(Tween.EaseType.InOut);
     }
 
+    private Tween _yawTween;
+    private float _yawTweenTarget;
+
+    /// <summary>
+    /// Tweens yaw by a relative amount (sine in-out). Rapid presses accumulate:
+    /// a press mid-tween retargets from the in-flight destination, so two 45°
+    /// presses always land 90° from where the first started. A rotate drag
+    /// kills the tween.
+    /// </summary>
+    public void TweenYawBy(float deltaRadians, float seconds)
+    {
+        bool inFlight = _yawTween != null && _yawTween.IsValid() && _yawTween.IsRunning();
+        _yawTweenTarget = (inFlight ? _yawTweenTarget : Rotation.Y) + deltaRadians;
+        _yawTween?.Kill();
+        _yawTween = CreateTween();
+        _yawTween.TweenProperty(this, "rotation:y", _yawTweenTarget, seconds)
+            .SetTrans(Tween.TransitionType.Sine)
+            .SetEase(Tween.EaseType.InOut);
+    }
+
+    /// <summary>
+    /// FOV (degrees) narrow enough that snapping between a matched-framing
+    /// perspective and true orthographic is visually negligible.
+    /// </summary>
+    private const float OrthoSnapFovDegrees = 5f;
+
+    private Tween _projectionTween;
+    private bool? _orthoTarget;
+    private float _perspectiveFov = DefaultFov;
+
+    /// <summary>
+    /// The projection state the rig is at or animating toward. Poll this (not
+    /// <see cref="Orthographic"/>) for UI toggles so they don't flicker during
+    /// a projection tween, which stays in perspective until the final snap.
+    /// </summary>
+    public bool OrthographicTarget => _orthoTarget ?? Orthographic;
+
+    /// <summary>
+    /// Animated projection switch. To ortho: dolly the camera out while
+    /// narrowing the FOV (the framing extent through the rig's origin held
+    /// constant), then snap to true orthographic once perspective distortion is
+    /// negligible. To perspective: snap to the matched narrow-FOV perspective
+    /// (visually identical), then tween FOV/distance back to the FOV captured
+    /// on the way out. Distance ends where the current framing implies, so zoom
+    /// done while in ortho carries back to perspective.
+    /// </summary>
+    public void TweenProjection(bool orthographic, float seconds)
+    {
+        if (Camera is null) return;
+        bool wasTransitioning = _projectionTween != null && _projectionTween.IsValid();
+        _projectionTween?.Kill();
+        _orthoTarget = orthographic;
+
+        if (orthographic)
+        {
+            if (Orthographic) return;
+            // Mid-transition FOV is scratch state, not the one to come back to.
+            if (!wasTransitioning) _perspectiveFov = Camera.Fov;
+            float extent = FramingExtent();
+            _projectionTween = CreateTween();
+            _projectionTween.TweenMethod(
+                    Callable.From<float>(fov => SetPerspectiveFraming(fov, extent)),
+                    Camera.Fov, OrthoSnapFovDegrees, seconds)
+                .SetTrans(Tween.TransitionType.Sine)
+                .SetEase(Tween.EaseType.InOut);
+            _projectionTween.TweenCallback(Callable.From(() =>
+            {
+                Camera.Projection = Camera3D.ProjectionType.Orthogonal;
+                SyncOrthoSize();
+            }));
+        }
+        else
+        {
+            float extent = FramingExtent();
+            if (Orthographic)
+            {
+                Camera.Fov = OrthoSnapFovDegrees;
+                Camera.Projection = Camera3D.ProjectionType.Perspective;
+                SetPerspectiveFraming(OrthoSnapFovDegrees, extent);
+            }
+            _projectionTween = CreateTween();
+            _projectionTween.TweenMethod(
+                    Callable.From<float>(fov => SetPerspectiveFraming(fov, extent)),
+                    Camera.Fov, _perspectiveFov, seconds)
+                .SetTrans(Tween.TransitionType.Sine)
+                .SetEase(Tween.EaseType.InOut);
+        }
+    }
+
+    /// <summary>
+    /// World extent spanned by the viewport (along the keep-aspect axis) at the
+    /// plane through the rig's origin — the quantity both projections share.
+    /// </summary>
+    private float FramingExtent()
+        => Orthographic
+            ? Camera.Size
+            : 2f * Mathf.Abs(Distance) * Mathf.Tan(Mathf.DegToRad(Camera.Fov) * 0.5f);
+
+    /// <summary>Sets FOV and back-solves Distance so the framing extent stays fixed.</summary>
+    private void SetPerspectiveFraming(float fovDegrees, float framingExtent)
+    {
+        Camera.Fov = fovDegrees;
+        Distance = framingExtent / (2f * Mathf.Tan(Mathf.DegToRad(fovDegrees) * 0.5f));
+    }
+
     /// <summary>Walks up from a node (typically the active camera) to its owning rig, if any.</summary>
     public static CameraRig FromNode(Node node)
     {
@@ -116,12 +224,6 @@ public partial class CameraRig : Node3D
 
     #region Manipulation in play mode
     [Export] public float RotationSensitivity { get; set; } = 0.005f;
-    /// <summary>
-    /// Pixels of press-drag motion before a left-drag starts rotating. Quick
-    /// clicks (press/release with less motion than this) never disturb the
-    /// camera, so click-to-act game modes don't get accidental orbit nudges.
-    /// </summary>
-    [Export] public float RotationDragThresholdPixels { get; set; } = 5f;
     /// <summary>Unitless multiplier on top of the zoom-aware pan rate. 1.0 = mouse tracks the world 1:1 at the rig's depth.</summary>
     [Export] public float PanSensitivity { get; set; } = 1.0f;
     [Export] public float ZoomSensitivity { get; set; } = 0.1f;
@@ -163,9 +265,7 @@ public partial class CameraRig : Node3D
     /// </summary>
     [Export] public bool MouseManipulationEnabled { get; set; } = true;
 
-    private bool _isRotating = false;      // threshold crossed, actively rotating
-    private bool _rotatePending = false;   // left button held, threshold not yet crossed
-    private Vector2 _rotatePressPosition;
+    private bool _isRotating = false;
     private bool _isPanning = false;
     private Vector2 _lastMousePosition;
     private float _yaw;
@@ -187,7 +287,6 @@ public partial class CameraRig : Node3D
             if (!MouseManipulationEnabled && !isZoom)
             {
                 _isRotating = false;
-                _rotatePending = false;
                 _isPanning = false;
                 return;
             }
@@ -198,7 +297,6 @@ public partial class CameraRig : Node3D
             if (!MouseManipulationEnabled)
             {
                 _isRotating = false;
-                _rotatePending = false;
                 _isPanning = false;
                 return;
             }
@@ -213,11 +311,7 @@ public partial class CameraRig : Node3D
             case MouseButton.Left:
                 if (EnableYaw || EnablePitch)
                 {
-                    // Rotation arms on press but only starts once the cursor has
-                    // moved RotationDragThresholdPixels (see HandleMouseMotionEvent),
-                    // so a click never nudges the camera.
-                    _rotatePending = mouseButtonEvent.Pressed;
-                    if (_rotatePending) _rotatePressPosition = mouseButtonEvent.Position;
+                    if (mouseButtonEvent.Pressed) BeginRotateDrag(mouseButtonEvent.Position);
                     else _isRotating = false;
                 }
                 break;
@@ -251,12 +345,6 @@ public partial class CameraRig : Node3D
     
     private void HandleMouseMotionEvent(InputEventMouseMotion mouseMotionEvent)
     {
-        if (_rotatePending && !_isRotating
-            && mouseMotionEvent.Position.DistanceTo(_rotatePressPosition) >= RotationDragThresholdPixels)
-        {
-            BeginRotateDrag(mouseMotionEvent.Position);
-        }
-
         Vector2 delta = mouseMotionEvent.Position - _lastMousePosition;
         _lastMousePosition = mouseMotionEvent.Position;
 
@@ -326,6 +414,7 @@ public partial class CameraRig : Node3D
         _dragPitchLower = Mathf.Min(-Mathf.DegToRad(PitchMax), _pitch);
         _dragPitchUpper = Mathf.Max(-Mathf.DegToRad(PitchMin), _pitch);
         _pitchTween?.Kill();
+        _yawTween?.Kill();
     }
 
     private static Vector3 FlattenXZ(Vector3 v)
