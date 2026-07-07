@@ -37,9 +37,36 @@ public partial class CameraRig : Node3D
         get => Camera is null ? DefaultDistance : Camera.Position.Z;
         set
         {
-            if (Camera is null) return; 
+            if (Camera is null) return;
             Camera.Position = new Vector3(Camera.Position.X, Camera.Position.Y, value);
+            SyncOrthoSize();
         }
+    }
+
+    /// <summary>
+    /// Orthographic projection toggle. Switching preserves the apparent framing:
+    /// the ortho size is derived from Distance and the camera's FOV so the plane
+    /// through the rig's origin spans the same screen extent in both projections.
+    /// Distance stays the single zoom state — wheel zoom keeps working in ortho
+    /// because the ortho size tracks Distance.
+    /// </summary>
+    public bool Orthographic
+    {
+        get => Camera != null && Camera.Projection == Camera3D.ProjectionType.Orthogonal;
+        set
+        {
+            if (Camera is null) return;
+            Camera.Projection = value
+                ? Camera3D.ProjectionType.Orthogonal
+                : Camera3D.ProjectionType.Perspective;
+            SyncOrthoSize();
+        }
+    }
+
+    private void SyncOrthoSize()
+    {
+        if (Camera is null || Camera.Projection != Camera3D.ProjectionType.Orthogonal) return;
+        Camera.Size = 2f * Mathf.Abs(Distance) * Mathf.Tan(Mathf.DegToRad(Camera.Fov) * 0.5f);
     }
 
     public Animation ZoomToAnimationDeprecated(float distance)
@@ -52,8 +79,49 @@ public partial class CameraRig : Node3D
         return new PropertyStateChange(Camera, "position", new Vector3(Camera.Position.X, Camera.Position.Y, distance));
     }
 
+    /// <summary>
+    /// Top-down pitch that stays a hair off exact vertical so camera-relative
+    /// controls (forward = camera forward projected onto XZ) keep a defined
+    /// direction while looking straight down.
+    /// </summary>
+    public const float TopDownPitchRadians = -Mathf.Pi / 2f + 0.01f;
+
+    private Tween _pitchTween;
+
+    /// <summary>
+    /// Tweens the rig's pitch to <paramref name="targetRadians"/> (sine in-out),
+    /// killing any in-flight pitch tween. Sets rotation directly, so it can reach
+    /// targets outside the drag-time pitch clamp; a later rotate drag eases back
+    /// into the clamp (and kills the tween) rather than jumping.
+    /// </summary>
+    public void TweenPitch(float targetRadians, float seconds)
+    {
+        _pitchTween?.Kill();
+        _pitchTween = CreateTween();
+        _pitchTween.TweenProperty(this, "rotation:x", targetRadians, seconds)
+            .SetTrans(Tween.TransitionType.Sine)
+            .SetEase(Tween.EaseType.InOut);
+    }
+
+    /// <summary>Walks up from a node (typically the active camera) to its owning rig, if any.</summary>
+    public static CameraRig FromNode(Node node)
+    {
+        while (node != null)
+        {
+            if (node is CameraRig rig) return rig;
+            node = node.GetParent();
+        }
+        return null;
+    }
+
     #region Manipulation in play mode
     [Export] public float RotationSensitivity { get; set; } = 0.005f;
+    /// <summary>
+    /// Pixels of press-drag motion before a left-drag starts rotating. Quick
+    /// clicks (press/release with less motion than this) never disturb the
+    /// camera, so click-to-act game modes don't get accidental orbit nudges.
+    /// </summary>
+    [Export] public float RotationDragThresholdPixels { get; set; } = 5f;
     /// <summary>Unitless multiplier on top of the zoom-aware pan rate. 1.0 = mouse tracks the world 1:1 at the rig's depth.</summary>
     [Export] public float PanSensitivity { get; set; } = 1.0f;
     [Export] public float ZoomSensitivity { get; set; } = 0.1f;
@@ -95,11 +163,18 @@ public partial class CameraRig : Node3D
     /// </summary>
     [Export] public bool MouseManipulationEnabled { get; set; } = true;
 
-    private bool _isRotating = false;
+    private bool _isRotating = false;      // threshold crossed, actively rotating
+    private bool _rotatePending = false;   // left button held, threshold not yet crossed
+    private Vector2 _rotatePressPosition;
     private bool _isPanning = false;
     private Vector2 _lastMousePosition;
     private float _yaw;
     private float _pitch;
+    // Per-drag pitch bounds: the configured clamp, expanded to include the pitch
+    // the drag started at, so a drag beginning outside the clamp (e.g. after a
+    // scripted top-down snap) eases back into range instead of jumping.
+    private float _dragPitchLower;
+    private float _dragPitchUpper;
 
     public override void _UnhandledInput(InputEvent @event)
     {
@@ -112,6 +187,7 @@ public partial class CameraRig : Node3D
             if (!MouseManipulationEnabled && !isZoom)
             {
                 _isRotating = false;
+                _rotatePending = false;
                 _isPanning = false;
                 return;
             }
@@ -122,6 +198,7 @@ public partial class CameraRig : Node3D
             if (!MouseManipulationEnabled)
             {
                 _isRotating = false;
+                _rotatePending = false;
                 _isPanning = false;
                 return;
             }
@@ -136,13 +213,12 @@ public partial class CameraRig : Node3D
             case MouseButton.Left:
                 if (EnableYaw || EnablePitch)
                 {
-                    _isRotating = mouseButtonEvent.Pressed;
-                    if (_isRotating)
-                    {
-                        _lastMousePosition = mouseButtonEvent.Position;
-                        _yaw = Rotation.Y;
-                        _pitch = Rotation.X;
-                    }
+                    // Rotation arms on press but only starts once the cursor has
+                    // moved RotationDragThresholdPixels (see HandleMouseMotionEvent),
+                    // so a click never nudges the camera.
+                    _rotatePending = mouseButtonEvent.Pressed;
+                    if (_rotatePending) _rotatePressPosition = mouseButtonEvent.Position;
+                    else _isRotating = false;
                 }
                 break;
                 
@@ -175,9 +251,15 @@ public partial class CameraRig : Node3D
     
     private void HandleMouseMotionEvent(InputEventMouseMotion mouseMotionEvent)
     {
+        if (_rotatePending && !_isRotating
+            && mouseMotionEvent.Position.DistanceTo(_rotatePressPosition) >= RotationDragThresholdPixels)
+        {
+            BeginRotateDrag(mouseMotionEvent.Position);
+        }
+
         Vector2 delta = mouseMotionEvent.Position - _lastMousePosition;
         _lastMousePosition = mouseMotionEvent.Position;
-        
+
         if (_isRotating && (EnableYaw || EnablePitch))
         {
             if (EnableYaw)
@@ -190,7 +272,7 @@ public partial class CameraRig : Node3D
             {
                 float xRotationDirection = InvertRotationY ? -1 : 1;
                 _pitch += xRotationDirection * delta.Y * RotationSensitivity;
-                _pitch = Mathf.Clamp(_pitch, -Mathf.DegToRad(PitchMax), -Mathf.DegToRad(PitchMin));
+                _pitch = Mathf.Clamp(_pitch, _dragPitchLower, _dragPitchUpper);
             }
 
             Rotation = new Vector3(_pitch, _yaw, 0);
@@ -233,6 +315,17 @@ public partial class CameraRig : Node3D
                 SnapYToGround();
             }
         }
+    }
+
+    private void BeginRotateDrag(Vector2 at)
+    {
+        _isRotating = true;
+        _lastMousePosition = at;
+        _yaw = Rotation.Y;
+        _pitch = Rotation.X;
+        _dragPitchLower = Mathf.Min(-Mathf.DegToRad(PitchMax), _pitch);
+        _dragPitchUpper = Mathf.Max(-Mathf.DegToRad(PitchMin), _pitch);
+        _pitchTween?.Kill();
     }
 
     private static Vector3 FlattenXZ(Vector3 v)
