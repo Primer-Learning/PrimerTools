@@ -106,26 +106,6 @@ public partial class CameraRig : Node3D
             .SetEase(Tween.EaseType.InOut);
     }
 
-    private Tween _yawTween;
-    private float _yawTweenTarget;
-
-    /// <summary>
-    /// Tweens yaw by a relative amount (sine in-out). Rapid presses accumulate:
-    /// a press mid-tween retargets from the in-flight destination, so two 45°
-    /// presses always land 90° from where the first started. A rotate drag
-    /// kills the tween.
-    /// </summary>
-    public void TweenYawBy(float deltaRadians, float seconds)
-    {
-        bool inFlight = _yawTween != null && _yawTween.IsValid() && _yawTween.IsRunning();
-        _yawTweenTarget = (inFlight ? _yawTweenTarget : Rotation.Y) + deltaRadians;
-        _yawTween?.Kill();
-        _yawTween = CreateTween();
-        _yawTween.TweenProperty(this, "rotation:y", _yawTweenTarget, seconds)
-            .SetTrans(Tween.TransitionType.Sine)
-            .SetEase(Tween.EaseType.InOut);
-    }
-
     /// <summary>
     /// FOV (degrees) narrow enough that snapping between a matched-framing
     /// perspective and true orthographic is visually negligible.
@@ -414,7 +394,6 @@ public partial class CameraRig : Node3D
         _dragPitchLower = Mathf.Min(-Mathf.DegToRad(PitchMax), _pitch);
         _dragPitchUpper = Mathf.Max(-Mathf.DegToRad(PitchMin), _pitch);
         _pitchTween?.Kill();
-        _yawTween?.Kill();
     }
 
     private static Vector3 FlattenXZ(Vector3 v)
