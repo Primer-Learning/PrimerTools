@@ -245,6 +245,15 @@ public partial class CameraRig : Node3D
     /// </summary>
     [Export] public bool MouseManipulationEnabled { get; set; } = true;
 
+    /// <summary>
+    /// Increments on every mouse-motion event that actually rotates the rig
+    /// during a rotate drag. Lets UI poll for "the user manually rotated the
+    /// camera" (e.g. to drop a scripted top-down/ortho view the moment the
+    /// user takes over) without wiring events to a node that may not exist yet.
+    /// A mere click (press with no motion) doesn't count.
+    /// </summary>
+    public int RotateDragMotionCount { get; private set; }
+
     private bool _isRotating = false;
     private bool _isPanning = false;
     private Vector2 _lastMousePosition;
@@ -330,6 +339,8 @@ public partial class CameraRig : Node3D
 
         if (_isRotating && (EnableYaw || EnablePitch))
         {
+            if (delta != Vector2.Zero) RotateDragMotionCount++;
+
             if (EnableYaw)
             {
                 float yRotationDirection = InvertRotationX ? 1 : -1;
