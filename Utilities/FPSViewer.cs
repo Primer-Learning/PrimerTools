@@ -1,4 +1,5 @@
-﻿using Godot;
+using Godot;
+using System.Collections.Generic;
 
 namespace PrimerTools;
 
@@ -16,8 +17,23 @@ public partial class FPSViewer : Label
     /// </summary>
     [Export] private bool _showRenderStats = true;
 
+    /// <summary>
+    /// Frames slower than this count toward the per-second hitch counter.
+    /// With a 10 Hz simulation, the hitch count approximates how many sim
+    /// ticks were heavy in the last second, while the worst-frame readout
+    /// shows how heavy the worst one was.
+    /// </summary>
+    [Export] private double _hitchThresholdMs = 25;
+
     private double _printInterval = 1;
     private double _timer;
+
+    // Rolling one-second window of real frame times for the worst-frame and
+    // hitch-count readouts. Measured by wall clock between _Process calls
+    // rather than the delta argument, so the numbers stay honest if
+    // Engine.TimeScale is ever changed.
+    private readonly Queue<(ulong endUsec, double ms)> _frameWindow = new();
+    private ulong _lastFrameUsec;
 
     public override void _Ready()
     {
@@ -26,8 +42,30 @@ public partial class FPSViewer : Label
 
     public override void _Process(double delta)
     {
+        ulong now = Time.GetTicksUsec();
+        if (_lastFrameUsec != 0)
+        {
+            _frameWindow.Enqueue((now, (now - _lastFrameUsec) / 1000.0));
+        }
+        _lastFrameUsec = now;
+
+        while (_frameWindow.Count > 0 && now - _frameWindow.Peek().endUsec > 1_000_000)
+        {
+            _frameWindow.Dequeue();
+        }
+
+        double worstMs = 0;
+        int hitchCount = 0;
+        foreach (var (_, ms) in _frameWindow)
+        {
+            if (ms > worstMs) worstMs = ms;
+            if (ms > _hitchThresholdMs) hitchCount++;
+        }
+
         int fps = (int)Engine.GetFramesPerSecond();
         string text = $"{fps} FPS";
+        text += $"\nWorst: {worstMs:F1} ms";
+        text += $"\nOver {_hitchThresholdMs:0} ms: {hitchCount}";
 
         if (_showRenderStats)
         {
