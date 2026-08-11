@@ -28,7 +28,7 @@ public partial class FPSViewer : Label
     private double _printInterval = 1;
     private double _timer;
 
-    // Rolling one-second window of real frame times for the worst-frame and
+    // Rolling ten-second window of real frame times for the worst-frame and
     // hitch-count readouts. Measured by wall clock between _Process calls
     // rather than the delta argument, so the numbers stay honest if
     // Engine.TimeScale is ever changed.
@@ -49,22 +49,27 @@ public partial class FPSViewer : Label
         }
         _lastFrameUsec = now;
 
-        while (_frameWindow.Count > 0 && now - _frameWindow.Peek().endUsec > 1_000_000)
+        while (_frameWindow.Count > 0 && now - _frameWindow.Peek().endUsec > 10_000_000)
         {
             _frameWindow.Dequeue();
         }
 
-        double worstMs = 0;
+        double worst1SecMs = 0;
+        double worst10SecMs = 0;
         int hitchCount = 0;
-        foreach (var (_, ms) in _frameWindow)
+        foreach (var (endUsec, ms) in _frameWindow)
         {
-            if (ms > worstMs) worstMs = ms;
-            if (ms > _hitchThresholdMs) hitchCount++;
+            if (ms > worst10SecMs) worst10SecMs = ms;
+            if (now - endUsec <= 1_000_000)
+            {
+                if (ms > worst1SecMs) worst1SecMs = ms;
+                if (ms > _hitchThresholdMs) hitchCount++;
+            }
         }
 
         int fps = (int)Engine.GetFramesPerSecond();
         string text = $"{fps} FPS";
-        text += $"\nWorst: {worstMs:F1} ms";
+        text += $"\nWorst: {worst1SecMs:F1} ms (1s), {worst10SecMs:F1} ms (10s)";
         text += $"\nOver {_hitchThresholdMs:0} ms: {hitchCount}";
 
         if (_showRenderStats)
