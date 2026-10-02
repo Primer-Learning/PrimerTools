@@ -1,7 +1,7 @@
 [gd_scene load_steps=11 format=3 uid="uid://xpslpcgxjiyc"]
 
 [ext_resource type="Script" uid="uid://kcs7ih573co5" path="res://addons/PrimerTools/TestScenes/Graph/GraphTest.cs" id="1_bnpil"]
-[ext_resource type="Script" uid="uid://cmyih6anxr6g7" path="res://addons/PrimerTools/Camera/CameraRig.cs" id="10_inb6s"]
+[ext_resource type="Script" uid="uid://b2h26llaoia2s" path="res://addons/PrimerTools/Camera/CameraRig.cs" id="10_inb6s"]
 
 [sub_resource type="Animation" id="Animation_u2hqe"]
 length = 101.004
